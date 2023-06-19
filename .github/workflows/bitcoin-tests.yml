@@ -59,7 +59,7 @@ jobs:
       - name: Cargo Build
         id: cargo_build
         run: |
-          cargo build --workspace --release --all-targets
+          cargo nextest run --workspace --all-targets --tests --release --build-jobs 8 --no-run --run-ignored all && cargo build --workspace --release --all-targets
 
       - name: Save Cargo Cache
         id: cargo_cache
