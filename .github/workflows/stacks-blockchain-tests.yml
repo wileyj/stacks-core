@@ -8,6 +8,7 @@ name: Tests
 #   - manually triggered via the ci.yml workflow
 
 on:
+  workflow_dispatch:
   workflow_call:
 
 jobs:

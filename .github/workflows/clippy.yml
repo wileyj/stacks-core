@@ -11,12 +11,13 @@ name: Clippy Checks
 #   - PRs are (re)opened against develop branch
 
 on:
-  pull_request:
-    branches:
-      - develop
-    types:
-      - opened
-      - reopened
+  workflow_dispatch:
+  # pull_request:
+  #   branches:
+  #     - develop
+  #   types:
+  #     - opened
+  #     - reopened
 
 jobs:
   clippy_check:

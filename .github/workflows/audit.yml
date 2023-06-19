@@ -12,12 +12,12 @@ name: Security Audit
 
 on:
   workflow_dispatch:
-  push:
-    paths:
-      - "**/Cargo.toml"
-      - "**/Cargo.lock"
-  schedule:
-    - cron: 30 03 * * *
+  # push:
+  #   paths:
+  #     - "**/Cargo.toml"
+  #     - "**/Cargo.lock"
+  # schedule:
+  #   - cron: 30 03 * * *
 
 jobs:
   security_audit:

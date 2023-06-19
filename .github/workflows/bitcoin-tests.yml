@@ -8,11 +8,11 @@ name: Bitcoin Integration Tests
 #   - PRs are (re)opened against fakemaster branch
 
 on:
+  workflow_dispatch:
   pull_request:
     types:
       - opened
       - reopened
-
 concurrency:
   group: stacks-bitcoin-integration-tests-${{ github.ref }}
   # Only cancel in progress if this is for a PR
@@ -53,6 +53,7 @@ jobs:
       - build-integration-image
     strategy:
       fail-fast: false
+      max-parallel: 16
       matrix:
         test-name:
           - tests::neon_integrations::miner_submit_twice
@@ -157,6 +158,7 @@ jobs:
       - build-integration-image
     strategy:
       fail-fast: false
+      max-parallel: 16
       matrix:
         test-name:
           - tests::neon_integrations::atlas_integration_test
