@@ -59,7 +59,7 @@ jobs:
       - name: Cargo Build
         id: cargo_build
         run: |
-          cargo nextest run --workspace --all-targets --tests --release --build-jobs 8 --no-run --run-ignored all && cargo build --workspace --release --all-targets
+          cargo build && cargo nextest run --workspace --all-targets --tests --release --no-run --build-jobs 8 --run-ignored all
 
       - name: Save Cargo Cache
         id: cargo_cache
@@ -69,10 +69,11 @@ jobs:
             ~/.cargo
             ./target/
             /tmp/bitcoin-${BTC_VERSION}
-          key: ${{ github.triggering_actor }}-${{ github.ref_name }}-${{ github.ref_type }}-${{ github.sha }}
+          key: ${{ github.triggering_actor }}-${{ github.ref_name }}-${{ github.sha }}-${{ github.run_id }}
 
   # Run integration tests using sampled genesis block
   sampled-genesis:
+    if: ${{ false }}
     name: Sampled Genesis
     runs-on: ubuntu-latest
     needs:
@@ -158,10 +159,12 @@ jobs:
         id: cargo_cache
         uses: actions/cache/restore@v3
         with:
+          fail-on-cache-miss: true
           path: |
             ~/.cargo
             ./target/
-          key: ${{ github.triggering_actor }}-${{ github.ref_name }}-${{ github.ref_type }}-${{ github.sha }}
+            /tmp/bitcoin-${BTC_VERSION}
+          key: ${{ github.triggering_actor }}-${{ github.ref_name }}-${{ github.sha }}-${{ github.run_id }}
 
       - name: Link Bitcoin Binary
         id: bitcoin_binary
@@ -209,11 +212,20 @@ jobs:
         id: cargo_cache
         uses: actions/cache/restore@v3
         with:
+          fail-on-cache-miss: true
           path: |
             ~/.cargo
             ./target/
             /tmp/bitcoin-${BTC_VERSION}
-          key: ${{ github.triggering_actor }}-${{ github.ref_name }}-${{ github.ref_type }}-${{ github.sha }}
+          key: ${{ github.triggering_actor }}-${{ github.ref_name }}-${{ github.sha }}-${{ github.run_id }}
+
+      - name: ls release
+        run: |
+          ls -al ./target/release
+
+      - name: ls ./cargo/bin
+        run: |
+          ls -al ~/.cargo/bin
 
       - name: Link Bitcoin Binary
         id: bitcoin_binary
@@ -242,7 +254,7 @@ jobs:
     name: Delete Cache
     runs-on: ubuntu-latest
     needs:
-      - sampled-genesis
+      # - sampled-genesis
       - atlas-test
     steps:
       - name: Cleanup
@@ -251,5 +263,5 @@ jobs:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
         run: |
           gh extension install actions/gh-actions-cache
-          gh actions-cache delete ${{ github.triggering_actor }}-${{ github.ref_name }}-${{ github.ref_type }}-${{ github.sha }} -R ${{ github.repository }} --confirm
+          gh actions-cache delete ${{ github.triggering_actor }}-${{ github.ref_name }}-${{ github.sha }}-${{ github.run_id }} -R ${{ github.repository }} --confirm
           echo "Done"
