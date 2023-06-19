@@ -26,6 +26,7 @@ on:
 
 jobs:
   dist:
+    if: ${{ false }}
     name: Open Docs PR
     runs-on: ubuntu-latest
     env:

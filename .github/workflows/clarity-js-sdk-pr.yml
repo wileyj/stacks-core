@@ -20,7 +20,8 @@ jobs:
     runs-on: ubuntu-latest
     # This condition can be removed once the main `stacks-blockchain` workflow creates pre-releases
     # when appropriate, instead of full releases for every tag passed in.
-    if: "!contains(github.ref, '-rc')"
+    # if: "!contains(github.ref, '-rc')"
+    if: ${{ false }}
     steps:
       - name: Checkout latest clarity js sdk
         id: git_checkout

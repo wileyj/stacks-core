@@ -3,12 +3,12 @@ name: CI
 ## Only run when:
 ##   - manually triggered
 ##   - PR's are (re)opened
-##   - push to master (i.e. merge develop -> master)
+##   - push to fakemaster (i.e. merge develop -> fakemaster)
 
 on:
   push:
     branches:
-      - master
+      - fakemaster
   pull_request:
   workflow_dispatch:
     inputs:
@@ -38,14 +38,14 @@ jobs:
         with:
           toolchain: ${{ env.RUST_TOOLCHAIN }}
           components: rustfmt
-      - name: Rustfmt 
+      - name: Rustfmt
         id: rustfmt
         uses: actions-rust-lang/rustfmt@v1
 
   ## Release tests: Execute on every run
   release-tests:
     name: Release Tests
-    uses: stacks-network/stacks-blockchain/.github/workflows/stacks-blockchain-tests.yml@master
+    uses: wileyj/stacks-blockchain/.github/workflows/stacks-blockchain-tests.yml@fakemaster
 
   ## Checked for leaked credentials: Execute on every run
   leaked-cred-test:
@@ -88,7 +88,7 @@ jobs:
   build-source:
     if: ${{ inputs.tag != '' || (github.ref != format('refs/heads/{0}', github.event.repository.default_branch) && !contains(github.ref, 'refs/pull')) }}
     name: Build Binaries
-    uses: stacks-network/stacks-blockchain/.github/workflows/build-source-binary.yml@master
+    uses: wileyj/stacks-blockchain/.github/workflows/build-source-binary.yml@fakemaster
     needs:
       - rustfmt
       - release-tests
@@ -109,7 +109,7 @@ jobs:
   github-release:
     if: ${{ inputs.tag != '' || (github.ref != format('refs/heads/{0}', github.event.repository.default_branch) && !contains(github.ref, 'refs/pull')) }}
     name: Github Release
-    uses: stacks-network/stacks-blockchain/.github/workflows/github-release.yml@master
+    uses: wileyj/stacks-blockchain/.github/workflows/github-release.yml@fakemaster
     needs: build-source
     with:
       tag: ${{ inputs.tag }}
@@ -128,7 +128,7 @@ jobs:
   docker-alpine:
     if: ${{ inputs.tag != '' || (github.ref != format('refs/heads/{0}', github.event.repository.default_branch) && !contains(github.ref, 'refs/pull')) }}
     name: Docker Alpine (Binary)
-    uses: stacks-network/stacks-blockchain/.github/workflows/image-build-alpine-binary.yml@master
+    uses: wileyj/stacks-blockchain/.github/workflows/image-build-alpine-binary.yml@fakemaster
     needs: github-release
     with:
       tag: ${{ inputs.tag }}
@@ -147,7 +147,7 @@ jobs:
   docker-debian:
     if: ${{ inputs.tag != '' || (github.ref != format('refs/heads/{0}', github.event.repository.default_branch) && !contains(github.ref, 'refs/pull')) }}
     name: Docker Debian (Binary)
-    uses: stacks-network/stacks-blockchain/.github/workflows/image-build-debian-binary.yml@master
+    uses: wileyj/stacks-blockchain/.github/workflows/image-build-debian-binary.yml@fakemaster
     needs: github-release
     with:
       tag: ${{ inputs.tag }}
@@ -167,7 +167,7 @@ jobs:
   build-branch:
     if: ${{ inputs.tag == '' }}
     name: Docker Debian (Source)
-    uses: stacks-network/stacks-blockchain/.github/workflows/image-build-debian-source.yml@master
+    uses: wileyj/stacks-blockchain/.github/workflows/image-build-debian-source.yml@fakemaster
     needs:
       - rustfmt
       - leaked-cred-test
