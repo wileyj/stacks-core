@@ -45,7 +45,7 @@ jobs:
   ## Release tests: Execute on every run
   release-tests:
     name: Release Tests
-    # uses: wileyj/stacks-blockchain.github/workflows/stacks-blockchain-tests.yml@master
+    # uses: wileyj/stacks-blockchain.github/workflows/stacks-blockchain-tests.yml@fakemaster
     uses: ./.github/workflows/stacks-blockchain-tests.yml
 
   ## Checked for leaked credentials: Execute on every run
@@ -89,7 +89,7 @@ jobs:
   build-source:
     if: ${{ inputs.tag != '' || (github.ref != format('refs/heads/{0}', github.event.repository.default_branch) && !contains(github.ref, 'refs/pull')) }}
     name: Build Binaries
-    # uses: wileyj/stacks-blockchain/.github/workflows/build-source-binary.yml@master
+    # uses: wileyj/stacks-blockchain/.github/workflows/build-source-binary.yml@fakemaster
     uses: ./.github/workflows/build-source-binary.yml
     needs:
       - rustfmt
@@ -111,7 +111,7 @@ jobs:
   github-release:
     if: ${{ inputs.tag != '' || (github.ref != format('refs/heads/{0}', github.event.repository.default_branch) && !contains(github.ref, 'refs/pull')) }}
     name: Github Release
-    # uses: wileyj/stacks-blockchain/.github/workflows/github-release.yml@master
+    # uses: wileyj/stacks-blockchain/.github/workflows/github-release.yml@fakemaster
     uses: ./.github/workflows/github-release.yml
     needs: build-source
     with:
@@ -131,7 +131,7 @@ jobs:
   docker-alpine:
     if: ${{ inputs.tag != '' || (github.ref != format('refs/heads/{0}', github.event.repository.default_branch) && !contains(github.ref, 'refs/pull')) }}
     name: Docker Alpine (Binary)
-    # uses: wileyj/stacks-blockchain/.github/workflows/image-build-alpine-binary.yml@master
+    # uses: wileyj/stacks-blockchain/.github/workflows/image-build-alpine-binary.yml@fakemaster
     uses: ./.github/workflows/image-build-alpine-binary.yml
     needs: github-release
     with:
@@ -151,7 +151,7 @@ jobs:
   docker-debian:
     if: ${{ inputs.tag != '' || (github.ref != format('refs/heads/{0}', github.event.repository.default_branch) && !contains(github.ref, 'refs/pull')) }}
     name: Docker Debian (Binary)
-    # uses: wileyj/stacks-blockchain/.github/workflows/image-build-debian-binary.yml@master
+    # uses: wileyj/stacks-blockchain/.github/workflows/image-build-debian-binary.yml@fakemaster
     uses: ./.github/workflows/image-build-debian-binary.yml
     needs: github-release
     with:
@@ -172,7 +172,7 @@ jobs:
   build-branch:
     if: ${{ inputs.tag == '' }}
     name: Docker Debian (Source)
-    # uses: wileyj/stacks-blockchain/.github/workflows/image-build-debian-source.yml@master
+    # uses: wileyj/stacks-blockchain/.github/workflows/image-build-debian-source.yml@fakemaster
     uses: ./.github/workflows/image-build-debian-source.yml
     needs:
       - rustfmt
