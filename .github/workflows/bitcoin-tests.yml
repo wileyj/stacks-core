@@ -34,8 +34,9 @@ jobs:
         id: git_checkout
         uses: actions/checkout@v3
 
-      - uses: actions-rust-lang/setup-rust-toolchain@v1
+      - name: Setup Rust Toolchain
         id: setup_rust_toolchain
+        uses: actions-rust-lang/setup-rust-toolchain@v1
         with:
           toolchain: stable
           components: llvm-tools-preview
@@ -55,12 +56,6 @@ jobs:
           PLATFORM=unknown-linux
           curl -LsSf "https://github.com/mozilla/grcov/releases/download/${VERSION}/grcov-${ARCH}-${PLATFORM}-${LIBC}.tar.bz2" | tar jxf - -C ${CARGO_HOME:-~/.cargo}/bin
 
-      - name: Install Bitcoin Binary
-        id: bitcoin_binary
-        run: |
-          curl -LSf https://bitcoin.org/bin/bitcoin-core-${BTC_VERSION}/bitcoin-${BTC_VERSION}-x86_64-linux-gnu.tar.gz | tar zxf - -C /tmp
-          sudo cp -a /tmp/bitcoin-${BTC_VERSION}/bin/bitcoind /bin/
-
       - name: Cargo Build
         id: cargo_build
         run: |
@@ -73,7 +68,7 @@ jobs:
           path: |
             ~/.cargo
             ./target/
-            /bin/bitcoind
+            /tmp/bitcoin-${BTC_VERSION}
           key: ${{ github.triggering_actor }}-${{ github.ref_name }}-${{ github.ref_type }}-${{ github.sha }}
 
   # Run integration tests using sampled genesis block
@@ -166,8 +161,12 @@ jobs:
           path: |
             ~/.cargo
             ./target/
-            /bin/bitcoind
           key: ${{ github.triggering_actor }}-${{ github.ref_name }}-${{ github.ref_type }}-${{ github.sha }}
+
+      - name: Link Bitcoin Binary
+        id: bitcoin_binary
+        run: |
+          sudo ln -s /tmp/bitcoin-${BTC_VERSION}/bin/bitcoind /bin/
 
       - name: Run Tests
         id: run_tests
@@ -213,7 +212,13 @@ jobs:
           path: |
             ~/.cargo
             ./target/
+            /tmp/bitcoin-${BTC_VERSION}
           key: ${{ github.triggering_actor }}-${{ github.ref_name }}-${{ github.ref_type }}-${{ github.sha }}
+
+      - name: Link Bitcoin Binary
+        id: bitcoin_binary
+        run: |
+          sudo ln -s /tmp/bitcoin-${BTC_VERSION}/bin/bitcoind /bin/
 
       - name: Run Tests
         id: run_tests
