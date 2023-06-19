@@ -209,7 +209,7 @@ jobs:
     runs-on: ubuntu-latest
     needs:
       - full-genesis
-      - unit_tests
+      - unit-tests
     steps:
       - name: Cleanup
         env:
