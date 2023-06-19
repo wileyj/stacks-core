@@ -5,7 +5,7 @@
 name: Bitcoin Integration Tests
 
 # Only run when:
-#   - PRs are (re)opened against fakemaster branch
+#   - PRs are (re)opened against master branch
 
 on:
   workflow_dispatch:
