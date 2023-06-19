@@ -13,44 +13,68 @@ on:
     types:
       - opened
       - reopened
+
+env:
+  RUSTFLAGS: "-Cinstrument-coverage"
+  LLVM_PROFILE_FILE: "stacks-blockchain-%p-%m.profraw"
+  BTC_VERSION: "0.20.0"
+  BITCOIND_TEST: 1
+
 concurrency:
   group: stacks-bitcoin-integration-tests-${{ github.ref }}
   # Only cancel in progress if this is for a PR
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
-  # Create bitcoin image used for later tests
-  build-integration-image:
-    name: Build Image
+  create-cache:
+    name: Create Cache
     runs-on: ubuntu-latest
     steps:
       - name: Checkout the latest code
         id: git_checkout
         uses: actions/checkout@v3
-      - name: Build bitcoin integration testing image
-        id: build_docker_image
-        env:
-          DOCKER_BUILDKIT: 1
-        # Remove .dockerignore file so codecov has access to git info and build the image
-        run: |
-          rm .dockerignore
-          docker build -f ./.github/actions/bitcoin-int-tests/Dockerfile.generic.bitcoin-tests -t stacks-blockchain:integrations .
-      - name: Export docker image as tarball
-        id: export_docker_image
-        run: docker save -o integration-image.tar stacks-blockchain:integrations
-      - name: Upload built docker image
-        id: upload_docker_image
-        uses: actions/upload-artifact@v3
+
+      - uses: actions-rust-lang/setup-rust-toolchain@v1
+        id: setup_rust_toolchain
         with:
-          name: integration-image.tar
-          path: integration-image.tar
+          toolchain: stable
+          components: llvm-tools-preview
+
+      - name: Install Nextest
+        id: install_nextest
+        run: |
+          curl -LsSf https://get.nexte.st/latest/linux | tar zxf - -C ${CARGO_HOME:-~/.cargo}/bin
+
+      # Note - doing this with `cargo install grcov` also works, but is a bit slower
+      - name: Install grcov
+        id: install_grcov
+        run: |
+          VERSION=$(curl -sL https://api.github.com/repos/mozilla/grcov/releases/latest | jq -r .tag_name)
+          ARCH=x86_64
+          LIBC=gnu
+          PLATFORM=unknown-linux
+          curl -LsSf "https://github.com/mozilla/grcov/releases/download/${VERSION}/grcov-${ARCH}-${PLATFORM}-${LIBC}.tar.bz2" | tar jxf - -C ${CARGO_HOME:-~/.cargo}/bin
+
+      - name: Cargo Build
+        id: cargo_build
+        run: |
+          cargo build --workspace --release --all-targets
+
+      - name: Save Cargo Cache
+        id: cargo_cache
+        uses: actions/cache/save@v3
+        with:
+          path: |
+            ~/.cargo
+            ./target/
+          key: ${{ github.triggering_actor }}-${{ github.ref_name }}-${{ github.ref_type }}-${{ github.sha }}
 
   # Run integration tests using sampled genesis block
   sampled-genesis:
     name: Sampled Genesis
     runs-on: ubuntu-latest
     needs:
-      - build-integration-image
+      - create-cache
     strategy:
       fail-fast: false
       max-parallel: 16
@@ -127,35 +151,41 @@ jobs:
       - name: Checkout the latest code
         id: git_checkout
         uses: actions/checkout@v3
-      - name: Download docker image
-        id: download_docker_image
-        uses: actions/download-artifact@v3
+
+      - name: Restore Cargo Cache
+        id: cargo_cache
+        uses: actions/cache/restore@v3
         with:
-          name: integration-image.tar
-      - name: Load docker image
-        id: load_docker_image
-        run: docker load -i integration-image.tar && rm integration-image.tar
-      - name: All integration tests with sampled genesis
-        id: bitcoin_integration_tests
-        timeout-minutes: 30
-        env:
-          DOCKER_BUILDKIT: 1
-          TEST_NAME: ${{ matrix.test-name }}
-        run: docker build -o coverage-output --build-arg test_name=${{ matrix.test-name }} -f ./.github/actions/bitcoin-int-tests/Dockerfile.bitcoin-tests .
-      - name: Code Coverage
-        id: code_coverage
-        uses: codecov/codecov-action@v3
-        with:
-          files: ./coverage-output/lcov.info
-          name: ${{ matrix.test-name }}
-          fail_ci_if_error: false
+          path: |
+            ~/.cargo
+            ./target/
+          key: ${{ github.triggering_actor }}-${{ github.ref_name }}-${{ github.ref_type }}-${{ github.sha }}
+
+      - name: Run Tests
+        id: run_tests
+        run: |
+          cargo nextest run --workspace --no-fail-fast --all-targets --tests --release --test-threads 8 --build-jobs 8 --run-ignored all ${{ matrix.test-name }}
+
+      - name: Run grcov
+        id: run_grcov
+        run: |
+          grcov . --binary-path ./target/debug/ -s . -t lcov --branch --ignore-not-existing --ignore "/*" -o lcov.info
+
+      # - name: Code Coverage
+      #   id: code_coverage
+      #   uses: codecov/codecov-action@v3
+      #   with:
+      #     files: ./coverage-output/lcov.info
+      #     name: ${{ matrix.test-name }}
+      #     fail_ci_if_error: false
 
   # Run atlas integration tests
+
   atlas-test:
     name: Atlas Test
     runs-on: ubuntu-latest
     needs:
-      - build-integration-image
+      - create-cache
     strategy:
       fail-fast: false
       max-parallel: 16
@@ -167,25 +197,46 @@ jobs:
       - name: Checkout the latest code
         id: git_checkout
         uses: actions/checkout@v3
-      - name: Download docker image
-        id: download_docker_image
-        uses: actions/download-artifact@v3
+
+      - name: Restore Cargo Cache
+        id: cargo_cache
+        uses: actions/cache/restore@v3
         with:
-          name: integration-image.tar
-      - name: Load docker image
-        id: load_docker_image
-        run: docker load -i integration-image.tar && rm integration-image.tar
-      - name: Atlas integration tests
-        id: atlas_integration_tests
-        timeout-minutes: 40
+          path: |
+            ~/.cargo
+            ./target/
+          key: ${{ github.triggering_actor }}-${{ github.ref_name }}-${{ github.ref_type }}-${{ github.sha }}
+
+      - name: Run Tests
+        id: run_tests
+        run: |
+          cargo nextest run --workspace --no-fail-fast --all-targets --tests --release --test-threads 8 --build-jobs 8 --run-ignored all ${{ matrix.test-name }}
+
+      - name: Run grcov
+        id: run_grcov
+        run: |
+          grcov . --binary-path ./target/debug/ -s . -t lcov --branch --ignore-not-existing --ignore "/*" -o lcov.info
+
+      # - name: Code Coverage
+      #   id: code_coverage
+      #   uses: codecov/codecov-action@v3
+      #   with:
+      #     files: ./coverage-output/lcov.info
+      #     name: ${{ matrix.test-name }}
+      #     fail_ci_if_error: false
+
+  delete-cache:
+    name: Delete Cache
+    runs-on: ubuntu-latest
+    needs:
+      - sampled-genesis
+      - atlas-test
+    steps:
+      - name: Cleanup
         env:
-          DOCKER_BUILDKIT: 1
-          TEST_NAME: ${{ matrix.test-name }}
-        run: docker build -o coverage-output --build-arg test_name=${{ matrix.test-name }} -f ./.github/actions/bitcoin-int-tests/Dockerfile.bitcoin-tests .
-      - name: Code Coverage
-        id: code_coverage
-        uses: codecov/codecov-action@v3
-        with:
-          files: ./coverage-output/lcov.info
-          name: ${{ matrix.test-name }}
-          fail_ci_if_error: false
+          REPO: ${{ github.repository }}
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+        run: |
+          gh extension install actions/gh-actions-cache
+          gh actions-cache delete ${{ github.triggering_actor }}-${{ github.ref_name }}-${{ github.ref_type }}-${{ github.sha }} -R ${{ github.repository }} --confirm
+          echo "Done"
