@@ -235,6 +235,14 @@ jobs:
         run: |
           ls -al
 
+      - name: ls /tmp
+        run: |
+          ls -al /tmp
+
+      - name: ls /bin
+        run: |
+          ls -al /bin
+
       - name: Link Bitcoin Binary
         id: bitcoin_binary
         run: |
