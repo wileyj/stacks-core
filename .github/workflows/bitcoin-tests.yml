@@ -61,13 +61,18 @@ jobs:
         run: |
           cargo test --no-run --workspace && cargo build --workspace
 
+      - name: Install Bitcoin Binary
+        id: bitcoin_binary
+        run: |
+          curl -LSf https://bitcoin.org/bin/bitcoin-core-${BTC_VERSION}/bitcoin-${BTC_VERSION}-x86_64-linux-gnu.tar.gz | tar zxf - -C /tmp
+
       - name: Save Cargo Cache
         id: cargo_cache
         uses: actions/cache/save@v3
         with:
           path: |
             ~/.cargo
-            ./target/
+            ./
             /tmp/bitcoin-${BTC_VERSION}
           key: ${{ github.triggering_actor }}-${{ github.ref_name }}-${{ github.sha }}-${{ github.run_id }}
 
@@ -162,7 +167,7 @@ jobs:
           fail-on-cache-miss: true
           path: |
             ~/.cargo
-            ./target/
+            ./
             /tmp/bitcoin-${BTC_VERSION}
           key: ${{ github.triggering_actor }}-${{ github.ref_name }}-${{ github.sha }}-${{ github.run_id }}
 
@@ -215,7 +220,7 @@ jobs:
           fail-on-cache-miss: true
           path: |
             ~/.cargo
-            ./target/
+            ./
             /tmp/bitcoin-${BTC_VERSION}
           key: ${{ github.triggering_actor }}-${{ github.ref_name }}-${{ github.sha }}-${{ github.run_id }}
 
