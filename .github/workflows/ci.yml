@@ -6,10 +6,10 @@ name: CI
 ##   - push to master (i.e. merge develop -> master)
 
 on:
-  push:
-    branches:
-      - master
-  pull_request:
+  # push:
+  #   branches:
+  #     - master
+  # pull_request:
   workflow_dispatch:
     inputs:
       tag:
