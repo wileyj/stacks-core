@@ -273,9 +273,9 @@ jobs:
         run: |
           ls -al ./target/debug
 
-      - name: ls target/release
-        run: |
-          ls -al ./target/release
+      # - name: ls target/release
+      #   run: |
+      #     ls -al ./target/release
 
       - name: ls ./cargo/bin
         run: |
