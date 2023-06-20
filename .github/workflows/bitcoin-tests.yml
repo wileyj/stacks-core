@@ -59,7 +59,8 @@ jobs:
       - name: Cargo Build
         id: cargo_build
         run: |
-          cargo build && cargo nextest run --workspace --all-targets --tests --release --no-run --build-jobs 8 --run-ignored all
+          # cargo build && cargo nextest run --workspace --all-targets --tests --release --run-ignored all  --no-run
+          cargo test --no-run && cargo build
 
       - name: Save Cargo Cache
         id: cargo_cache
@@ -219,6 +220,10 @@ jobs:
             /tmp/bitcoin-${BTC_VERSION}
           key: ${{ github.triggering_actor }}-${{ github.ref_name }}-${{ github.sha }}-${{ github.run_id }}
 
+      - name: ls debug
+        run: |
+          ls -al ./target/debug
+
       - name: ls release
         run: |
           ls -al ./target/release
@@ -235,8 +240,8 @@ jobs:
       - name: Run Tests
         id: run_tests
         run: |
-          cargo nextest run --workspace --no-fail-fast --all-targets --tests --release --test-threads 8 --build-jobs 8 --run-ignored all ${{ matrix.test-name }}
-
+          # cargo nextest run --workspace --no-fail-fast --all-targets --tests --release --test-threads 8 --build-jobs 8 --run-ignored all ${{ matrix.test-name }}
+          cargo build && cargo test -- --test-threads 1 --ignored "${{ matrix.test-name }}"
       - name: Run grcov
         id: run_grcov
         run: |
