@@ -59,8 +59,7 @@ jobs:
       - name: Cargo Build
         id: cargo_build
         run: |
-          # cargo build && cargo nextest run --workspace --all-targets --tests --release --run-ignored all  --no-run
-          cargo test --no-run && cargo build
+          cargo test --no-run --workspace && cargo build --workspace
 
       - name: Save Cargo Cache
         id: cargo_cache
@@ -175,7 +174,7 @@ jobs:
       - name: Run Tests
         id: run_tests
         run: |
-          cargo nextest run --workspace --no-fail-fast --all-targets --tests --release --test-threads 8 --build-jobs 8 --run-ignored all ${{ matrix.test-name }}
+          cargo nextest run --tests --test-threads 1 --workspace --run-ignored all "${{ matrix.test-name }}"
 
       - name: Run grcov
         id: run_grcov
@@ -232,6 +231,10 @@ jobs:
         run: |
           ls -al ~/.cargo/bin
 
+      - name: ls current
+        run: |
+          ls -al
+
       - name: Link Bitcoin Binary
         id: bitcoin_binary
         run: |
@@ -240,8 +243,8 @@ jobs:
       - name: Run Tests
         id: run_tests
         run: |
-          # cargo nextest run --workspace --no-fail-fast --all-targets --tests --release --test-threads 8 --build-jobs 8 --run-ignored all ${{ matrix.test-name }}
-          cargo build && cargo test -- --test-threads 1 --ignored "${{ matrix.test-name }}"
+          cargo nextest run --tests --test-threads 1 --workspace --run-ignored all "${{ matrix.test-name }}"
+
       - name: Run grcov
         id: run_grcov
         run: |
