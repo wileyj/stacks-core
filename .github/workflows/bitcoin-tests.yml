@@ -80,13 +80,23 @@ jobs:
     name: Cache Bitcoin Binary
     runs-on: ubuntu-latest
     steps:
+      - name: Check Bitcoin Cache
+        uses: actions/cache@v3
+        id: check_cache
+        with:
+          lookup-only: true
+          path: /tmp/bitcoin
+          key: ${{ github.event.repository.name }}-bitcoin-binaries
+
       - name: Install Bitcoin Binary
+        if: steps.check_cache.outputs.cache-hit != 'true'
         id: bitcoin_binary
         run: |
           curl -LSf https://bitcoin.org/bin/bitcoin-core-${BTC_VERSION}/bitcoin-${BTC_VERSION}-x86_64-linux-gnu.tar.gz | tar zxf - -C /tmp
           mv /tmp/bitcoin-${BTC_VERSION} /tmp/bitcoin
 
       - name: Save Cache
+        if: steps.check_cache.outputs.cache-hit != 'true'
         id: save_cache
         uses: actions/cache/save@v3
         with:
@@ -118,7 +128,7 @@ jobs:
           fail-on-cache-miss: true
           path: |
             ~/.cargo
-          key: ${{ github.event.repository.name }}-${{ github.run_id }}-cargo
+          key: ${{ github.event.repository.name }}-${{ github.sha }}-${{ github.run_id }}-cargo
 
       - name: Archive Tests
         id: archive_tests
