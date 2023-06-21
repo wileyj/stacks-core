@@ -185,7 +185,7 @@ jobs:
       - cache-bitcoin-binary
     strategy:
       fail-fast: false
-      max-parallel: ${{ env.PARALLEL_JOBS }}
+      max-parallel: ${{ PARALLEL_JOBS }}
       matrix:
         test-name:
           - tests::neon_integrations::miner_submit_twice
@@ -346,7 +346,7 @@ jobs:
       - cache-bitcoin-binary
     strategy:
       fail-fast: false
-      max-parallel: ${{ env.PARALLEL_JOBS }}
+      max-parallel: ${{ PARALLEL_JOBS }}
       matrix:
         test-name:
           - tests::neon_integrations::atlas_integration_test
