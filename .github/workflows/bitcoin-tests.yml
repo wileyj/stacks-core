@@ -214,7 +214,7 @@ jobs:
       #     retention-days: 2
 
   sampled-genesis:
-    if: ${{ false }}
+    # if: ${{ false }}
     name: Sampled Genesis
     runs-on: ubuntu-latest
     needs:
@@ -355,6 +355,12 @@ jobs:
         run: |
           grcov . --binary-path ./target/debug/ -s . -t lcov --branch --ignore-not-existing --ignore "/*" -o lcov.info || exit 1
 
+      - name: Upload grcov to workflow
+        uses: actions/upload-artifact@v3
+        with:
+          name: ${{ matrix.test-name }}
+          path: ./lcov.info
+
       # - name: Code Coverage
       #   id: code_coverage
       #   uses: codecov/codecov-action@v3
@@ -451,11 +457,17 @@ jobs:
         run: |
           grcov . --binary-path ./target/debug/ -s . -t lcov --branch --ignore-not-existing --ignore "/*" -o lcov.info || exit 1
 
+      - name: Upload grcov to workflow
+        uses: actions/upload-artifact@v3
+        with:
+          name: ${{ matrix.test-name }}
+          path: ./lcov.info
+
       # - name: Code Coverage
       #   id: code_coverage
       #   uses: codecov/codecov-action@v3
       #   with:
-      #     files: ./coverage-output/lcov.info
+      #     files: ./lcov.info
       #     name: ${{ matrix.test-name }}
       #     fail_ci_if_error: false
 
