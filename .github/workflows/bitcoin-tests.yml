@@ -361,7 +361,7 @@ jobs:
         with:
           fail-on-cache-miss: true
           path: /tmp/bitcoin
-          key: ${{ github.event.repository.name }}-bitcoin-cache
+          key: ${{ github.event.repository.name }}-bitcoin-binaries
 
       - name: Restore Test Archive Cache
         id: restore_test-archive_cache
