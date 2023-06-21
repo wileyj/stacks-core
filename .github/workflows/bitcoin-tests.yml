@@ -61,7 +61,7 @@ jobs:
         id: check_cache
         with:
           lookup-only: true
-          # path: ~/.cargo
+          path: ~/.cargo
           key: ${{ github.event.repository.name }}-${{ github.sha }}-cargo
 
       - name: Install nextest
@@ -107,7 +107,7 @@ jobs:
         id: check_cache
         with:
           lookup-only: true
-          # path: /tmp/bitcoin
+          path: /tmp/bitcoin
           key: ${{ github.event.repository.name }}-bitcoin-binaries
 
       - name: Install Bitcoin Binary
@@ -136,7 +136,7 @@ jobs:
         id: check_cache
         with:
           lookup-only: true
-          # path: /tmp/test_archive.tar.zst
+          path: /tmp/test_archive.tar.zst
           key: ${{ github.event.repository.name }}-${{ github.sha }}-test-archive
 
       - name: Checkout the latest code
