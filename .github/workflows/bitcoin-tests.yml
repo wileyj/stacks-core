@@ -175,7 +175,7 @@ jobs:
           key: ${{ github.event.repository.name }}-cargo
           # key: ${{ github.event.repository.name }}-${{ github.sha }}-cargo
 
-      - name: Archive Tests
+      - name: Build and Archive Tests
         if: ${{ steps.check_target_cache.outputs.cache-hit != 'true' && steps.check_archive_cache.outputs.cache-hit != 'true' }}
         id: archive_tests
         run: |
@@ -186,9 +186,9 @@ jobs:
             --locked \
             --archive-file /tmp/test_archive.tar.zst
 
-      - name: Cache Archive
+      - name: Cache Nextest Archive
         if: ${{ steps.check_target_cache.outputs.cache-hit != 'true' && steps.check_archive_cache.outputs.cache-hit != 'true' }}
-        id: save_cache
+        id: save_nextest_cache
         uses: actions/cache/save@v3
         with:
           path: /tmp/test_archive.tar.zst
@@ -198,7 +198,7 @@ jobs:
 
       - name: Cache Target
         if: ${{ steps.check_target_cache.outputs.cache-hit != 'true' && steps.check_archive_cache.outputs.cache-hit != 'true' }}
-        id: save_cache
+        id: save_target_cache
         uses: actions/cache/save@v3
         with:
           path: ./target/debug
