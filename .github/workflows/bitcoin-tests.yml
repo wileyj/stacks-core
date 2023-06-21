@@ -368,7 +368,7 @@ jobs:
         id: code_coverage
         uses: codecov/codecov-action@v3
         with:
-          files: ./coverage-output/lcov.info
+          files: ./lcov.info
           name: ${{ matrix.test-name }}
           fail_ci_if_error: false
 
