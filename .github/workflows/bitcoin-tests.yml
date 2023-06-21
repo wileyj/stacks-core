@@ -19,7 +19,6 @@ env:
   LLVM_PROFILE_FILE: "stacks-blockchain-%p-%m.profraw"
   BTC_VERSION: "0.20.0"
   BITCOIND_TEST: 1
-  PARALLEL_JOBS: 16
 
 concurrency:
   group: stacks-bitcoin-integration-tests-${{ github.ref }}
@@ -185,7 +184,7 @@ jobs:
       - cache-bitcoin-binary
     strategy:
       fail-fast: false
-      max-parallel: ${{ PARALLEL_JOBS }}
+      max-parallel: 16
       matrix:
         test-name:
           - tests::neon_integrations::miner_submit_twice
@@ -346,7 +345,7 @@ jobs:
       - cache-bitcoin-binary
     strategy:
       fail-fast: false
-      max-parallel: ${{ PARALLEL_JOBS }}
+      max-parallel: 16
       matrix:
         test-name:
           - tests::neon_integrations::atlas_integration_test
