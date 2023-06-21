@@ -159,7 +159,7 @@ jobs:
         with:
           fail-on-cache-miss: true
           path: ~/.cargo
-          key: ${{ github.event.repository.name }}-${{ github.sha }}-${{ github.run_id }}-cargo
+          key: ${{ github.event.repository.name }}-${{ github.sha }}-cargo
 
       - name: Archive Tests
         if: steps.check_cache.outputs.cache-hit != 'true'
