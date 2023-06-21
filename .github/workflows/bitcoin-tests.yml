@@ -26,7 +26,7 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
-  cargo-cache:
+  cache-cargo:
     name: Cargo Cache
     runs-on: ubuntu-latest
     steps:
@@ -98,7 +98,7 @@ jobs:
   ##
   ## it is expected that this cache will exist longer so other runs can use it
   ##
-  bitcoin-binary-cache:
+  cache-bitcoin-binary:
     name: Bitcoin Binary Cache
     runs-on: ubuntu-latest
     steps:
