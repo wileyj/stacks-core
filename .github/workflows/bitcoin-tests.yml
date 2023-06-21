@@ -30,32 +30,6 @@ jobs:
     name: Cargo Cache
     runs-on: ubuntu-latest
     steps:
-      # - name: Checkout the latest code
-      #   id: git_checkout
-      #   uses: actions/checkout@v3
-
-      # - name: Setup Rust Toolchain
-      #   id: setup_rust_toolchain
-      #   uses: actions-rust-lang/setup-rust-toolchain@v1
-      #   with:
-      #     toolchain: stable
-      #     components: llvm-tools-preview
-
-      # - name: Install Nextest
-      #   id: install_nextest
-      #   run: |
-      #     curl -LsSf https://get.nexte.st/latest/linux | tar zxf - -C ${CARGO_HOME:-~/.cargo}/bin
-
-      # # Note - doing this with `cargo install grcov` also works, but is a bit slower
-      # - name: Install grcov
-      #   id: install_grcov
-      #   run: |
-      #     VERSION=$(curl -sL https://api.github.com/repos/mozilla/grcov/releases/latest | jq -r .tag_name)
-      #     ARCH=x86_64
-      #     LIBC=gnu
-      #     PLATFORM=unknown-linux
-      #     curl -LsSf "https://github.com/mozilla/grcov/releases/download/${VERSION}/grcov-${ARCH}-${PLATFORM}-${LIBC}.tar.bz2" | tar jxf - -C ${CARGO_HOME:-~/.cargo}/bin
-
       - name: Check Cargo Cache
         uses: actions/cache@v3
         id: check_cache
@@ -74,18 +48,6 @@ jobs:
         if: steps.check_cache.outputs.cache-hit != 'true'
         id: install_grcov
         uses: taiki-e/install-action@grcov
-
-      # - name: Cargo Build
-      #   id: cargo_build
-      #   run: |
-      #     cargo nextest run --tests --no-run --workspace --build-jobs 8 --run-ignored all && cargo build --workspace
-      #     cargo nextest run --tests --test-threads 1 --workspace --run-ignored all tests::neon_integrations::atlas_integration_test
-      #     cargo nextest run --tests --test-threads 1 --workspace --run-ignored all tests::neon_integrations::atlas_stress_integration_test
-
-      # - name: Install Bitcoin Binary
-      #   id: bitcoin_binary
-      #   run: |
-      #     curl -LSf https://bitcoin.org/bin/bitcoin-core-${BTC_VERSION}/bitcoin-${BTC_VERSION}-x86_64-linux-gnu.tar.gz | tar zxf - -C /tmp
 
       - name: Save Cache
         if: steps.check_cache.outputs.cache-hit != 'true'
@@ -229,69 +191,69 @@ jobs:
           - tests::neon_integrations::microblock_integration_test
           - tests::neon_integrations::microblock_fork_poison_integration_test
           - tests::neon_integrations::size_check_integration_test
-          # - tests::neon_integrations::cost_voting_integration
-          # - tests::integrations::integration_test_get_info
-          # - tests::neon_integrations::bitcoind_integration_test
-          # - tests::neon_integrations::liquid_ustx_integration
-          # - tests::neon_integrations::stx_transfer_btc_integration_test
-          # - tests::neon_integrations::stx_delegate_btc_integration_test
-          # - tests::neon_integrations::bitcoind_forking_test
-          # - tests::neon_integrations::should_fix_2771
-          # - tests::neon_integrations::pox_integration_test
-          # - tests::neon_integrations::mining_events_integration_test
-          # - tests::bitcoin_regtest::bitcoind_integration_test
-          # - tests::should_succeed_handling_malformed_and_valid_txs
-          # - tests::neon_integrations::size_overflow_unconfirmed_microblocks_integration_test
-          # - tests::neon_integrations::size_overflow_unconfirmed_stream_microblocks_integration_test
-          # - tests::neon_integrations::size_overflow_unconfirmed_invalid_stream_microblocks_integration_test
-          # - tests::neon_integrations::runtime_overflow_unconfirmed_microblocks_integration_test
-          # - tests::neon_integrations::antientropy_integration_test
-          # - tests::neon_integrations::filter_low_fee_tx_integration_test
-          # - tests::neon_integrations::filter_long_runtime_tx_integration_test
-          # - tests::neon_integrations::microblock_large_tx_integration_test_FLAKY
-          # - tests::neon_integrations::block_large_tx_integration_test
-          # - tests::neon_integrations::microblock_limit_hit_integration_test
-          # - tests::neon_integrations::block_limit_hit_integration_test
-          # - tests::neon_integrations::fuzzed_median_fee_rate_estimation_test_window5
-          # - tests::neon_integrations::fuzzed_median_fee_rate_estimation_test_window10
-          # - tests::neon_integrations::use_latest_tip_integration_test
-          # - tests::neon_integrations::test_flash_block_skip_tenure
-          # - tests::neon_integrations::test_chainwork_first_intervals
-          # - tests::neon_integrations::test_chainwork_partial_interval
-          # - tests::neon_integrations::test_problematic_txs_are_not_stored
-          # - tests::neon_integrations::test_problematic_blocks_are_not_mined
-          # - tests::neon_integrations::test_problematic_blocks_are_not_relayed_or_stored
-          # - tests::neon_integrations::test_problematic_microblocks_are_not_mined
-          # - tests::neon_integrations::test_problematic_microblocks_are_not_relayed_or_stored
-          # - tests::neon_integrations::push_boot_receipts
-          # - tests::epoch_205::test_dynamic_db_method_costs
-          # - tests::epoch_205::transition_empty_blocks
-          # - tests::epoch_205::test_cost_limit_switch_version205
-          # - tests::epoch_205::test_exact_block_costs
-          # - tests::epoch_205::bigger_microblock_streams_in_2_05
-          # - tests::epoch_21::transition_adds_burn_block_height
-          # - tests::epoch_21::transition_fixes_bitcoin_rigidity
-          # - tests::epoch_21::transition_adds_pay_to_contract
-          # - tests::epoch_21::transition_adds_get_pox_addr_recipients
-          # - tests::epoch_21::transition_adds_mining_from_segwit
-          # - tests::epoch_21::transition_removes_pox_sunset
-          # - tests::epoch_21::transition_empty_blocks
-          # - tests::epoch_21::test_pox_reorgs_three_flaps
-          # - tests::epoch_21::test_pox_reorg_one_flap
-          # - tests::epoch_21::test_pox_reorg_flap_duel
-          # - tests::epoch_21::test_pox_reorg_flap_reward_cycles
-          # - tests::epoch_21::test_pox_missing_five_anchor_blocks
-          # - tests::epoch_21::test_sortition_divergence_pre_21
-          # - tests::epoch_21::test_v1_unlock_height_with_current_stackers
-          # - tests::epoch_21::test_v1_unlock_height_with_delay_and_current_stackers
-          # - tests::epoch_21::trait_invocation_cross_epoch
-          # - tests::epoch_22::pox_2_unlock_all
-          # - tests::epoch_22::disable_pox
-          # - tests::epoch_22::test_pox_reorg_one_flap
-          # - tests::epoch_23::trait_invocation_behavior
-          # - tests::neon_integrations::bad_microblock_pubkey
-          # - tests::epoch_24::fix_to_pox_contract
-          # - tests::epoch_24::verify_auto_unlock_behavior
+          - tests::neon_integrations::cost_voting_integration
+          - tests::integrations::integration_test_get_info
+          - tests::neon_integrations::bitcoind_integration_test
+          - tests::neon_integrations::liquid_ustx_integration
+          - tests::neon_integrations::stx_transfer_btc_integration_test
+          - tests::neon_integrations::stx_delegate_btc_integration_test
+          - tests::neon_integrations::bitcoind_forking_test
+          - tests::neon_integrations::should_fix_2771
+          - tests::neon_integrations::pox_integration_test
+          - tests::neon_integrations::mining_events_integration_test
+          - tests::bitcoin_regtest::bitcoind_integration_test
+          - tests::should_succeed_handling_malformed_and_valid_txs
+          - tests::neon_integrations::size_overflow_unconfirmed_microblocks_integration_test
+          - tests::neon_integrations::size_overflow_unconfirmed_stream_microblocks_integration_test
+          - tests::neon_integrations::size_overflow_unconfirmed_invalid_stream_microblocks_integration_test
+          - tests::neon_integrations::runtime_overflow_unconfirmed_microblocks_integration_test
+          - tests::neon_integrations::antientropy_integration_test
+          - tests::neon_integrations::filter_low_fee_tx_integration_test
+          - tests::neon_integrations::filter_long_runtime_tx_integration_test
+          - tests::neon_integrations::microblock_large_tx_integration_test_FLAKY
+          - tests::neon_integrations::block_large_tx_integration_test
+          - tests::neon_integrations::microblock_limit_hit_integration_test
+          - tests::neon_integrations::block_limit_hit_integration_test
+          - tests::neon_integrations::fuzzed_median_fee_rate_estimation_test_window5
+          - tests::neon_integrations::fuzzed_median_fee_rate_estimation_test_window10
+          - tests::neon_integrations::use_latest_tip_integration_test
+          - tests::neon_integrations::test_flash_block_skip_tenure
+          - tests::neon_integrations::test_chainwork_first_intervals
+          - tests::neon_integrations::test_chainwork_partial_interval
+          - tests::neon_integrations::test_problematic_txs_are_not_stored
+          - tests::neon_integrations::test_problematic_blocks_are_not_mined
+          - tests::neon_integrations::test_problematic_blocks_are_not_relayed_or_stored
+          - tests::neon_integrations::test_problematic_microblocks_are_not_mined
+          - tests::neon_integrations::test_problematic_microblocks_are_not_relayed_or_stored
+          - tests::neon_integrations::push_boot_receipts
+          - tests::epoch_205::test_dynamic_db_method_costs
+          - tests::epoch_205::transition_empty_blocks
+          - tests::epoch_205::test_cost_limit_switch_version205
+          - tests::epoch_205::test_exact_block_costs
+          - tests::epoch_205::bigger_microblock_streams_in_2_05
+          - tests::epoch_21::transition_adds_burn_block_height
+          - tests::epoch_21::transition_fixes_bitcoin_rigidity
+          - tests::epoch_21::transition_adds_pay_to_contract
+          - tests::epoch_21::transition_adds_get_pox_addr_recipients
+          - tests::epoch_21::transition_adds_mining_from_segwit
+          - tests::epoch_21::transition_removes_pox_sunset
+          - tests::epoch_21::transition_empty_blocks
+          - tests::epoch_21::test_pox_reorgs_three_flaps
+          - tests::epoch_21::test_pox_reorg_one_flap
+          - tests::epoch_21::test_pox_reorg_flap_duel
+          - tests::epoch_21::test_pox_reorg_flap_reward_cycles
+          - tests::epoch_21::test_pox_missing_five_anchor_blocks
+          - tests::epoch_21::test_sortition_divergence_pre_21
+          - tests::epoch_21::test_v1_unlock_height_with_current_stackers
+          - tests::epoch_21::test_v1_unlock_height_with_delay_and_current_stackers
+          - tests::epoch_21::trait_invocation_cross_epoch
+          - tests::epoch_22::pox_2_unlock_all
+          - tests::epoch_22::disable_pox
+          - tests::epoch_22::test_pox_reorg_one_flap
+          - tests::epoch_23::trait_invocation_behavior
+          - tests::neon_integrations::bad_microblock_pubkey
+          - tests::epoch_24::fix_to_pox_contract
+          - tests::epoch_24::verify_auto_unlock_behavior
     steps:
       - name: Checkout the latest code
         id: git_checkout
@@ -373,7 +335,6 @@ jobs:
           fail_ci_if_error: false
 
   # Run atlas integration tests
-
   atlas-test:
     # if: ${{ false }}
     name: Atlas Test
@@ -383,7 +344,7 @@ jobs:
       - cache-bitcoin-binary
     strategy:
       fail-fast: false
-      max-parallel: 16
+      # max-parallel: 16
       matrix:
         test-name:
           - tests::neon_integrations::atlas_integration_test
