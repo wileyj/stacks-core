@@ -342,9 +342,9 @@ jobs:
           - tests::neon_integrations::atlas_integration_test
           - tests::neon_integrations::atlas_stress_integration_test
     steps:
-      # - name: Checkout the latest code
-      #   id: git_checkout
-      #   uses: actions/checkout@v3
+      - name: Checkout the latest code
+        id: git_checkout
+        uses: actions/checkout@v3
 
       - name: Restore Cargo Cache
         id: restore_rust_cache
