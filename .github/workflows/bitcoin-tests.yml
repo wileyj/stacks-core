@@ -331,6 +331,15 @@ jobs:
           key: ${{ github.event.repository.name }}-test-archive
           # key: ${{ github.event.repository.name }}-${{ github.sha }}-test-archive
 
+      - name: Restore Target Cache
+        id: restore_target_cache
+        uses: actions/cache/restore@v3
+        with:
+          fail-on-cache-miss: true
+          path: ./target/debug
+          key: ${{ github.event.repository.name }}-target-debug
+          # key: ${{ github.event.repository.name }}-${{ github.sha }}-target-debug
+
       # - name: Download archive
       #   uses: actions/download-artifact@v3
       #   with:
@@ -355,19 +364,13 @@ jobs:
         run: |
           grcov . --binary-path ./target/debug/ -s . -t lcov --branch --ignore-not-existing --ignore "/*" -o lcov.info || exit 1
 
-      - name: Upload grcov to workflow
-        uses: actions/upload-artifact@v3
+      - name: Code Coverage
+        id: code_coverage
+        uses: codecov/codecov-action@v3
         with:
+          files: ./coverage-output/lcov.info
           name: ${{ matrix.test-name }}
-          path: ./lcov.info
-
-      # - name: Code Coverage
-      #   id: code_coverage
-      #   uses: codecov/codecov-action@v3
-      #   with:
-      #     files: ./coverage-output/lcov.info
-      #     name: ${{ matrix.test-name }}
-      #     fail_ci_if_error: false
+          fail_ci_if_error: false
 
   # Run atlas integration tests
 
@@ -457,19 +460,13 @@ jobs:
         run: |
           grcov . --binary-path ./target/debug/ -s . -t lcov --branch --ignore-not-existing --ignore "/*" -o lcov.info || exit 1
 
-      - name: Upload grcov to workflow
-        uses: actions/upload-artifact@v3
+      - name: Code Coverage
+        id: code_coverage
+        uses: codecov/codecov-action@v3
         with:
+          files: ./lcov.info
           name: ${{ matrix.test-name }}
-          path: ./lcov.info
-
-      # - name: Code Coverage
-      #   id: code_coverage
-      #   uses: codecov/codecov-action@v3
-      #   with:
-      #     files: ./lcov.info
-      #     name: ${{ matrix.test-name }}
-      #     fail_ci_if_error: false
+          fail_ci_if_error: false
 
   delete-cache:
     if: ${{ false }}
