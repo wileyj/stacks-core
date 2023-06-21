@@ -136,28 +136,37 @@ jobs:
     steps:
       - name: Check Test Archive Cache
         uses: actions/cache@v3
-        id: check_cache
+        id: check_archive_cache
         with:
           lookup-only: true
           path: /tmp/test_archive.tar.zst
           key: ${{ github.event.repository.name }}-test-archive
           # key: ${{ github.event.repository.name }}-${{ github.sha }}-test-archive
 
+      - name: Check Target Cache
+        uses: actions/cache@v3
+        id: check_target_cache
+        with:
+          lookup-only: true
+          path: ./target/debug
+          key: ${{ github.event.repository.name }}-target-debug
+          # key: ${{ github.event.repository.name }}-${{ github.sha }}-target-debug
+
       - name: Checkout the latest code
-        if: steps.check_cache.outputs.cache-hit != 'true'
+        if: ${{ steps.check_target_cache.outputs.cache-hit != 'true' && steps.check_archive_cache.outputs.cache-hit != 'true' }}
         id: git_checkout
         uses: actions/checkout@v3
 
-      # - name: Setup Rust Toolchain
-      #   if: steps.check_cache.outputs.cache-hit != 'true'
-      #   id: setup_rust_toolchain
-      #   uses: actions-rust-lang/setup-rust-toolchain@v1
-      #   with:
-      #     toolchain: stable
-      #     components: llvm-tools-preview
+      - name: Setup Rust Toolchain
+        if: ${{ steps.check_target_cache.outputs.cache-hit != 'true' && steps.check_archive_cache.outputs.cache-hit != 'true' }}
+        id: setup_rust_toolchain
+        uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          toolchain: stable
+          components: llvm-tools-preview
 
       - name: Restore Cargo Cache
-        if: steps.check_cache.outputs.cache-hit != 'true'
+        if: ${{ steps.check_target_cache.outputs.cache-hit != 'true' && steps.check_archive_cache.outputs.cache-hit != 'true' }}
         id: restore_cargo_cache
         uses: actions/cache/restore@v3
         with:
@@ -167,7 +176,7 @@ jobs:
           # key: ${{ github.event.repository.name }}-${{ github.sha }}-cargo
 
       - name: Archive Tests
-        if: steps.check_cache.outputs.cache-hit != 'true'
+        if: ${{ steps.check_target_cache.outputs.cache-hit != 'true' && steps.check_archive_cache.outputs.cache-hit != 'true' }}
         id: archive_tests
         run: |
           cargo nextest archive \
@@ -177,8 +186,8 @@ jobs:
             --locked \
             --archive-file /tmp/test_archive.tar.zst
 
-      - name: Save Cache
-        if: steps.check_cache.outputs.cache-hit != 'true'
+      - name: Cache Archive
+        if: ${{ steps.check_target_cache.outputs.cache-hit != 'true' && steps.check_archive_cache.outputs.cache-hit != 'true' }}
         id: save_cache
         uses: actions/cache/save@v3
         with:
@@ -186,6 +195,16 @@ jobs:
           key: ${{ github.event.repository.name }}-test-archive
           # key: ${{ github.event.repository.name }}-${{ github.sha }}-test-archive
           # key: ${{ github.event.repository.name }}-${{ github.sha }}-${{ github.run_id }}-test-archive
+
+      - name: Cache Target
+        if: ${{ steps.check_target_cache.outputs.cache-hit != 'true' && steps.check_archive_cache.outputs.cache-hit != 'true' }}
+        id: save_cache
+        uses: actions/cache/save@v3
+        with:
+          path: ./target/debug
+          key: ${{ github.event.repository.name }}-target-debug
+          # key: ${{ github.event.repository.name }}-${{ github.sha }}-target-debug
+          # key: ${{ github.event.repository.name }}-${{ github.sha }}-${{ github.run_id }}-target-debug
 
       # - name: Upload archive to workflow
       #   uses: actions/upload-artifact@v3
@@ -278,13 +297,13 @@ jobs:
         id: git_checkout
         uses: actions/checkout@v3
 
-      - name: Setup Rust Toolchain
-        if: steps.check_cache.outputs.cache-hit != 'true'
-        id: setup_rust_toolchain
-        uses: actions-rust-lang/setup-rust-toolchain@v1
-        with:
-          toolchain: stable
-          components: llvm-tools-preview
+      # - name: Setup Rust Toolchain
+      #   if: steps.check_cache.outputs.cache-hit != 'true'
+      #   id: setup_rust_toolchain
+      #   uses: actions-rust-lang/setup-rust-toolchain@v1
+      #   with:
+      #     toolchain: stable
+      #     components: llvm-tools-preview
 
       - name: Restore Cargo Cache
         id: restore_rust_cache
@@ -334,7 +353,7 @@ jobs:
       - name: Run grcov
         id: run_grcov
         run: |
-          grcov . --binary-path ./target/debug/ -s . -t lcov --branch --ignore-not-existing --ignore "/*" -o lcov.info
+          grcov . --binary-path ./target/debug/ -s . -t lcov --branch --ignore-not-existing --ignore "/*" -o lcov.info || exit 1
 
       # - name: Code Coverage
       #   id: code_coverage
@@ -365,13 +384,13 @@ jobs:
         id: git_checkout
         uses: actions/checkout@v3
 
-      - name: Setup Rust Toolchain
-        if: steps.check_cache.outputs.cache-hit != 'true'
-        id: setup_rust_toolchain
-        uses: actions-rust-lang/setup-rust-toolchain@v1
-        with:
-          toolchain: stable
-          components: llvm-tools-preview
+      # - name: Setup Rust Toolchain
+      #   if: steps.check_cache.outputs.cache-hit != 'true'
+      #   id: setup_rust_toolchain
+      #   uses: actions-rust-lang/setup-rust-toolchain@v1
+      #   with:
+      #     toolchain: stable
+      #     components: llvm-tools-preview
 
       - name: Restore Cargo Cache
         id: restore_rust_cache
@@ -399,6 +418,15 @@ jobs:
           key: ${{ github.event.repository.name }}-test-archive
           # key: ${{ github.event.repository.name }}-${{ github.sha }}-test-archive
 
+      - name: Restore Target Cache
+        id: restore_test-archive_cache
+        uses: actions/cache/restore@v3
+        with:
+          fail-on-cache-miss: true
+          path: ./target/debug
+          key: ${{ github.event.repository.name }}-target-debug
+          # key: ${{ github.event.repository.name }}-${{ github.sha }}-target-debug
+
       # - name: Download archive
       #   uses: actions/download-artifact@v3
       #   with:
@@ -421,7 +449,7 @@ jobs:
       - name: Run grcov
         id: run_grcov
         run: |
-          grcov . --binary-path ./target/debug/ -s . -t lcov --branch --ignore-not-existing --ignore "/*" -o lcov.info
+          grcov . --binary-path ./target/debug/ -s . -t lcov --branch --ignore-not-existing --ignore "/*" -o lcov.info || exit 1
 
       # - name: Code Coverage
       #   id: code_coverage
