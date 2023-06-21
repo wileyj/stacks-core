@@ -311,6 +311,7 @@ jobs:
         id: bitcoin_binary
         run: |
           sudo ln -s /tmp/bitcoin/bin/bitcoind /bin/
+          ls -al /bin/bitcoind
 
       - name: Run Tests
         id: run_tests
@@ -407,6 +408,7 @@ jobs:
         id: bitcoin_binary
         run: |
           sudo ln -s /tmp/bitcoin/bin/bitcoind /bin/
+          ls -al /bin/bitcoind
 
       - name: Run Tests
         id: run_tests
