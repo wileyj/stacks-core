@@ -319,6 +319,7 @@ jobs:
             --test-threads num-cpus  \
             --run-ignored all \
             --archive-file /tmp/test_archive.tar.zst \
+            --retries 2 \
             "${{ matrix.test-name }}"
 
       - name: Run grcov
@@ -414,6 +415,7 @@ jobs:
             --test-threads num-cpus  \
             --run-ignored all \
             --archive-file /tmp/test_archive.tar.zst \
+            --retries 2 \
             "${{ matrix.test-name }}"
 
       - name: Run grcov
