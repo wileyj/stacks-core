@@ -62,7 +62,8 @@ jobs:
         with:
           lookup-only: true
           path: ~/.cargo
-          key: ${{ github.event.repository.name }}-${{ github.sha }}-cargo
+          key: ${{ github.event.repository.name }}-cargo
+          # key: ${{ github.event.repository.name }}-${{ github.sha }}-cargo
 
       - name: Install nextest
         if: steps.check_cache.outputs.cache-hit != 'true'
@@ -92,12 +93,14 @@ jobs:
         uses: actions/cache/save@v3
         with:
           path: ~/.cargo
-          key: ${{ github.event.repository.name }}-${{ github.sha }}-cargo
+          key: ${{ github.event.repository.name }}-cargo
+          # key: ${{ github.event.repository.name }}-${{ github.sha }}-cargo
           # key: ${{ github.event.repository.name }}-${{ github.sha }}-${{ github.run_id }}-cargo
 
   ##
   ## it is expected that this cache will exist longer so other runs can use it
   ##
+
   cache-bitcoin-binary:
     name: Bitcoin Binary Cache
     runs-on: ubuntu-latest
@@ -137,7 +140,8 @@ jobs:
         with:
           lookup-only: true
           path: /tmp/test_archive.tar.zst
-          key: ${{ github.event.repository.name }}-${{ github.sha }}-test-archive
+          key: ${{ github.event.repository.name }}-test-archive
+          # key: ${{ github.event.repository.name }}-${{ github.sha }}-test-archive
 
       - name: Checkout the latest code
         if: steps.check_cache.outputs.cache-hit != 'true'
@@ -159,7 +163,8 @@ jobs:
         with:
           fail-on-cache-miss: true
           path: ~/.cargo
-          key: ${{ github.event.repository.name }}-${{ github.sha }}-cargo
+          key: ${{ github.event.repository.name }}-cargo
+          # key: ${{ github.event.repository.name }}-${{ github.sha }}-cargo
 
       - name: Archive Tests
         if: steps.check_cache.outputs.cache-hit != 'true'
@@ -178,7 +183,8 @@ jobs:
         uses: actions/cache/save@v3
         with:
           path: /tmp/test_archive.tar.zst
-          key: ${{ github.event.repository.name }}-${{ github.sha }}-test-archive
+          key: ${{ github.event.repository.name }}-test-archive
+          # key: ${{ github.event.repository.name }}-${{ github.sha }}-test-archive
           # key: ${{ github.event.repository.name }}-${{ github.sha }}-${{ github.run_id }}-test-archive
 
       # - name: Upload archive to workflow
@@ -186,6 +192,7 @@ jobs:
       #   with:
       #     name: test_archive
       #     path: /tmp/test_archive.tar.zst
+      #     retention-days: 2
 
   sampled-genesis:
     if: ${{ false }}
@@ -321,7 +328,7 @@ jobs:
   # Run atlas integration tests
 
   atlas-test:
-    if: ${{ false }}
+    # if: ${{ false }}
     name: Atlas Test
     runs-on: ubuntu-latest
     needs:
@@ -345,7 +352,8 @@ jobs:
         with:
           fail-on-cache-miss: true
           path: ~/.cargo
-          key: ${{ github.event.repository.name }}-${{ github.sha }}-cargo
+          key: ${{ github.event.repository.name }}-cargo
+          # key: ${{ github.event.repository.name }}-${{ github.sha }}-cargo
 
       - name: Restore Bitcoin Binary Cache
         id: restore_bitcoin_cache
@@ -361,7 +369,8 @@ jobs:
         with:
           fail-on-cache-miss: true
           path: /tmp/test_archive.tar.zst
-          key: ${{ github.event.repository.name }}-bitcoin-cache
+          key: ${{ github.event.repository.name }}-test-archive
+          # key: ${{ github.event.repository.name }}-${{ github.sha }}-test-archive
 
       # - name: Download archive
       #   uses: actions/download-artifact@v3
