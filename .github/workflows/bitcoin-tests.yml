@@ -184,7 +184,7 @@ jobs:
       - cache-bitcoin-binary
     strategy:
       fail-fast: false
-      max-parallel: 16
+      # max-parallel: 16
       matrix:
         test-name:
           - tests::neon_integrations::miner_submit_twice
@@ -201,7 +201,7 @@ jobs:
           - tests::neon_integrations::should_fix_2771
           - tests::neon_integrations::pox_integration_test
           - tests::neon_integrations::mining_events_integration_test
-          - tests::bitcoin_regtest::bitcoind_integration_test
+          - tests::bitcoin_regtest::bitcoind_integration_test # panics quickly and fails
           - tests::should_succeed_handling_malformed_and_valid_txs
           - tests::neon_integrations::size_overflow_unconfirmed_microblocks_integration_test
           - tests::neon_integrations::size_overflow_unconfirmed_stream_microblocks_integration_test
@@ -241,7 +241,7 @@ jobs:
           - tests::epoch_21::test_pox_reorgs_three_flaps
           - tests::epoch_21::test_pox_reorg_one_flap
           - tests::epoch_21::test_pox_reorg_flap_duel
-          - tests::epoch_21::test_pox_reorg_flap_reward_cycles
+          - tests::epoch_21::test_pox_reorg_flap_reward_cycles # fails after a long while
           - tests::epoch_21::test_pox_missing_five_anchor_blocks
           - tests::epoch_21::test_sortition_divergence_pre_21
           - tests::epoch_21::test_v1_unlock_height_with_current_stackers
