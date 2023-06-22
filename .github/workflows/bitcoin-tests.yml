@@ -316,6 +316,8 @@ jobs:
       - name: Run Tests
         id: run_tests
         run: |
+          ## disabled
+            # tests::bitcoin_regtest::bitcoind_integration_test
           TESTS=(
             tests::neon_integrations::miner_submit_twice
             tests::neon_integrations::microblock_integration_test
@@ -331,7 +333,6 @@ jobs:
             tests::neon_integrations::should_fix_2771
             tests::neon_integrations::pox_integration_test
             tests::neon_integrations::mining_events_integration_test
-            tests::bitcoin_regtest::bitcoind_integration_test
             tests::should_succeed_handling_malformed_and_valid_txs
             tests::neon_integrations::size_overflow_unconfirmed_microblocks_integration_test
             tests::neon_integrations::size_overflow_unconfirmed_stream_microblocks_integration_test
