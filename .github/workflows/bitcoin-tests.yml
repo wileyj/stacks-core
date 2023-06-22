@@ -19,6 +19,7 @@ env:
   LLVM_PROFILE_FILE: "stacks-blockchain-%p-%m.profraw"
   BTC_VERSION: "0.20.0"
   BITCOIND_TEST: 1
+  RUST_BACKTRACE: full
 
 concurrency:
   group: stacks-bitcoin-integration-tests-${{ github.ref }}
