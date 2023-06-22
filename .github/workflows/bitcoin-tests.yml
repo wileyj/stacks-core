@@ -386,12 +386,13 @@ jobs:
             tests::epoch_24::verify_auto_unlock_behavior
           )
           for test in ${TESTS[*]}; do
+            echo "Running test: $test"
             cargo nextest run \
               --test-threads num-cpus  \
               --run-ignored all \
               --archive-file /tmp/test_archive.tar.zst \
               --retries 2 \
-              "$test-name"
+              "$test"
           done
 
       # - name: Run grcov
