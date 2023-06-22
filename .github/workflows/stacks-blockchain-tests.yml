@@ -2,7 +2,7 @@
 ## Run tests for tagged releases
 ##
 
-name: Tests
+name: Stacks Blockchain Tests
 
 # Only run when:
 #   - manually triggered via the ci.yml workflow
@@ -263,7 +263,6 @@ jobs:
           fail_ci_if_error: true
 
   # Run unit tests with code coverage
-
   unit-tests:
     name: Unit Tests
     runs-on: ubuntu-latest
