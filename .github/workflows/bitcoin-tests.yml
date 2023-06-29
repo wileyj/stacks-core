@@ -45,6 +45,8 @@ jobs:
         id: install_nextest
         uses: taiki-e/install-action@nextest
 
+      # cargo-llvm-cov instead?
+      # https://github.com/taiki-e/cargo-llvm-cov
       - name: Install grcov
         if: steps.check_cache.outputs.cache-hit != 'true'
         id: install_grcov
@@ -106,6 +108,15 @@ jobs:
           key: ${{ github.event.repository.name }}-test-archive
           # key: ${{ github.event.repository.name }}-${{ github.sha }}-test-archive
 
+      - name: Check Genesis Test Archive Cache
+        uses: actions/cache@v3
+        id: check_genesis_archive_cache
+        with:
+          lookup-only: true
+          path: /tmp/genesis_archive.tar.zst
+          key: ${{ github.event.repository.name }}-genesis-archive
+          # key: ${{ github.event.repository.name }}-${{ github.sha }}-genesis-archive
+
       - name: Check Target Cache
         uses: actions/cache@v3
         id: check_target_cache
@@ -116,12 +127,12 @@ jobs:
           # key: ${{ github.event.repository.name }}-${{ github.sha }}-target-debug
 
       - name: Checkout the latest code
-        if: ${{ steps.check_target_cache.outputs.cache-hit != 'true' || steps.check_archive_cache.outputs.cache-hit != 'true' }}
+        if: ${{ steps.check_target_cache.outputs.cache-hit != 'true' || steps.check_archive_cache.outputs.cache-hit != 'true' || steps.check_genesis_archive_cache.cache-hit != 'true' }}
         id: git_checkout
         uses: actions/checkout@v3
 
       - name: Setup Rust Toolchain
-        if: ${{ steps.check_target_cache.outputs.cache-hit != 'true' || steps.check_archive_cache.outputs.cache-hit != 'true' }}
+        if: ${{ steps.check_target_cache.outputs.cache-hit != 'true' || steps.check_archive_cache.outputs.cache-hit != 'true' || steps.check_genesis_archive_cache.cache-hit != 'true' }}
         id: setup_rust_toolchain
         uses: actions-rust-lang/setup-rust-toolchain@v1
         with:
@@ -129,7 +140,7 @@ jobs:
           components: llvm-tools-preview
 
       - name: Restore Cargo Cache
-        if: ${{ steps.check_target_cache.outputs.cache-hit != 'true' || steps.check_archive_cache.outputs.cache-hit != 'true' }}
+        if: ${{ steps.check_target_cache.outputs.cache-hit != 'true' || steps.check_archive_cache.outputs.cache-hit != 'true' || steps.check_genesis_archive_cache.cache-hit != 'true' }}
         id: restore_cargo_cache
         uses: actions/cache/restore@v3
         with:
@@ -139,7 +150,7 @@ jobs:
           # key: ${{ github.event.repository.name }}-${{ github.sha }}-cargo
 
       - name: Build and Archive Tests
-        if: ${{ steps.check_target_cache.outputs.cache-hit != 'true' || steps.check_archive_cache.outputs.cache-hit != 'true' }}
+        if: ${{ steps.check_target_cache.outputs.cache-hit != 'true' || steps.check_archive_cache.outputs.cache-hit != 'true' || steps.check_genesis_archive_cache.cache-hit != 'true' }}
         id: archive_tests
         run: |
           cargo nextest archive \
@@ -149,8 +160,20 @@ jobs:
             --locked \
             --archive-file /tmp/test_archive.tar.zst
 
-      - name: Cache Nextest Archive
-        if: ${{ steps.check_target_cache.outputs.cache-hit != 'true' || steps.check_archive_cache.outputs.cache-hit != 'true' }}
+      - name: Build and Archive Genesis Tests
+        if: ${{ steps.check_target_cache.outputs.cache-hit != 'true' || steps.check_genesis_archive_cache.outputs.cache-hit != 'true' || steps.check_genesis_archive_cache.cache-hit != 'true' }}
+        id: archive_genesis_tests
+        run: |
+          cd testnet/stacks-node && cargo nextest archive \
+            --build-jobs 8 \
+            --workspace \
+            --tests \
+            --locked \
+            --features prod-genesis-chainstate \
+            --archive-file /tmp/genesis_archive.tar.zst
+
+      - name: Cache Test Archive
+        if: ${{ steps.check_target_cache.outputs.cache-hit != 'true' || steps.check_archive_cache.outputs.cache-hit != 'true' || steps.check_genesis_archive_cache.cache-hit != 'true' }}
         id: save_nextest_cache
         uses: actions/cache/save@v3
         with:
@@ -159,8 +182,18 @@ jobs:
           # key: ${{ github.event.repository.name }}-${{ github.sha }}-test-archive
           # key: ${{ github.event.repository.name }}-${{ github.sha }}-${{ github.run_id }}-test-archive
 
+      - name: Cache Genesis Archive
+        if: ${{ steps.check_target_cache.outputs.cache-hit != 'true' || steps.check_archive_cache.outputs.cache-hit != 'true' || steps.check_genesis_archive_cache.cache-hit != 'true'}}
+        id: save_genesis_cache
+        uses: actions/cache/save@v3
+        with:
+          path: /tmp/test_archive.tar.zst
+          key: ${{ github.event.repository.name }}-genesis-archive
+          # key: ${{ github.event.repository.name }}-${{ github.sha }}-test-archive
+          # key: ${{ github.event.repository.name }}-${{ github.sha }}-${{ github.run_id }}-test-archive
+
       - name: Cache Target
-        if: ${{ steps.check_target_cache.outputs.cache-hit != 'true' || steps.check_archive_cache.outputs.cache-hit != 'true' }}
+        if: ${{ steps.check_target_cache.outputs.cache-hit != 'true' || steps.check_archive_cache.outputs.cache-hit != 'true' || steps.check_genesis_archive_cache.cache-hit != 'true' }}
         id: save_target_cache
         uses: actions/cache/save@v3
         with:
@@ -182,7 +215,7 @@ jobs:
     runs-on: ubuntu-latest
     needs:
       - cache-test-archive
-      - cache-bitcoin-binary
+      # - cache-bitcoin-binary
     strategy:
       fail-fast: false
       max-parallel: 32
@@ -194,15 +227,12 @@ jobs:
           - tests::neon_integrations::size_check_integration_test
           - tests::neon_integrations::cost_voting_integration
           - tests::integrations::integration_test_get_info
-          - tests::neon_integrations::bitcoind_integration_test
           - tests::neon_integrations::liquid_ustx_integration
           - tests::neon_integrations::stx_transfer_btc_integration_test
           - tests::neon_integrations::stx_delegate_btc_integration_test
-          - tests::neon_integrations::bitcoind_forking_test
           - tests::neon_integrations::should_fix_2771
           - tests::neon_integrations::pox_integration_test
           - tests::neon_integrations::mining_events_integration_test
-          - tests::bitcoin_regtest::bitcoind_integration_test ## panics quickly and fails (bitcoind)
           - tests::should_succeed_handling_malformed_and_valid_txs
           - tests::neon_integrations::size_overflow_unconfirmed_microblocks_integration_test
           - tests::neon_integrations::size_overflow_unconfirmed_stream_microblocks_integration_test
@@ -255,6 +285,199 @@ jobs:
           - tests::neon_integrations::bad_microblock_pubkey
           - tests::epoch_24::fix_to_pox_contract
           - tests::epoch_24::verify_auto_unlock_behavior
+    steps:
+      - name: Checkout the latest code
+        id: git_checkout
+        uses: actions/checkout@v3
+
+      - name: Setup Rust Toolchain
+        if: steps.check_cache.outputs.cache-hit != 'true'
+        id: setup_rust_toolchain
+        uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          toolchain: stable
+          components: llvm-tools-preview
+
+      - name: Restore Cargo Cache
+        id: restore_cargo_cache
+        uses: actions/cache/restore@v3
+        with:
+          fail-on-cache-miss: true
+          path: ~/.cargo
+          key: ${{ github.event.repository.name }}-cargo
+          # key: ${{ github.event.repository.name }}-${{ github.sha }}-cargo
+
+      # - name: Restore Bitcoin Binary Cache
+      #   id: restore_bitcoin_cache
+      #   uses: actions/cache/restore@v3
+      #   with:
+      #     fail-on-cache-miss: true
+      #     path: /tmp/bitcoin
+      #     key: ${{ github.event.repository.name }}-bitcoin-binaries
+
+      - name: Restore Test Archive Cache
+        id: restore_test-archive_cache
+        uses: actions/cache/restore@v3
+        with:
+          fail-on-cache-miss: true
+          path: /tmp/test_archive.tar.zst
+          key: ${{ github.event.repository.name }}-test-archive
+          # key: ${{ github.event.repository.name }}-${{ github.sha }}-test-archive
+
+      - name: Restore Target Cache
+        id: restore_target_cache
+        uses: actions/cache/restore@v3
+        with:
+          fail-on-cache-miss: true
+          path: ./target/debug
+          key: ${{ github.event.repository.name }}-target-debug
+          # key: ${{ github.event.repository.name }}-${{ github.sha }}-target-debug
+
+      # - name: Download archive
+      #   uses: actions/download-artifact@v3
+      #   with:
+      #     name: test_archive
+
+      # - name: Link Bitcoin Binary
+      #   id: bitcoin_binary
+      #   run: |
+      #     sudo ln -s /tmp/bitcoin/bin/bitcoind /bin/
+      #     ls -al /bin/bitcoind
+
+      - name: Run Tests
+        id: run_tests
+        run: |
+          cargo nextest run \
+            --test-threads num-cpus  \
+            --run-ignored all \
+            --retries 2 \
+            --archive-file /tmp/test_archive.tar.zst \
+            "${{ matrix.test-name }}"
+
+      - name: Run grcov
+        id: run_grcov
+        run: |
+          grcov . --binary-path ./target/debug/ -s . -t lcov --branch --ignore-not-existing --ignore "/*" -o lcov.info || exit 1
+
+      - name: Code Coverage
+        id: code_coverage
+        uses: codecov/codecov-action@v3
+        with:
+          files: ./lcov.info
+          name: ${{ matrix.test-name }}
+          fail_ci_if_error: false
+
+  bitcoind-tests:
+    # if: ${{ false }}
+    name: Bitcoind Tests
+    runs-on: ubuntu-latest
+    needs:
+      - cache-test-archive
+      - cache-bitcoin-binary
+    strategy:
+      fail-fast: false
+      max-parallel: 32
+      matrix:
+        test-name:
+          - tests::neon_integrations::bitcoind_integration_test
+          - tests::neon_integrations::bitcoind_forking_test
+          - tests::bitcoin_regtest::bitcoind_integration_test
+    steps:
+      - name: Checkout the latest code
+        id: git_checkout
+        uses: actions/checkout@v3
+
+      - name: Setup Rust Toolchain
+        if: steps.check_cache.outputs.cache-hit != 'true'
+        id: setup_rust_toolchain
+        uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          toolchain: stable
+          components: llvm-tools-preview
+
+      - name: Restore Cargo Cache
+        id: restore_cargo_cache
+        uses: actions/cache/restore@v3
+        with:
+          fail-on-cache-miss: true
+          path: ~/.cargo
+          key: ${{ github.event.repository.name }}-cargo
+          # key: ${{ github.event.repository.name }}-${{ github.sha }}-cargo
+
+      - name: Restore Bitcoin Binary Cache
+        id: restore_bitcoin_cache
+        uses: actions/cache/restore@v3
+        with:
+          fail-on-cache-miss: true
+          path: /tmp/bitcoin
+          key: ${{ github.event.repository.name }}-bitcoin-binaries
+
+      - name: Restore Test Archive Cache
+        id: restore_test-archive_cache
+        uses: actions/cache/restore@v3
+        with:
+          fail-on-cache-miss: true
+          path: /tmp/test_archive.tar.zst
+          key: ${{ github.event.repository.name }}-test-archive
+          # key: ${{ github.event.repository.name }}-${{ github.sha }}-test-archive
+
+      - name: Restore Target Cache
+        id: restore_target_cache
+        uses: actions/cache/restore@v3
+        with:
+          fail-on-cache-miss: true
+          path: ./target/debug
+          key: ${{ github.event.repository.name }}-target-debug
+          # key: ${{ github.event.repository.name }}-${{ github.sha }}-target-debug
+
+      # - name: Download archive
+      #   uses: actions/download-artifact@v3
+      #   with:
+      #     name: test_archive
+
+      - name: Link Bitcoin Binary
+        id: bitcoin_binary
+        run: |
+          sudo ln -s /tmp/bitcoin/bin/bitcoind /bin/
+          ls -al /bin/bitcoind
+
+      - name: Run Tests
+        id: run_tests
+        run: |
+          cargo nextest run \
+            --test-threads 1  \
+            --run-ignored all \
+            --retries 2 \
+            --archive-file /tmp/test_archive.tar.zst \
+            "${{ matrix.test-name }}"
+
+      - name: Run grcov
+        id: run_grcov
+        run: |
+          grcov . --binary-path ./target/debug/ -s . -t lcov --branch --ignore-not-existing --ignore "/*" -o lcov.info || exit 1
+
+      - name: Code Coverage
+        id: code_coverage
+        uses: codecov/codecov-action@v3
+        with:
+          files: ./lcov.info
+          name: ${{ matrix.test-name }}
+          fail_ci_if_error: false
+
+  slow-tests:
+    # if: ${{ false }}
+    name: Slow Tests
+    runs-on: ubuntu-latest
+    needs:
+      - cache-test-archive
+      - cache-bitcoin-binary
+    strategy:
+      fail-fast: false
+      max-parallel: 32
+      matrix:
+        test-name:
+          - tests::epoch_21::test_pox_reorg_flap_duel
+          - tests::epoch_21::test_pox_reorg_flap_reward_cycles
     steps:
       - name: Checkout the latest code
         id: git_checkout
@@ -415,7 +638,7 @@ jobs:
         id: run_tests
         run: |
           cargo nextest run \
-            --test-threads num-cpus  \
+            --test-threads 1  \
             --run-ignored all \
             --archive-file /tmp/test_archive.tar.zst \
             --retries 2 \
@@ -450,11 +673,13 @@ jobs:
           gh extension install actions/gh-actions-cache
           gh actions-cache delete ${{ github.event.repository.name }}-${{ github.sha }}-cargo -R ${{ github.repository }} --confirm
           gh actions-cache delete ${{ github.event.repository.name }}-${{ github.sha }}-test-archive -R ${{ github.repository }} --confirm
+          gh actions-cache delete ${{ github.event.repository.name }}-${{ github.sha }}-genesis-archive -R ${{ github.repository }} --confirm
           gh actions-cache delete ${{ github.event.repository.name }}-${{ github.sha }}-target-debug -R ${{ github.repository }} --confirm
           echo "Done"
         # run: |
         #   gh extension install actions/gh-actions-cache
         #   gh actions-cache delete ${{ github.event.repository.name }}-${{ github.sha }}-${{ github.run_id }}-cargo -R ${{ github.repository }} --confirm
         #   gh actions-cache delete ${{ github.event.repository.name }}-${{ github.sha }}-${{ github.run_id }}-test-archive -R ${{ github.repository }} --confirm
+        #   gh actions-cache delete ${{ github.event.repository.name }}-${{ github.sha }}-${{ github.run_id }}-genesis-archive -R ${{ github.repository }} --confirm
         #   gh actions-cache delete ${{ github.event.repository.name }}-${{ github.sha }}-${{ github.run_id }}-test-archive -R ${{ github.repository }} --confirm
         #   echo "Done"

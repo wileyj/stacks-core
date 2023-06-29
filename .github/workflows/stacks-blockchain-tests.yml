@@ -42,6 +42,8 @@ jobs:
         id: install_nextest
         uses: taiki-e/install-action@nextest
 
+      # cargo-llvm-cov instead?
+      # https://github.com/taiki-e/cargo-llvm-cov
       - name: Install grcov
         if: steps.check_cache.outputs.cache-hit != 'true'
         id: install_grcov
@@ -103,6 +105,15 @@ jobs:
           key: ${{ github.event.repository.name }}-test-archive
           # key: ${{ github.event.repository.name }}-${{ github.sha }}-test-archive
 
+      - name: Check Genesis Test Archive Cache
+        uses: actions/cache@v3
+        id: check_genesis_archive_cache
+        with:
+          lookup-only: true
+          path: /tmp/genesis_archive.tar.zst
+          key: ${{ github.event.repository.name }}-genesis-archive
+          # key: ${{ github.event.repository.name }}-${{ github.sha }}-genesis-archive
+
       - name: Check Target Cache
         uses: actions/cache@v3
         id: check_target_cache
@@ -113,12 +124,12 @@ jobs:
           # key: ${{ github.event.repository.name }}-${{ github.sha }}-target-debug
 
       - name: Checkout the latest code
-        if: ${{ steps.check_target_cache.outputs.cache-hit != 'true' || steps.check_archive_cache.outputs.cache-hit != 'true' }}
+        if: ${{ steps.check_target_cache.outputs.cache-hit != 'true' || steps.check_archive_cache.outputs.cache-hit != 'true' || steps.check_genesis_archive_cache.cache-hit != 'true' }}
         id: git_checkout
         uses: actions/checkout@v3
 
       - name: Setup Rust Toolchain
-        if: ${{ steps.check_target_cache.outputs.cache-hit != 'true' || steps.check_archive_cache.outputs.cache-hit != 'true' }}
+        if: ${{ steps.check_target_cache.outputs.cache-hit != 'true' || steps.check_archive_cache.outputs.cache-hit != 'true' || steps.check_genesis_archive_cache.cache-hit != 'true' }}
         id: setup_rust_toolchain
         uses: actions-rust-lang/setup-rust-toolchain@v1
         with:
@@ -126,7 +137,7 @@ jobs:
           components: llvm-tools-preview
 
       - name: Restore Cargo Cache
-        if: ${{ steps.check_target_cache.outputs.cache-hit != 'true' || steps.check_archive_cache.outputs.cache-hit != 'true' }}
+        if: ${{ steps.check_target_cache.outputs.cache-hit != 'true' || steps.check_archive_cache.outputs.cache-hit != 'true' || steps.check_genesis_archive_cache.cache-hit != 'true' }}
         id: restore_cargo_cache
         uses: actions/cache/restore@v3
         with:
@@ -136,7 +147,7 @@ jobs:
           # key: ${{ github.event.repository.name }}-${{ github.sha }}-cargo
 
       - name: Build and Archive Tests
-        if: ${{ steps.check_target_cache.outputs.cache-hit != 'true' || steps.check_archive_cache.outputs.cache-hit != 'true' }}
+        if: ${{ steps.check_target_cache.outputs.cache-hit != 'true' || steps.check_archive_cache.outputs.cache-hit != 'true' || steps.check_genesis_archive_cache.cache-hit != 'true' }}
         id: archive_tests
         run: |
           cargo nextest archive \
@@ -146,8 +157,20 @@ jobs:
             --locked \
             --archive-file /tmp/test_archive.tar.zst
 
-      - name: Cache Nextest Archive
-        if: ${{ steps.check_target_cache.outputs.cache-hit != 'true' || steps.check_archive_cache.outputs.cache-hit != 'true' }}
+      - name: Build and Archive Genesis Tests
+        if: ${{ steps.check_target_cache.outputs.cache-hit != 'true' || steps.check_genesis_archive_cache.outputs.cache-hit != 'true' || steps.check_genesis_archive_cache.cache-hit != 'true' }}
+        id: archive_genesis_tests
+        run: |
+          cd testnet/stacks-node && cargo nextest archive \
+            --build-jobs 8 \
+            --workspace \
+            --tests \
+            --locked \
+            --features prod-genesis-chainstate \
+            --archive-file /tmp/genesis_archive.tar.zst
+
+      - name: Cache Test Archive
+        if: ${{ steps.check_target_cache.outputs.cache-hit != 'true' || steps.check_archive_cache.outputs.cache-hit != 'true' || steps.check_genesis_archive_cache.cache-hit != 'true' }}
         id: save_nextest_cache
         uses: actions/cache/save@v3
         with:
@@ -156,8 +179,18 @@ jobs:
           # key: ${{ github.event.repository.name }}-${{ github.sha }}-test-archive
           # key: ${{ github.event.repository.name }}-${{ github.sha }}-${{ github.run_id }}-test-archive
 
+      - name: Cache Genesis Archive
+        if: ${{ steps.check_target_cache.outputs.cache-hit != 'true' || steps.check_archive_cache.outputs.cache-hit != 'true' || steps.check_genesis_archive_cache.cache-hit != 'true'}}
+        id: save_genesis_cache
+        uses: actions/cache/save@v3
+        with:
+          path: /tmp/test_archive.tar.zst
+          key: ${{ github.event.repository.name }}-genesis-archive
+          # key: ${{ github.event.repository.name }}-${{ github.sha }}-test-archive
+          # key: ${{ github.event.repository.name }}-${{ github.sha }}-${{ github.run_id }}-test-archive
+
       - name: Cache Target
-        if: ${{ steps.check_target_cache.outputs.cache-hit != 'true' || steps.check_archive_cache.outputs.cache-hit != 'true' }}
+        if: ${{ steps.check_target_cache.outputs.cache-hit != 'true' || steps.check_archive_cache.outputs.cache-hit != 'true' || steps.check_genesis_archive_cache.cache-hit != 'true' }}
         id: save_target_cache
         uses: actions/cache/save@v3
         with:
@@ -172,8 +205,6 @@ jobs:
       #     name: test_archive
       #     path: /tmp/test_archive.tar.zst
       #     retention-days: 2
-
-  # Run full genesis test
 
   full-genesis:
     name: Full Genesis Test
@@ -244,11 +275,11 @@ jobs:
         id: run_tests
         run: |
           cargo nextest run \
-            --test-threads num-cpus  \
-            --run-ignored all \
-            --archive-file /tmp/test_archive.tar.zst \
-            --retries 2 \
-            neon_integrations::bitcoind_integration_test
+           --test-threads 1 \
+           --run-ignored all \
+           --retries 2 \
+           --archive-file /tmp/genesis_archive.tar.zst \
+           neon_integrations::bitcoind_integration_test
 
       - name: Run grcov
         id: run_grcov
