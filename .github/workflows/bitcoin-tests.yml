@@ -99,9 +99,9 @@ jobs:
           toolchain: stable
           components: llvm-tools-preview
 
-      - name: Restore Cache
-        # uses: wileyj/stacks-blockchain/.github/workflows/create_cache.yml@master
-        uses: ./.github/workflows/restore-cache.yml
+      # - name: Restore Cache
+      #   # uses: wileyj/stacks-blockchain/.github/workflows/create_cache.yml@master
+      #   uses: ./.github/workflows/restore-cache.yml
 
       - name: Restore Cargo Cache
         id: restore_cargo_cache
