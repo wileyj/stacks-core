@@ -20,6 +20,7 @@ env:
   BTC_VERSION: "0.20.0"
   BITCOIND_TEST: 1
   RUST_BACKTRACE: full
+  SEGMENT_DOWNLOAD_TIMEOUT_MINS: 15
 
 concurrency:
   group: stacks-bitcoin-integration-tests-${{ github.ref }}
@@ -98,22 +99,26 @@ jobs:
           toolchain: stable
           components: llvm-tools-preview
 
-      - name: Restore Cargo Cache
-        id: restore_cargo_cache
-        uses: actions/cache/restore@v3
-        with:
-          fail-on-cache-miss: true
-          path: ~/.cargo
-          key: ${{ github.event.repository.name }}-cargo
-          # key: ${{ github.event.repository.name }}-${{ github.sha }}-cargo
+      - name: Restore Cache
+        # uses: wileyj/stacks-blockchain/.github/workflows/create_cache.yml@master
+        uses: ./.github/workflows/restore-cache.yml
 
-      - name: Restore Bitcoin Binary Cache
-        id: restore_bitcoin_cache
-        uses: actions/cache/restore@v3
-        with:
-          fail-on-cache-miss: true
-          path: /tmp/bitcoin
-          key: ${{ github.event.repository.name }}-bitcoin-binaries
+      # - name: Restore Cargo Cache
+      #   id: restore_cargo_cache
+      #   uses: actions/cache/restore@v3
+      #   with:
+      #     fail-on-cache-miss: true
+      #     path: ~/.cargo
+      #     key: ${{ github.event.repository.name }}-cargo
+      #     # key: ${{ github.event.repository.name }}-${{ github.sha }}-cargo
+
+      # - name: Restore Bitcoin Binary Cache
+      #   id: restore_bitcoin_cache
+      #   uses: actions/cache/restore@v3
+      #   with:
+      #     fail-on-cache-miss: true
+      #     path: /tmp/bitcoin
+      #     key: ${{ github.event.repository.name }}-bitcoin-binaries
 
       - name: Restore Test Archive Cache
         id: restore_test-archive_cache
@@ -124,25 +129,25 @@ jobs:
           key: ${{ github.event.repository.name }}-test-archive
           # key: ${{ github.event.repository.name }}-${{ github.sha }}-test-archive
 
-      - name: Restore Target Cache
-        id: restore_target_cache
-        uses: actions/cache/restore@v3
-        with:
-          fail-on-cache-miss: true
-          path: ./target/debug
-          key: ${{ github.event.repository.name }}-target-debug
-          # key: ${{ github.event.repository.name }}-${{ github.sha }}-target-debug
+      # - name: Restore Target Cache
+      #   id: restore_target_cache
+      #   uses: actions/cache/restore@v3
+      #   with:
+      #     fail-on-cache-miss: true
+      #     path: ./target/debug
+      #     key: ${{ github.event.repository.name }}-target-debug
+      #     # key: ${{ github.event.repository.name }}-${{ github.sha }}-target-debug
 
       # - name: Download archive
       #   uses: actions/download-artifact@v3
       #   with:
       #     name: test_archive
 
-      - name: Link Bitcoin Binary
-        id: bitcoin_binary
-        run: |
-          sudo ln -s /tmp/bitcoin/bin/bitcoind /bin/
-          ls -al /bin/bitcoind
+      # - name: Link Bitcoin Binary
+      #   id: bitcoin_binary
+      #   run: |
+      #     sudo ln -s /tmp/bitcoin/bin/bitcoind /bin/
+      #     ls -al /bin/bitcoind
 
       - name: Run Tests
         id: run_tests
@@ -196,22 +201,26 @@ jobs:
           toolchain: stable
           components: llvm-tools-preview
 
-      - name: Restore Cargo Cache
-        id: restore_cargo_cache
-        uses: actions/cache/restore@v3
-        with:
-          fail-on-cache-miss: true
-          path: ~/.cargo
-          key: ${{ github.event.repository.name }}-cargo
-          # key: ${{ github.event.repository.name }}-${{ github.sha }}-cargo
+      - name: Restore Cache
+        # uses: wileyj/stacks-blockchain/.github/workflows/create_cache.yml@master
+        uses: ./.github/workflows/restore-cache.yml
 
-      - name: Restore Bitcoin Binary Cache
-        id: restore_bitcoin_cache
-        uses: actions/cache/restore@v3
-        with:
-          fail-on-cache-miss: true
-          path: /tmp/bitcoin
-          key: ${{ github.event.repository.name }}-bitcoin-binaries
+      # - name: Restore Cargo Cache
+      #   id: restore_cargo_cache
+      #   uses: actions/cache/restore@v3
+      #   with:
+      #     fail-on-cache-miss: true
+      #     path: ~/.cargo
+      #     key: ${{ github.event.repository.name }}-cargo
+      #     # key: ${{ github.event.repository.name }}-${{ github.sha }}-cargo
+
+      # - name: Restore Bitcoin Binary Cache
+      #   id: restore_bitcoin_cache
+      #   uses: actions/cache/restore@v3
+      #   with:
+      #     fail-on-cache-miss: true
+      #     path: /tmp/bitcoin
+      #     key: ${{ github.event.repository.name }}-bitcoin-binaries
 
       - name: Restore Test Archive Cache
         id: restore_test-archive_cache
@@ -222,25 +231,25 @@ jobs:
           key: ${{ github.event.repository.name }}-test-archive
           # key: ${{ github.event.repository.name }}-${{ github.sha }}-test-archive
 
-      - name: Restore Target Cache
-        id: restore_target_cache
-        uses: actions/cache/restore@v3
-        with:
-          fail-on-cache-miss: true
-          path: ./target/debug
-          key: ${{ github.event.repository.name }}-target-debug
-          # key: ${{ github.event.repository.name }}-${{ github.sha }}-target-debug
+      # - name: Restore Target Cache
+      #   id: restore_target_cache
+      #   uses: actions/cache/restore@v3
+      #   with:
+      #     fail-on-cache-miss: true
+      #     path: ./target/debug
+      #     key: ${{ github.event.repository.name }}-target-debug
+      #     # key: ${{ github.event.repository.name }}-${{ github.sha }}-target-debug
 
       # - name: Download archive
       #   uses: actions/download-artifact@v3
       #   with:
       #     name: test_archive
 
-      - name: Link Bitcoin Binary
-        id: bitcoin_binary
-        run: |
-          sudo ln -s /tmp/bitcoin/bin/bitcoind /bin/
-          ls -al /bin/bitcoind
+      # - name: Link Bitcoin Binary
+      #   id: bitcoin_binary
+      #   run: |
+      #     sudo ln -s /tmp/bitcoin/bin/bitcoind /bin/
+      #     ls -al /bin/bitcoind
 
       - name: Run Tests
         id: run_tests
@@ -317,22 +326,26 @@ jobs:
           toolchain: stable
           components: llvm-tools-preview
 
-      - name: Restore Cargo Cache
-        id: restore_cargo_cache
-        uses: actions/cache/restore@v3
-        with:
-          fail-on-cache-miss: true
-          path: ~/.cargo
-          key: ${{ github.event.repository.name }}-cargo
-          # key: ${{ github.event.repository.name }}-${{ github.sha }}-cargo
+      - name: Restore Cache
+        # uses: wileyj/stacks-blockchain/.github/workflows/create_cache.yml@master
+        uses: ./.github/workflows/restore-cache.yml
 
-      - name: Restore Bitcoin Binary Cache
-        id: restore_bitcoin_cache
-        uses: actions/cache/restore@v3
-        with:
-          fail-on-cache-miss: true
-          path: /tmp/bitcoin
-          key: ${{ github.event.repository.name }}-bitcoin-binaries
+      # - name: Restore Cargo Cache
+      #   id: restore_cargo_cache
+      #   uses: actions/cache/restore@v3
+      #   with:
+      #     fail-on-cache-miss: true
+      #     path: ~/.cargo
+      #     key: ${{ github.event.repository.name }}-cargo
+      #     # key: ${{ github.event.repository.name }}-${{ github.sha }}-cargo
+
+      # - name: Restore Bitcoin Binary Cache
+      #   id: restore_bitcoin_cache
+      #   uses: actions/cache/restore@v3
+      #   with:
+      #     fail-on-cache-miss: true
+      #     path: /tmp/bitcoin
+      #     key: ${{ github.event.repository.name }}-bitcoin-binaries
 
       - name: Restore Test Archive Cache
         id: restore_test-archive_cache
@@ -343,25 +356,25 @@ jobs:
           key: ${{ github.event.repository.name }}-test-archive
           # key: ${{ github.event.repository.name }}-${{ github.sha }}-test-archive
 
-      - name: Restore Target Cache
-        id: restore_target_cache
-        uses: actions/cache/restore@v3
-        with:
-          fail-on-cache-miss: true
-          path: ./target/debug
-          key: ${{ github.event.repository.name }}-target-debug
-          # key: ${{ github.event.repository.name }}-${{ github.sha }}-target-debug
+      # - name: Restore Target Cache
+      #   id: restore_target_cache
+      #   uses: actions/cache/restore@v3
+      #   with:
+      #     fail-on-cache-miss: true
+      #     path: ./target/debug
+      #     key: ${{ github.event.repository.name }}-target-debug
+      #     # key: ${{ github.event.repository.name }}-${{ github.sha }}-target-debug
 
       # - name: Download archive
       #   uses: actions/download-artifact@v3
       #   with:
       #     name: test_archive
 
-      - name: Link Bitcoin Binary
-        id: bitcoin_binary
-        run: |
-          sudo ln -s /tmp/bitcoin/bin/bitcoind /bin/
-          ls -al /bin/bitcoind
+      # - name: Link Bitcoin Binary
+      #   id: bitcoin_binary
+      #   run: |
+      #     sudo ln -s /tmp/bitcoin/bin/bitcoind /bin/
+      #     ls -al /bin/bitcoind
 
       - name: Run Tests
         id: run_tests
@@ -414,22 +427,26 @@ jobs:
           toolchain: stable
           components: llvm-tools-preview
 
-      - name: Restore Cargo Cache
-        id: restore_cargo_cache
-        uses: actions/cache/restore@v3
-        with:
-          fail-on-cache-miss: true
-          path: ~/.cargo
-          key: ${{ github.event.repository.name }}-cargo
-          # key: ${{ github.event.repository.name }}-${{ github.sha }}-cargo
+      - name: Restore Cache
+        # uses: wileyj/stacks-blockchain/.github/workflows/create_cache.yml@master
+        uses: ./.github/workflows/restore-cache.yml
 
-      - name: Restore Bitcoin Binary Cache
-        id: restore_bitcoin_cache
-        uses: actions/cache/restore@v3
-        with:
-          fail-on-cache-miss: true
-          path: /tmp/bitcoin
-          key: ${{ github.event.repository.name }}-bitcoin-binaries
+      # - name: Restore Cargo Cache
+      #   id: restore_cargo_cache
+      #   uses: actions/cache/restore@v3
+      #   with:
+      #     fail-on-cache-miss: true
+      #     path: ~/.cargo
+      #     key: ${{ github.event.repository.name }}-cargo
+      #     # key: ${{ github.event.repository.name }}-${{ github.sha }}-cargo
+
+      # - name: Restore Bitcoin Binary Cache
+      #   id: restore_bitcoin_cache
+      #   uses: actions/cache/restore@v3
+      #   with:
+      #     fail-on-cache-miss: true
+      #     path: /tmp/bitcoin
+      #     key: ${{ github.event.repository.name }}-bitcoin-binaries
 
       - name: Restore Test Archive Cache
         id: restore_test-archive_cache
@@ -440,25 +457,25 @@ jobs:
           key: ${{ github.event.repository.name }}-test-archive
           # key: ${{ github.event.repository.name }}-${{ github.sha }}-test-archive
 
-      - name: Restore Target Cache
-        id: restore_target_cache
-        uses: actions/cache/restore@v3
-        with:
-          fail-on-cache-miss: true
-          path: ./target/debug
-          key: ${{ github.event.repository.name }}-target-debug
-          # key: ${{ github.event.repository.name }}-${{ github.sha }}-target-debug
+      # - name: Restore Target Cache
+      #   id: restore_target_cache
+      #   uses: actions/cache/restore@v3
+      #   with:
+      #     fail-on-cache-miss: true
+      #     path: ./target/debug
+      #     key: ${{ github.event.repository.name }}-target-debug
+      #     # key: ${{ github.event.repository.name }}-${{ github.sha }}-target-debug
 
       # - name: Download archive
       #   uses: actions/download-artifact@v3
       #   with:
       #     name: test_archive
 
-      - name: Link Bitcoin Binary
-        id: bitcoin_binary
-        run: |
-          sudo ln -s /tmp/bitcoin/bin/bitcoind /bin/
-          ls -al /bin/bitcoind
+      # - name: Link Bitcoin Binary
+      #   id: bitcoin_binary
+      #   run: |
+      #     sudo ln -s /tmp/bitcoin/bin/bitcoind /bin/
+      #     ls -al /bin/bitcoind
 
       - name: Run Tests
         id: run_tests

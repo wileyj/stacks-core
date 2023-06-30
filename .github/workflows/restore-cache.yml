@@ -1,0 +1,54 @@
+##
+## Bitcoin Integration Tests
+##
+
+name: Restore Binary Caches
+
+# Only run when:
+#   - PRs are (re)opened against master branch
+
+on:
+  workflow_call:
+
+env:
+  SEGMENT_DOWNLOAD_TIMEOUT_MINS: 15
+
+concurrency:
+  group: stacks-bitcoin-cache-${{ github.ref }}
+  # Only cancel in progress if this is for a PR
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  restore-cache:
+    steps:
+      - name: Restore Cargo Cache
+        id: restore_cargo_cache
+        uses: actions/cache/restore@v3
+        with:
+          fail-on-cache-miss: true
+          path: ~/.cargo
+          key: ${{ github.event.repository.name }}-cargo
+          # key: ${{ github.event.repository.name }}-${{ github.sha }}-cargo
+
+      - name: Restore Bitcoin Binary Cache
+        id: restore_bitcoin_cache
+        uses: actions/cache/restore@v3
+        with:
+          fail-on-cache-miss: true
+          path: /tmp/bitcoin
+          key: ${{ github.event.repository.name }}-bitcoin-binaries
+
+      - name: Restore Target Cache
+        id: restore_target_cache
+        uses: actions/cache/restore@v3
+        with:
+          fail-on-cache-miss: true
+          path: ./target/debug
+          key: ${{ github.event.repository.name }}-target-debug
+          # key: ${{ github.event.repository.name }}-${{ github.sha }}-target-debug
+
+      - name: Link Bitcoin Binary
+        id: bitcoin_binary
+        run: |
+          sudo ln -s /tmp/bitcoin/bin/bitcoind /bin/
+          ls -al /bin/bitcoind
