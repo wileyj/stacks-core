@@ -341,11 +341,11 @@ jobs:
       #   with:
       #     name: test_archive
 
-      # - name: Link Bitcoin Binary
-      #   id: bitcoin_binary
-      #   run: |
-      #     sudo ln -s /tmp/bitcoin/bin/bitcoind /bin/
-      #     ls -al /bin/bitcoind
+      - name: Link Bitcoin Binary
+        id: bitcoin_binary
+        run: |
+          sudo ln -s /tmp/bitcoin/bin/bitcoind /bin/
+          ls -al /bin/bitcoind
 
       - name: Run Tests
         id: run_tests
