@@ -86,7 +86,7 @@ jobs:
           mv /tmp/bitcoin-${BTC_VERSION} /tmp/bitcoin
 
       - name: Save Cache
-        if: steps.check_bitcoin_cache.outputs.cache-hit != 'true'
+        if: steps.check_cache.outputs.cache-hit != 'true'
         id: save_cache
         uses: actions/cache/save@v3
         with:
@@ -218,7 +218,7 @@ jobs:
       - cache-bitcoin-binary
     strategy:
       fail-fast: false
-      max-parallel: 32
+      max-parallel: 16
       matrix:
         test-name:
           - tests::neon_integrations::bitcoind_integration_test
