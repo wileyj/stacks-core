@@ -210,7 +210,7 @@ jobs:
       #     retention-days: 2
 
   sampled-genesis:
-    if: ${{ false }}
+    # if: ${{ false }}
     name: Sampled Genesis
     runs-on: ubuntu-latest
     needs:
@@ -371,7 +371,7 @@ jobs:
           fail_ci_if_error: false
 
   slow-tests:
-    if: ${{ false }}
+    # if: ${{ false }}
     name: Slow Tests
     runs-on: ubuntu-latest
     needs:
