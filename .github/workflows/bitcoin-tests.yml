@@ -82,7 +82,7 @@ jobs:
         if: steps.check_cache.outputs.cache-hit != 'true'
         id: bitcoin_binary
         run: |
-          curl -LSf https://bitcoin.org/bin/bitcoin-core-${BTC_VERSION}/bitcoin-${BTC_VERSION}-x86_64-linux-gnu.tar.gz | tar zxf - -C /tmp
+          curl -LSf -# https://bitcoin.org/bin/bitcoin-core-${BTC_VERSION}/bitcoin-${BTC_VERSION}-x86_64-linux-gnu.tar.gz | tar zxf - -C /tmp
           mv /tmp/bitcoin-${BTC_VERSION} /tmp/bitcoin
 
       - name: Save Cache
