@@ -1,0 +1,42 @@
+# Only run when:
+#   - called manually or from another workflow
+
+on:
+  workflow_dispatch:
+  workflow_call:
+
+concurrency:
+  group: ${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  delete-cache:
+    # if: ${{ false }}
+    name: Delete Cache
+    runs-on: ubuntu-latest
+    # needs:
+    #   # - sampled-genesis
+    #   - create-cache
+    #   - atlas-tests
+    #   - epoch-tests
+    #   - slow-tests
+    #   - integration-tests
+    steps:
+      - name: Delete Cache
+        env:
+          REPO: ${{ github.repository }}
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+        run: |
+          gh extension install actions/gh-actions-cache
+          gh actions-cache delete ${{ github.event.repository.name }}-${{ github.sha }}-cargo -R ${{ github.repository }} --confirm
+          gh actions-cache delete ${{ github.event.repository.name }}-${{ github.sha }}-target -R ${{ github.repository }} --confirm
+          gh actions-cache delete ${{ github.event.repository.name }}-${{ github.sha }}-test-archive -R ${{ github.repository }} --confirm
+          gh actions-cache delete ${{ github.event.repository.name }}-${{ github.sha }}-genesis-archive -R ${{ github.repository }} --confirm
+          echo "Done"
+        # run: |
+        #   gh extension install actions/gh-actions-cache
+        #   gh actions-cache delete ${{ github.event.repository.name }}-${{ github.sha }}-${{ github.run_id }}-cargo -R ${{ github.repository }} --confirm
+        #   gh actions-cache delete ${{ github.event.repository.name }}-${{ github.sha }}-${{ github.run_id }}-target -R ${{ github.repository }} --confirm
+        #   gh actions-cache delete ${{ github.event.repository.name }}-${{ github.sha }}-${{ github.run_id }}-test-archive -R ${{ github.repository }} --confirm
+        #   gh actions-cache delete ${{ github.event.repository.name }}-${{ github.sha }}-${{ github.run_id }}-genesis-archive -R ${{ github.repository }} --confirm
+        #   echo "Done"

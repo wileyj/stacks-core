@@ -27,13 +27,13 @@ concurrency:
 jobs:
   create-cache:
     name: Create Test Cache
-    # uses: wileyj/stacks-blockchain/.github/workflows/create_cache.yml@master
     uses: ./.github/workflows/create-cache.yml
+    # uses: wileyj/stacks-blockchain/.github/workflows/create_cache.yml@master
 
   full-genesis:
     name: Full Genesis Test
-    # runs-on: ubuntu-latest
-    runs-on: buildjet-4vcpu-ubuntu-2204
+    runs-on: ubuntu-latest
+    # runs-on: buildjet-4vcpu-ubuntu-2204
     needs:
       - create-cache
     steps:
@@ -51,7 +51,8 @@ jobs:
 
       - name: Restore Cargo Cache
         id: restore_cargo_cache
-        uses: buildjet/cache/restore@v3
+        # uses: buildjet/cache/restore@v3
+        uses: actions/cache/restore@v3
         with:
           fail-on-cache-miss: true
           # path: ~/.cargo
@@ -65,7 +66,8 @@ jobs:
 
       - name: Restore Bitcoin Binary Cache
         id: restore_bitcoin_cache
-        uses: buildjet/cache/restore@v3
+        # uses: buildjet/cache/restore@v3
+        uses: actions/cache/restore@v3
         with:
           fail-on-cache-miss: true
           path: /tmp/bitcoin
@@ -73,7 +75,8 @@ jobs:
 
       - name: Restore Test Archive Cache
         id: restore_test-archive_cache
-        uses: buildjet/cache/restore@v3
+        # uses: buildjet/cache/restore@v3
+        uses: actions/cache/restore@v3
         with:
           fail-on-cache-miss: true
           path: /tmp/test_archive.tar.zst
@@ -82,7 +85,8 @@ jobs:
 
       - name: Restore Target Cache
         id: restore_target_cache
-        uses: buildjet/cache/restore@v3
+        # uses: buildjet/cache/restore@v3
+        uses: actions/cache/restore@v3
         with:
           fail-on-cache-miss: true
           # path: ./target/debug
@@ -128,8 +132,8 @@ jobs:
   # Run unit tests with code coverage
   unit-tests:
     name: Unit Tests
-    # runs-on: ubuntu-latest
-    runs-on: buildjet-4vcpu-ubuntu-2204
+    runs-on: ubuntu-latest
+    # runs-on: buildjet-4vcpu-ubuntu-2204
     needs:
       - create-cache
     steps:
@@ -147,7 +151,8 @@ jobs:
 
       - name: Restore Cargo Cache
         id: restore_cargo_cache
-        uses: buildjet/cache/restore@v3
+        # uses: buildjet/cache/restore@v3
+        uses: actions/cache/restore@v3
         with:
           fail-on-cache-miss: true
           # path: ~/.cargo
@@ -161,7 +166,8 @@ jobs:
 
       - name: Restore Bitcoin Binary Cache
         id: restore_bitcoin_cache
-        uses: buildjet/cache/restore@v3
+        # uses: buildjet/cache/restore@v3
+        uses: actions/cache/restore@v3
         with:
           fail-on-cache-miss: true
           path: /tmp/bitcoin
@@ -169,7 +175,8 @@ jobs:
 
       - name: Restore Test Archive Cache
         id: restore_test-archive_cache
-        uses: buildjet/cache/restore@v3
+        # uses: buildjet/cache/restore@v3
+        uses: actions/cache/restore@v3
         with:
           fail-on-cache-miss: true
           path: /tmp/test_archive.tar.zst
@@ -178,7 +185,8 @@ jobs:
 
       - name: Restore Target Cache
         id: restore_target_cache
-        uses: buildjet/cache/restore@v3
+        # uses: buildjet/cache/restore@v3
+        uses: actions/cache/restore@v3
         with:
           fail-on-cache-miss: true
           # path: ./target/debug
@@ -223,8 +231,8 @@ jobs:
 
   open-api-validation:
     name: OpenAPI Validation
-    # runs-on: ubuntu-latest
-    runs-on: buildjet-2vcpu-ubuntu-2204
+    runs-on: ubuntu-latest
+    # runs-on: buildjet-2vcpu-ubuntu-2204
     steps:
       - name: Checkout the latest code
         id: git_checkout
@@ -255,8 +263,8 @@ jobs:
     #  on github actions in a while, and the failures can take > 4 hours
     if: ${{ false }}
     name: Net-Test
-    # runs-on: ubuntu-latest
-    runs-on: buildjet-4vcpu-ubuntu-2204
+    runs-on: ubuntu-latest
+    # runs-on: buildjet-4vcpu-ubuntu-2204
     steps:
       - name: Checkout the latest code
         id: git_checkout
@@ -270,8 +278,8 @@ jobs:
   # Core contract tests
   core-contracts-clarinet-test:
     name: Core Contracts Test
-    # runs-on: ubuntu-latest
-    runs-on: buildjet-2vcpu-ubuntu-2204
+    runs-on: ubuntu-latest
+    # runs-on: buildjet-2vcpu-ubuntu-2204
     steps:
       - name: Checkout the latest code
         id: git_checkout
@@ -289,33 +297,3 @@ jobs:
         with:
           files: ./coverage.lcov
           verbose: true
-
-  # # duplicate from bitcoin-tests. need to DRY this
-  # delete-cache:
-  #   if: ${{ false }}
-  #   name: Delete Cache
-  #   runs-on: ubuntu-latest
-  #   needs:
-  #     - create-cache
-  #     - full-genesis
-  #     - unit-tests
-  #     - full-genesis
-  #   steps:
-  #     - name: Cleanup
-  #       env:
-  #         REPO: ${{ github.repository }}
-  #         GH_TOKEN: ${{ secrets.GH_TOKEN }}
-  #       run: |
-  #         gh extension install actions/gh-actions-cache
-  #         gh actions-cache delete ${{ github.event.repository.name }}-${{ github.sha }}-cargo -R ${{ github.repository }} --confirm
-  #         gh actions-cache delete ${{ github.event.repository.name }}-${{ github.sha }}-target -R ${{ github.repository }} --confirm
-  #         gh actions-cache delete ${{ github.event.repository.name }}-${{ github.sha }}-test-archive -R ${{ github.repository }} --confirm
-  #         gh actions-cache delete ${{ github.event.repository.name }}-${{ github.sha }}-genesis-archive -R ${{ github.repository }} --confirm
-  #         echo "Done"
-  #       # run: |
-  #       #   gh extension install actions/gh-actions-cache
-  #       #   gh actions-cache delete ${{ github.event.repository.name }}-${{ github.sha }}-${{ github.run_id }}-cargo -R ${{ github.repository }} --confirm
-  #       #   gh actions-cache delete ${{ github.event.repository.name }}-${{ github.sha }}-${{ github.run_id }}-target -R ${{ github.repository }} --confirm
-  #       #   gh actions-cache delete ${{ github.event.repository.name }}-${{ github.sha }}-${{ github.run_id }}-test-archive -R ${{ github.repository }} --confirm
-  #       #   gh actions-cache delete ${{ github.event.repository.name }}-${{ github.sha }}-${{ github.run_id }}-genesis-archive -R ${{ github.repository }} --confirm
-  #       #   echo "Done"
