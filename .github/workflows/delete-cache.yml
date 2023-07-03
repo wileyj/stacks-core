@@ -1,6 +1,8 @@
 # Only run when:
 #   - called manually or from another workflow
 
+name: Delete Cache
+
 on:
   workflow_dispatch:
   workflow_call:
@@ -47,3 +49,8 @@ jobs:
         #   gh actions-cache delete ${{ github.event.repository.name }}-${{ github.sha }}-${{ github.run_id }}-test-archive -R ${{ github.repository }} --confirm
         #   gh actions-cache delete ${{ github.event.repository.name }}-${{ github.sha }}-${{ github.run_id }}-genesis-archive -R ${{ github.repository }} --confirm
         #   echo "Done"
+
+# https://github.com/actions/upload-artifact/issues/290#issuecomment-1374207010
+# https://github.com/marketplace/actions/purge-cache
+# https://github.com/marketplace/actions/delete-run-artifacts
+
