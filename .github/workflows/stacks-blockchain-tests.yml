@@ -53,7 +53,12 @@ jobs:
         uses: actions/cache/restore@v3
         with:
           fail-on-cache-miss: true
-          path: ~/.cargo
+          # path: ~/.cargo
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
           key: ${{ github.event.repository.name }}-cargo
           # key: ${{ github.event.repository.name }}-${{ github.sha }}-cargo
 
@@ -79,9 +84,11 @@ jobs:
         uses: actions/cache/restore@v3
         with:
           fail-on-cache-miss: true
-          path: ./target/debug
-          key: ${{ github.event.repository.name }}-target-debug
-          # key: ${{ github.event.repository.name }}-${{ github.sha }}-target-debug
+          # path: ./target/debug
+          # key: ${{ github.event.repository.name }}-target-debug
+          # # key: ${{ github.event.repository.name }}-${{ github.sha }}-target-debug
+          path: ./target
+          key: ${{ github.event.repository.name }}-target
 
       # - name: Download archive
       #   uses: actions/download-artifact@v3
@@ -141,7 +148,12 @@ jobs:
         uses: actions/cache/restore@v3
         with:
           fail-on-cache-miss: true
-          path: ~/.cargo
+          # path: ~/.cargo
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
           key: ${{ github.event.repository.name }}-cargo
           # key: ${{ github.event.repository.name }}-${{ github.sha }}-cargo
 
@@ -167,9 +179,11 @@ jobs:
         uses: actions/cache/restore@v3
         with:
           fail-on-cache-miss: true
-          path: ./target/debug
-          key: ${{ github.event.repository.name }}-target-debug
-          # key: ${{ github.event.repository.name }}-${{ github.sha }}-target-debug
+          # path: ./target/debug
+          # key: ${{ github.event.repository.name }}-target-debug
+          # # key: ${{ github.event.repository.name }}-${{ github.sha }}-target-debug
+          path: ./target
+          key: ${{ github.event.repository.name }}-target
 
       # - name: Download archive
       #   uses: actions/download-artifact@v3
@@ -289,12 +303,14 @@ jobs:
         run: |
           gh extension install actions/gh-actions-cache
           gh actions-cache delete ${{ github.event.repository.name }}-${{ github.sha }}-cargo -R ${{ github.repository }} --confirm
+          gh actions-cache delete ${{ github.event.repository.name }}-${{ github.sha }}-target -R ${{ github.repository }} --confirm
           gh actions-cache delete ${{ github.event.repository.name }}-${{ github.sha }}-test-archive -R ${{ github.repository }} --confirm
-          gh actions-cache delete ${{ github.event.repository.name }}-${{ github.sha }}-target-debug -R ${{ github.repository }} --confirm
+          gh actions-cache delete ${{ github.event.repository.name }}-${{ github.sha }}-genesis-archive -R ${{ github.repository }} --confirm
           echo "Done"
         # run: |
         #   gh extension install actions/gh-actions-cache
         #   gh actions-cache delete ${{ github.event.repository.name }}-${{ github.sha }}-${{ github.run_id }}-cargo -R ${{ github.repository }} --confirm
+        #   gh actions-cache delete ${{ github.event.repository.name }}-${{ github.sha }}-${{ github.run_id }}-target -R ${{ github.repository }} --confirm
         #   gh actions-cache delete ${{ github.event.repository.name }}-${{ github.sha }}-${{ github.run_id }}-test-archive -R ${{ github.repository }} --confirm
-        #   gh actions-cache delete ${{ github.event.repository.name }}-${{ github.sha }}-${{ github.run_id }}-test-archive -R ${{ github.repository }} --confirm
+        #   gh actions-cache delete ${{ github.event.repository.name }}-${{ github.sha }}-${{ github.run_id }}-genesis-archive -R ${{ github.repository }} --confirm
         #   echo "Done"

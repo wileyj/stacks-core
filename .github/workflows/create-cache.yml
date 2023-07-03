@@ -30,7 +30,11 @@ jobs:
         id: check_cache
         with:
           lookup-only: true
-          path: ~/.cargo
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
           key: ${{ github.event.repository.name }}-cargo
           # key: ${{ github.event.repository.name }}-${{ github.sha }}-cargo
 
@@ -51,7 +55,12 @@ jobs:
         id: save_cache
         uses: actions/cache/save@v3
         with:
-          path: ~/.cargo
+          # path: ~/.cargo
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
           key: ${{ github.event.repository.name }}-cargo
           # key: ${{ github.event.repository.name }}-${{ github.sha }}-cargo
           # key: ${{ github.event.repository.name }}-${{ github.sha }}-${{ github.run_id }}-cargo
@@ -98,9 +107,11 @@ jobs:
         id: check_target_cache
         with:
           lookup-only: true
-          path: ./target/debug
-          key: ${{ github.event.repository.name }}-target-debug
-          # key: ${{ github.event.repository.name }}-${{ github.sha }}-target-debug
+          # path: ./target/debug
+          # key: ${{ github.event.repository.name }}-target-debug
+          # # key: ${{ github.event.repository.name }}-${{ github.sha }}-target-debug
+          path: ./target
+          key: ${{ github.event.repository.name }}-target
 
       - name: Check Test Archive Cache
         uses: actions/cache@v3
@@ -139,7 +150,11 @@ jobs:
         uses: actions/cache/restore@v3
         with:
           fail-on-cache-miss: true
-          path: ~/.cargo
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
           key: ${{ github.event.repository.name }}-cargo
           # key: ${{ github.event.repository.name }}-${{ github.sha }}-cargo
 
@@ -191,14 +206,9 @@ jobs:
         id: save_target_cache
         uses: actions/cache/save@v3
         with:
-          path: ./target/debug
-          key: ${{ github.event.repository.name }}-target-debug
-          # key: ${{ github.event.repository.name }}-${{ github.sha }}-target-debug
-          # key: ${{ github.event.repository.name }}-${{ github.sha }}-${{ github.run_id }}-target-debug
-
-      # - name: Upload archive to workflow
-      #   uses: actions/upload-artifact@v3
-      #   with:
-      #     name: test_archive
-      #     path: /tmp/test_archive.tar.zst
-      #     retention-days: 2
+          # path: ./target/debug
+          # key: ${{ github.event.repository.name }}-target-debug
+          # # key: ${{ github.event.repository.name }}-${{ github.sha }}-target-debug
+          # # key: ${{ github.event.repository.name }}-${{ github.sha }}-${{ github.run_id }}-target-debug
+          path: ./target
+          key: ${{ github.event.repository.name }}-target
