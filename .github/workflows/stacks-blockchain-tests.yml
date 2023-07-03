@@ -73,15 +73,15 @@ jobs:
           path: /tmp/bitcoin
           key: ${{ github.event.repository.name }}-bitcoin-binaries
 
-      - name: Restore Test Archive Cache
+      - name: Restore Genesis Archive Cache
         id: restore_test-archive_cache
         # uses: buildjet/cache/restore@v3
         uses: actions/cache/restore@v3
         with:
           fail-on-cache-miss: true
-          path: /tmp/test_archive.tar.zst
-          key: ${{ github.event.repository.name }}-test-archive
-          # key: ${{ github.event.repository.name }}-${{ github.sha }}-test-archive
+          path: /tmp/genesis_archive.tar.zst
+          key: ${{ github.event.repository.name }}-genesis-archive
+          # key: ${{ github.event.repository.name }}-${{ github.sha }}-genesis-archive
 
       - name: Restore Target Cache
         id: restore_target_cache

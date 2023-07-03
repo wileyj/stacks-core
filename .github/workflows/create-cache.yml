@@ -10,6 +10,7 @@ name: Create Test Caches
 on:
   workflow_call:
 
+# move btc_version to an input arg, default to 0.20 ?
 env:
   RUSTFLAGS: "-Cinstrument-coverage"
   LLVM_PROFILE_FILE: "stacks-blockchain-%p-%m.profraw"
