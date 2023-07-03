@@ -28,11 +28,18 @@ jobs:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
         run: |
           gh extension install actions/gh-actions-cache
-          gh actions-cache delete ${{ github.event.repository.name }}-${{ github.sha }}-cargo -R ${{ github.repository }} --confirm
-          gh actions-cache delete ${{ github.event.repository.name }}-${{ github.sha }}-target -R ${{ github.repository }} --confirm
-          gh actions-cache delete ${{ github.event.repository.name }}-${{ github.sha }}-test-archive -R ${{ github.repository }} --confirm
-          gh actions-cache delete ${{ github.event.repository.name }}-${{ github.sha }}-genesis-archive -R ${{ github.repository }} --confirm
+          gh actions-cache delete ${{ github.event.repository.name }}-cargo -R ${{ github.repository }} --confirm
+          gh actions-cache delete ${{ github.event.repository.name }}-target -R ${{ github.repository }} --confirm
+          gh actions-cache delete ${{ github.event.repository.name }}-test-archive -R ${{ github.repository }} --confirm
+          gh actions-cache delete ${{ github.event.repository.name }}-genesis-archive -R ${{ github.repository }} --confirm
           echo "Done"
+        # run: |
+        #   gh extension install actions/gh-actions-cache
+        #   gh actions-cache delete ${{ github.event.repository.name }}-${{ github.sha }}-cargo -R ${{ github.repository }} --confirm
+        #   gh actions-cache delete ${{ github.event.repository.name }}-${{ github.sha }}-target -R ${{ github.repository }} --confirm
+        #   gh actions-cache delete ${{ github.event.repository.name }}-${{ github.sha }}-test-archive -R ${{ github.repository }} --confirm
+        #   gh actions-cache delete ${{ github.event.repository.name }}-${{ github.sha }}-genesis-archive -R ${{ github.repository }} --confirm
+        #   echo "Done"
         # run: |
         #   gh extension install actions/gh-actions-cache
         #   gh actions-cache delete ${{ github.event.repository.name }}-${{ github.sha }}-${{ github.run_id }}-cargo -R ${{ github.repository }} --confirm
