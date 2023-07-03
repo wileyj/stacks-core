@@ -44,7 +44,7 @@ jobs:
       # - cache-bitcoin-binary
     strategy:
       fail-fast: false
-      max-parallel: 16
+      max-parallel: 32
       matrix:
         test-name:
           - tests::bitcoin_regtest::bitcoind_integration_test
