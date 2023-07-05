@@ -12,15 +12,12 @@ on:
   workflow_call:
 
 env:
-  RUSTFLAGS: "-Cinstrument-coverage"
-  LLVM_PROFILE_FILE: "stacks-blockchain-%p-%m.profraw"
-  BTC_VERSION: "0.20.0"
   BITCOIND_TEST: 1
   RUST_BACKTRACE: full
   SEGMENT_DOWNLOAD_TIMEOUT_MINS: 15
 
 concurrency:
-  group: stacks-bitcoin-integration-tests-${{ github.ref }}
+  group: stacks-blockchain-tests-${{ github.ref }}
   # Only cancel in progress if this is for a PR
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
