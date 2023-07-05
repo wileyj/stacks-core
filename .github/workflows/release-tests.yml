@@ -1,0 +1,386 @@
+##
+## Release Tests
+##
+
+name: Release Tests
+
+# Only run when:
+#   - PRs are (re)opened against master branch
+
+on:
+  workflow_dispatch:
+  # # run on push to master or tagging a release
+  # push:
+  #   branches:
+  #     - master
+  #   tags:
+  #     - "[0-9]+.[0-9]+.[0-9]+.[0-9]+.[0-9]+" # 2.1.0.0.0
+  #     - "[0-9]+.[0-9]+.[0-9].[0-9]+.[0-9]+-rc[0-9]+" # 2.1.0.0.0-rc1
+
+env:
+  BITCOIND_TEST: 1
+  RUST_BACKTRACE: full
+  SEGMENT_DOWNLOAD_TIMEOUT_MINS: 20
+
+concurrency:
+  group: stacks-bitcoin-integration-tests-${{ github.ref }}
+  # Only cancel in progress if this is for a PR
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  create-cache:
+    name: Create Test Cache
+    # uses: wileyj/stacks-blockchain/.github/workflows/create_cache.yml@master
+    uses: ./.github/workflows/create-cache.yml
+
+  # slow tests
+  slow-tests:
+    # if: ${{ false }}
+    name: Slow Tests
+    runs-on: ubuntu-latest
+    # runs-on: buildjet-4vcpu-ubuntu-2204
+    needs:
+      - create-cache
+      # - cache-test-archive
+      # - cache-bitcoin-binary
+    strategy:
+      fail-fast: false
+      max-parallel: 16
+      matrix:
+        test-name:
+          - tests::epoch_21::test_pox_reorg_flap_duel
+          - tests::epoch_21::test_pox_reorg_flap_reward_cycles
+    steps:
+      - name: Checkout the latest code
+        id: git_checkout
+        uses: actions/checkout@v3
+
+      - name: Setup Rust Toolchain
+        if: steps.check_cache.outputs.cache-hit != 'true'
+        id: setup_rust_toolchain
+        uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          toolchain: stable
+          components: llvm-tools-preview
+
+      - name: Restore Cargo Cache
+        id: restore_cargo_cache
+        # uses: buildjet/cache/restore@v3
+        uses: actions/cache/restore@v3
+        with:
+          fail-on-cache-miss: true
+          # path: ~/.cargo
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+          key: ${{ github.event.repository.name }}-cargo
+          # key: ${{ github.event.repository.name }}-${{ github.sha }}-cargo
+
+      - name: Restore Bitcoin Binary Cache
+        id: restore_bitcoin_cache
+        # uses: buildjet/cache/restore@v3
+        uses: actions/cache/restore@v3
+        with:
+          fail-on-cache-miss: true
+          path: /tmp/bitcoin
+          key: ${{ github.event.repository.name }}-bitcoin-binaries
+
+      - name: Restore Test Archive Cache
+        id: restore_test-archive_cache
+        # uses: buildjet/cache/restore@v3
+        uses: actions/cache/restore@v3
+        with:
+          fail-on-cache-miss: true
+          path: /tmp/test_archive.tar.zst
+          key: ${{ github.event.repository.name }}-test-archive
+          # key: ${{ github.event.repository.name }}-${{ github.sha }}-test-archive
+
+      - name: Restore Target Cache
+        id: restore_target_cache
+        # uses: buildjet/cache/restore@v3
+        uses: actions/cache/restore@v3
+        with:
+          fail-on-cache-miss: true
+          # path: ./target/debug
+          # key: ${{ github.event.repository.name }}-target-debug
+          # # key: ${{ github.event.repository.name }}-${{ github.sha }}-target-debug
+          path: ./target
+          key: ${{ github.event.repository.name }}-target
+
+      # - name: Download archive
+      #   uses: actions/download-artifact@v3
+      #   with:
+      #     name: test_archive
+
+      - name: Link Bitcoin Binary
+        id: bitcoin_binary
+        run: |
+          sudo ln -s /tmp/bitcoin/bin/bitcoind /bin/
+          ls -al /bin/bitcoind
+
+      - name: Run Tests
+        id: run_tests
+        run: |
+          cargo nextest run \
+            --test-threads num-cpus  \
+            --run-ignored all \
+            --archive-file /tmp/test_archive.tar.zst \
+            --retries 2 \
+            "${{ matrix.test-name }}"
+
+      - name: Run grcov
+        id: run_grcov
+        run: |
+          grcov . --binary-path ./target/debug/ -s . -t lcov --branch --ignore-not-existing --ignore "/*" -o lcov.info || exit 1
+
+      - name: Code Coverage
+        id: code_coverage
+        uses: codecov/codecov-action@v3
+        with:
+          files: ./lcov.info
+          name: ${{ matrix.test-name }}
+          fail_ci_if_error: false
+
+  # epoch tests
+  epoch-tests:
+    # if: ${{ false }}
+    name: Epoch Tests
+    runs-on: ubuntu-latest
+    # runs-on: buildjet-4vcpu-ubuntu-2204
+    needs:
+      - create-cache
+      # - cache-test-archive
+      # - cache-bitcoin-binary
+    strategy:
+      fail-fast: false
+      max-parallel: 16
+      matrix:
+        test-name:
+          - tests::epoch_205::bigger_microblock_streams_in_2_05
+          - tests::epoch_205::test_cost_limit_switch_version205
+          - tests::epoch_205::test_dynamic_db_method_costs
+          - tests::epoch_205::test_exact_block_costs
+          - tests::epoch_205::transition_empty_blocks
+          - tests::epoch_21::test_pox_missing_five_anchor_blocks
+          - tests::epoch_21::test_pox_reorg_one_flap
+          - tests::epoch_21::test_pox_reorgs_three_flaps
+          - tests::epoch_21::test_sortition_divergence_pre_21
+          - tests::epoch_21::test_v1_unlock_height_with_current_stackers
+          - tests::epoch_21::test_v1_unlock_height_with_delay_and_current_stackers
+          - tests::epoch_21::trait_invocation_cross_epoch
+          - tests::epoch_21::transition_adds_burn_block_height
+          - tests::epoch_21::transition_adds_get_pox_addr_recipients
+          - tests::epoch_21::transition_adds_mining_from_segwit
+          - tests::epoch_21::transition_adds_pay_to_contract
+          - tests::epoch_21::transition_empty_blocks
+          - tests::epoch_21::transition_fixes_bitcoin_rigidity
+          - tests::epoch_21::transition_removes_pox_sunset
+          - tests::epoch_22::disable_pox
+          - tests::epoch_22::pox_2_unlock_all
+          - tests::epoch_22::test_pox_reorg_one_flap
+          - tests::epoch_23::trait_invocation_behavior
+          - tests::epoch_24::fix_to_pox_contract
+          - tests::epoch_24::verify_auto_unlock_behavior
+    steps:
+      - name: Checkout the latest code
+        id: git_checkout
+        uses: actions/checkout@v3
+
+      - name: Setup Rust Toolchain
+        if: steps.check_cache.outputs.cache-hit != 'true'
+        id: setup_rust_toolchain
+        uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          toolchain: stable
+          components: llvm-tools-preview
+
+      - name: Restore Cargo Cache
+        id: restore_cargo_cache
+        # uses: buildjet/cache/restore@v3
+        uses: actions/cache/restore@v3
+        with:
+          fail-on-cache-miss: true
+          # path: ~/.cargo
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+          key: ${{ github.event.repository.name }}-cargo
+          # key: ${{ github.event.repository.name }}-${{ github.sha }}-cargo
+
+      - name: Restore Bitcoin Binary Cache
+        id: restore_bitcoin_cache
+        # uses: buildjet/cache/restore@v3
+        uses: actions/cache/restore@v3
+        with:
+          fail-on-cache-miss: true
+          path: /tmp/bitcoin
+          key: ${{ github.event.repository.name }}-bitcoin-binaries
+
+      - name: Restore Test Archive Cache
+        id: restore_test-archive_cache
+        # uses: buildjet/cache/restore@v3
+        uses: actions/cache/restore@v3
+        with:
+          fail-on-cache-miss: true
+          path: /tmp/test_archive.tar.zst
+          key: ${{ github.event.repository.name }}-test-archive
+          # key: ${{ github.event.repository.name }}-${{ github.sha }}-test-archive
+
+      - name: Restore Target Cache
+        id: restore_target_cache
+        # uses: buildjet/cache/restore@v3
+        uses: actions/cache/restore@v3
+        with:
+          fail-on-cache-miss: true
+          # path: ./target/debug
+          # key: ${{ github.event.repository.name }}-target-debug
+          # # key: ${{ github.event.repository.name }}-${{ github.sha }}-target-debug
+          path: ./target
+          key: ${{ github.event.repository.name }}-target
+
+      # - name: Download archive
+      #   uses: actions/download-artifact@v3
+      #   with:
+      #     name: test_archive
+
+      - name: Link Bitcoin Binary
+        id: bitcoin_binary
+        run: |
+          sudo ln -s /tmp/bitcoin/bin/bitcoind /bin/
+          ls -al /bin/bitcoind
+
+      - name: Run Tests
+        id: run_tests
+        run: |
+          cargo nextest run \
+            --test-threads num-cpus  \
+            --run-ignored all \
+            --archive-file /tmp/test_archive.tar.zst \
+            --retries 2 \
+            "${{ matrix.test-name }}"
+
+      - name: Run grcov
+        id: run_grcov
+        run: |
+          grcov . --binary-path ./target/debug/ -s . -t lcov --branch --ignore-not-existing --ignore "/*" -o lcov.info || exit 1
+
+      - name: Code Coverage
+        id: code_coverage
+        uses: codecov/codecov-action@v3
+        with:
+          files: ./lcov.info
+          name: ${{ matrix.test-name }}
+          fail_ci_if_error: false
+
+  # Run atlas integration tests
+  atlas-tests:
+    # if: ${{ false }}
+    name: Atlas Test
+    runs-on: ubuntu-latest
+    # runs-on: buildjet-4vcpu-ubuntu-2204
+    needs:
+      - create-cache
+      # - cache-test-archive
+    strategy:
+      fail-fast: false
+      max-parallel: 16
+      matrix:
+        test-name:
+          - tests::neon_integrations::atlas_integration_test
+          - tests::neon_integrations::atlas_stress_integration_test
+    steps:
+      - name: Checkout the latest code
+        id: git_checkout
+        uses: actions/checkout@v3
+
+      - name: Setup Rust Toolchain
+        if: steps.check_cache.outputs.cache-hit != 'true'
+        id: setup_rust_toolchain
+        uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          toolchain: stable
+          components: llvm-tools-preview
+
+      - name: Restore Cargo Cache
+        id: restore_cargo_cache
+        # uses: buildjet/cache/restore@v3
+        uses: actions/cache/restore@v3
+        with:
+          fail-on-cache-miss: true
+          # path: ~/.cargo
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+          key: ${{ github.event.repository.name }}-cargo
+          # key: ${{ github.event.repository.name }}-${{ github.sha }}-cargo
+
+      - name: Restore Bitcoin Binary Cache
+        id: restore_bitcoin_cache
+        # uses: buildjet/cache/restore@v3
+        uses: actions/cache/restore@v3
+        with:
+          fail-on-cache-miss: true
+          path: /tmp/bitcoin
+          key: ${{ github.event.repository.name }}-bitcoin-binaries
+
+      - name: Restore Test Archive Cache
+        id: restore_test-archive_cache
+        # uses: buildjet/cache/restore@v3
+        uses: actions/cache/restore@v3
+        with:
+          fail-on-cache-miss: true
+          path: /tmp/test_archive.tar.zst
+          key: ${{ github.event.repository.name }}-test-archive
+          # key: ${{ github.event.repository.name }}-${{ github.sha }}-test-archive
+
+      - name: Restore Target Cache
+        id: restore_target_cache
+        # uses: buildjet/cache/restore@v3
+        uses: actions/cache/restore@v3
+        with:
+          fail-on-cache-miss: true
+          # path: ./target/debug
+          # key: ${{ github.event.repository.name }}-target-debug
+          # # key: ${{ github.event.repository.name }}-${{ github.sha }}-target-debug
+          path: ./target
+          key: ${{ github.event.repository.name }}-target
+
+      # - name: Download archive
+      #   uses: actions/download-artifact@v3
+      #   with:
+      #     name: test_archive
+
+      - name: Link Bitcoin Binary
+        id: bitcoin_binary
+        run: |
+          sudo ln -s /tmp/bitcoin/bin/bitcoind /bin/
+          ls -al /bin/bitcoind
+
+      - name: Run Tests
+        id: run_tests
+        run: |
+          cargo nextest run \
+            --test-threads 1  \
+            --run-ignored all \
+            --archive-file /tmp/test_archive.tar.zst \
+            --retries 2 \
+            "${{ matrix.test-name }}"
+
+      - name: Run grcov
+        id: run_grcov
+        run: |
+          grcov . --binary-path ./target/debug/ -s . -t lcov --branch --ignore-not-existing --ignore "/*" -o lcov.info || exit 1
+
+      - name: Code Coverage
+        id: code_coverage
+        uses: codecov/codecov-action@v3
+        with:
+          files: ./lcov.info
+          name: ${{ matrix.test-name }}
+          fail_ci_if_error: false
