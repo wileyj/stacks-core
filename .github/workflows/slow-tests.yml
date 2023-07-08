@@ -9,13 +9,14 @@ name: Slow Tests
 
 on:
   workflow_dispatch:
-  # # run on push to master or tagging a release
+  workflow_call:
+  ## run when tagging a release or a PR is approved
   # push:
-  #   branches:
-  #     - master
   #   tags:
   #     - "[0-9]+.[0-9]+.[0-9]+.[0-9]+.[0-9]+" # 2.1.0.0.0
   #     - "[0-9]+.[0-9]+.[0-9].[0-9]+.[0-9]+-rc[0-9]+" # 2.1.0.0.0-rc1
+  pull_request_review:
+    types: [submitted]
 
 env:
   BITCOIND_TEST: 1
