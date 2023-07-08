@@ -24,7 +24,7 @@ jobs:
     #   - slow-tests
     #   - integration-tests
     steps:
-      - name: Delete Cache
+      - name: Delete Binary Cache
         env:
           REPO: ${{ github.repository }}
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
@@ -35,20 +35,35 @@ jobs:
           gh actions-cache delete ${{ github.event.repository.name }}-test-archive -R ${{ github.repository }} --confirm
           gh actions-cache delete ${{ github.event.repository.name }}-genesis-archive -R ${{ github.repository }} --confirm
           echo "Done"
-        # run: |
-        #   gh extension install actions/gh-actions-cache
-        #   gh actions-cache delete ${{ github.event.repository.name }}-${{ github.sha }}-cargo -R ${{ github.repository }} --confirm
-        #   gh actions-cache delete ${{ github.event.repository.name }}-${{ github.sha }}-target -R ${{ github.repository }} --confirm
-        #   gh actions-cache delete ${{ github.event.repository.name }}-${{ github.sha }}-test-archive -R ${{ github.repository }} --confirm
-        #   gh actions-cache delete ${{ github.event.repository.name }}-${{ github.sha }}-genesis-archive -R ${{ github.repository }} --confirm
-        #   echo "Done"
-        # run: |
-        #   gh extension install actions/gh-actions-cache
-        #   gh actions-cache delete ${{ github.event.repository.name }}-${{ github.sha }}-${{ github.run_id }}-cargo -R ${{ github.repository }} --confirm
-        #   gh actions-cache delete ${{ github.event.repository.name }}-${{ github.sha }}-${{ github.run_id }}-target -R ${{ github.repository }} --confirm
-        #   gh actions-cache delete ${{ github.event.repository.name }}-${{ github.sha }}-${{ github.run_id }}-test-archive -R ${{ github.repository }} --confirm
-        #   gh actions-cache delete ${{ github.event.repository.name }}-${{ github.sha }}-${{ github.run_id }}-genesis-archive -R ${{ github.repository }} --confirm
-        #   echo "Done"
+
+      - name: Delete Rust Cache
+        env:
+          REPO: ${{ github.repository }}
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+        run: |
+          gh extension install actions/gh-actions-cache
+          gh actions-cache delete v0-rust-integration-tests-${{ github.run_id }}-${{ github.sha }} -R ${{ github.repository }} --confirm
+          gh actions-cache delete v0-rust-epoch-tests-${{ github.run_id }}-${{ github.sha }} -R ${{ github.repository }} --confirm
+          gh actions-cache delete v0-rust-atlas-tests-${{ github.run_id }}-${{ github.sha }} -R ${{ github.repository }} --confirm
+          gh actions-cache delete v0-rust-slow-tests-${{ github.run_id }}-${{ github.sha }} -R ${{ github.repository }} --confirm
+          gh actions-cache delete v0-rust-full-genesis-${{ github.run_id }}-${{ github.sha }} -R ${{ github.repository }} --confirm
+          gh actions-cache delete v0-rust-unit-tests-${{ github.run_id }}-${{ github.sha }} -R ${{ github.repository }} --confirm
+          echo "Done"
+
+# run: |
+#   gh extension install actions/gh-actions-cache
+#   gh actions-cache delete ${{ github.event.repository.name }}-${{ github.sha }}-cargo -R ${{ github.repository }} --confirm
+#   gh actions-cache delete ${{ github.event.repository.name }}-${{ github.sha }}-target -R ${{ github.repository }} --confirm
+#   gh actions-cache delete ${{ github.event.repository.name }}-${{ github.sha }}-test-archive -R ${{ github.repository }} --confirm
+#   gh actions-cache delete ${{ github.event.repository.name }}-${{ github.sha }}-genesis-archive -R ${{ github.repository }} --confirm
+#   echo "Done"
+# run: |
+#   gh extension install actions/gh-actions-cache
+#   gh actions-cache delete ${{ github.event.repository.name }}-${{ github.sha }}-${{ github.run_id }}-cargo -R ${{ github.repository }} --confirm
+#   gh actions-cache delete ${{ github.event.repository.name }}-${{ github.sha }}-${{ github.run_id }}-target -R ${{ github.repository }} --confirm
+#   gh actions-cache delete ${{ github.event.repository.name }}-${{ github.sha }}-${{ github.run_id }}-test-archive -R ${{ github.repository }} --confirm
+#   gh actions-cache delete ${{ github.event.repository.name }}-${{ github.sha }}-${{ github.run_id }}-genesis-archive -R ${{ github.repository }} --confirm
+#   echo "Done"
 
 # https://github.com/actions/upload-artifact/issues/290#issuecomment-1374207010
 # https://github.com/marketplace/actions/purge-cache
