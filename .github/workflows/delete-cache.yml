@@ -29,20 +29,25 @@ jobs:
           gh actions-cache delete ${{ github.event.repository.name }}-test-archive -R ${{ github.repository }} --confirm
           gh actions-cache delete ${{ github.event.repository.name }}-genesis-archive -R ${{ github.repository }} --confirm
           echo "Done"
+        # run: |
+        #   for cache in $(gh actions-cache list -R ${{ github.repository }}  | grep ${{ github.run_id }}-${{ github.sha }} | awk {'print $1'}); do
+        #     echo "Deleting cache ${cache}"
+        #     gh actions-cache delete -R ${{ github.repository }} ${cache} --confirm
+        #   done
 
-      - name: Delete Rust Cache
-        env:
-          REPO: ${{ github.repository }}
-          GH_TOKEN: ${{ secrets.GH_TOKEN }}
-        run: |
-          gh extension install actions/gh-actions-cache
-          gh actions-cache delete v0-rust-integration-tests-${{ github.run_id }}-${{ github.sha }} -R ${{ github.repository }} --confirm
-          gh actions-cache delete v0-rust-epoch-tests-${{ github.run_id }}-${{ github.sha }} -R ${{ github.repository }} --confirm
-          gh actions-cache delete v0-rust-atlas-tests-${{ github.run_id }}-${{ github.sha }} -R ${{ github.repository }} --confirm
-          gh actions-cache delete v0-rust-slow-tests-${{ github.run_id }}-${{ github.sha }} -R ${{ github.repository }} --confirm
-          gh actions-cache delete v0-rust-full-genesis-${{ github.run_id }}-${{ github.sha }} -R ${{ github.repository }} --confirm
-          gh actions-cache delete v0-rust-unit-tests-${{ github.run_id }}-${{ github.sha }} -R ${{ github.repository }} --confirm
-          echo "Done"
+      # - name: Delete Rust Cache
+      #   env:
+      #     REPO: ${{ github.repository }}
+      #     GH_TOKEN: ${{ secrets.GH_TOKEN }}
+      #   run: |
+      #     gh extension install actions/gh-actions-cache
+      #     gh actions-cache delete v0-rust-integration-tests-${{ github.run_id }}-${{ github.sha }} -R ${{ github.repository }} --confirm
+      #     gh actions-cache delete v0-rust-epoch-tests-${{ github.run_id }}-${{ github.sha }} -R ${{ github.repository }} --confirm
+      #     gh actions-cache delete v0-rust-atlas-tests-${{ github.run_id }}-${{ github.sha }} -R ${{ github.repository }} --confirm
+      #     gh actions-cache delete v0-rust-slow-tests-${{ github.run_id }}-${{ github.sha }} -R ${{ github.repository }} --confirm
+      #     gh actions-cache delete v0-rust-full-genesis-${{ github.run_id }}-${{ github.sha }} -R ${{ github.repository }} --confirm
+      #     gh actions-cache delete v0-rust-unit-tests-${{ github.run_id }}-${{ github.sha }} -R ${{ github.repository }} --confirm
+      #     echo "Done"
 
 # for cache in $(gh actions-cache list -R ${{ github.repository }}  | grep ${{ github.run_id }}-${{ github.sha }} | awk {'print $1'}); do
 #   echo "Deleting cache ${cache}"
