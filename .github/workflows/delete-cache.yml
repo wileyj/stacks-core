@@ -50,6 +50,12 @@ jobs:
           gh actions-cache delete v0-rust-unit-tests-${{ github.run_id }}-${{ github.sha }} -R ${{ github.repository }} --confirm
           echo "Done"
 
+# for cache in $(gh actions-cache list -R ${{ github.repository }}  | grep ${{ github.run_id }}-${{ github.sha }} | awk {'print $1'}); do
+#   echo "Deleting cache ${cache}"
+#   gh actions-cache delete -R ${{ github.repository }} ${cache} --confirm
+# done
+#
+
 # run: |
 #   gh extension install actions/gh-actions-cache
 #   gh actions-cache delete ${{ github.event.repository.name }}-${{ github.sha }}-cargo -R ${{ github.repository }} --confirm
