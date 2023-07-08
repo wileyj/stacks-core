@@ -24,7 +24,8 @@ env:
   SEGMENT_DOWNLOAD_TIMEOUT_MINS: 20
 
 concurrency:
-  group: stacks-blockchain-release-tests-${{ github.ref }}
+  # group: stacks-blockchain-release-tests-${{ github.ref }}
+  group: ${{ github.workflow }}-${{ github.ref }}
   # Only cancel in progress if this is for a PR
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
