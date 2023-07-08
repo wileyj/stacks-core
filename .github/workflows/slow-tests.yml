@@ -144,5 +144,21 @@ jobs:
           files: ./lcov.info
           name: ${{ matrix.test-name }}
           fail_ci_if_error: false
-# v0-rust-slow-tests-43636576-f2379146
-# v0-rust-slow-tests-${{ github.run_id }}-${{ github.sha }}
+  # v0-rust-slow-tests-43636576-f2379146
+  # v0-rust-slow-tests-${{ github.run_id }}-${{ github.sha }}
+
+  delete-rust-cache:
+    # if: ${{ false }}
+    name: Delete Rust Cache
+    runs-on: ubuntu-latest
+    steps:
+      - name: Delete Rust Cache
+        env:
+          REPO: ${{ github.repository }}
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+        run: |
+          gh extension install actions/gh-actions-cache
+          for cache in $(gh actions-cache list -R ${{ github.repository }} --key v0-rust-slow-tests-${{ github.run_id }}-${{ github.sha }} | awk {'print $1'}); do
+            echo "Deleting slow-tests cache ${cache}"
+            gh actions-cache delete -R ${{ github.repository }} ${cache} --confirm
+          done

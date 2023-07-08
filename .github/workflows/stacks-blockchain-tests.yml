@@ -308,3 +308,23 @@ jobs:
         with:
           files: ./coverage.lcov
           verbose: true
+
+  delete-rust-cache:
+    # if: ${{ false }}
+    name: Delete Rust Cache
+    runs-on: ubuntu-latest
+    steps:
+      - name: Delete Rust Cache
+        env:
+          REPO: ${{ github.repository }}
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+        run: |
+          gh extension install actions/gh-actions-cache
+          for cache in $(gh actions-cache list -R ${{ github.repository }} --key v0-rust-full-genesis-${{ github.run_id }}-${{ github.sha }} | awk {'print $1'}); do
+            echo "Deleting full-genesis cache ${cache}"
+            gh actions-cache delete -R ${{ github.repository }} ${cache} --confirm
+          done
+          for cache in $(gh actions-cache list -R ${{ github.repository }} --key v0-rust-unit-tests-${{ github.run_id }}-${{ github.sha }} | awk {'print $1'}); do
+            echo "Deleting unit-tests cache ${cache}"
+            gh actions-cache delete -R ${{ github.repository }} ${cache} --confirm
+          done
