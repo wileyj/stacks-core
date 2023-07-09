@@ -157,6 +157,7 @@ jobs:
         with:
           toolchain: stable
           components: llvm-tools-preview
+          cache: false
 
       - name: Restore Cargo Cache
         if: ${{ steps.check_target_cache.outputs.cache-hit != 'true' || steps.check_test_archive_cache.outputs.cache-hit != 'true' || steps.check_genesis_archive_cache.outputs.cache-hit != 'true' }}
