@@ -20,7 +20,7 @@ concurrency:
   # group: stacks-bitcoin-cache-${{ github.ref }}
   # # Only cancel in progress if this is for a PR
   # cancel-in-progress: ${{ github.event_name == 'pull_request' }}
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: create-cache-${{ github.workflow }}-${{ github.ref }}
   # Only cancel in progress if this is for a PR
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
