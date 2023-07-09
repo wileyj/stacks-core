@@ -6,7 +6,6 @@ name: Delete Cache
 on:
   workflow_dispatch:
   workflow_call:
-
 concurrency:
   # group: ${{ github.head_ref || github.run_id }}
   group: ${{ github.workflow }}-${{ github.ref }}
