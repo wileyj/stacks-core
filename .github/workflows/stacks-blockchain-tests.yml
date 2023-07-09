@@ -24,6 +24,7 @@ env:
   SEGMENT_DOWNLOAD_TIMEOUT_MINS: 15
 
 concurrency:
+  # https://github.com/orgs/community/discussions/13496
   # group: stacks-blockchain-tests-${{ github.ref }}
   group: ${{ github.workflow }}-${{ github.ref }}
   # Only cancel in progress if this is for a PR
