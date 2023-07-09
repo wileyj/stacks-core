@@ -9,7 +9,7 @@ name: Create Test Caches
 
 on:
   workflow_call:
-
+  workflow_dispatch:
 # move btc_version to an input arg, default to 0.20 ?
 env:
   RUSTFLAGS: "-Cinstrument-coverage"
