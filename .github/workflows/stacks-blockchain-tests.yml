@@ -18,7 +18,7 @@ on:
   pull_request_review:
     types: [submitted]
   workflow_run:
-    workflows: ["Create Cache"]
+    workflows: ["Create Test Caches"]
     types:
       - completed
 env:
