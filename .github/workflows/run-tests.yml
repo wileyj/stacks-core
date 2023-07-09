@@ -35,19 +35,38 @@ jobs:
   bitcoin-tests:
     name: Run Bitcoin Tests
     uses: ./.github/workflows/bitcoin-tests.yml
+    needs:
+      - create-cache
     # uses: wileyj/stacks-blockchain/.github/workflows/create_cache.yml@master
 
   stacks-blockchain-tests:
     name: Run Bitcoin Tests
     uses: ./.github/workflows/stacks-blockchain-tests.yml
+    needs:
+      - create-cache
     # uses: wileyj/stacks-blockchain/.github/workflows/create_cache.yml@master
 
   release-tests:
     name: Run Bitcoin Tests
     uses: ./.github/workflows/release-tests.yml
+    needs:
+      - create-cache
     # uses: wileyj/stacks-blockchain/.github/workflows/create_cache.yml@master
 
-  slow-tests:
+  # slow-tests:
+  #   name: Run Bitcoin Tests
+  #   uses: ./.github/workflows/slow-test.yml
+  #   needs:
+  #     - create-cache
+  #   # uses: wileyj/stacks-blockchain/.github/workflows/create_cache.yml@master
+
+  delete-cache:
     name: Run Bitcoin Tests
-    uses: ./.github/workflows/slow-test.yml
+    uses: ./.github/workflows/delete-cache.yml
+    needs:
+      - create-cache
+      - bitcoin-tests
+      - stacks-blockchain-tests
+      - release-tests
+      # - slow-tests
     # uses: wileyj/stacks-blockchain/.github/workflows/create_cache.yml@master
