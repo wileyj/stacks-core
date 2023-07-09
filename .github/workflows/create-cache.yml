@@ -1,5 +1,5 @@
 ##
-## Bitcoin Integration Tests
+## Create Cache
 ##
 
 name: Create Test Caches
@@ -20,7 +20,7 @@ concurrency:
   # group: stacks-bitcoin-cache-${{ github.ref }}
   # # Only cancel in progress if this is for a PR
   # cancel-in-progress: ${{ github.event_name == 'pull_request' }}
-  group: create-cache-${{ github.workflow }}-${{ github.ref }}
+  group: ${{ github.workflow }}-${{ github.ref }}
   # Only cancel in progress if this is for a PR
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
