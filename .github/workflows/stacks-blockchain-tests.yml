@@ -205,7 +205,6 @@ jobs:
         run: |
           cargo nextest run \
             --test-threads num-cpus \
-            --workspace \
             --final-status-level fail \
             --archive-file /tmp/test_archive.tar.zst
 
