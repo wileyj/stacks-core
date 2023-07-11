@@ -139,7 +139,7 @@ jobs:
         id: run_tests
         run: |
           cargo nextest run \
-            --test-threads 1 \
+            --test-threads num-cpus \
             --run-ignored all \
             --retries 2 \
             --final-status-level fail \
