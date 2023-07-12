@@ -36,11 +36,13 @@ jobs:
       - name: Checkout the latest code
         id: git_checkout
         uses: actions/checkout@v3
+
       - name: Build docs
         id: build_docs
         env:
           DOCKER_BUILDKIT: 1
         run: rm -rf docs-output && docker build -o docs-output -f ./.github/actions/docsgen/Dockerfile.docsgen .
+
       - name: Checkout latest docs
         id: git_checkout_docs
         uses: actions/checkout@v3
@@ -48,6 +50,7 @@ jobs:
           token: ${{ secrets.DOCS_GITHUB_TOKEN }}
           repository: ${{ env.TARGET_REPOSITORY }}
           path: docs
+
       - name: Branch and commit
         id: push
         run: |
@@ -69,6 +72,7 @@ jobs:
             git push robot $ROBOT_BRANCH
             echo "::set-output name=open_pr::1"
           fi
+
       - name: Open PR
         id: open_pr
         if: ${{ steps.push.outputs.open_pr == '1' }}

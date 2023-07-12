@@ -7,7 +7,6 @@ name: Security Audit
 # Only run when:
 #   - workflow is manually triggered
 #   - Cargo.toml/lock is changed
-#   - Daily at 0330 UTC
 # Note: this will create issues for any crate advisories unless they already exist
 
 on:
@@ -16,8 +15,6 @@ on:
   #   paths:
   #     - "**/Cargo.toml"
   #     - "**/Cargo.lock"
-  # schedule:
-  #   - cron: 30 03 * * *
 
 jobs:
   security_audit:
@@ -28,6 +25,7 @@ jobs:
       - name: Checkout the latest code
         id: git_checkout
         uses: actions/checkout@v3
+
       - name: Rust Dependency Check
         id: rust_dep_check
         uses: actions-rs/audit-check@v1
