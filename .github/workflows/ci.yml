@@ -103,7 +103,7 @@ jobs:
   create-test-cache:
     if: ${{ inputs.tag != '' || github.event.review.state == 'approved' }}
     name: Create Test Cache
-    uses: ././.github/workflows/create-cache.yml
+    uses: ./.github/workflows/create-cache.yml
     needs:
       - rustfmt
       - leaked-cred-test
