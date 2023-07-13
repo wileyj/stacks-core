@@ -96,7 +96,9 @@ jobs:
     needs:
       - rustfmt
       - leaked-cred-test
-
+    secrets:
+      DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+      DOCKERHUB_PASSWORD: ${{ secrets.DOCKERHUB_PASSWORD }}
   ## run this step if:
   ##  - input tag is provided OR a PR is approved
   ##  - this job triggers several other testing workflows
