@@ -8,6 +8,10 @@ name: Build Alpine Binary Image
 #   - manually triggered via the ci.yml workflow
 
 on:
+  # workflow_run:
+  #   workflows: ["Build Distributable Binaries"]
+  #   types:
+  #     - completed
   workflow_call:
     inputs:
       tag:

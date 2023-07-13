@@ -16,13 +16,13 @@ on:
         description: "The tag to create (optional)"
         required: false
   pull_request_target:
-    # paths-ignore:
-    #   - "**.md"
-    #   - "**.yml"
-    ## might be better to use inclusive v exclusive paths
-    paths:
-      - "**.rs"
-      - "**.clar"
+    paths-ignore:
+      - "**.md"
+      - "**.yml"
+    # ## might be better to use inclusive v exclusive paths
+    # paths:
+    #   - "**.rs"
+    #   - "**.clar"
 
 concurrency:
   group: ${{ github.head_ref || github.run_id }}
@@ -31,6 +31,10 @@ concurrency:
 jobs:
   ##
   ## Execute on every PR, these are generic workflows
+  ##   - rust format
+  ##   - check for any leaked credentials
+  ##   - build debian source image (if no tag is provided)
+
   ##
   ## rust format
   rustfmt:
@@ -80,13 +84,33 @@ jobs:
           path: ./
           base: ${{ env.BRANCH_NAME }}
           head: HEAD
-# clippy job
-# audit job?
+  # clippy job
+  # audit job?
 
+  ## Build and push Debian image built from source
+  build-source-image:
+    if: ${{ inputs.tag == '' }}
+    name: Docker Debian Source Image
+    # uses: wileyj/stacks-blockchain/.github/workflows/image-build-debian-source.yml@master
+    uses: ./.github/workflows/image-build-debian-source.yml
+    needs:
+      - rustfmt
+      - leaked-cred-test
+
+  ## run this step if:
+  ##  - input tag is provided OR a PR is approved
+  ##  - this job triggers several other testing workflows
+  create-test-cache:
+    if: ${{ inputs.tag != '' || github.event.review.state == 'approved' }}
+    name: Create Test Cache
+    uses: ././.github/workflows/create-cache.yml
+    needs:
+      - rustfmt
+      - leaked-cred-test
 # ## Release tests: Execute on every run
 # release-tests:
 #   name: Release Tests
-#   # uses: wileyj/stacks-blockchain.github/workflows/stacks-blockchain-tests.yml@fakemaster
+#   # uses: wileyj/stacks-blockchain.github/workflows/stacks-blockchain-tests.yml@master
 #   uses: ./.github/workflows/stacks-blockchain-tests.yml
 
 # ###############################################
@@ -102,7 +126,7 @@ jobs:
 # build-source:
 #   if: ${{ inputs.tag != '' || (github.ref != format('refs/heads/{0}', github.event.repository.default_branch) && !contains(github.ref, 'refs/pull')) }}
 #   name: Build Binaries
-#   # uses: wileyj/stacks-blockchain/.github/workflows/build-source-binary.yml@fakemaster
+#   # uses: wileyj/stacks-blockchain/.github/workflows/build-source-binary.yml@master
 #   uses: ./.github/workflows/build-source-binary.yml
 #   needs:
 #     - rustfmt
@@ -124,7 +148,7 @@ jobs:
 # github-release:
 #   if: ${{ inputs.tag != '' || (github.ref != format('refs/heads/{0}', github.event.repository.default_branch) && !contains(github.ref, 'refs/pull')) }}
 #   name: Github Release
-#   # uses: wileyj/stacks-blockchain/.github/workflows/github-release.yml@fakemaster
+#   # uses: wileyj/stacks-blockchain/.github/workflows/github-release.yml@master
 #   uses: ./.github/workflows/github-release.yml
 #   needs: build-source
 #   with:
@@ -144,7 +168,7 @@ jobs:
 # docker-alpine:
 #   if: ${{ inputs.tag != '' || (github.ref != format('refs/heads/{0}', github.event.repository.default_branch) && !contains(github.ref, 'refs/pull')) }}
 #   name: Docker Alpine (Binary)
-#   # uses: wileyj/stacks-blockchain/.github/workflows/image-build-alpine-binary.yml@fakemaster
+#   # uses: wileyj/stacks-blockchain/.github/workflows/image-build-alpine-binary.yml@master
 #   uses: ./.github/workflows/image-build-alpine-binary.yml
 #   needs: github-release
 #   with:
@@ -164,7 +188,7 @@ jobs:
 # docker-debian:
 #   if: ${{ inputs.tag != '' || (github.ref != format('refs/heads/{0}', github.event.repository.default_branch) && !contains(github.ref, 'refs/pull')) }}
 #   name: Docker Debian (Binary)
-#   # uses: wileyj/stacks-blockchain/.github/workflows/image-build-debian-binary.yml@fakemaster
+#   # uses: wileyj/stacks-blockchain/.github/workflows/image-build-debian-binary.yml@master
 #   uses: ./.github/workflows/image-build-debian-binary.yml
 #   needs: github-release
 #   with:
@@ -186,7 +210,7 @@ jobs:
 # build-branch:
 #   if: ${{ inputs.tag == '' }}
 #   name: Docker Debian (Source)
-#   # uses: wileyj/stacks-blockchain/.github/workflows/image-build-debian-source.yml@fakemaster
+#   # uses: wileyj/stacks-blockchain/.github/workflows/image-build-debian-source.yml@master
 #   uses: ./.github/workflows/image-build-debian-source.yml
 #   needs:
 #     - rustfmt

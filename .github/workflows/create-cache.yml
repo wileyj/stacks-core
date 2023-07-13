@@ -4,13 +4,20 @@
 
 name: Create Test Caches
 
-# Only run when:
-#   - PRs are (re)opened against master branch
+# Run when:
+#   - PR is approved
+#     - files changed are *.rs or *.clar (i.e. no .yml or .md files)
+#  https://github.com/marketplace/actions/paths-changes-filter
 
 on:
-  workflow_call:
+  # workflow_call:
   workflow_dispatch:
-# move btc_version to an input arg, default to 0.20 ?
+  # pull_request_review:
+  #   types: [submitted]
+  # pull_request_target:
+  #   paths:
+  #     - "**.rs"
+  #     - "**.clar"
 env:
   RUSTFLAGS: "-Cinstrument-coverage"
   LLVM_PROFILE_FILE: "stacks-blockchain-%p-%m.profraw"
@@ -26,6 +33,7 @@ concurrency:
 
 jobs:
   cache-cargo:
+    # if: github.event.review.state == 'approved'
     name: Cargo Cache
     runs-on: ubuntu-latest
     # runs-on: buildjet-4vcpu-ubuntu-2204
@@ -77,6 +85,7 @@ jobs:
   ##
 
   cache-bitcoin-binary:
+    # if: github.event.review.state == 'approved'
     name: Bitcoin Binary Cache
     runs-on: ubuntu-latest
     # runs-on: buildjet-2vcpu-ubuntu-2204
@@ -107,6 +116,7 @@ jobs:
           key: ${{ github.event.repository.name }}-bitcoin-binaries
 
   cache-test-archive:
+    # if: github.event.review.state == 'approved'
     name: Test Archive Cache
     runs-on: ubuntu-latest
     # runs-on: buildjet-4vcpu-ubuntu-2204

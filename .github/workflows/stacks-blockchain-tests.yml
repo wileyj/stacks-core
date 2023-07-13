@@ -5,21 +5,9 @@
 name: Stacks Blockchain Tests
 
 on:
-  ## run when tagging a release or a PR is approved
+  ## run when create-cache has completed successfully
+  ##  create-cache will run when an input-tag is provided, or a PR is approved
   workflow_dispatch:
-  workflow_call:
-  pull_request_target:
-    paths:
-      - "**.rs"
-      - "**.clar"
-  # push:
-  #   paths-ignore:
-  #     - "*.md"
-  #   tags:
-  #     - "[0-9]+.[0-9]+.[0-9]+.[0-9]+.[0-9]+" # 2.1.0.0.0
-  #     - "[0-9]+.[0-9]+.[0-9].[0-9]+.[0-9]+-rc[0-9]+" # 2.1.0.0.0-rc1
-  pull_request_review:
-    types: [submitted]
   workflow_run:
     workflows: ["Create Test Caches"]
     types:
@@ -209,6 +197,7 @@ jobs:
         run: |
           cargo nextest run \
             --test-threads num-cpus \
+            --retries 2 \
             --final-status-level fail \
             --archive-file /tmp/test_archive.tar.zst
 
