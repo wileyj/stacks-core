@@ -87,10 +87,22 @@ jobs:
   # clippy job
   # audit job?
 
-  ## Build and push Debian image built from source
-  build-source-image:
+  # ## Build and push Debian image built from source
+  # build-source-image:
+  #   if: ${{ inputs.tag == '' }}
+  #   name: Docker Debian Source Image
+  #   # uses: wileyj/stacks-blockchain/.github/workflows/image-build-debian-source.yml@master
+  #   uses: ./.github/workflows/image-build-debian-source.yml
+  #   needs:
+  #     - rustfmt
+  #     - leaked-cred-test
+  #   secrets:
+  #     DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+  #     DOCKERHUB_PASSWORD: ${{ secrets.DOCKERHUB_PASSWORD }}
+
+  build-branch:
     if: ${{ inputs.tag == '' }}
-    name: Docker Debian Source Image
+    name: Docker Debian (Source)
     # uses: wileyj/stacks-blockchain/.github/workflows/image-build-debian-source.yml@master
     uses: ./.github/workflows/image-build-debian-source.yml
     needs:
@@ -99,6 +111,7 @@ jobs:
     secrets:
       DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
       DOCKERHUB_PASSWORD: ${{ secrets.DOCKERHUB_PASSWORD }}
+
   ## run this step if:
   ##  - input tag is provided OR a PR is approved
   ##  - this job triggers several other testing workflows
