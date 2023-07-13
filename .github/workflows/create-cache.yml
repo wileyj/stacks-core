@@ -10,7 +10,7 @@ name: Create Test Caches
 #  https://github.com/marketplace/actions/paths-changes-filter
 
 on:
-  # workflow_call:
+  workflow_call:
   workflow_dispatch:
   # pull_request_review:
   #   types: [submitted]
