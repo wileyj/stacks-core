@@ -8,25 +8,42 @@ name: Build Linux Source Image
 #   - workflow is manually triggered
 # #   - manually triggered via the ci.yml workflow
 #   - PR created, ignoring yaml and markdownfiles
+
 on:
   workflow_dispatch:
-  workflow_call:
-    inputs:
-      docker_platforms:
-        required: true
-        description: "Arch to buid images"
-        type: string
-        default: linux/amd64
-      linux_version:
-        required: true
-        description: "Linux image to build"
-        type: string
-        default: debian
-      build_type:
-        required: true
-        description: Build type (source/binary)
-        type: string
-        default: source
+    # workflow_call:
+    # inputs:
+    #   docker_platforms:
+    #     required: true
+    #     description: "Docker Image Arch"
+    #     type: choice
+    #     default: linux/amd64
+    #     options:
+    #       - linux/amd64
+    #   linux_version:
+    #     required: true
+    #     description: "Linux image to build"
+    #     type: choice
+    #     default: debian
+    #     options:
+    #       - debian
+    # workflow_call:
+    #   inputs:
+    #     docker_platforms:
+    #       required: true
+    #       description: "Arch to buid images"
+    #       type: string
+    #       default: linux/amd64
+    #     linux_version:
+    #       required: true
+    #       description: "Linux image to build"
+    #       type: string
+    #       default: debian
+    #     build_type:
+    #       required: true
+    #       description: Build type (source/binary)
+    #       type: string
+    #       default: source
     secrets:
       DOCKERHUB_USERNAME:
         required: true
@@ -36,6 +53,11 @@ on:
     workflows: ["CI"]
     types:
       - completed
+
+env:
+  docker_arch: linux/amd64
+  os_version: debian
+
 jobs:
   image:
     name: Build Image
@@ -90,8 +112,8 @@ jobs:
         id: docker_build
         uses: docker/build-push-action@v3
         with:
-          file: ./.github/actions/dockerfiles/Dockerfile.${{ inputs.linux_version }}-${{ inputs.build_type }}
-          platforms: ${{ inputs.docker_platforms }}
+          file: ./.github/actions/dockerfiles/Dockerfile.${{ env.os_version }}-source
+          platforms: ${{ env.docker_arch }}
           tags: ${{ steps.docker_metadata.outputs.tags }}
           labels: ${{ steps.docker_metadata.outputs.labels }}
           build-args: |
