@@ -9,8 +9,25 @@ name: Build Linux Source Image
 # #   - manually triggered via the ci.yml workflow
 #   - PR created, ignoring yaml and markdownfiles
 
+inputs:
+  docker_arch:
+    required: true
+    description: "Docker Image Arch"
+    type: choice
+    default: linux/amd64
+    options:
+      - linux/amd64
+  os_version:
+    required: true
+    description: "Linux image to build"
+    type: choice
+    default: debian
+    options:
+      - debian
+
 on:
   workflow_dispatch:
+  workflow_call:
     # workflow_call:
     # inputs:
     #   docker_platforms:
@@ -49,18 +66,21 @@ on:
         required: true
       DOCKERHUB_PASSWORD:
         required: true
-  workflow_run:
-    workflows: ["CI"]
-    types:
-      - completed
+  # workflow_run:
+  #   workflows: ["CI"]
+  #   types:
+  #     - completed
 
+# env:
+#   docker_arch: linux/amd64
+#   os_version: debian
 env:
-  docker_arch: linux/amd64
-  os_version: debian
+  docker_arch: ${{ inputs.docker_platforms }}
+  os_version: ${{ inputs.os_version }}
 
 jobs:
   image:
-    name: Build Image
+    name: Build Docker Image
     runs-on: ubuntu-latest
     steps:
       - name: Checkout the latest code
