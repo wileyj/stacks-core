@@ -10,50 +10,29 @@ name: Build Linux Source Image
 #   - PR created, ignoring yaml and markdownfiles
 
 on:
-  workflow_call:
   workflow_dispatch:
-    # workflow_call:
+  workflow_call:
     # inputs:
     #   docker_platforms:
     #     required: true
-    #     description: "Docker Image Arch"
-    #     type: choice
+    #     description: "Arch to buid images"
+    #     type: string
     #     default: linux/amd64
-    #     options:
-    #       - linux/amd64
     #   linux_version:
     #     required: true
     #     description: "Linux image to build"
-    #     type: choice
+    #     type: string
     #     default: debian
-    #     options:
-    #       - debian
-    # workflow_call:
-    #   inputs:
-    #     docker_platforms:
-    #       required: true
-    #       description: "Arch to buid images"
-    #       type: string
-    #       default: linux/amd64
-    #     linux_version:
-    #       required: true
-    #       description: "Linux image to build"
-    #       type: string
-    #       default: debian
-    #     build_type:
-    #       required: true
-    #       description: Build type (source/binary)
-    #       type: string
-    #       default: source
+    #   build_type:
+    #     required: true
+    #     description: Build type (source/binary)
+    #     type: string
+    #     default: source
     secrets:
       DOCKERHUB_USERNAME:
         required: true
       DOCKERHUB_PASSWORD:
         required: true
-  # workflow_run:
-  #   workflows: ["CI"]
-  #   types:
-  #     - completed
 
 env:
   docker_arch: linux/amd64
