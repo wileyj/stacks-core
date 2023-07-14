@@ -9,7 +9,8 @@ on:
   ##  create-cache will run when an input-tag is provided, or a PR is approved
   workflow_dispatch:
   workflow_run:
-    workflows: ["Create Test Caches"]
+    workflows: ["CI"]
+    # workflows: ["Create Test Caches"]
     types:
       - completed
   # ## old
