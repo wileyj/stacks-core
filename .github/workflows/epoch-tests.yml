@@ -2,17 +2,17 @@
 ## Release Tests
 ##
 
-name: Release Tests
+name: Epoch Tests
 
 on:
   ## run when create-cache has completed successfully
   ##  create-cache will run when an input-tag is provided, or a PR is approved
   workflow_dispatch:
-  workflow_run:
-    workflows: ["CI"]
-    # workflows: ["Create Test Caches"]
-    types:
-      - completed
+  workflow_call:
+  # workflow_run:
+  #   workflows: ["CI"]
+  #   types:
+  #     - completed
   # ## old
   # ## run when tagging a release or a PR is approved
   # workflow_dispatch:

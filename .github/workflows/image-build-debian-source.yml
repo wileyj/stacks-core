@@ -12,30 +12,14 @@ name: Build Linux Source Image
 on:
   workflow_dispatch:
   workflow_call:
-    # inputs:
-    #   docker_platforms:
+    # secrets:
+    #   DOCKERHUB_USERNAME:
     #     required: true
-    #     description: "Arch to buid images"
-    #     type: string
-    #     default: linux/amd64
-    #   linux_version:
+    #   DOCKERHUB_PASSWORD:
     #     required: true
-    #     description: "Linux image to build"
-    #     type: string
-    #     default: debian
-    #   build_type:
-    #     required: true
-    #     description: Build type (source/binary)
-    #     type: string
-    #     default: source
-    secrets:
-      DOCKERHUB_USERNAME:
-        required: true
-      DOCKERHUB_PASSWORD:
-        required: true
 
 env:
-  docker_arch: linux/amd64
+  docker_platforms: linux/amd64
   os_version: debian
 
 jobs:
@@ -93,7 +77,7 @@ jobs:
         uses: docker/build-push-action@v3
         with:
           file: ./.github/actions/dockerfiles/Dockerfile.${{ env.os_version }}-source
-          platforms: ${{ env.docker_arch }}
+          platforms: ${{ env.docker_platforms }}
           tags: ${{ steps.docker_metadata.outputs.tags }}
           labels: ${{ steps.docker_metadata.outputs.labels }}
           build-args: |
