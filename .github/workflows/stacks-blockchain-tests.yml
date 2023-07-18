@@ -222,13 +222,26 @@ jobs:
         run: |
           grcov . --binary-path ./target/debug/ -s . -t lcov --branch --ignore-not-existing --ignore "/*" -o lcov.info
 
-      - name: Unit Test Codecov
-        id: codedov
-        uses: codecov/codecov-action@v3
+      # - name: Unit Test Codecov
+      #   id: codedov
+      #   uses: codecov/codecov-action@v3
+      #   with:
+      #     files: ./lcov.info
+      #     name: unit_tests
+      #     fail_ci_if_error: true
+
+      - name: Upload Code Coverage
+        id: code_coverage
+        uses: Wandalen/wretry.action@master
         with:
-          files: ./lcov.info
-          name: unit_tests
-          fail_ci_if_error: true
+          action: codecov/codecov-action@v3
+          with: |
+            files: ./lcov.info
+            name: unit_tests
+            fail_ci_if_error: false
+            verbose: true
+          attempt_limit: 3
+          attempt_delay: 10000
 
   open-api-validation:
     # if: ${{ false }}

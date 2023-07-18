@@ -144,10 +144,23 @@ jobs:
         run: |
           grcov . --binary-path ./target/debug/ -s . -t lcov --branch --ignore-not-existing --ignore "/*" -o lcov.info || exit 1
 
-      - name: Code Coverage
+      # - name: Code Coverage
+      #   id: code_coverage
+      #   uses: codecov/codecov-action@v3
+      #   with:
+      #     files: ./lcov.info
+      #     name: ${{ matrix.test-name }}
+      #     fail_ci_if_error: false
+
+      - name: Upload Code Coverage
         id: code_coverage
-        uses: codecov/codecov-action@v3
+        uses: Wandalen/wretry.action@master
         with:
-          files: ./lcov.info
-          name: ${{ matrix.test-name }}
-          fail_ci_if_error: false
+          action: codecov/codecov-action@v3
+          with: |
+            files: ./lcov.info
+            name: ${{ matrix.test-name }}
+            fail_ci_if_error: false
+            verbose: true
+          attempt_limit: 3
+          attempt_delay: 10000
