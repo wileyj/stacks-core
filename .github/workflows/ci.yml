@@ -15,8 +15,7 @@ on:
       tag:
         description: "The tag to create (optional)"
         required: false
-  # pull_request_target:
-  pull_request:
+  pull_request_target:
     # types:
     #   - opened
     #   - reopened
