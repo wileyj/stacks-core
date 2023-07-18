@@ -11,6 +11,10 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+defaults:
+  run:
+    shell: bash
+
 jobs:
   delete-cache:
     # if: ${{ false }}
@@ -19,7 +23,6 @@ jobs:
     steps:
       - name: Delete Binary Cache
         env:
-          REPO: ${{ github.repository }}
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
         run: |
           gh extension install actions/gh-actions-cache
@@ -29,9 +32,26 @@ jobs:
           gh actions-cache delete ${{ github.event.repository.name }}-genesis-archive -R ${{ github.repository }} --confirm
           echo "Done"
         # run: |
-        #   for cache in $(gh actions-cache list -R ${{ github.repository }}  | grep ${{ github.run_id }}-${{ github.sha }} | awk {'print $1'}); do
-        #     echo "Deleting cache ${cache}"
-        #     gh actions-cache delete -R ${{ github.repository }} ${cache} --confirm
+        #   TS=$(date --iso-8601=ns -u -d @$((EPOCHSECONDS-86400)))
+        #   gh api \
+        #     --paginate \
+        #     -H "Accept: application/vnd.github+json" \
+        #     repos/${{ github.repository }}/actions/caches |
+        #   for ID in `
+        #     jq -r --arg TS "$TS" '
+        #       .actions_caches[]
+        #       | { id, last_accessed_at, key }
+        #       | select(.last_accessed_at < $TS)
+        #       | {id}
+        #       | .[]
+        #     '
+        #   `; do
+        #     echo "deleting cache: $ID"
+        #     gh api \
+        #       -H "Accept: application/vnd.github.v3+json" \
+        #       -X DELETE \
+        #       repos/${{ github.repository }}/actions/caches/$ID \
+        #     | echo;
         #   done
 
       # - name: Delete Rust Cache
