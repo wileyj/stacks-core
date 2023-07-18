@@ -16,9 +16,11 @@ on:
         description: "The tag to create (optional)"
         required: false
   pull_request_target:
-    # types:
-    #   - opened
-    #   - reopened
+    types:
+      - opened
+      - reopened
+      - closed
+      - synchronize
     paths-ignore:
       - "**.md"
       - "**.yml"
