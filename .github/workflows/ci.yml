@@ -15,7 +15,11 @@ on:
       tag:
         description: "The tag to create (optional)"
         required: false
-  pull_request_target:
+  # pull_request_target:
+  pull_request:
+    types:
+      - opened
+      - reopened
     paths-ignore:
       - "**.md"
       - "**.yml"
