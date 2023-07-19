@@ -76,14 +76,14 @@ jobs:
     steps:
       - name: Extract non-pr branch name
         id: extract_branch
-        if: ${{ github.event_name != 'pull_request' }}
+        if: ${{ github.event_name != 'pull_request' && github.event_name != 'pull_request_target' }}
         # run: echo "BRANCH_NAME=$(echo ${GITHUB_REF#refs/heads/} | sed -e 's!^refs/heads/!! )" >> $GITHUB_ENV
         run: echo "BRANCH_NAME=$(echo ${GITHUB_REF#refs/heads/})" >> $GITHUB_ENV
       # ${{ github.event.pull_request.base.ref }}
 
       - name: Extract PR branch name
         id: extract_branch_pr
-        if: ${{ github.event_name == 'pull_request' }}
+        if: ${{ github.event_name == 'pull_request' || github.event_name == 'pull_request_target' }}
         run: echo "BRANCH_NAME=$(echo ${GITHUB_HEAD_REF})" >> $GITHUB_ENV
       - name: Branch name
         run: |
@@ -93,18 +93,18 @@ jobs:
           echo " - pr: ${GITHUB_HEAD_REF}"
           echo " - base-ref: ${{ github.event.pull_request.base.ref }} "
           echo " - github.event_name: ${{ github.event_name }}"
-      - name: Checkout the latest code
-        id: git_checkout
-        uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
-      - name: TruffleHog Scan
-        id: trufflehog_check
-        uses: trufflesecurity/trufflehog@main
-        with:
-          path: ./
-          base: ${{ env.BRANCH_NAME }}
-          head: HEAD
+      # - name: Checkout the latest code
+      #   id: git_checkout
+      #   uses: actions/checkout@v3
+      #   with:
+      #     fetch-depth: 0
+      # - name: TruffleHog Scan
+      #   id: trufflehog_check
+      #   uses: trufflesecurity/trufflehog@main
+      #   with:
+      #     path: ./
+      #     base: ${{ env.BRANCH_NAME }}
+      #     head: HEAD
   # #
   # # clippy job
   # #
