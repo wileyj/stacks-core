@@ -137,14 +137,16 @@ jobs:
   ## Tests to run regularly
   ##
   ## if:
-  ##  - ((input tag is provided) AND (is master branch and not a PR) OR (pr is approved))
+  ##  - ((input tag is not provided) AND (pr is approved))
   ## then:
   ##  - run subset of tests
   ##    - epoch-tests
   ##    - bitcoin tests
+  ## if input tag *is* provided, these tests will run as part of the `create-release` workflow
+  ##
   bitcoin-tests:
-    # if: ${{ inputs.tag != '' || github.event.review.state == 'approved' }}
-    if: ${{ (inputs.tag != '' && (github.ref == format('refs/heads/{0}', github.event.repository.default_branch) && !contains(github.ref, 'refs/pull'))) || github.event.review.state == 'approved'  }}
+    if: ${{ inputs.tag != '' && github.event.review.state == 'approved' }}
+    # if: ${{ (inputs.tag != '' && (github.ref == format('refs/heads/{0}', github.event.repository.default_branch) && !contains(github.ref, 'refs/pull'))) || github.event.review.state == 'approved'  }}
     name: Bitcoin Tests
     # uses: wileyj/stacks-blockchain/.github/workflows/image-build-debian-source.yml@master
     uses: ./.github/workflows/bitcoin-tests.yml
@@ -153,8 +155,8 @@ jobs:
       - leaked-cred-test
 
   epoch-tests:
-    # if: ${{ inputs.tag != '' || github.event.review.state == 'approved' }}
-    if: ${{ (inputs.tag != '' && (github.ref == format('refs/heads/{0}', github.event.repository.default_branch) && !contains(github.ref, 'refs/pull'))) || github.event.review.state == 'approved'  }}
+    if: ${{ inputs.tag != '' && github.event.review.state == 'approved' }}
+    # if: ${{ (inputs.tag != '' && (github.ref == format('refs/heads/{0}', github.event.repository.default_branch) && !contains(github.ref, 'refs/pull'))) || github.event.review.state == 'approved'  }}
     name: Epoch Tests
     # uses: wileyj/stacks-blockchain/.github/workflows/build-source-binary.yml@master
     uses: ./.github/workflows/epoch-tests.yml
