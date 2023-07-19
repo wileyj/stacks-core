@@ -19,7 +19,7 @@ on:
     types:
       - opened
       - reopened
-      - closed
+      # - closed
       - synchronize
     paths-ignore:
       - "**.md"
