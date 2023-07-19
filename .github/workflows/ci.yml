@@ -28,7 +28,12 @@ on:
     # paths:
     #   - "**.rs"
     #   - "**.clar"
-
+  # pull_request_review:
+  #   types:
+  #     - submitted
+  #   paths-ignore:
+  #     - "**.md"
+  #     - "**.yml"
 concurrency:
   group: ${{ github.head_ref || github.run_id }}
   cancel-in-progress: true
@@ -145,7 +150,7 @@ jobs:
   ## if input tag *is* provided, these tests will run as part of the `create-release` workflow
   ##
   bitcoin-tests:
-    if: ${{ inputs.tag != '' && github.event.review.state == 'approved' }}
+    if: ${{ inputs.tag == '' && github.event.review.state == 'approved' }}
     # if: ${{ (inputs.tag != '' && (github.ref == format('refs/heads/{0}', github.event.repository.default_branch) && !contains(github.ref, 'refs/pull'))) || github.event.review.state == 'approved'  }}
     name: Bitcoin Tests
     # uses: wileyj/stacks-blockchain/.github/workflows/image-build-debian-source.yml@master
@@ -155,7 +160,7 @@ jobs:
       - leaked-cred-test
 
   epoch-tests:
-    if: ${{ inputs.tag != '' && github.event.review.state == 'approved' }}
+    if: ${{ inputs.tag == '' && github.event.review.state == 'approved' }}
     # if: ${{ (inputs.tag != '' && (github.ref == format('refs/heads/{0}', github.event.repository.default_branch) && !contains(github.ref, 'refs/pull'))) || github.event.review.state == 'approved'  }}
     name: Epoch Tests
     # uses: wileyj/stacks-blockchain/.github/workflows/build-source-binary.yml@master
