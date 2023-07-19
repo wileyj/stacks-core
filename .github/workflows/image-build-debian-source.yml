@@ -47,13 +47,22 @@ jobs:
 
       - name: Extract branch name
         id: extract_branch
-        if: ${{ github.event_name != 'pull_request' }}
-        run: echo "BRANCH_NAME=$(echo ${GITHUB_REF#refs/heads/})" >> $GITHUB_ENV
-
-      - name: Extract branch name (PR)
-        id: extract_branch_pr
-        if: ${{ github.event_name == 'pull_request' }}
-        run: echo "BRANCH_NAME=$(echo ${GITHUB_HEAD_REF})" >> $GITHUB_ENV
+        shell: bash
+        run: |
+          event=${{ github.event_name }}
+          case ${event} in
+            pull_request|pull_request_target|pull_request_review)
+              echo "is a PR"
+              echo "  setting branch: ${{ github.event.pull_request.head.ref }}"
+              branch=${{ github.event.pull_request.head.ref }}
+              ;;
+            *)
+              echo "not a PR"
+              echo "  setting branch: ${GITHUB_REF#refs/heads/}"
+              branch=${GITHUB_REF#refs/heads/}
+              ;;
+          esac
+          echo "BRANCH_NAME=$branch" >> $GITHUB_ENV
 
       - name: Docker Metadata
         id: docker_metadata

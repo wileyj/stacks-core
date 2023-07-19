@@ -47,6 +47,15 @@ jobs:
     if: ${{ inputs.tag != '' }}
     name: Build Image
     runs-on: ubuntu-latest
+    ## this can DRY the image build and make multiple files unneeded
+    # strategy:
+    #   fail-fast: false
+    #   max-parallel: 2
+    #   matrix:
+    #     dist:
+    #       - alpine
+    #       - debian
+    ##
     steps:
       - name: Checkout the latest code
         id: git_checkout

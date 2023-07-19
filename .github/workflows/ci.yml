@@ -6,10 +6,9 @@ name: CI
 ##   - push to master (i.e. merge develop -> master)
 
 on:
-  # push:
-  #   branches:
-  #     - master
-  # pull_request:
+  push:
+    branches:
+      - master
   workflow_dispatch:
     inputs:
       tag:
@@ -19,7 +18,7 @@ on:
     types:
       - opened
       - reopened
-      # - closed
+      # - closed ## this will run if a PR is opened, then closed (i.e. by a spammer). best to leave it disabled
       - synchronize
     paths-ignore:
       - "**.md"
@@ -48,7 +47,6 @@ jobs:
   ##
   ## rust format
   rustfmt:
-    if: ${{ false }}
     name: Rust Format
     runs-on: ubuntu-latest
     steps:
