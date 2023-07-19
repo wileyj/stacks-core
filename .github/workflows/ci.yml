@@ -36,6 +36,12 @@ on:
     paths-ignore:
       - "**.md"
       - "**.yml"
+  pull_request_review_comment:
+    types:
+      - created
+      - deleted
+    paths-ignore:
+      - "**"
 concurrency:
   group: ${{ github.head_ref || github.run_id }}
   cancel-in-progress: true
