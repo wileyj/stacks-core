@@ -37,10 +37,7 @@ on:
       - "**.md"
       - "**.yml"
   pull_request_review_comment:
-    types:
-      - created
-      - deleted
-    paths-ignore:
+    branches-ignore:
       - "**"
 concurrency:
   group: ${{ github.head_ref || github.run_id }}
@@ -129,6 +126,7 @@ jobs:
           echo " - github.event.pull_request.base.ref: ${{ github.event.pull_request.base.ref }} "
           echo " - github.event.pull_request.head.ref: ${{ github.event.pull_request.head.ref }}"
           echo " - github.event_name: ${{ github.event_name }}"
+          echo " - github.event.type: ${{ github.event.action }}"
 
       # github.event.pull_request.head.ref: test1
 
