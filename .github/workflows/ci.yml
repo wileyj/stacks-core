@@ -74,26 +74,21 @@ jobs:
     name: Leaked Credential Test
     runs-on: ubuntu-latest
     steps:
-      # - name: Extract non-pr branch name
-      #   id: extract_branch
-      #   if: ${{ github.event_name != 'pull_request' && github.event_name != 'pull_request_target' }}
-      #   # run: echo "BRANCH_NAME=$(echo ${GITHUB_REF#refs/heads/} | sed -e 's!^refs/heads/!! )" >> $GITHUB_ENV
-      #   run: echo "BRANCH_NAME=$(echo ${GITHUB_REF#refs/heads/})" >> $GITHUB_ENV
-      # # ${{ github.event.pull_request.base.ref }}
+      - name: Extract non-pr branch name
+        id: extract_branch
+        if: ${{ github.event_name != 'pull_request' && github.event_name != 'pull_request_target' }}
+        run: echo "BRANCH_NAME=$(echo ${GITHUB_REF#refs/heads/})" >> $GITHUB_ENV
 
-      # - name: Extract PR branch name
-      #   id: extract_branch_pr
-      #   if: ${{ github.event_name == 'pull_request' || github.event_name == 'pull_request_target' }}
-      #   run: echo "BRANCH_NAME=$(echo ${GITHUB_HEAD_REF})" >> $GITHUB_ENV
-
-      # - name: Extract PR branch name
-      #   id: extract_branch_pr
-      #   run: echo "BRANCH_NAME=$(echo ${GITHUB_HEAD_REF})" >> $GITHUB_ENV
+      - name: Extract PR branch name
+        id: extract_branch_pr
+        if: ${{ github.event_name == 'pull_request' || github.event_name == 'pull_request_target' }}
+        #   run: echo "BRANCH_NAME=$(echo ${GITHUB_HEAD_REF})" >> $GITHUB_ENV
+        run: echo "BRANCH_NAME=$(echo ${{ github.event.pull_request.head.ref }})" >> $GITHUB_ENV
 
       - name: Branch name
         run: |
           echo ""
-          # echo "running on branch ${{ env.BRANCH_NAME }}"
+          echo "running on branch ${{ env.BRANCH_NAME }}"
           echo " - short-ref: ${GITHUB_REF#refs/*/}"
           echo " - short-ref-head:  ${GITHUB_REF#refs/heads/} "
           echo " - GITHUB_REF: ${GITHUB_REF}"
@@ -114,7 +109,7 @@ jobs:
         uses: trufflesecurity/trufflehog@main
         with:
           path: ./
-          base: ${{ github.event.pull_request.head.ref }}
+          base: ${{ env.BRANCH_NAME }}
           head: HEAD
 # #
 # # clippy job
