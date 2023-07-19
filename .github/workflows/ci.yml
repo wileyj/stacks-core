@@ -167,3 +167,6 @@ jobs:
     name: Epoch Tests
     # uses: wileyj/stacks-blockchain/.github/workflows/build-source-binary.yml@master
     uses: ./.github/workflows/epoch-tests.yml
+    needs:
+      - rustfmt
+      - leaked-cred-test
