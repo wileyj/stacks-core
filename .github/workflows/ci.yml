@@ -74,21 +74,26 @@ jobs:
     name: Leaked Credential Test
     runs-on: ubuntu-latest
     steps:
-      - name: Extract non-pr branch name
-        id: extract_branch
-        if: ${{ github.event_name != 'pull_request' && github.event_name != 'pull_request_target' }}
-        # run: echo "BRANCH_NAME=$(echo ${GITHUB_REF#refs/heads/} | sed -e 's!^refs/heads/!! )" >> $GITHUB_ENV
-        run: echo "BRANCH_NAME=$(echo ${GITHUB_REF#refs/heads/})" >> $GITHUB_ENV
-      # ${{ github.event.pull_request.base.ref }}
+      # - name: Extract non-pr branch name
+      #   id: extract_branch
+      #   if: ${{ github.event_name != 'pull_request' && github.event_name != 'pull_request_target' }}
+      #   # run: echo "BRANCH_NAME=$(echo ${GITHUB_REF#refs/heads/} | sed -e 's!^refs/heads/!! )" >> $GITHUB_ENV
+      #   run: echo "BRANCH_NAME=$(echo ${GITHUB_REF#refs/heads/})" >> $GITHUB_ENV
+      # # ${{ github.event.pull_request.base.ref }}
 
-      - name: Extract PR branch name
-        id: extract_branch_pr
-        if: ${{ github.event_name == 'pull_request' || github.event_name == 'pull_request_target' }}
-        run: echo "BRANCH_NAME=$(echo ${GITHUB_HEAD_REF})" >> $GITHUB_ENV
+      # - name: Extract PR branch name
+      #   id: extract_branch_pr
+      #   if: ${{ github.event_name == 'pull_request' || github.event_name == 'pull_request_target' }}
+      #   run: echo "BRANCH_NAME=$(echo ${GITHUB_HEAD_REF})" >> $GITHUB_ENV
+
+      # - name: Extract PR branch name
+      #   id: extract_branch_pr
+      #   run: echo "BRANCH_NAME=$(echo ${GITHUB_HEAD_REF})" >> $GITHUB_ENV
+
       - name: Branch name
         run: |
           echo ""
-          echo "running on branch ${{ env.BRANCH_NAME }}"
+          # echo "running on branch ${{ env.BRANCH_NAME }}"
           echo " - short-ref: ${GITHUB_REF#refs/*/}"
           echo " - short-ref-head:  ${GITHUB_REF#refs/heads/} "
           echo " - GITHUB_REF: ${GITHUB_REF}"
@@ -96,90 +101,93 @@ jobs:
           echo " - github.event.pull_request.base.ref: ${{ github.event.pull_request.base.ref }} "
           echo " - github.event.pull_request.head.ref: ${{ github.event.pull_request.head.ref }}"
           echo " - github.event_name: ${{ github.event_name }}"
-      # - name: Checkout the latest code
-      #   id: git_checkout
-      #   uses: actions/checkout@v3
-      #   with:
-      #     fetch-depth: 0
-      # - name: TruffleHog Scan
-      #   id: trufflehog_check
-      #   uses: trufflesecurity/trufflehog@main
-      #   with:
-      #     path: ./
-      #     base: ${{ env.BRANCH_NAME }}
-      #     head: HEAD
-  # #
-  # # clippy job
-  # #
-  # # audit job
-  # #
-  # #
-  # ## Build and push Debian image built from source
-  # ##  only if this is not a tagged build
-  # ## this will run on all PR updates
-  # build-source-image:
-  #   if: ${{ inputs.tag == '' }}
-  #   name: Docker Debian Source Image
-  #   # uses: wileyj/stacks-blockchain/.github/workflows/image-build-debian-source.yml@master
-  #   uses: ./.github/workflows/image-build-debian-source.yml
-  #   needs:
-  #     - rustfmt
-  #     - leaked-cred-test
-  #   secrets: inherit
-  #   # secrets:
-  #   #   DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
-  #   #   DOCKERHUB_PASSWORD: ${{ secrets.DOCKERHUB_PASSWORD }}
 
-  # ## if:
-  # ##  - (input tag is provided) AND (is master branch and not a PR)
-  # ## then:
-  # ##  - create release
-  # ##
-  # ## This job will run the full suite of tests vi callable workflow
-  # ##  - atlas-tests
-  # ##  - slow-tests
-  # ##  - stacks-blockchain-tests
-  # create-release:
-  #   # if: ${{ inputs.tag != '' }}
-  #   # if: ${{ inputs.tag != '' || (github.ref != format('refs/heads/{0}', github.event.repository.default_branch) && !contains(github.ref, 'refs/pull')) }}
-  #   if: ${{ inputs.tag != '' && (github.ref == format('refs/heads/{0}', github.event.repository.default_branch) && !contains(github.ref, 'refs/pull')) }}
-  #   name: Create Release
-  #   # uses: wileyj/stacks-blockchain/.github/workflows/image-build-debian-source.yml@master
-  #   uses: ./.github/workflows/image-build-debian-source.yml
-  #   needs:
-  #     - rustfmt
-  #     - leaked-cred-test
-  #   secrets: inherit
+      # github.event.pull_request.head.ref: test1
 
-  # ##
-  # ## Tests to run regularly
-  # ##
-  # ## if:
-  # ##  - ((input tag is not provided) AND (pr is approved))
-  # ## then:
-  # ##  - run subset of tests
-  # ##    - epoch-tests
-  # ##    - bitcoin tests
-  # ## if input tag *is* provided, these tests will run as part of the `create-release` workflow
-  # ##
-  # bitcoin-tests:
-  #   if: ${{ github.event.review.state == 'approved' }}
-  #   # if: ${{ inputs.tag == '' && github.event.review.state == 'approved' }}
-  #   # if: ${{ (inputs.tag != '' && (github.ref == format('refs/heads/{0}', github.event.repository.default_branch) && !contains(github.ref, 'refs/pull'))) || github.event.review.state == 'approved'  }}
-  #   name: Bitcoin Tests
-  #   # uses: wileyj/stacks-blockchain/.github/workflows/image-build-debian-source.yml@master
-  #   uses: ./.github/workflows/bitcoin-tests.yml
-  #   needs:
-  #     - rustfmt
-  #     - leaked-cred-test
+      - name: Checkout the latest code
+        id: git_checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - name: TruffleHog Scan
+        id: trufflehog_check
+        uses: trufflesecurity/trufflehog@main
+        with:
+          path: ./
+          base: ${{ github.event.pull_request.head.ref }}
+          head: HEAD
+# #
+# # clippy job
+# #
+# # audit job
+# #
+# #
+# ## Build and push Debian image built from source
+# ##  only if this is not a tagged build
+# ## this will run on all PR updates
+# build-source-image:
+#   if: ${{ inputs.tag == '' }}
+#   name: Docker Debian Source Image
+#   # uses: wileyj/stacks-blockchain/.github/workflows/image-build-debian-source.yml@master
+#   uses: ./.github/workflows/image-build-debian-source.yml
+#   needs:
+#     - rustfmt
+#     - leaked-cred-test
+#   secrets: inherit
+#   # secrets:
+#   #   DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+#   #   DOCKERHUB_PASSWORD: ${{ secrets.DOCKERHUB_PASSWORD }}
 
-  # epoch-tests:
-  #   if: ${{ github.event.review.state == 'approved' }}
-  #   # if: ${{ inputs.tag == '' && github.event.review.state == 'approved' }}
-  #   # if: ${{ (inputs.tag != '' && (github.ref == format('refs/heads/{0}', github.event.repository.default_branch) && !contains(github.ref, 'refs/pull'))) || github.event.review.state == 'approved'  }}
-  #   name: Epoch Tests
-  #   # uses: wileyj/stacks-blockchain/.github/workflows/build-source-binary.yml@master
-  #   uses: ./.github/workflows/epoch-tests.yml
-  #   needs:
-  #     - rustfmt
-  #     - leaked-cred-test
+# ## if:
+# ##  - (input tag is provided) AND (is master branch and not a PR)
+# ## then:
+# ##  - create release
+# ##
+# ## This job will run the full suite of tests vi callable workflow
+# ##  - atlas-tests
+# ##  - slow-tests
+# ##  - stacks-blockchain-tests
+# create-release:
+#   # if: ${{ inputs.tag != '' }}
+#   # if: ${{ inputs.tag != '' || (github.ref != format('refs/heads/{0}', github.event.repository.default_branch) && !contains(github.ref, 'refs/pull')) }}
+#   if: ${{ inputs.tag != '' && (github.ref == format('refs/heads/{0}', github.event.repository.default_branch) && !contains(github.ref, 'refs/pull')) }}
+#   name: Create Release
+#   # uses: wileyj/stacks-blockchain/.github/workflows/image-build-debian-source.yml@master
+#   uses: ./.github/workflows/image-build-debian-source.yml
+#   needs:
+#     - rustfmt
+#     - leaked-cred-test
+#   secrets: inherit
+
+# ##
+# ## Tests to run regularly
+# ##
+# ## if:
+# ##  - ((input tag is not provided) AND (pr is approved))
+# ## then:
+# ##  - run subset of tests
+# ##    - epoch-tests
+# ##    - bitcoin tests
+# ## if input tag *is* provided, these tests will run as part of the `create-release` workflow
+# ##
+# bitcoin-tests:
+#   if: ${{ github.event.review.state == 'approved' }}
+#   # if: ${{ inputs.tag == '' && github.event.review.state == 'approved' }}
+#   # if: ${{ (inputs.tag != '' && (github.ref == format('refs/heads/{0}', github.event.repository.default_branch) && !contains(github.ref, 'refs/pull'))) || github.event.review.state == 'approved'  }}
+#   name: Bitcoin Tests
+#   # uses: wileyj/stacks-blockchain/.github/workflows/image-build-debian-source.yml@master
+#   uses: ./.github/workflows/bitcoin-tests.yml
+#   needs:
+#     - rustfmt
+#     - leaked-cred-test
+
+# epoch-tests:
+#   if: ${{ github.event.review.state == 'approved' }}
+#   # if: ${{ inputs.tag == '' && github.event.review.state == 'approved' }}
+#   # if: ${{ (inputs.tag != '' && (github.ref == format('refs/heads/{0}', github.event.repository.default_branch) && !contains(github.ref, 'refs/pull'))) || github.event.review.state == 'approved'  }}
+#   name: Epoch Tests
+#   # uses: wileyj/stacks-blockchain/.github/workflows/build-source-binary.yml@master
+#   uses: ./.github/workflows/epoch-tests.yml
+#   needs:
+#     - rustfmt
+#     - leaked-cred-test
