@@ -73,18 +73,24 @@ jobs:
     name: Leaked Credential Test
     runs-on: ubuntu-latest
     steps:
-      - name: Extract branch name
+      - name: Extract non-pr branch name
         id: extract_branch
         if: ${{ github.event_name != 'pull_request' }}
         # run: echo "BRANCH_NAME=$(echo ${GITHUB_REF#refs/heads/} | sed -e 's!^refs/heads/!! )" >> $GITHUB_ENV
-        run: echo "BRANCH_NAME=$(echo ${{ github.event.push.ref }} | sed -e 's!^refs/heads/!!')" >> $GITHUB_ENV
+        run: echo "BRANCH_NAME=$(echo ${GITHUB_REF#refs/heads/})" >> $GITHUB_ENV
+      # ${{ github.event.pull_request.base.ref }}
 
-      - name: Extract branch name
+      - name: Extract PR branch name
         id: extract_branch_pr
         if: ${{ github.event_name == 'pull_request' }}
         run: echo "BRANCH_NAME=$(echo ${GITHUB_HEAD_REF})" >> $GITHUB_ENV
       - name: Branch name
-        run: echo running on branch ${{ env.BRANCH_NAME }}
+        run: |
+          echo ""
+          echo "running on branch ${{ env.BRANCH_NAME }}"
+          echo " - non-pr:  ${GITHUB_REF#refs/heads/} "
+          echo " - pr: ${GITHUB_HEAD_REF}"
+          echo " - base-ref: ${{ github.event.pull_request.base.ref }} "
       - name: Checkout the latest code
         id: git_checkout
         uses: actions/checkout@v3
