@@ -30,15 +30,17 @@ on:
     # paths:
     #   - "**.rs"
     #   - "**.clar"
-  pull_request_review:
-    types:
-      - submitted
-    paths-ignore:
-      - "**.md"
-      - "**.yml"
-  pull_request_review_comment:
-    branches-ignore:
-      - "**"
+  # pull_request_review:
+  #   types:
+  #     - submitted
+  #   paths-ignore:
+  #     - "**.md"
+  #     - "**.yml"
+  # pull_request_review_comment:
+  #   branches-ignore:
+  #     - "**"
+  #   # pr review request for change: `submitted`
+  #   # pr review approval:
 concurrency:
   group: ${{ github.head_ref || github.run_id }}
   cancel-in-progress: true
