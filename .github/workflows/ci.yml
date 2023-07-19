@@ -74,16 +74,40 @@ jobs:
     name: Leaked Credential Test
     runs-on: ubuntu-latest
     steps:
-      - name: Extract non-pr branch name
-        id: extract_branch
-        if: ${{ github.event_name != 'pull_request' && github.event_name != 'pull_request_target' }}
-        run: echo "BRANCH_NAME=$(echo ${GITHUB_REF#refs/heads/})" >> $GITHUB_ENV
+      # running on branch refs/pull/9/merge
+      #  - short-ref: 9/merge
+      #  - short-ref-head:  refs/pull/9/merge
+      #  - GITHUB_REF: refs/pull/9/merge
+      #  - GITHUB_HEAD_REF:
+      #  - github.event.pull_request.base.ref: master
+      #  - github.event.pull_request.head.ref: test1
+      #  - github.event_name: pull_request_review
 
-      - name: Extract PR branch name
-        id: extract_branch_pr
-        if: ${{ github.event_name == 'pull_request' || github.event_name == 'pull_request_target' }}
-        #   run: echo "BRANCH_NAME=$(echo ${GITHUB_HEAD_REF})" >> $GITHUB_ENV
-        run: echo "BRANCH_NAME=$(echo ${{ github.event.pull_request.head.ref }})" >> $GITHUB_ENV
+      # - name: Extract non-pr branch name
+      #   id: extract_branch
+      #   if: ${{ github.event_name != 'pull_request' && github.event_name != 'pull_request_target' }}
+      #   run: echo "BRANCH_NAME=$(echo ${GITHUB_REF#refs/heads/})" >> $GITHUB_ENV
+
+      # - name: Extract PR branch name
+      #   id: extract_branch_pr
+      #   if: ${{ github.event_name == 'pull_request' || github.event_name == 'pull_request_target' }}
+      #   #   run: echo "BRANCH_NAME=$(echo ${GITHUB_HEAD_REF})" >> $GITHUB_ENV
+      #   run: echo "BRANCH_NAME=$(echo ${{ github.event.pull_request.head.ref }})" >> $GITHUB_ENV
+      - name: Extract branch name
+        shell: bash
+        run: |
+          event=${{ github.event_name }}
+          case ${event} in
+            pull_request|pull_request_target|pull_request_review)
+              echo "is a PR"
+              branch=${{ github.event.pull_request.head.ref }}}
+              ;;
+            *)
+              echo "not a PR"
+              branch=${GITHUB_REF#refs/heads/}
+              ;;
+          esac
+          echo "BRANCH_NAME=$branch" >> $GITHUB_ENV
 
       - name: Branch name
         run: |
