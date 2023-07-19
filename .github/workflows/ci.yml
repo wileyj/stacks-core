@@ -90,10 +90,11 @@ jobs:
           echo ""
           echo "running on branch ${{ env.BRANCH_NAME }}"
           echo " - short-ref: ${GITHUB_REF#refs/*/}"
-          echo " - non-pr:  ${GITHUB_REF#refs/heads/} "
-          echo " - pr: ${GITHUB_HEAD_REF}"
-          echo " - base-ref: ${{ github.event.pull_request.base.ref }} "
-          echo " - target-base-ref: ${{ github.event.pull_request_target.base.ref }} "
+          echo " - short-ref-head:  ${GITHUB_REF#refs/heads/} "
+          echo " - GITHUB_REF: ${GITHUB_REF}"
+          echo " - GITHUB_HEAD_REF: ${GITHUB_HEAD_REF}"
+          echo " - github.event.pull_request.base.ref: ${{ github.event.pull_request.base.ref }} "
+          echo " - github.event.pull_request.head.ref: ${{ github.event.pull_request.head.ref }}"
           echo " - github.event_name: ${{ github.event_name }}"
       # - name: Checkout the latest code
       #   id: git_checkout
