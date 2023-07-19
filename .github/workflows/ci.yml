@@ -100,10 +100,12 @@ jobs:
           case ${event} in
             pull_request|pull_request_target|pull_request_review)
               echo "is a PR"
-              branch=${{ github.event.pull_request.head.ref }}}
+              echo "  setting branch: ${{ github.event.pull_request.head.ref }}"
+              branch=${{ github.event.pull_request.head.ref }}
               ;;
             *)
               echo "not a PR"
+              echo "  setting branch: ${GITHUB_REF#refs/heads/}"
               branch=${GITHUB_REF#refs/heads/}
               ;;
           esac
