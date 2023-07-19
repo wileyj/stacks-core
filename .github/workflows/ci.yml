@@ -48,7 +48,7 @@ jobs:
   ##
   ## rust format
   rustfmt:
-    if: ${{false}}
+    if: ${{ false }}
     name: Rust Format
     runs-on: ubuntu-latest
     steps:
