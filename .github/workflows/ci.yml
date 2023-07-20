@@ -56,20 +56,18 @@ jobs:
   ## rust format
   rustfmt:
     if: |
-      ${{
-        !(
-          github.event_name == 'pull_request_review' && 
-          github.event.action == 'submitted' && 
-          github.event.review.state == 'commented' 
-        )
-      }}
+      !(
+        github.event_name == 'pull_request_review' && 
+        github.event.action == 'submitted' && 
+        github.event.review.state == 'commented' 
+      )
     name: Rust Format
     runs-on: ubuntu-latest
     steps:
       - name: conditional
         run: |
           echo "Conditional"
-          echo "  - !( github.event_name == 'pull_request_review' &&  github.event.action == 'submitted' &&  github.event.review.state == 'commented'  ) }}"
+          echo "  - !( github.event_name == 'pull_request_review' &&  github.event.action == 'submitted' &&  github.event.review.state == 'commented'  )"
           echo "  - true/false: ${{ !( github.event_name == 'pull_request_review' &&  github.event.action == 'submitted' &&  github.event.review.state == 'commented'  ) }}"
           echo "github.event_name: ${{ github.event_name }}"
           echo "github.event.action: ${{ github.event.action }}"
@@ -93,13 +91,12 @@ jobs:
   ## Checked for leaked credentials
   leaked-cred-test:
     if: |
-      ${{
-        !(
-          github.event_name == 'pull_request_review' && 
-          github.event.action == 'submitted' && 
-          github.event.review.state == 'commented' 
-        )
-      }}    name: Leaked Credential Test
+      !(
+        github.event_name == 'pull_request_review' && 
+        github.event.action == 'submitted' && 
+        github.event.review.state == 'commented' 
+      )
+    name: Leaked Credential Test
     runs-on: ubuntu-latest
     steps:
       - name: conditional
@@ -187,14 +184,12 @@ jobs:
   build-source-image:
     # if: ${{ inputs.tag == '' }}
     if: |
-      ${{ 
-        inputs.tag == '' && 
-        !(
-          github.event_name == 'pull_request_review' && 
-          github.event.action == 'submitted' && 
-          github.event.review.state != 'commented' 
-        ) 
-      }}
+      inputs.tag == '' && 
+      !(
+        github.event_name == 'pull_request_review' && 
+        github.event.action == 'submitted' && 
+        github.event.review.state != 'commented' 
+      )
     name: Docker Debian Source Image
     runs-on: ubuntu-latest
     steps:
@@ -231,9 +226,7 @@ jobs:
   # ##  - stacks-blockchain-tests
   create-release:
     if: |
-      ${{ 
-        inputs.tag != '' 
-      }}
+      inputs.tag != ''
     name: Create Release
     runs-on: ubuntu-latest
     steps:
@@ -272,13 +265,11 @@ jobs:
   bitcoin-tests:
     # if: ${{ github.event.review.state == 'approved' }}
     if: |
-      ${{ 
-        ( 
-          github.event_name == 'pull_request_review' && 
-          github.event.action == 'submitted' && 
-          github.event.review.state == 'approved' 
-        ) 
-      }}
+      ( 
+        github.event_name == 'pull_request_review' && 
+        github.event.action == 'submitted' && 
+        github.event.review.state == 'approved' 
+      )
     name: Bitcoin Tests
     runs-on: ubuntu-latest
     steps:
@@ -304,13 +295,11 @@ jobs:
   epoch-tests:
     # if: ${{ github.event.review.state == 'approved' }}
     if: |
-      ${{ 
-        ( 
-          github.event_name == 'pull_request_review' && 
-          github.event.action == 'submitted' && 
-          github.event.review.state == 'approved' 
-        ) 
-      }}
+      ( 
+        github.event_name == 'pull_request_review' && 
+        github.event.action == 'submitted' && 
+        github.event.review.state == 'approved' 
+      )
     name: Epoch Tests
     runs-on: ubuntu-latest
     steps:
