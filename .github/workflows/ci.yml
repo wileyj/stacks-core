@@ -30,12 +30,12 @@ on:
     # paths:
     #   - "**.rs"
     #   - "**.clar"
-  # pull_request_review:
-  #   types:
-  #     - submitted
-  #   paths-ignore:
-  #     - "**.md"
-  #     - "**.yml"
+  pull_request_review:
+    types:
+      - submitted
+    paths-ignore:
+      - "**.md"
+      - "**.yml"
   # pull_request_review_comment:
   #   branches-ignore:
   #     - "**"
