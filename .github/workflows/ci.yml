@@ -55,6 +55,7 @@ jobs:
   ##
   ## rust format
   rustfmt:
+    if: ${{ (github.event_name == 'pull_request_review' && github.event.type == 'submitted' && github.event.review.state != 'commented' ) }}
     name: Rust Format
     runs-on: ubuntu-latest
     steps:
@@ -77,6 +78,7 @@ jobs:
 
   ## Checked for leaked credentials
   leaked-cred-test:
+    if: ${{ (github.event_name == 'pull_request_review' && github.event.type == 'submitted' && github.event.review.state != 'commented' ) }}
     name: Leaked Credential Test
     runs-on: ubuntu-latest
     steps:
@@ -152,6 +154,15 @@ jobs:
   # ## Build and push Debian image built from source
   # ##  only if this is not a tagged build
   # ## this will run on all PR updates
+  build-source-image:
+    # if: ${{ inputs.tag == '' }}
+    if: ${{ inputs.tag == '' && (github.event_name == 'pull_request_review' && github.event.type == 'submitted' && github.event.review.state != 'commented' ) }}
+    name: Docker Debian Source Image
+    runs-on: ubuntu-latest
+    steps:
+      - name: echo
+        run: |
+          echo "Docker Debian Source Image"
   # build-source-image:
   #   if: ${{ inputs.tag == '' }}
   #   name: Docker Debian Source Image
@@ -206,7 +217,8 @@ jobs:
   # ## if input tag *is* provided, these tests will run as part of the `create-release` workflow
   # ##
   bitcoin-tests:
-    if: ${{ github.event.review.state == 'approved' }}
+    # if: ${{ github.event.review.state == 'approved' }}
+    if: ${{ ( github.event_name == 'pull_request_review' && github.event.type == 'submitted' && github.event.review.state == 'approved' ) }}
     name: Bitcoin Tests
     runs-on: ubuntu-latest
     steps:
@@ -224,7 +236,8 @@ jobs:
   #     - rustfmt
   #     - leaked-cred-test
   epoch-tests:
-    if: ${{ github.event.review.state == 'approved' }}
+    # if: ${{ github.event.review.state == 'approved' }}
+    if: ${{ ( github.event_name == 'pull_request_review' && github.event.type == 'submitted' && github.event.review.state == 'approved' ) }}
     name: Epoch Tests
     runs-on: ubuntu-latest
     steps:
