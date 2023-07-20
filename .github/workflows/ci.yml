@@ -159,11 +159,11 @@ jobs:
           echo " - github.event.action: ${{ github.event.action }}"
           echo " - github.event.review.state: ${{ github.event.review.state }}"
 
-      - name: Checkout the latest code
-        id: git_checkout
-        uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
+      # - name: Checkout the latest code
+      #   id: git_checkout
+      #   uses: actions/checkout@v3
+      #   with:
+      #     fetch-depth: 0
 
       # - name: TruffleHog Scan
       #   id: trufflehog_check
