@@ -55,7 +55,7 @@ jobs:
   ##
   ## rust format
   rustfmt:
-    if: ${{ (github.event_name == 'pull_request_review' && github.event.type == 'submitted' && github.event.review.state != 'commented' ) }}
+    if: ${{ !(github.event_name == 'pull_request_review' && github.event.type == 'submitted' && github.event.review.state == 'commented' ) }}
     name: Rust Format
     runs-on: ubuntu-latest
     steps:
@@ -78,7 +78,7 @@ jobs:
 
   ## Checked for leaked credentials
   leaked-cred-test:
-    if: ${{ (github.event_name == 'pull_request_review' && github.event.type == 'submitted' && github.event.review.state != 'commented' ) }}
+    if: ${{ !(github.event_name == 'pull_request_review' && github.event.type == 'submitted' && github.event.review.state == 'commented' ) }}
     name: Leaked Credential Test
     runs-on: ubuntu-latest
     steps:
