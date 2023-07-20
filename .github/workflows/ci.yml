@@ -55,33 +55,62 @@ jobs:
   ##
   ## rust format
   rustfmt:
-    if: ${{ !(github.event_name == 'pull_request_review' && github.event.type == 'submitted' && github.event.review.state == 'commented' ) }}
+    if: |
+      ${{
+        !(
+          github.event_name == 'pull_request_review' && 
+          github.event.type == 'submitted' && 
+          github.event.review.state == 'commented' 
+        )
+      }}
     name: Rust Format
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout the latest code
-        id: git_checkout
-        uses: actions/checkout@v3
-      # - name: Define Rust Toolchain
-      #   id: define_rust_toolchain
-      #   run: echo "RUST_TOOLCHAIN=$(cat ./rust-toolchain)" >> $GITHUB_ENV
-      - name: Setup Rust Toolchain
-        id: setup_rust_toolchain
-        uses: actions-rust-lang/setup-rust-toolchain@v1
-        with:
-          # toolchain: ${{ env.RUST_TOOLCHAIN }}
-          components: rustfmt
-          cache: false
-      - name: Rustfmt
-        id: rustfmt
-        uses: actions-rust-lang/rustfmt@v1
+      - name: conditional
+        run: |
+          echo "Conditional"
+          echo "  - !( github.event_name == 'pull_request_review' &&  github.event.type == 'submitted' &&  github.event.review.state == 'commented'  ) }}"
+          echo "  - true/false: ${{ !( github.event_name == 'pull_request_review' &&  github.event.type == 'submitted' &&  github.event.review.state == 'commented'  ) }}"
+          echo "github.event_name: ${{ github.event_name }}"
+          echo "github.event.type: ${{ github.event.type }}"
+          echo "github.event.review.state: ${{ github.event.review.state }}"
+      # - name: Checkout the latest code
+      #   id: git_checkout
+      #   uses: actions/checkout@v3
+
+      # - name: Setup Rust Toolchain
+      #   id: setup_rust_toolchain
+      #   uses: actions-rust-lang/setup-rust-toolchain@v1
+      #   with:
+      #     # toolchain: ${{ env.RUST_TOOLCHAIN }}
+      #     components: rustfmt
+      #     cache: false
+
+      # - name: Rustfmt
+      #   id: rustfmt
+      #   uses: actions-rust-lang/rustfmt@v1
 
   ## Checked for leaked credentials
   leaked-cred-test:
-    if: ${{ !(github.event_name == 'pull_request_review' && github.event.type == 'submitted' && github.event.review.state == 'commented' ) }}
-    name: Leaked Credential Test
+    if: |
+      ${{
+        !(
+          github.event_name == 'pull_request_review' && 
+          github.event.type == 'submitted' && 
+          github.event.review.state == 'commented' 
+        )
+      }}    name: Leaked Credential Test
     runs-on: ubuntu-latest
     steps:
+      - name: conditional
+        run: |
+          echo "Conditional"
+          echo "  - !(github.event_name == 'pull_request_review' && github.event.type == 'submitted' && github.event.review.state == 'commented' )"
+          echo "  - true/false: ${{ !(github.event_name == 'pull_request_review' && github.event.type == 'submitted' && github.event.review.state == 'commented' ) }}"
+          echo "github.event_name: ${{ github.event_name }}"
+          echo "github.event.type: ${{ github.event.type }}"
+          echo "github.event.review.state: ${{ github.event.review.state }}"
+
       # running on branch refs/pull/9/merge
       #  - short-ref: 9/merge
       #  - short-ref-head:  refs/pull/9/merge
@@ -138,13 +167,14 @@ jobs:
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
-      - name: TruffleHog Scan
-        id: trufflehog_check
-        uses: trufflesecurity/trufflehog@main
-        with:
-          path: ./
-          base: ${{ env.BRANCH_NAME }}
-          head: HEAD
+
+      # - name: TruffleHog Scan
+      #   id: trufflehog_check
+      #   uses: trufflesecurity/trufflehog@main
+      #   with:
+      #     path: ./
+      #     base: ${{ env.BRANCH_NAME }}
+      #     head: HEAD
   # #
   # # clippy job
   # #
@@ -156,13 +186,27 @@ jobs:
   # ## this will run on all PR updates
   build-source-image:
     # if: ${{ inputs.tag == '' }}
-    if: ${{ inputs.tag == '' && (github.event_name == 'pull_request_review' && github.event.type == 'submitted' && github.event.review.state != 'commented' ) }}
+    if: |
+      ${{ 
+        inputs.tag == '' && 
+        !(
+          github.event_name == 'pull_request_review' && 
+          github.event.type == 'submitted' && 
+          github.event.review.state != 'commented' 
+        ) 
+      }}
     name: Docker Debian Source Image
     runs-on: ubuntu-latest
     steps:
       - name: echo
         run: |
           echo "Docker Debian Source Image"
+          echo "Conditional"
+          echo "  - !(github.event_name == 'pull_request_review' && github.event.type == 'submitted' && github.event.review.state == 'commented' )"
+          echo "  - true/false: ${{ !(github.event_name == 'pull_request_review' && github.event.type == 'submitted' && github.event.review.state == 'commented' ) }}"
+          echo "github.event_name: ${{ github.event_name }}"
+          echo "github.event.type: ${{ github.event.type }}"
+          echo "github.event.review.state: ${{ github.event.review.state }}"
   # build-source-image:
   #   if: ${{ inputs.tag == '' }}
   #   name: Docker Debian Source Image
@@ -186,13 +230,22 @@ jobs:
   # ##  - slow-tests
   # ##  - stacks-blockchain-tests
   create-release:
-    if: ${{ inputs.tag != '' }}
+    if: |
+      ${{ 
+        inputs.tag != '' 
+      }}
     name: Create Release
     runs-on: ubuntu-latest
     steps:
       - name: echo
         run: |
           echo "Create Release"
+          echo "Conditional"
+          echo "  - inputs.tag != '' "
+          echo "  - true/false: ${{ inputs.tag != '' }}"
+          echo "github.event_name: ${{ github.event_name }}"
+          echo "github.event.type: ${{ github.event.type }}"
+          echo "github.event.review.state: ${{ github.event.review.state }}"
   # create-release:
   #   # if: ${{ inputs.tag != '' }}
   #   # if: ${{ inputs.tag != '' || (github.ref != format('refs/heads/{0}', github.event.repository.default_branch) && !contains(github.ref, 'refs/pull')) }}
@@ -218,13 +271,26 @@ jobs:
   # ##
   bitcoin-tests:
     # if: ${{ github.event.review.state == 'approved' }}
-    if: ${{ ( github.event_name == 'pull_request_review' && github.event.type == 'submitted' && github.event.review.state == 'approved' ) }}
+    if: |
+      ${{ 
+        ( 
+          github.event_name == 'pull_request_review' && 
+          github.event.type == 'submitted' && 
+          github.event.review.state == 'approved' 
+        ) 
+      }}
     name: Bitcoin Tests
     runs-on: ubuntu-latest
     steps:
       - name: echo
         run: |
           echo "Bitcoin Tests"
+          echo "Conditional"
+          echo "  - ( github.event_name == 'pull_request_review' && github.event.type == 'submitted' && github.event.review.state == 'approved' )"
+          echo "  - true/false: ${{ ( github.event_name == 'pull_request_review' && github.event.type == 'submitted' && github.event.review.state == 'approved' ) }}}"
+          echo "github.event_name: ${{ github.event_name }}"
+          echo "github.event.type: ${{ github.event.type }}"
+          echo "github.event.review.state: ${{ github.event.review.state }}"
   # bitcoin-tests:
   #   if: ${{ github.event.review.state == 'approved' }}
   #   # if: ${{ inputs.tag == '' && github.event.review.state == 'approved' }}
@@ -237,13 +303,26 @@ jobs:
   #     - leaked-cred-test
   epoch-tests:
     # if: ${{ github.event.review.state == 'approved' }}
-    if: ${{ ( github.event_name == 'pull_request_review' && github.event.type == 'submitted' && github.event.review.state == 'approved' ) }}
+    if: |
+      ${{ 
+        ( 
+          github.event_name == 'pull_request_review' && 
+          github.event.type == 'submitted' && 
+          github.event.review.state == 'approved' 
+        ) 
+      }}
     name: Epoch Tests
     runs-on: ubuntu-latest
     steps:
       - name: echo
         run: |
           echo "Epoch Tests"
+          echo "Conditional"
+          echo "  - ( github.event_name == 'pull_request_review' && github.event.type == 'submitted' && github.event.review.state == 'approved' ) "
+          echo "  - true/false: ${{ ( github.event_name == 'pull_request_review' && github.event.type == 'submitted' && github.event.review.state == 'approved' ) }}"
+          echo "github.event_name: ${{ github.event_name }}"
+          echo "github.event.type: ${{ github.event.type }}"
+          echo "github.event.review.state: ${{ github.event.review.state }}"
 
 # epoch-tests:
 #   if: ${{ github.event.review.state == 'approved' }}
