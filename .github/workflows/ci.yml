@@ -184,11 +184,13 @@ jobs:
   build-source-image:
     # if: ${{ inputs.tag == '' }}
     if: |
-      inputs.tag == '' && 
-      !(
-        github.event_name == 'pull_request_review' && 
-        github.event.action == 'submitted' && 
-        github.event.review.state != 'commented' 
+      (
+        inputs.tag == '' && 
+        !(
+          github.event_name == 'pull_request_review' && 
+          github.event.action == 'submitted' && 
+          github.event.review.state != 'commented' 
+        )
       )
     name: Docker Debian Source Image
     runs-on: ubuntu-latest
