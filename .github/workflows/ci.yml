@@ -189,7 +189,7 @@ jobs:
         !(
           github.event_name == 'pull_request_review' && 
           github.event.action == 'submitted' && 
-          github.event.review.state != 'commented' 
+          github.event.review.state == 'commented' 
         )
       )
     name: Docker Debian Source Image
@@ -200,7 +200,7 @@ jobs:
           echo "Docker Debian Source Image"
           echo "Conditional"
           echo "  - !(github.event_name == 'pull_request_review' && github.event.action == 'submitted' && github.event.review.state == 'commented' )"
-          echo "  - true/false: ${{ !(github.event_name == 'pull_request_review' && github.event.action == 'submitted' && github.event.review.state == 'commented' ) }}"
+          echo "  - true/false: ${{ inputs.tag == '' && !(github.event_name == 'pull_request_review' && github.event.action == 'submitted' && github.event.review.state == 'commented' ) }}"
           echo "github.event_name: ${{ github.event_name }}"
           echo "github.event.action: ${{ github.event.action }}"
           echo "github.event.review.state: ${{ github.event.review.state }}"
