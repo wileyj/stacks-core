@@ -76,3 +76,8 @@ jobs:
 # https://github.com/marketplace/actions/purge-cache
 # https://github.com/marketplace/actions/delete-run-artifacts
 # https://github.com/marketplace/actions/rerun-actions
+#
+#
+#
+# clean up cancelled workflows at the same time (not all triggers will run, but will show up as a cencelled job)
+# clean up jobs older than 14?(?) days
