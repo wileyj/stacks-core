@@ -41,6 +41,11 @@ on:
   #     - "**"
   #   # pr review request for change: `submitted`
   #   # pr review approval:
+
+defaults:
+  run:
+    shell: bash
+
 concurrency:
   group: ${{ github.head_ref || github.run_id }}
   cancel-in-progress: true
@@ -67,29 +72,21 @@ jobs:
     name: Rust Format
     runs-on: ubuntu-latest
     steps:
-      - name: conditional
-        run: |
-          echo "Conditional"
-          echo "  - !( github.event_name == 'pull_request_review' &&  github.event.action == 'submitted' &&  github.event.review.state == 'commented'  )"
-          echo "  - true/false: ${{ !( github.event_name == 'pull_request_review' &&  github.event.action == 'submitted' &&  github.event.review.state == 'commented'  ) }}"
-          echo "github.event_name: ${{ github.event_name }}"
-          echo "github.event.action: ${{ github.event.action }}"
-          echo "github.event.review.state: ${{ github.event.review.state }}"
-      # - name: Checkout the latest code
-      #   id: git_checkout
-      #   uses: actions/checkout@v3
+      - name: Checkout the latest code
+        id: git_checkout
+        uses: actions/checkout@v3
 
-      # - name: Setup Rust Toolchain
-      #   id: setup_rust_toolchain
-      #   uses: actions-rust-lang/setup-rust-toolchain@v1
-      #   with:
-      #     # toolchain: ${{ env.RUST_TOOLCHAIN }}
-      #     components: rustfmt
-      #     cache: false
+      - name: Setup Rust Toolchain
+        id: setup_rust_toolchain
+        uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          # toolchain: ${{ env.RUST_TOOLCHAIN }}
+          components: rustfmt
+          cache: false
 
-      # - name: Rustfmt
-      #   id: rustfmt
-      #   uses: actions-rust-lang/rustfmt@v1
+      - name: Rustfmt
+        id: rustfmt
+        uses: actions-rust-lang/rustfmt@v1
 
   ## Checked for leaked credentials
   leaked-cred-test:
@@ -105,36 +102,7 @@ jobs:
     name: Leaked Credential Test
     runs-on: ubuntu-latest
     steps:
-      - name: conditional
-        run: |
-          echo "Conditional"
-          echo "  - !(github.event_name == 'pull_request_review' && github.event.action == 'submitted' && github.event.review.state == 'commented' )"
-          echo "  - true/false: ${{ !(github.event_name == 'pull_request_review' && github.event.action == 'submitted' && github.event.review.state == 'commented' ) }}"
-          echo "github.event_name: ${{ github.event_name }}"
-          echo "github.event.action: ${{ github.event.action }}"
-          echo "github.event.review.state: ${{ github.event.review.state }}"
-
-      # running on branch refs/pull/9/merge
-      #  - short-ref: 9/merge
-      #  - short-ref-head:  refs/pull/9/merge
-      #  - GITHUB_REF: refs/pull/9/merge
-      #  - GITHUB_HEAD_REF:
-      #  - github.event.pull_request.base.ref: master
-      #  - github.event.pull_request.head.ref: test1
-      #  - github.event_name: pull_request_review
-
-      # - name: Extract non-pr branch name
-      #   id: extract_branch
-      #   if: ${{ github.event_name != 'pull_request' && github.event_name != 'pull_request_target' }}
-      #   run: echo "BRANCH_NAME=$(echo ${GITHUB_REF#refs/heads/})" >> $GITHUB_ENV
-
-      # - name: Extract PR branch name
-      #   id: extract_branch_pr
-      #   if: ${{ github.event_name == 'pull_request' || github.event_name == 'pull_request_target' }}
-      #   #   run: echo "BRANCH_NAME=$(echo ${GITHUB_HEAD_REF})" >> $GITHUB_ENV
-      #   run: echo "BRANCH_NAME=$(echo ${{ github.event.pull_request.head.ref }})" >> $GITHUB_ENV
       - name: Extract branch name
-        shell: bash
         run: |
           event=${{ github.event_name }}
           case ${event} in
@@ -151,33 +119,19 @@ jobs:
           esac
           echo "BRANCH_NAME=$branch" >> $GITHUB_ENV
 
-      - name: Branch name
-        run: |
-          echo ""
-          echo "running on branch ${{ env.BRANCH_NAME }}"
-          echo " - short-ref: ${GITHUB_REF#refs/*/}"
-          echo " - short-ref-head:  ${GITHUB_REF#refs/heads/} "
-          echo " - GITHUB_REF: ${GITHUB_REF}"
-          echo " - GITHUB_HEAD_REF: ${GITHUB_HEAD_REF}"
-          echo " - github.event.pull_request.base.ref: ${{ github.event.pull_request.base.ref }} "
-          echo " - github.event.pull_request.head.ref: ${{ github.event.pull_request.head.ref }}"
-          echo " - github.event_name: ${{ github.event_name }}"
-          echo " - github.event.action: ${{ github.event.action }}"
-          echo " - github.event.review.state: ${{ github.event.review.state }}"
+      - name: Checkout the latest code
+        id: git_checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
 
-      # - name: Checkout the latest code
-      #   id: git_checkout
-      #   uses: actions/checkout@v3
-      #   with:
-      #     fetch-depth: 0
-
-      # - name: TruffleHog Scan
-      #   id: trufflehog_check
-      #   uses: trufflesecurity/trufflehog@main
-      #   with:
-      #     path: ./
-      #     base: ${{ env.BRANCH_NAME }}
-      #     head: HEAD
+      - name: TruffleHog Scan
+        id: trufflehog_check
+        uses: trufflesecurity/trufflehog@main
+        with:
+          path: ./
+          base: ${{ env.BRANCH_NAME }}
+          head: HEAD
   # #
   # # clippy job
   # #
@@ -188,44 +142,31 @@ jobs:
   # ##  only if this is not a tagged build
   # ## this will run on all PR updates
   build-source-image:
-    # if: ${{ inputs.tag == '' }}
     if: |
-      (
-        inputs.tag == '' && 
-        !(
-          github.event_name == 'pull_request_review' && 
-          github.event.action == 'submitted' && 
-          (
-            github.event.review.state == 'commented' ||
-            github.event.review.state == 'changes_requested'
-          )
+      inputs.tag == '' && 
+      !(
+        github.event_name == 'pull_request_review' && 
+        github.event.action == 'submitted' && 
+        (
+          github.event.review.state == 'commented' ||
+          github.event.review.state == 'changes_requested'
         )
       )
     name: Docker Debian Source Image
+    # # uses: wileyj/stacks-blockchain/.github/workflows/image-build-debian-source.yml@master
+    # uses: ./.github/workflows/image-build-debian-source.yml
+    needs:
+      - rustfmt
+      - leaked-cred-test
+    # secrets: inherit
+    # # secrets:
+    # #   DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+    # #   DOCKERHUB_PASSWORD: ${{ secrets.DOCKERHUB_PASSWORD }}
     runs-on: ubuntu-latest
     steps:
       - name: echo
         run: |
-          echo "Docker Debian Source Image"
-          echo "Conditional"
-          echo "  - !(github.event_name == 'pull_request_review' && github.event.action == 'submitted' && github.event.review.state == 'commented' )"
-          echo "  - true/false: ${{ inputs.tag == '' && !(github.event_name == 'pull_request_review' && github.event.action == 'submitted' && github.event.review.state == 'commented' ) }}"
-          echo "github.event_name: ${{ github.event_name }}"
-          echo "github.event.action: ${{ github.event.action }}"
-          echo "github.event.review.state: ${{ github.event.review.state }}"
-  # build-source-image:
-  #   if: ${{ inputs.tag == '' }}
-  #   name: Docker Debian Source Image
-  #   # uses: wileyj/stacks-blockchain/.github/workflows/image-build-debian-source.yml@master
-  #   uses: ./.github/workflows/image-build-debian-source.yml
-  #   needs:
-  #     - rustfmt
-  #     - leaked-cred-test
-  #   secrets: inherit
-  #   # secrets:
-  #   #   DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
-  #   #   DOCKERHUB_PASSWORD: ${{ secrets.DOCKERHUB_PASSWORD }}
-
+          echo "running  build-source-image"
   # ## if:
   # ##  - (input tag is provided) AND (is master branch and not a PR)
   # ## then:
@@ -236,31 +177,19 @@ jobs:
   # ##  - slow-tests
   # ##  - stacks-blockchain-tests
   create-release:
-    if: |
-      inputs.tag != ''
+    if: inputs.tag != ''
     name: Create Release
+    # # uses: wileyj/stacks-blockchain/.github/workflows/github-release.yml@master
+    # uses: ./.github/workflows/github-release.yml
+    needs:
+      - rustfmt
+      - leaked-cred-test
+    # secrets: inherit
     runs-on: ubuntu-latest
     steps:
       - name: echo
         run: |
-          echo "Create Release"
-          echo "Conditional"
-          echo "  - inputs.tag != '' "
-          echo "  - true/false: ${{ inputs.tag != '' }}"
-          echo "github.event_name: ${{ github.event_name }}"
-          echo "github.event.action: ${{ github.event.action }}"
-          echo "github.event.review.state: ${{ github.event.review.state }}"
-  # create-release:
-  #   # if: ${{ inputs.tag != '' }}
-  #   # if: ${{ inputs.tag != '' || (github.ref != format('refs/heads/{0}', github.event.repository.default_branch) && !contains(github.ref, 'refs/pull')) }}
-  #   if: ${{ inputs.tag != '' && (github.ref == format('refs/heads/{0}', github.event.repository.default_branch) && !contains(github.ref, 'refs/pull')) }}
-  #   name: Create Release
-  #   # uses: wileyj/stacks-blockchain/.github/workflows/image-build-debian-source.yml@master
-  #   uses: ./.github/workflows/image-build-debian-source.yml
-  #   needs:
-  #     - rustfmt
-  #     - leaked-cred-test
-  #   secrets: inherit
+          echo "running  create-release"
 
   # ##
   # ## Tests to run regularly
@@ -274,63 +203,52 @@ jobs:
   # ## if input tag *is* provided, these tests will run as part of the `create-release` workflow
   # ##
   bitcoin-tests:
-    # if: ${{ github.event.review.state == 'approved' }}
     if: |
-      ( 
-        github.event_name == 'pull_request_review' && 
-        github.event.action == 'submitted' && 
-        github.event.review.state == 'approved' 
-      )
+      github.event_name == 'pull_request_review' && 
+      github.event.action == 'submitted' && 
+      github.event.review.state == 'approved'
     name: Bitcoin Tests
+    # # uses: wileyj/stacks-blockchain/.github/workflows/image-build-debian-source.yml@master
+    # uses: ./.github/workflows/bitcoin-tests.yml
+    needs:
+      - rustfmt
+      - leaked-cred-test
     runs-on: ubuntu-latest
     steps:
       - name: echo
         run: |
-          echo "Bitcoin Tests"
-          echo "Conditional"
-          echo "  - ( github.event_name == 'pull_request_review' && github.event.action == 'submitted' && github.event.review.state == 'approved' )"
-          echo "  - true/false: ${{ ( github.event_name == 'pull_request_review' && github.event.action == 'submitted' && github.event.review.state == 'approved' ) }}}"
-          echo "github.event_name: ${{ github.event_name }}"
-          echo "github.event.action: ${{ github.event.action }}"
-          echo "github.event.review.state: ${{ github.event.review.state }}"
-  # bitcoin-tests:
-  #   if: ${{ github.event.review.state == 'approved' }}
-  #   # if: ${{ inputs.tag == '' && github.event.review.state == 'approved' }}
-  #   # if: ${{ (inputs.tag != '' && (github.ref == format('refs/heads/{0}', github.event.repository.default_branch) && !contains(github.ref, 'refs/pull'))) || github.event.review.state == 'approved'  }}
-  #   name: Bitcoin Tests
-  #   # uses: wileyj/stacks-blockchain/.github/workflows/image-build-debian-source.yml@master
-  #   uses: ./.github/workflows/bitcoin-tests.yml
-  #   needs:
-  #     - rustfmt
-  #     - leaked-cred-test
-  epoch-tests:
-    # if: ${{ github.event.review.state == 'approved' }}
-    if: |
-      ( 
-        github.event_name == 'pull_request_review' && 
-        github.event.action == 'submitted' && 
-        github.event.review.state == 'approved' 
-      )
-    name: Epoch Tests
-    runs-on: ubuntu-latest
-    steps:
-      - name: echo
-        run: |
-          echo "Epoch Tests"
-          echo "Conditional"
-          echo "  - ( github.event_name == 'pull_request_review' && github.event.action == 'submitted' && github.event.review.state == 'approved' ) "
-          echo "  - true/false: ${{ ( github.event_name == 'pull_request_review' && github.event.action == 'submitted' && github.event.review.state == 'approved' ) }}"
-          echo "github.event_name: ${{ github.event_name }}"
-          echo "github.event.action: ${{ github.event.action }}"
-          echo "github.event.review.state: ${{ github.event.review.state }}"
+          echo "running  create-release"
 
-# epoch-tests:
-#   if: ${{ github.event.review.state == 'approved' }}
-#   # if: ${{ inputs.tag == '' && github.event.review.state == 'approved' }}
-#   # if: ${{ (inputs.tag != '' && (github.ref == format('refs/heads/{0}', github.event.repository.default_branch) && !contains(github.ref, 'refs/pull'))) || github.event.review.state == 'approved'  }}
-#   name: Epoch Tests
-#   # uses: wileyj/stacks-blockchain/.github/workflows/build-source-binary.yml@master
-#   uses: ./.github/workflows/epoch-tests.yml
-#   needs:
-#     - rustfmt
-#     - leaked-cred-test
+  epoch-tests:
+    if: |
+      github.event_name == 'pull_request_review' && 
+      github.event.action == 'submitted' && 
+      github.event.review.state == 'approved'
+    name: Epoch Tests
+    # # uses: wileyj/stacks-blockchain/.github/workflows/build-source-binary.yml@master
+    # uses: ./.github/workflows/epoch-tests.yml
+    needs:
+      - rustfmt
+      - leaked-cred-test
+    runs-on: ubuntu-latest
+    steps:
+      - name: echo
+        run: |
+          echo "running  create-release"
+
+  artifact:
+    if: |
+      inputs.tag != '' || (
+        github.ref != format('refs/heads/{0}', github.event.repository.default_branch) && 
+        !contains(github.ref, 'refs/pull'
+      )
+    name: Create Artifacts
+    runs-on: ubuntu-latest
+    strategy:
+      max-parallel: ${{ inputs.parallel_jobs }}
+      matrix:
+        platform: ${{ fromJson(inputs.arch) }}
+    steps:
+      - name: echo
+        run: |
+          echo "running  artifact"
