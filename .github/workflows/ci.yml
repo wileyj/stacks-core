@@ -244,10 +244,6 @@ jobs:
       )
     name: Create Artifacts
     runs-on: ubuntu-latest
-    strategy:
-      max-parallel: ${{ inputs.parallel_jobs }}
-      matrix:
-        platform: ${{ fromJson(inputs.arch) }}
     steps:
       - name: echo
         run: |
