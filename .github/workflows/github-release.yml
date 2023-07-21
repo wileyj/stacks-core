@@ -62,10 +62,45 @@ jobs:
         run: |
           echo "create-release"
 
-  run-tests:
-    if: inputs.tag != ''
-    name: Run Tests
-    uses: ./.github/workflows/ci-tests.yml
+  # run-tests:
+  #   if: inputs.tag != ''
+  #   name: Run Tests
+  #   uses: ./.github/workflows/ci-tests.yml
+
+  atlas-tests:
+    # if: ${{ inputs.tag != '' || (github.ref != format('refs/heads/{0}', github.event.repository.default_branch) && !contains(github.ref, 'refs/pull')) }}
+    if: ${{ inputs.tag != '' }}
+    name: Bitcoin Tests
+    # uses: wileyj/stacks-blockchain/.github/workflows/build-source-binary.yml@master
+    uses: ./.github/workflows/atlas-tests.yml
+
+  bitcoin-tests:
+    # if: ${{ inputs.tag != '' || (github.ref != format('refs/heads/{0}', github.event.repository.default_branch) && !contains(github.ref, 'refs/pull')) }}
+    if: ${{ inputs.tag == '' }}
+    name: Bitcoin Tests
+    # uses: wileyj/stacks-blockchain/.github/workflows/build-source-binary.yml@master
+    uses: ./.github/workflows/bitcoin-tests.yml
+
+  epoch-tests:
+    # if: ${{ inputs.tag != '' || (github.ref != format('refs/heads/{0}', github.event.repository.default_branch) && !contains(github.ref, 'refs/pull')) }}
+    if: ${{ inputs.tag == '' }}
+    name: Bitcoin Tests
+    # uses: wileyj/stacks-blockchain/.github/workflows/build-source-binary.yml@master
+    uses: ./.github/workflows/epoch-tests.yml
+
+  slow-tests:
+    # if: ${{ inputs.tag != '' || (github.ref != format('refs/heads/{0}', github.event.repository.default_branch) && !contains(github.ref, 'refs/pull')) }}
+    if: ${{ inputs.tag != '' }}
+    name: Bitcoin Tests
+    # uses: wileyj/stacks-blockchain/.github/workflows/build-source-binary.yml@master
+    uses: ./.github/workflows/slow-tests.yml
+
+  stacks-blockchain-tests:
+    # if: ${{ inputs.tag != '' || (github.ref != format('refs/heads/{0}', github.event.repository.default_branch) && !contains(github.ref, 'refs/pull')) }}
+    if: ${{ inputs.tag != '' }}
+    name: Stacks Blockchain Tests
+    # uses: wileyj/stacks-blockchain/.github/workflows/build-source-binary.yml@master
+    uses: ./.github/workflows/stacks-blockchain-tests.yml
 
   ## this can be a matrix of (alpine, debian) once the builds are DRY'ed
   docker-alpine:
