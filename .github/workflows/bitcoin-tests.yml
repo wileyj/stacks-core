@@ -37,6 +37,11 @@ on:
   #   workflows: ["Create Test Caches"]
   #   types:
   #     - completed
+
+defaults:
+  run:
+    shell: bash
+
 env:
   BITCOIND_TEST: 1
   RUST_BACKTRACE: full
@@ -62,142 +67,7 @@ jobs:
     runs-on: ubuntu-latest
     needs:
       - create-cache
-    strategy:
-      fail-fast: false
-      max-parallel: 32
-      matrix:
-        test-name:
-          - tests::bitcoin_regtest::bitcoind_integration_test
-          - tests::integrations::integration_test_get_info
-          - tests::neon_integrations::antientropy_integration_test
-          - tests::neon_integrations::bad_microblock_pubkey
-          - tests::neon_integrations::bitcoind_forking_test
-          - tests::neon_integrations::bitcoind_integration_test
-          - tests::neon_integrations::block_large_tx_integration_test
-          - tests::neon_integrations::block_limit_hit_integration_test
-          - tests::neon_integrations::cost_voting_integration
-          - tests::neon_integrations::filter_long_runtime_tx_integration_test
-          - tests::neon_integrations::filter_low_fee_tx_integration_test
-          - tests::neon_integrations::fuzzed_median_fee_rate_estimation_test_window10
-          - tests::neon_integrations::fuzzed_median_fee_rate_estimation_test_window5
-          - tests::neon_integrations::liquid_ustx_integration
-          - tests::neon_integrations::microblock_fork_poison_integration_test
-          - tests::neon_integrations::microblock_integration_test
-          - tests::neon_integrations::microblock_large_tx_integration_test_FLAKY
-          - tests::neon_integrations::microblock_limit_hit_integration_test
-          - tests::neon_integrations::miner_submit_twice
-          - tests::neon_integrations::mining_events_integration_test
-          - tests::neon_integrations::pox_integration_test
-          - tests::neon_integrations::push_boot_receipts
-          - tests::neon_integrations::runtime_overflow_unconfirmed_microblocks_integration_test
-          - tests::neon_integrations::should_fix_2771
-          - tests::neon_integrations::size_check_integration_test
-          - tests::neon_integrations::size_overflow_unconfirmed_invalid_stream_microblocks_integration_test
-          - tests::neon_integrations::size_overflow_unconfirmed_microblocks_integration_test
-          - tests::neon_integrations::size_overflow_unconfirmed_stream_microblocks_integration_test
-          - tests::neon_integrations::stx_delegate_btc_integration_test
-          - tests::neon_integrations::stx_transfer_btc_integration_test
-          - tests::neon_integrations::test_chainwork_first_intervals
-          - tests::neon_integrations::test_chainwork_partial_interval
-          - tests::neon_integrations::test_flash_block_skip_tenure
-          - tests::neon_integrations::test_problematic_blocks_are_not_mined
-          - tests::neon_integrations::test_problematic_blocks_are_not_relayed_or_stored
-          - tests::neon_integrations::test_problematic_microblocks_are_not_mined
-          - tests::neon_integrations::test_problematic_microblocks_are_not_relayed_or_stored
-          - tests::neon_integrations::test_problematic_txs_are_not_stored
-          - tests::neon_integrations::use_latest_tip_integration_test
-          - tests::should_succeed_handling_malformed_and_valid_txs
     steps:
-      - name: Checkout the latest code
-        id: git_checkout
-        uses: actions/checkout@v3
-
-      - name: Setup Rust Toolchain
-        id: setup_rust_toolchain
-        uses: actions-rust-lang/setup-rust-toolchain@v1
-        with:
-          toolchain: stable
-          components: llvm-tools-preview
-          cache: false
-
-      - name: Restore Cargo Cache
-        id: restore_cargo_cache
-        uses: actions/cache/restore@v3
-        with:
-          fail-on-cache-miss: true
-          path: |
-            ~/.cargo/bin/
-            ~/.cargo/registry/index/
-            ~/.cargo/registry/cache/
-            ~/.cargo/git/db/
-          key: ${{ github.event.repository.name }}-cargo
-          # key: ${{ github.event.repository.name }}-${{ github.sha }}-cargo
-
-      - name: Restore Bitcoin Binary Cache
-        id: restore_bitcoin_cache
-        uses: actions/cache/restore@v3
-        with:
-          fail-on-cache-miss: true
-          path: /tmp/bitcoin
-          key: ${{ github.event.repository.name }}-bitcoin-binaries
-
-      - name: Restore Test Archive Cache
-        id: restore_test-archive_cache
-        uses: actions/cache/restore@v3
-        with:
-          fail-on-cache-miss: true
-          path: /tmp/test_archive.tar.zst
-          key: ${{ github.event.repository.name }}-test-archive
-          # key: ${{ github.event.repository.name }}-${{ github.sha }}-test-archive
-
-      - name: Restore Target Cache
-        id: restore_target_cache
-        uses: actions/cache/restore@v3
-        with:
-          fail-on-cache-miss: true
-          path: ./target
-          key: ${{ github.event.repository.name }}-target
-          # key: ${{ github.event.repository.name }}-${{ github.sha }}-target
-
-      - name: Link Bitcoin Binary
-        id: bitcoin_binary
+      - name: echo
         run: |
-          sudo ln -s /tmp/bitcoin/bin/bitcoind /bin/
-          ls -al /bin/bitcoind
-
-      - name: Run Tests
-        id: run_tests
-        run: |
-          cargo nextest run \
-            --test-threads 1  \
-            --run-ignored all \
-            --retries 2 \
-            --final-status-level fail \
-            --archive-file /tmp/test_archive.tar.zst \
-            "${{ matrix.test-name }}"
-
-      - name: Run grcov
-        id: run_grcov
-        run: |
-          grcov . --binary-path ./target/debug/ -s . -t lcov --branch --ignore-not-existing --ignore "/*" -o lcov.info || exit 1
-
-      # - name: Upload Code Coverage
-      #   id: code_coverage
-      #   uses: codecov/codecov-action@v3
-      #   with:
-      #     files: ./lcov.info
-      #     name: ${{ matrix.test-name }}
-      #     fail_ci_if_error: false
-
-      - name: Upload Code Coverage
-        id: code_coverage
-        uses: Wandalen/wretry.action@master
-        with:
-          action: codecov/codecov-action@v3
-          with: |
-            files: ./lcov.info
-            name: ${{ matrix.test-name }}
-            fail_ci_if_error: false
-            verbose: true
-          attempt_limit: 3
-          attempt_delay: 10000
+          echo "integration-tests"

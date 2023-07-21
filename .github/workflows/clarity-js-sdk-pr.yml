@@ -4,6 +4,10 @@
 
 name: Open Clarity JS SDK PR
 
+defaults:
+  run:
+    shell: bash
+
 env:
   CLARITY_JS_SDK_REPOSITORY: stacks-network/clarity-js-sdk
   COMMIT_USER: Hiro DevOps

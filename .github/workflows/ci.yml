@@ -153,20 +153,21 @@ jobs:
         )
       )
     name: Docker Debian Source Image
-    # # uses: wileyj/stacks-blockchain/.github/workflows/image-build-debian-source.yml@master
-    # uses: ./.github/workflows/image-build-debian-source.yml
+    # uses: wileyj/stacks-blockchain/.github/workflows/image-build-debian-source.yml@master
+    uses: ./.github/workflows/image-build-debian-source.yml
     needs:
       - rustfmt
       - leaked-cred-test
-    # secrets: inherit
-    # # secrets:
-    # #   DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
-    # #   DOCKERHUB_PASSWORD: ${{ secrets.DOCKERHUB_PASSWORD }}
-    runs-on: ubuntu-latest
-    steps:
-      - name: echo
-        run: |
-          echo "running  build-source-image"
+    secrets: inherit
+    # secrets:
+    #   DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+    #   DOCKERHUB_PASSWORD: ${{ secrets.DOCKERHUB_PASSWORD }}
+    # runs-on: ubuntu-latest
+    # steps:
+    #   - name: echo
+    #     run: |
+    #       echo "running  build-source-image"
+
   # ## if:
   # ##  - (input tag is provided) AND (is master branch and not a PR)
   # ## then:
@@ -179,17 +180,17 @@ jobs:
   create-release:
     if: inputs.tag != ''
     name: Create Release
-    # # uses: wileyj/stacks-blockchain/.github/workflows/github-release.yml@master
-    # uses: ./.github/workflows/github-release.yml
     needs:
       - rustfmt
       - leaked-cred-test
-    # secrets: inherit
-    runs-on: ubuntu-latest
-    steps:
-      - name: echo
-        run: |
-          echo "running  create-release"
+    # # uses: wileyj/stacks-blockchain/.github/workflows/github-release.yml@master
+    uses: ./.github/workflows/github-release.yml
+    secrets: inherit
+    # runs-on: ubuntu-latest
+    # steps:
+    #   - name: echo
+    #     run: |
+    #       echo "running  create-release"
 
   # ##
   # ## Tests to run regularly
@@ -208,16 +209,16 @@ jobs:
       github.event.action == 'submitted' && 
       github.event.review.state == 'approved'
     name: Bitcoin Tests
-    # # uses: wileyj/stacks-blockchain/.github/workflows/image-build-debian-source.yml@master
-    # uses: ./.github/workflows/bitcoin-tests.yml
     needs:
       - rustfmt
       - leaked-cred-test
-    runs-on: ubuntu-latest
-    steps:
-      - name: echo
-        run: |
-          echo "running  create-release"
+    # uses: wileyj/stacks-blockchain/.github/workflows/image-build-debian-source.yml@master
+    uses: ./.github/workflows/bitcoin-tests.yml
+    # runs-on: ubuntu-latest
+    # steps:
+    #   - name: echo
+    #     run: |
+    #       echo "running  create-release"
 
   epoch-tests:
     if: |
@@ -225,26 +226,13 @@ jobs:
       github.event.action == 'submitted' && 
       github.event.review.state == 'approved'
     name: Epoch Tests
-    # # uses: wileyj/stacks-blockchain/.github/workflows/build-source-binary.yml@master
-    # uses: ./.github/workflows/epoch-tests.yml
     needs:
       - rustfmt
       - leaked-cred-test
-    runs-on: ubuntu-latest
-    steps:
-      - name: echo
-        run: |
-          echo "running  create-release"
-
-  artifact:
-    if: |
-      inputs.tag != '' || (
-        github.ref != format('refs/heads/{0}', github.event.repository.default_branch) && 
-        !contains(github.ref, 'refs/pull')
-      )
-    name: Create Artifacts
-    runs-on: ubuntu-latest
-    steps:
-      - name: echo
-        run: |
-          echo "running  artifact"
+    # uses: wileyj/stacks-blockchain/.github/workflows/build-source-binary.yml@master
+    uses: ./.github/workflows/epoch-tests.yml
+    # runs-on: ubuntu-latest
+    # steps:
+    #   - name: echo
+    #     run: |
+    #       echo "running  create-release"

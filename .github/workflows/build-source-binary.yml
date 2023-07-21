@@ -29,10 +29,18 @@ on:
         type: string
         default: >-
           ["linux-glibc-x64", "linux-musl-x64", "linux-glibc-arm64", "linux-musl-arm64", "macos-x64", "macos-arm64", "windows-x64"]
+
+defaults:
+  run:
+    shell: bash
+
 jobs:
   artifact:
-    # if: ${{ inputs.tag != '' }}
-    if: ${{ inputs.tag != '' || (github.ref != format('refs/heads/{0}', github.event.repository.default_branch) && !contains(github.ref, 'refs/pull')) }}
+    if: |
+      inputs.tag != '' || (
+        github.ref != format('refs/heads/{0}', github.event.repository.default_branch) && 
+        !contains(github.ref, 'refs/pull')
+      )
     name: Create Artifacts
     runs-on: ubuntu-latest
     strategy:
@@ -40,37 +48,6 @@ jobs:
       matrix:
         platform: ${{ fromJson(inputs.arch) }}
     steps:
-      - name: Checkout the latest code
-        id: git_checkout
-        uses: actions/checkout@v3
-
-      - name: Set Vars
-        id: set_vars
+      - name: echo
         run: |
-          echo "GITHUB_SHA_SHORT=${GITHUB_SHA::7}" >> $GITHUB_ENV
-          echo "GITHUB_REF_SHORT=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
-
-      - name: Set up Docker Buildx
-        id: setup_buildx
-        uses: docker/setup-buildx-action@v2
-
-      - name: Build Binaries
-        id: build_binaries
-        uses: docker/build-push-action@v3
-        with:
-          file: build-scripts/Dockerfile.${{ matrix.platform }}
-          outputs: type=local,dest=./release/${{ matrix.platform }}
-          build-args: |
-            OS_ARCH=${{ matrix.platform }}
-            GIT_BRANCH=${{ env.GITHUB_REF_SHORT }}
-            GIT_COMMIT=${{ env.GITHUB_SHA_SHORT }}
-
-      - name: Compress artifact
-        id: compress_artifact
-        run: zip --junk-paths ${{ matrix.platform }} ./release/${{ matrix.platform }}/*
-
-      - name: Upload artifact
-        id: upload_artifact
-        uses: actions/upload-artifact@v3
-        with:
-          path: ${{ matrix.platform }}.zip
+          echo "artifact"

@@ -37,6 +37,10 @@ on:
     #   DOCKERHUB_PASSWORD:
     #     required: true
 
+defaults:
+  run:
+    shell: bash
+
 env:
   docker_platforms: "linux/arm64, linux/amd64, linux/amd64/v2, linux/amd64/v3"
   os_version: alpine
@@ -44,7 +48,7 @@ env:
 jobs:
   image:
     # Only run if a tag is provided manually
-    if: ${{ inputs.tag != '' }}
+    if: inputs.tag != ''
     name: Build Image
     runs-on: ubuntu-latest
     ## this can DRY the image build and make multiple files unneeded
@@ -57,70 +61,6 @@ jobs:
     #       - debian
     ##
     steps:
-      - name: Checkout the latest code
-        id: git_checkout
-        uses: actions/checkout@v3
-
-      - name: Set Vars
-        id: set_vars
+      - name: echo
         run: |
-          echo "GITHUB_SHA_SHORT=${GITHUB_SHA::7}" >> $GITHUB_ENV
-          echo "GITHUB_REF_SHORT=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
-
-      - name: Set up QEMU
-        id: docker_qemu
-        uses: docker/setup-qemu-action@v2
-
-      - name: Set up Docker Buildx
-        id: docker_buildx
-        uses: docker/setup-buildx-action@v2
-
-      # tag image with:
-      #   latest: `latest`
-      #   input tag: `<input tag>`
-      #   git tag: `1234`
-      - name: Docker Metadata (Alpine)
-        # if: ${{ inputs.dist == 'alpine' }}
-        id: docker_metadata
-        uses: docker/metadata-action@v4
-        with:
-          images: |
-            wileyj/${{ github.event.repository.name }}
-          tags: |
-            type=raw,value=latest,enable=${{ inputs.tag != '' && (github.ref == format('refs/heads/{0}', github.event.repository.default_branch) )}}
-            type=raw,value=${{ inputs.tag }}-${{ env.os_version }},enable=${{ inputs.tag != '' }}
-            type=raw,value=${{ inputs.tag }},enable=${{ inputs.tag != '' }}
-            type=ref,event=tag,enable=true
-
-      # - name: Docker Metadata (Debian)
-      #   # if: ${{ inputs.dist == 'debian' }}
-      #   id: docker_metadata
-      #   uses: docker/metadata-action@v4
-      #   with:
-      #     images: |
-      #       wileyj/${{ github.event.repository.name }}
-      #     tags: |
-      #       type=raw,value=latest-${{ env.os_version }},enable=${{ inputs.tag != '' && (github.ref == format('refs/heads/{0}', github.event.repository.default_branch) )}}
-      #       type=raw,value=${{ inputs.tag }}-${{ env.os_version }},enable=${{ inputs.tag != '' }}
-
-      - name: Login to DockerHub
-        id: docker_login
-        uses: docker/login-action@v2
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_PASSWORD }}
-
-      - name: Build and Push
-        id: docker_build
-        uses: docker/build-push-action@v3
-        with:
-          file: ./.github/actions/dockerfiles/Dockerfile.${{ env.os_version }}-binary
-          platforms: ${{ env.docker_platforms }}
-          tags: ${{ steps.docker_metadata.outputs.tags }}
-          labels: ${{ steps.docker_metadata.outputs.labels }}
-          build-args: |
-            TAG=${{ inputs.tag}}
-            STACKS_NODE_VERSION=${{ inputs.tag || env.GITHUB_SHA_SHORT }}
-            GIT_BRANCH=${{ env.GITHUB_REF_SHORT }}
-            GIT_COMMIT=${{ env.GITHUB_SHA_SHORT }}
-          push: true
+          echo "image"
