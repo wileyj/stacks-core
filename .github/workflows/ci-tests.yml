@@ -24,11 +24,11 @@ on:
         required: true
         type: choice
         options:
-          - atlas
-          - bitcoin
-          - epoch
-          - slow
-          - stacks-blockchain
+          - atlas tests
+          - bitcoin tests
+          - epoch tests
+          - slow tests
+          - stacks-blockchain tests
 jobs:
   create-cache:
     if: inputs.tag != ''
@@ -39,7 +39,7 @@ jobs:
   atlas-wf-test:
     if: |
       inputs.tag == '' &&
-      inputs.workflow == 'atlas'
+      inputs.workflow == 'atlas tests'
     name: Atlas Workflow Test
     runs-on: ubuntu-latest
     # needs:
@@ -52,7 +52,7 @@ jobs:
   bitcoin-wf-test:
     if: |
       inputs.tag == '' &&
-      inputs.workflow == 'bitcoin'
+      inputs.workflow == 'bitcoin tests'
     name: Bitcoin Workflow Test
     runs-on: ubuntu-latest
     # needs:
@@ -65,7 +65,7 @@ jobs:
   epoch-wf-test:
     if: |
       inputs.tag == '' &&
-      inputs.workflow == 'epoch'
+      inputs.workflow == 'epoch tests'
     name: Epoch Workflow Test
     runs-on: ubuntu-latest
     # needs:
@@ -78,7 +78,7 @@ jobs:
   slow-wf-test:
     if: |
       inputs.tag == '' &&
-      inputs.workflow == 'slow'
+      inputs.workflow == 'slow tests'
     name: Epoch Workflow Test
     runs-on: ubuntu-latest
     # needs:
@@ -91,7 +91,7 @@ jobs:
   stacks-wf-test:
     if: |
       inputs.tag != '' &&
-      inputs.workflow == 'stacks-blockchain'
+      inputs.workflow == 'stacks-blockchain tests'
     name: stacks-blockchain Workflow Test
     runs-on: ubuntu-latest
     # needs:
