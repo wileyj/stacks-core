@@ -205,9 +205,11 @@ jobs:
   # ##
   bitcoin-tests:
     if: |
-      github.event_name == 'pull_request_review' && 
-      github.event.action == 'submitted' && 
-      github.event.review.state == 'approved'
+      inputs.tag == '' || (
+        github.event_name == 'pull_request_review' && 
+        github.event.action == 'submitted' && 
+        github.event.review.state == 'approved'
+      )
     name: Bitcoin Tests
     needs:
       - rustfmt
@@ -222,9 +224,11 @@ jobs:
 
   epoch-tests:
     if: |
-      github.event_name == 'pull_request_review' && 
-      github.event.action == 'submitted' && 
-      github.event.review.state == 'approved'
+      inputs.tag == '' || (
+        github.event_name == 'pull_request_review' && 
+        github.event.action == 'submitted' && 
+        github.event.review.state == 'approved'
+      )
     name: Epoch Tests
     needs:
       - rustfmt
@@ -236,3 +240,11 @@ jobs:
     #   - name: echo
     #     run: |
     #       echo "running  create-release"
+
+  release-tests:
+    if: inputs.tag != ''
+    needs:
+      - rustfmt
+      - leaked-cred-test
+    name: Release Tests
+    uses: ./.github/workflows/ci-tests.yml
