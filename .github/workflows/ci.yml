@@ -185,6 +185,10 @@ jobs:
       - leaked-cred-test
     # # uses: wileyj/stacks-blockchain/.github/workflows/github-release.yml@master
     uses: ./.github/workflows/github-release.yml
+    with:
+      tag: ${{ inputs.tag }}
+      arch: >-
+        ["linux-glibc-x64", "linux-musl-x64", "linux-glibc-arm64", "linux-musl-arm64", "macos-x64", "macos-arm64", "windows-x64"]
     secrets: inherit
     # runs-on: ubuntu-latest
     # steps:
