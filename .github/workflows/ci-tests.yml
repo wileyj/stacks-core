@@ -136,7 +136,7 @@ jobs:
     if: |
       inputs.tag == '' &&
       inputs.workflow == 'Slow Tests'
-    name: Epoch Workflow Test
+    name: Slow Workflow Test
     runs-on: ubuntu-latest
     # needs:
     #   - create-cache
