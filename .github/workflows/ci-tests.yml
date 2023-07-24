@@ -65,7 +65,7 @@ jobs:
   epoch-wf-test:
     if: |
       inputs.tag == '' &&
-      inputs.workflow == 'atlas'
+      inputs.workflow == 'epoch'
     name: Epoch Workflow Test
     runs-on: ubuntu-latest
     # needs:
