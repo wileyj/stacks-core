@@ -113,12 +113,15 @@ jobs:
       - name: echo
         run: |
           echo "input: ${{ inputs.workflow }}"
+          echo "tag: ${{ inputs.tag }}"
 
   atlas-tests:
     # if: ${{ inputs.tag != '' || (github.ref != format('refs/heads/{0}', github.event.repository.default_branch) && !contains(github.ref, 'refs/pull')) }}
     if: |
-      inputs.tag != '' ||
-      inputs.workflow == 'Atlas Tests'
+      (
+        inputs.tag != '' ||
+        inputs.workflow == 'Atlas Tests'
+      )
     name: Atlas Tests
     needs:
       - create-cache
@@ -128,8 +131,10 @@ jobs:
   bitcoin-tests:
     # if: ${{ inputs.tag != '' || (github.ref != format('refs/heads/{0}', github.event.repository.default_branch) && !contains(github.ref, 'refs/pull')) }}
     if: |
-      inputs.tag != '' ||
-      inputs.workflow == 'Bitcoin Tests'
+      (
+        inputs.tag != '' ||
+        inputs.workflow == 'Bitcoin Tests'
+      )
     name: Bitcoin Tests
     needs:
       - create-cache
@@ -139,8 +144,10 @@ jobs:
   epoch-tests:
     # if: ${{ inputs.tag != '' || (github.ref != format('refs/heads/{0}', github.event.repository.default_branch) && !contains(github.ref, 'refs/pull')) }}
     if: |
-      inputs.tag != '' ||
-      inputs.workflow == 'Epoch Tests'
+      (
+        inputs.tag != '' ||
+        inputs.workflow == 'Epoch Tests'
+      )
     name: Epoch Tests
     needs:
       - create-cache
@@ -150,8 +157,10 @@ jobs:
   slow-tests:
     # if: ${{ inputs.tag != '' || (github.ref != format('refs/heads/{0}', github.event.repository.default_branch) && !contains(github.ref, 'refs/pull')) }}
     if: |
-      inputs.tag != '' ||
-      inputs.workflow == 'Slow Tests'
+      (
+        inputs.tag != '' ||
+        inputs.workflow == 'Slow Tests'
+      )
     name: Slow Tests
     needs:
       - create-cache
@@ -161,8 +170,10 @@ jobs:
   stacks-blockchain-tests:
     # if: ${{ inputs.tag != '' || (github.ref != format('refs/heads/{0}', github.event.repository.default_branch) && !contains(github.ref, 'refs/pull')) }}
     if: |
-      inputs.tag != '' ||
-      inputs.workflow == 'Stacks Blockchain Tests'
+      (
+        inputs.tag != '' ||
+        inputs.workflow == 'Stacks Blockchain Tests'
+      )
     name: Stacks Blockchain Tests
     needs:
       - create-cache
