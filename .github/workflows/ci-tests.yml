@@ -53,7 +53,11 @@ jobs:
         run: |
           echo "input: ${{ inputs.workflow }}"
           echo "tag: ${{ inputs.tag }}"
-          echo "truthy: ${{ ( inputs.tag == '' && inputs.workflow == 'Atlas Tests' ) || inputs.tag != ''}}"
+          echo "atlas truthy: ${{ ( inputs.tag == '' && inputs.workflow == 'Atlas Tests' ) || inputs.tag != ''}}"
+          echo "bitcoin truthy: ${{ ( inputs.tag == '' && inputs.workflow == 'Bitcoin Tests' ) || inputs.tag != ''}}"
+          echo "epoch truthy: ${{ ( inputs.tag == '' && inputs.workflow == 'Epoch Tests' ) || inputs.tag != ''}}"
+          echo "slow truthy: ${{ ( inputs.tag == '' && inputs.workflow == 'Slow Tests' ) || inputs.tag != ''}}"
+          echo "stacks-blockchain truthy: ${{ ( inputs.tag == '' && inputs.workflow == 'Stacks-Blockchain Tests' ) || inputs.tag != ''}}"
 
   # atlas-wf-test:
   #   if: |
