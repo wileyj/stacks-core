@@ -22,12 +22,24 @@ on:
         description: "Release Tag"
         required: true
         type: string
+      arch:
+        description: "Stringified JSON object listing of platform matrix"
+        required: true
+        type: string
+        default: >-
+          ["linux-glibc-x64", "linux-musl-x64", "linux-glibc-arm64", "linux-musl-arm64", "macos-x64", "macos-arm64", "windows-x64"]
   workflow_call:
     inputs:
       tag:
         description: "Release Tag"
         required: true
         type: string
+      arch:
+        description: "Stringified JSON object listing of platform matrix"
+        required: true
+        type: string
+        default: >-
+          ["linux-glibc-x64", "linux-musl-x64", "linux-glibc-arm64", "linux-musl-arm64", "macos-x64", "macos-arm64", "windows-x64"]
     secrets:
       GH_TOKEN:
         required: true
@@ -45,8 +57,9 @@ jobs:
     with:
       tag: ${{ inputs.tag }}
       parallel_jobs: 4
-      arch: >-
-        ["linux-glibc-x64", "linux-musl-x64", "linux-glibc-arm64", "linux-musl-arm64", "macos-x64", "macos-arm64", "windows-x64"]
+      arch: ${{ inputs.arch }}
+      # arch: >-
+      #   ["linux-glibc-x64", "linux-musl-x64", "linux-glibc-arm64", "linux-musl-arm64", "macos-x64", "macos-arm64", "windows-x64"]
     secrets: inherit
 
   create-release:
