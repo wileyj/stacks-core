@@ -178,7 +178,7 @@ jobs:
   # ##  - slow-tests
   # ##  - stacks-blockchain-tests
   create-release:
-    if: inputs.tag != ''
+    if: ${{ inputs.tag != '' }}
     name: Create Release
     needs:
       - rustfmt
