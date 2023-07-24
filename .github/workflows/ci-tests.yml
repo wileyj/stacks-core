@@ -29,11 +29,11 @@ on:
         required: true
         type: choice
         options:
-          - Atlas Tests
-          - Bitcoin Tests
-          - Epoch Tests
-          - Slow Tests
-          - Stacks Blockchain Tests
+          - "Atlas Tests"
+          - "Bitcoin Tests"
+          - "Epoch Tests"
+          - "Slow Tests"
+          - "Stacks Blockchain Tests"
 jobs:
   create-cache:
     if: inputs.tag != ''
