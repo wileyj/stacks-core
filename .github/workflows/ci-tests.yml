@@ -17,6 +17,7 @@ on:
   #   types:
   #     - completed
   workflow_call:
+  workflow_dispatch:
     inputs:
       workflow:
         description: "The tag to create (optional)"
@@ -28,8 +29,6 @@ on:
           - epoch
           - slow
           - stacks-blockchain
-  workflow_dispatch:
-
 jobs:
   create-cache:
     if: inputs.tag != ''
