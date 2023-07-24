@@ -16,6 +16,16 @@ on:
   #     tags:
   #       - "[0-9]+.[0-9]+.[0-9]+.[0-9]+.[0-9]+" # 2.1.0.0.0
   #       - "[0-9]+.[0-9]+.[0-9].[0-9]+.[0-9]+-rc[0-9]+" # 2.1.0.0.0-rc1
+  workflow_dispatch:
+    inputs:
+      tag:
+        required: true
+        type: string
+        description: "semver tag for alpine images"
+      dist:
+        required: true
+        type: string
+        description: "Linux Distribution"
   workflow_call:
     inputs:
       tag:
