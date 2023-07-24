@@ -54,19 +54,19 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
-  # check to see if cache exists, if not then recreate it
-  create-cache:
-    name: Create Test Cache
-    uses: ./.github/workflows/create-cache.yml
-    # uses: wileyj/stacks-blockchain/.github/workflows/create_cache.yml@master
+  # # check to see if cache exists, if not then recreate it
+  # create-cache:
+  #   name: Create Test Cache
+  #   uses: ./.github/workflows/create-cache.yml
+  #   # uses: wileyj/stacks-blockchain/.github/workflows/create_cache.yml@master
 
   # atlas integration tests with code coverage
   atlas-tests:
     # if: ${{ false }}
     name: Atlas Test
     runs-on: ubuntu-latest
-    needs:
-      - create-cache
+    # needs:
+    #   - create-cache
     steps:
       - name: echo
         run: |

@@ -207,6 +207,18 @@ jobs:
   # ##    - bitcoin tests
   # ## if input tag *is* provided, these tests will run as part of the `create-release` workflow
   # ##
+
+  create-cache:
+    if: |
+      inputs.tag == '' || (
+        github.event_name == 'pull_request_review' && 
+        github.event.action == 'submitted' && 
+        github.event.review.state == 'approved'
+      )
+    name: Create Test Cache
+    uses: ./.github/workflows/create-cache.yml
+    # uses: wileyj/stacks-blockchain/.github/workflows/create_cache.yml@master
+
   bitcoin-tests:
     if: |
       inputs.tag == '' || (
@@ -218,6 +230,7 @@ jobs:
     needs:
       - rustfmt
       - leaked-cred-test
+      - create-cache
     # uses: wileyj/stacks-blockchain/.github/workflows/image-build-debian-source.yml@master
     uses: ./.github/workflows/bitcoin-tests.yml
     # runs-on: ubuntu-latest
@@ -237,6 +250,7 @@ jobs:
     needs:
       - rustfmt
       - leaked-cred-test
+      - create-cache
     # uses: wileyj/stacks-blockchain/.github/workflows/build-source-binary.yml@master
     uses: ./.github/workflows/epoch-tests.yml
     # runs-on: ubuntu-latest
@@ -250,5 +264,6 @@ jobs:
     needs:
       - rustfmt
       - leaked-cred-test
+      - create-cache
     name: Release Tests
     uses: ./.github/workflows/ci-tests.yml
