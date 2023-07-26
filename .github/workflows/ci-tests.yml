@@ -24,10 +24,6 @@ on:
         type: string
   workflow_dispatch:
     inputs:
-      # tag:
-      #   description: "tag"
-      #   required: false
-      #   type: string
       workflow:
         description: "The tag to create (optional)"
         required: true
