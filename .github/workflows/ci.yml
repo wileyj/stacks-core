@@ -234,7 +234,7 @@ jobs:
     # uses: wileyj/stacks-blockchain/.github/workflows/image-build-debian-source.yml@master
     uses: ./.github/workflows/bitcoin-tests.yml
     with:
-      workflow: Bitcoin Tests
+      test: "Bitcoin Tests"
     # runs-on: ubuntu-latest
     # steps:
     #   - name: echo
