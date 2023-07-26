@@ -233,6 +233,8 @@ jobs:
       - create-cache
     # uses: wileyj/stacks-blockchain/.github/workflows/image-build-debian-source.yml@master
     uses: ./.github/workflows/bitcoin-tests.yml
+    with:
+      workflow: "Bitcoin Tests"
     # runs-on: ubuntu-latest
     # steps:
     #   - name: echo
@@ -253,17 +255,10 @@ jobs:
       - create-cache
     # uses: wileyj/stacks-blockchain/.github/workflows/build-source-binary.yml@master
     uses: ./.github/workflows/epoch-tests.yml
+    with:
+      workflow: "Epoch Tests"
     # runs-on: ubuntu-latest
     # steps:
     #   - name: echo
     #     run: |
     #       echo "running  create-release"
-
-  release-tests:
-    if: inputs.tag != ''
-    needs:
-      - rustfmt
-      - leaked-cred-test
-      - create-cache
-    name: Release Tests
-    uses: ./.github/workflows/ci-tests.yml
