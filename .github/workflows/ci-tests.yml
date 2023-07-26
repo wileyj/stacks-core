@@ -16,19 +16,20 @@ on:
   #   workflows: ["Build Distributable Assets"]
   #   types:
   #     - completed
-  workflow_call:
-    inputs:
-      test:
-        description: "The workflow to run from a calling action"
-        required: false
-        type: string
+  # workflow_call:
+  #   inputs:
+  #     workflow:
+  #       description: "The workflow to run from a calling action"
+  #       required: false
+  #       type: string
   workflow_dispatch:
     inputs:
-      test:
+      workflow:
         description: "The tag to create (optional)"
         required: true
         type: choice
         options:
+          - All Tests
           - Atlas Tests
           - Bitcoin Tests
           - Epoch Tests
@@ -40,7 +41,7 @@ jobs:
     if: |
       inputs.tag != '' || (
         inputs.tag == '' &&
-        inputs.test != ''
+        inputs.workflow != ''
       )
     name: Create Test Cache
     uses: ./.github/workflows/create-cache.yml
@@ -52,18 +53,18 @@ jobs:
     steps:
       - name: echo
         run: |
-          echo "input: ${{ inputs.test }}"
+          echo "input: ${{ inputs.workflow }}"
           echo "tag: ${{ inputs.tag }}"
-          echo "atlas truthy: ${{ ( inputs.tag == '' && inputs.test == 'Atlas Tests' ) || inputs.tag != ''}}"
-          echo "bitcoin truthy: ${{ ( inputs.tag == '' && inputs.test == 'Bitcoin Tests' ) || inputs.tag != ''}}"
-          echo "epoch truthy: ${{ ( inputs.tag == '' && inputs.test == 'Epoch Tests' ) || inputs.tag != ''}}"
-          echo "slow truthy: ${{ ( inputs.tag == '' && inputs.test == 'Slow Tests' ) || inputs.tag != ''}}"
-          echo "stacks-blockchain truthy: ${{ ( inputs.tag == '' && inputs.test == 'Stacks-Blockchain Tests' ) || inputs.tag != ''}}"
+          echo "atlas truthy: ${{ ( inputs.tag == '' && inputs.workflow == 'Atlas Tests' ) || inputs.tag != ''}}"
+          echo "bitcoin truthy: ${{ ( inputs.tag == '' && inputs.workflow == 'Bitcoin Tests' ) || inputs.tag != ''}}"
+          echo "epoch truthy: ${{ ( inputs.tag == '' && inputs.workflow == 'Epoch Tests' ) || inputs.tag != ''}}"
+          echo "slow truthy: ${{ ( inputs.tag == '' && inputs.workflow == 'Slow Tests' ) || inputs.tag != ''}}"
+          echo "stacks-blockchain truthy: ${{ ( inputs.tag == '' && inputs.workflow == 'Stacks-Blockchain Tests' ) || inputs.tag != ''}}"
 
   # atlas-wf-test:
   #   if: |
   #     inputs.tag == '' &&
-  #     inputs.test == 'Atlas Tests'
+  #     inputs.workflow == 'Atlas Tests'
   #   name: Atlas Workflow Test
   #   runs-on: ubuntu-latest
   #   # needs:
@@ -76,8 +77,10 @@ jobs:
     # if: ${{ inputs.tag != '' || (github.ref != format('refs/heads/{0}', github.event.repository.default_branch) && !contains(github.ref, 'refs/pull')) }}
     if: |
       inputs.tag != '' || (
-        inputs.tag == '' &&
-        inputs.test == 'Atlas Tests'
+        inputs.tag == '' && (
+          inputs.workflow == 'Atlas Tests' || 
+          inputs.workflow == 'All Tests'
+        )
       )
     name: Atlas Tests
     needs:
@@ -88,7 +91,7 @@ jobs:
   # bitcoin-wf-test:
   #   if: |
   #     inputs.tag == '' &&
-  #     inputs.test == 'Bitcoin Tests'
+  #     inputs.workflow == 'Bitcoin Tests'
   #   name: Bitcoin Workflow Test
   #   runs-on: ubuntu-latest
   #   # needs:
@@ -101,8 +104,10 @@ jobs:
     # if: ${{ inputs.tag != '' || (github.ref != format('refs/heads/{0}', github.event.repository.default_branch) && !contains(github.ref, 'refs/pull')) }}
     if: |
       inputs.tag != '' || (
-        inputs.tag == '' &&
-        inputs.test == 'Bitcoin Tests'
+        inputs.tag == '' && (
+          inputs.workflow == 'Bitcoin Tests' ||
+           inputs.workflow == 'All Tests'
+        )
       )
     name: Bitcoin Tests
     needs:
@@ -113,7 +118,7 @@ jobs:
   # epoch-wf-test:
   #   if: |
   #     inputs.tag == '' &&
-  #     inputs.test == 'Epoch Tests'
+  #     inputs.workflow == 'Epoch Tests'
   #   name: Epoch Workflow Test
   #   runs-on: ubuntu-latest
   #   # needs:
@@ -126,8 +131,10 @@ jobs:
     # if: ${{ inputs.tag != '' || (github.ref != format('refs/heads/{0}', github.event.repository.default_branch) && !contains(github.ref, 'refs/pull')) }}
     if: |
       inputs.tag != '' || (
-        inputs.tag == '' &&
-        inputs.test == 'Epoch Tests'
+        inputs.tag == '' && (
+          inputs.workflow == 'Epoch Tests' ||
+          inputs.workflow == 'All Tests'
+        )
       )
     name: Epoch Tests
     needs:
@@ -138,7 +145,7 @@ jobs:
   # slow-wf-test:
   #   if: |
   #     inputs.tag == '' &&
-  #     inputs.test == 'Slow Tests'
+  #     inputs.workflow == 'Slow Tests'
   #   name: Slow Workflow Test
   #   runs-on: ubuntu-latest
   #   # needs:
@@ -151,8 +158,10 @@ jobs:
     # if: ${{ inputs.tag != '' || (github.ref != format('refs/heads/{0}', github.event.repository.default_branch) && !contains(github.ref, 'refs/pull')) }}
     if: |
       inputs.tag != '' || (
-        inputs.tag == '' &&
-        inputs.test == 'Slow Tests'
+        inputs.tag == '' && (
+          inputs.workflow == 'Slow Tests' ||
+          inputs.workflow == 'All Tests'
+        )
       )
     name: Slow Tests
     needs:
@@ -163,7 +172,7 @@ jobs:
   # stacks-wf-test:
   #   if: |
   #     inputs.tag == '' &&
-  #     inputs.test == 'Stacks-Blockchain Tests'
+  #     inputs.workflow == 'Stacks-Blockchain Tests'
   #   name: stacks-blockchain Workflow Test
   #   runs-on: ubuntu-latest
   #   # needs:
@@ -177,8 +186,10 @@ jobs:
     # if: ${{ inputs.tag != '' || (github.ref != format('refs/heads/{0}', github.event.repository.default_branch) && !contains(github.ref, 'refs/pull')) }}
     if: |
       inputs.tag != '' || (
-        inputs.tag == '' &&
-        inputs.test == 'Stacks-Blockchain Tests'
+        inputs.tag == '' && (
+          inputs.workflow == 'Stacks-Blockchain Tests' ||
+          inputs.workflow == 'All Tests'
+        )
       )
     name: Stacks Blockchain Tests
     needs:
