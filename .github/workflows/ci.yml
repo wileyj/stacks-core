@@ -232,20 +232,16 @@ jobs:
       - leaked-cred-test
       - create-cache
     # uses: wileyj/stacks-blockchain/.github/workflows/image-build-debian-source.yml@master
-    uses: ./.github/workflows/bitcoin-tests.yml
+    uses: ./.github/workflows/ci-tests.yml
+    # uses: ./.github/workflows/bitcoin-tests.yml
     with:
       test: "Bitcoin Tests"
-    # runs-on: ubuntu-latest
-    # steps:
-    #   - name: echo
-    #     run: |
-    #       echo "running  create-release"
 
   epoch-tests:
     if: |
       inputs.tag == '' || (
-        github.event_name == 'pull_request_review' && 
-        github.event.action == 'submitted' && 
+        github.event_name == 'pull_request_review' &&
+        github.event.action == 'submitted' &&
         github.event.review.state == 'approved'
       )
     name: Epoch Tests
@@ -254,11 +250,7 @@ jobs:
       - leaked-cred-test
       - create-cache
     # uses: wileyj/stacks-blockchain/.github/workflows/build-source-binary.yml@master
-    uses: ./.github/workflows/epoch-tests.yml
+    uses: ./.github/workflows/ci-tests.yml
+    # uses: ./.github/workflows/epoch-tests.yml
     with:
-      workflow: "Epoch Tests"
-    # runs-on: ubuntu-latest
-    # steps:
-    #   - name: echo
-    #     run: |
-    #       echo "running  create-release"
+      test: "Epoch Tests"
