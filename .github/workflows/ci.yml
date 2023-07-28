@@ -225,7 +225,7 @@ jobs:
 
   create-cache:
     if: |
-      inputs.tag != '' || (
+      inputs.tag == '' && (
         github.event_name == 'pull_request_review' && 
         github.event.action == 'submitted' && 
         github.event.review.state == 'approved'
@@ -236,7 +236,7 @@ jobs:
 
   bitcoin-tests:
     if: |
-      inputs.tag != '' || (
+      inputs.tag == '' && (
         github.event_name == 'pull_request_review' && 
         github.event.action == 'submitted' && 
         github.event.review.state == 'approved'
@@ -254,7 +254,7 @@ jobs:
 
   epoch-tests:
     if: |
-      inputs.tag != '' || (
+      inputs.tag == '' && (
         github.event_name == 'pull_request_review' &&
         github.event.action == 'submitted' &&
         github.event.review.state == 'approved'
