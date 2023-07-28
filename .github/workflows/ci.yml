@@ -210,6 +210,18 @@ jobs:
   # ## if input tag *is* provided, these tests will run as part of the `create-release` workflow
   # ##
 
+  echo:
+    name: Echo
+    runs-on: ubuntu-latest
+    steps:
+      - name: echo
+        run: |
+          echo "inputs.tag: ${{ inputs.tag }}"
+          echo "github.event_name: ${{ github.event_name }}"
+          echo "github.event.action: ${{ github.event.action }}"
+          echo "github.event.review.state: ${{ github.event.review.state }}"
+          echo "truthy for aproved PR/input tag: ${{ inputs.tag == '' || ( github.event_name == 'pull_request_review' && github.event.action == 'submitted' && github.event.review.state == 'approved' }}"
+
   create-cache:
     if: |
       inputs.tag == '' || (
