@@ -50,7 +50,7 @@ jobs:
           echo "github.event_name: ${{ github.event_name }}"
           echo "github.event.action: ${{ github.event.action }}"
           echo "github.event.review.state: ${{ github.event.review.state }}"
-          echo "truthy: ${{ inputs.tag == '' || ( github.event_name == 'pull_request_review' && github.event.action == 'submitted' && github.event.review.state == 'approved' }}"
+          echo "truthy: ${{ inputs.tag == '' || ( github.event_name == 'pull_request_review' && github.event.action == 'submitted' && github.event.review.state == 'approved') }}"
   ##
   ## it is expected that this cache will exist longer so other runs can use it
   ##
