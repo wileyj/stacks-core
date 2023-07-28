@@ -223,9 +223,15 @@ jobs:
           echo "true if (input || pr approval): ${{ inputs.tag != '' || ( github.event_name == 'pull_request_review' && github.event.action == 'submitted' && github.event.review.state == 'approved') }}"
           echo "true if (input && not (pr submitted && !(pr comment || pr change requested))): ${{ inputs.tag == '' &&  !( github.event_name == 'pull_request_review' &&  github.event.action == 'submitted' &&  ( github.event.review.state == 'commented' || github.event.review.state == 'changes_requested' ) ) }}"
 
+  # run if:
+  # input tag is not provided
+  # or
+  # is a an approved PR
+  # == will run when called manually, or if a PR is approved.
+
   create-cache:
     if: |
-      inputs.tag == '' && (
+      inputs.tag == '' || (
         github.event_name == 'pull_request_review' && 
         github.event.action == 'submitted' && 
         github.event.review.state == 'approved'
@@ -234,9 +240,15 @@ jobs:
     uses: ./.github/workflows/create-cache.yml
     # uses: wileyj/stacks-blockchain/.github/workflows/create_cache.yml@master
 
+  # run if:
+  # input tag is not provided
+  # or
+  # is a an approved PR
+  # == will run when called manually, or if a PR is approved.
+
   bitcoin-tests:
     if: |
-      inputs.tag == '' && (
+      inputs.tag == '' || (
         github.event_name == 'pull_request_review' && 
         github.event.action == 'submitted' && 
         github.event.review.state == 'approved'
@@ -252,9 +264,15 @@ jobs:
     # with:
     #   test: "Bitcoin Tests"
 
+  # run if:
+  # input tag is not provided
+  # or
+  # is a an approved PR
+  # == will run when called manually, or if a PR is approved.
+
   epoch-tests:
     if: |
-      inputs.tag == '' && (
+      inputs.tag == '' || (
         github.event_name == 'pull_request_review' &&
         github.event.action == 'submitted' &&
         github.event.review.state == 'approved'
