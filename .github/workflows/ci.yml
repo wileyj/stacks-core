@@ -118,6 +118,8 @@ jobs:
               ;;
           esac
           echo "BRANCH_NAME=$branch" >> $GITHUB_ENV
+          echo "NOT PR: github.ref: ${{ github.ref }}"
+          echo "IS PR: github.event.pull_request.base.ref: ${{ github.event.pull_request.base.ref }}"
 
       - name: Checkout the latest code
         id: git_checkout
