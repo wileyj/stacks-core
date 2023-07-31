@@ -304,3 +304,6 @@ jobs:
           echo "Create-cache conditionals:"
           echo "    true if inputs.tag != '' ||: ${{ inputs.tag != '' }}"
           echo "    true if inputs.tag == '' ||: ${{ inputs.tag == '' }}"
+          echo "    true if github.event_name == 'pull_request_review: ${{ github.event_name == 'pull_request_review }}"
+          echo "    true if github.event.action == 'submitted': ${{ github.event.action == 'submitted' }}"
+          echo "    true if github.event.review.state == 'approved': ${{ github.event.review.state == 'approved' }}"
