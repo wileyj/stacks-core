@@ -213,9 +213,15 @@ jobs:
             github.event.action == 'submitted' && 
             github.event.review.state == 'approved'
           ) || 
+          github.event_name == 'workflow_dispatch' ||
+          github.event_name == 'pull_request_target' ||
           (
-            github.event_name == 'workflow_dispatch' ||
-            github.event_name == 'pull_request_target'
+            contains('
+              refs/heads/next
+              refs/heads/develoment
+              refs/heads/master
+            ', github.ref) &&
+            github.event.pull_request.merged == true
           )
         )
       )
