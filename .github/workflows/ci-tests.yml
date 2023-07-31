@@ -22,8 +22,18 @@ on:
   #       description: "The workflow to run from a calling action"
   #       required: false
   #       type: string
+  workflow_call:
+    inputs:
+      tag:
+        description: "Tag name of this release (x.y.z)"
+        required: false
+        type: string
   workflow_dispatch:
     inputs:
+      tag:
+        description: "Tag name of this release (x.y.z)"
+        required: false
+        type: string
       workflow:
         description: "The tag to create (optional)"
         required: true
