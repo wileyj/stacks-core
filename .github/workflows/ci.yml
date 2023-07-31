@@ -198,6 +198,25 @@ jobs:
     #     run: |
     #       echo "running  create-release"
 
+  # run if:
+  # input tag is not provided
+  # or
+  # is a an approved PR
+  # == will run when called manually, or if a PR is approved.
+
+  create-cache:
+    if: |
+      inputs.tag != '' || (
+        inputs.tag == '' || (
+          github.event_name == 'pull_request_review' && 
+          github.event.action == 'submitted' && 
+          github.event.review.state == 'approved'
+        )
+      )
+    name: Create Test Cache
+    uses: ./.github/workflows/create-cache.yml
+    # uses: wileyj/stacks-blockchain/.github/workflows/create_cache.yml@master
+
   # ##
   # ## Tests to run regularly
   # ##
@@ -209,36 +228,18 @@ jobs:
   # ##    - bitcoin tests
   # ## if input tag *is* provided, these tests will run as part of the `create-release` workflow
   # ##
-
-  echo:
-    name: Echo
-    runs-on: ubuntu-latest
-    steps:
-      - name: echo
-        run: |
-          echo "inputs.tag: ${{ inputs.tag }}"
-          echo "github.event_name: ${{ github.event_name }}"
-          echo "github.event.action: ${{ github.event.action }}"
-          echo "github.event.review.state: ${{ github.event.review.state }}"
-          echo "true if (input || pr approval): ${{ inputs.tag == '' || ( github.event_name == 'pull_request_review' && github.event.action == 'submitted' && github.event.review.state == 'approved') }}"
-          echo "true if (input && not (pr submitted && !(pr comment || pr change requested))): ${{ inputs.tag == '' &&  !( github.event_name == 'pull_request_review' &&  github.event.action == 'submitted' &&  ( github.event.review.state == 'commented' || github.event.review.state == 'changes_requested' ) ) }}"
-
-  # run if:
-  # input tag is not provided
-  # or
-  # is a an approved PR
-  # == will run when called manually, or if a PR is approved.
-
-  create-cache:
-    if: |
-      inputs.tag == '' || (
-        github.event_name == 'pull_request_review' && 
-        github.event.action == 'submitted' && 
-        github.event.review.state == 'approved'
-      )
-    name: Create Test Cache
-    uses: ./.github/workflows/create-cache.yml
-    # uses: wileyj/stacks-blockchain/.github/workflows/create_cache.yml@master
+  release-tests:
+    if: inputs.tag != ''
+    name: Release Tests
+    needs:
+      - rustfmt
+      - leaked-cred-test
+      - create-cache
+    # # uses: wileyj/stacks-blockchain/.github/workflows/github-release.yml@master
+    uses: ./.github/workflows/ci-tests.yml
+    with:
+      tag: ${{ inputs.tag }}
+    secrets: inherit
 
   # run if:
   # input tag is not provided
@@ -287,3 +288,16 @@ jobs:
     # uses: ./.github/workflows/ci-tests.yml
     # with:
     #   test: "Epoch Tests"
+
+  echo:
+    name: Echo
+    runs-on: ubuntu-latest
+    steps:
+      - name: echo
+        run: |
+          echo "inputs.tag: ${{ inputs.tag }}"
+          echo "github.event_name: ${{ github.event_name }}"
+          echo "github.event.action: ${{ github.event.action }}"
+          echo "github.event.review.state: ${{ github.event.review.state }}"
+          echo "true if (input || pr approval): ${{ inputs.tag == '' || ( github.event_name == 'pull_request_review' && github.event.action == 'submitted' && github.event.review.state == 'approved') }}"
+          echo "true if (input && not (pr submitted && !(pr comment || pr change requested))): ${{ inputs.tag == '' &&  !( github.event_name == 'pull_request_review' &&  github.event.action == 'submitted' &&  ( github.event.review.state == 'commented' || github.event.review.state == 'changes_requested' ) ) }}"
