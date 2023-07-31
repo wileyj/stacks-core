@@ -213,7 +213,10 @@ jobs:
             github.event.action == 'submitted' && 
             github.event.review.state == 'approved'
           ) || 
-          github.event_name == 'workflow_dispatch'
+          (
+            github.event_name == 'workflow_dispatch' ||
+            github.event_name == 'pull_request_target'
+          )
         )
       )
     name: Create Test Cache
