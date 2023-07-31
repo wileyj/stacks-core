@@ -220,7 +220,7 @@ jobs:
               refs/heads/next
               refs/heads/develoment
               refs/heads/master
-            ', github.ref) &&
+            ', github.event.pull_request.head.ref) &&
             github.event.pull_request.merged == true
           )
         )
@@ -322,3 +322,6 @@ jobs:
           echo "    true is PR is approved: ${{ (github.event_name == 'pull_request_review' && github.event.action == 'submitted' && github.event.review.state == 'approved') }}"
           echo "    true if inputs.tag != '' || (inputs.tag == '' || (github.event_name == 'pull_request_review' && github.event.action == 'submitted' && github.event.review.state == 'approved')): ${{ inputs.tag != '' || (inputs.tag == '' || (github.event_name == 'pull_request_review' && github.event.action == 'submitted' && github.event.review.state == 'approved')) }}"
           echo "    true if inputs.tag != '' || (inputs.tag == '' && (github.event_name == 'pull_request_review' && github.event.action == 'submitted' && github.event.review.state == 'approved')): ${{ inputs.tag != '' || (inputs.tag == '' && (github.event_name == 'pull_request_review' && github.event.action == 'submitted' && github.event.review.state == 'approved')) }}"
+          echo "    true if ref is master/develpment/next: ${{ contains(' refs/heads/next refs/heads/develoment refs/heads/master', github.event.pull_request.head.ref) }}"
+          echo "    true if merged PR (github.event.pull_request.merged) : ${{ github.event.pull_request.merged }}"
+          echo "    github.event.pull_request.head.ref: ${{ github.event.pull_request.head.ref }}"
