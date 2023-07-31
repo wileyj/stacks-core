@@ -213,7 +213,7 @@ jobs:
             github.event.action == 'submitted' && 
             github.event.review.state == 'approved'
           ) || 
-          github.event_name: 'workflow_dispatch'
+          github.event_name == 'workflow_dispatch'
       )
     name: Create Test Cache
     uses: ./.github/workflows/create-cache.yml
