@@ -207,7 +207,7 @@ jobs:
   create-cache:
     if: |
       inputs.tag != '' || (
-        inputs.tag == '' || (
+        inputs.tag == '' && (
           github.event_name == 'pull_request_review' && 
           github.event.action == 'submitted' && 
           github.event.review.state == 'approved'
@@ -301,3 +301,12 @@ jobs:
           echo "github.event.review.state: ${{ github.event.review.state }}"
           echo "true if (input || pr approval): ${{ inputs.tag == '' || ( github.event_name == 'pull_request_review' && github.event.action == 'submitted' && github.event.review.state == 'approved') }}"
           echo "true if (input && not (pr submitted && !(pr comment || pr change requested))): ${{ inputs.tag == '' &&  !( github.event_name == 'pull_request_review' &&  github.event.action == 'submitted' &&  ( github.event.review.state == 'commented' || github.event.review.state == 'changes_requested' ) ) }}"
+          echo "Create-cache conditionals:"
+          echo "    true if inputs.tag != '' ||: ${{inputs.tag != '' }}
+          echo "    true if inputs.tag == '' ||: ${{inputs.tag == '' }}
+          echo "    true if github.event_name == 'pull_request_review: ${{ github.event_name == 'pull_request_review }}"
+          echo "    true if github.event.action == 'submitted': ${{ github.event.action == 'submitted' }}"
+          echo "    true if github.event.review.state == 'approved': ${{ github.event.review.state == 'approved' }}"
+          echo "    true is PR is approved: ${{ (github.event_name == 'pull_request_review' && github.event.action == 'submitted' && github.event.review.state == 'approved') }}"
+          echo "    true if inputs.tag != '' || (inputs.tag == '' || (github.event_name == 'pull_request_review' && github.event.action == 'submitted' && github.event.review.state == 'approved')): ${{ inputs.tag != '' || (inputs.tag == '' || (github.event_name == 'pull_request_review' && github.event.action == 'submitted' && github.event.review.state == 'approved')) }}"
+          echo "    true if inputs.tag != '' || (inputs.tag == '' && (github.event_name == 'pull_request_review' && github.event.action == 'submitted' && github.event.review.state == 'approved')): ${{ inputs.tag != '' || (inputs.tag == '' && (github.event_name == 'pull_request_review' && github.event.action == 'submitted' && github.event.review.state == 'approved')) }}"
