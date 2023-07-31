@@ -208,10 +208,12 @@ jobs:
     if: |
       inputs.tag != '' || (
         inputs.tag == '' && (
-          github.event_name == 'pull_request_review' && 
-          github.event.action == 'submitted' && 
-          github.event.review.state == 'approved'
-        )
+          (
+            github.event_name == 'pull_request_review' && 
+            github.event.action == 'submitted' && 
+            github.event.review.state == 'approved'
+          ) || 
+          github.event_name: 'workflow_dispatch'
       )
     name: Create Test Cache
     uses: ./.github/workflows/create-cache.yml
