@@ -49,9 +49,8 @@ jobs:
   create-cache:
     # if: inputs.tag != ''
     if: |
-      github.event_name == 'workflow_dispatch' &&
-      inputs.tag != '' || (
-        inputs.tag == '' &&
+      (
+        github.event_name == 'workflow_dispatch' &&
         inputs.workflow != ''
       )
     name: Create Test Cache
@@ -64,14 +63,8 @@ jobs:
     steps:
       - name: echo
         run: |
-          echo "input: ${{ inputs.workflow }}"
-          echo "tag: ${{ inputs.tag }}"
-          echo "atlas truthy: ${{ ( inputs.tag == '' && inputs.workflow == 'Atlas Tests' ) || inputs.tag != ''}}"
-          echo "bitcoin truthy: ${{ ( inputs.tag == '' && inputs.workflow == 'Bitcoin Tests' ) || inputs.tag != ''}}"
-          echo "epoch truthy: ${{ ( inputs.tag == '' && inputs.workflow == 'Epoch Tests' ) || inputs.tag != ''}}"
-          echo "slow truthy: ${{ ( inputs.tag == '' && inputs.workflow == 'Slow Tests' ) || inputs.tag != ''}}"
-          echo "stacks-blockchain truthy: ${{ ( inputs.tag == '' && inputs.workflow == 'Stacks-Blockchain Tests' ) || inputs.tag != ''}}"
-
+          echo "inputs.workflow: ${{ inputs.workflow }}"
+          echo "github.event_name: ${{ github.event_name }}"
   # atlas-wf-test:
   #   if: |
   #     inputs.tag == '' &&
@@ -87,12 +80,16 @@ jobs:
   atlas-tests:
     # if: ${{ inputs.tag != '' || (github.ref != format('refs/heads/{0}', github.event.repository.default_branch) && !contains(github.ref, 'refs/pull')) }}
     if: |
-      inputs.tag != '' || (
-        inputs.tag == '' && (
-          inputs.workflow == 'Atlas Tests' || 
-          inputs.workflow == 'All Tests'
-        )
+      (
+        github.event_name == 'workflow_dispatch' &&
+        inputs.workflow != ''
       )
+    # inputs.tag != '' || (
+    #   inputs.tag == '' && (
+    #     inputs.workflow == 'Atlas Tests' ||
+    #     inputs.workflow == 'All Tests'
+    #   )
+    # )
     name: Atlas Tests
     needs:
       - create-cache
@@ -114,12 +111,16 @@ jobs:
   bitcoin-tests:
     # if: ${{ inputs.tag != '' || (github.ref != format('refs/heads/{0}', github.event.repository.default_branch) && !contains(github.ref, 'refs/pull')) }}
     if: |
-      inputs.tag != '' || (
-        inputs.tag == '' && (
-          inputs.workflow == 'Bitcoin Tests' ||
-           inputs.workflow == 'All Tests'
-        )
+      (
+        github.event_name == 'workflow_dispatch' &&
+        inputs.workflow != ''
       )
+    # inputs.tag != '' || (
+    #   inputs.tag == '' && (
+    #     inputs.workflow == 'Atlas Tests' ||
+    #     inputs.workflow == 'All Tests'
+    #   )
+    # )
     name: Bitcoin Tests
     needs:
       - create-cache
@@ -141,12 +142,16 @@ jobs:
   epoch-tests:
     # if: ${{ inputs.tag != '' || (github.ref != format('refs/heads/{0}', github.event.repository.default_branch) && !contains(github.ref, 'refs/pull')) }}
     if: |
-      inputs.tag != '' || (
-        inputs.tag == '' && (
-          inputs.workflow == 'Epoch Tests' ||
-          inputs.workflow == 'All Tests'
-        )
+      (
+        github.event_name == 'workflow_dispatch' &&
+        inputs.workflow != ''
       )
+    # inputs.tag != '' || (
+    #   inputs.tag == '' && (
+    #     inputs.workflow == 'Atlas Tests' ||
+    #     inputs.workflow == 'All Tests'
+    #   )
+    # )
     name: Epoch Tests
     needs:
       - create-cache
@@ -168,12 +173,16 @@ jobs:
   slow-tests:
     # if: ${{ inputs.tag != '' || (github.ref != format('refs/heads/{0}', github.event.repository.default_branch) && !contains(github.ref, 'refs/pull')) }}
     if: |
-      inputs.tag != '' || (
-        inputs.tag == '' && (
-          inputs.workflow == 'Slow Tests' ||
-          inputs.workflow == 'All Tests'
-        )
+      (
+        github.event_name == 'workflow_dispatch' &&
+        inputs.workflow != ''
       )
+    # inputs.tag != '' || (
+    #   inputs.tag == '' && (
+    #     inputs.workflow == 'Atlas Tests' ||
+    #     inputs.workflow == 'All Tests'
+    #   )
+    # )
     name: Slow Tests
     needs:
       - create-cache
@@ -196,12 +205,16 @@ jobs:
   stacks-blockchain-tests:
     # if: ${{ inputs.tag != '' || (github.ref != format('refs/heads/{0}', github.event.repository.default_branch) && !contains(github.ref, 'refs/pull')) }}
     if: |
-      inputs.tag != '' || (
-        inputs.tag == '' && (
-          inputs.workflow == 'Stacks-Blockchain Tests' ||
-          inputs.workflow == 'All Tests'
-        )
+      (
+        github.event_name == 'workflow_dispatch' &&
+        inputs.workflow != ''
       )
+    # inputs.tag != '' || (
+    #   inputs.tag == '' && (
+    #     inputs.workflow == 'Atlas Tests' ||
+    #     inputs.workflow == 'All Tests'
+    #   )
+    # )
     name: Stacks Blockchain Tests
     needs:
       - create-cache
