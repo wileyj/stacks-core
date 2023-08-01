@@ -141,35 +141,6 @@ jobs:
   # # audit job
   # #
   # #
-  # ## Build and push Debian image built from source
-  # ##  only if this is not a tagged build
-  # ## this will run on all PR updates
-  build-source-image:
-    if: |
-      inputs.tag == '' && 
-      !(
-        github.event_name == 'pull_request_review' && 
-        github.event.action == 'submitted' && 
-        (
-          github.event.review.state == 'commented' ||
-          github.event.review.state == 'changes_requested'
-        )
-      )
-    name: Docker Debian Source Image
-    # uses: wileyj/stacks-blockchain/.github/workflows/image-build-debian-source.yml@master
-    uses: ./.github/workflows/image-build-debian-source.yml
-    needs:
-      - rustfmt
-      - leaked-cred-test
-    secrets: inherit
-    # secrets:
-    #   DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
-    #   DOCKERHUB_PASSWORD: ${{ secrets.DOCKERHUB_PASSWORD }}
-    # runs-on: ubuntu-latest
-    # steps:
-    #   - name: echo
-    #     run: |
-    #       echo "running  build-source-image"
 
   # ## if:
   # ##  - (input tag is provided) AND (is master branch and not a PR)
@@ -199,11 +170,68 @@ jobs:
     #     run: |
     #       echo "running  create-release"
 
+  # ##
+  # ## Tests to run regularly
+  # ##
+  # ## if:
+  # ##  - ((input tag is not provided) AND (pr is approved))
+  # ## then:
+  # ##  - run subset of tests
+  # ##    - epoch-tests
+  # ##    - bitcoin tests
+  # ## if input tag *is* provided, these tests will run as part of the `create-release` workflow
+  # ##
+  release-tests:
+    if: inputs.tag != ''
+    name: Release Tests
+    needs:
+      - rustfmt
+      - leaked-cred-test
+    # # uses: wileyj/stacks-blockchain/.github/workflows/github-release.yml@master
+    uses: ./.github/workflows/ci-tests.yml
+    secrets: inherit
+
   # run if:
   # input tag is not provided
   # or
   # is a an approved PR
   # == will run when called manually, or if a PR is approved.
+
+  # run if:
+  # input tag is not provided
+  # or
+  # is a an approved PR
+  # == will run when called manually, or if a PR is approved.
+
+  # ## Build and push Debian image built from source
+  # ##  only if this is not a tagged build
+  # ## this will run on all PR updates
+  build-source-image:
+    if: |
+      inputs.tag == '' && 
+      !(
+        github.event_name == 'pull_request_review' && 
+        github.event.action == 'submitted' && 
+        (
+          github.event.review.state == 'commented' ||
+          github.event.review.state == 'changes_requested'
+        )
+      )
+    name: Docker Debian Source Image
+    # uses: wileyj/stacks-blockchain/.github/workflows/image-build-debian-source.yml@master
+    uses: ./.github/workflows/image-build-debian-source.yml
+    needs:
+      - rustfmt
+      - leaked-cred-test
+    secrets: inherit
+    # secrets:
+    #   DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+    #   DOCKERHUB_PASSWORD: ${{ secrets.DOCKERHUB_PASSWORD }}
+    # runs-on: ubuntu-latest
+    # steps:
+    #   - name: echo
+    #     run: |
+    #       echo "running  build-source-image"
 
   create-cache:
     if: |
@@ -244,33 +272,6 @@ jobs:
     name: Create Test Cache
     uses: ./.github/workflows/create-cache.yml
     # uses: wileyj/stacks-blockchain/.github/workflows/create_cache.yml@master
-
-  # ##
-  # ## Tests to run regularly
-  # ##
-  # ## if:
-  # ##  - ((input tag is not provided) AND (pr is approved))
-  # ## then:
-  # ##  - run subset of tests
-  # ##    - epoch-tests
-  # ##    - bitcoin tests
-  # ## if input tag *is* provided, these tests will run as part of the `create-release` workflow
-  # ##
-  release-tests:
-    if: inputs.tag != ''
-    name: Release Tests
-    needs:
-      - rustfmt
-      - leaked-cred-test
-    # # uses: wileyj/stacks-blockchain/.github/workflows/github-release.yml@master
-    uses: ./.github/workflows/ci-tests.yml
-    secrets: inherit
-
-  # run if:
-  # input tag is not provided
-  # or
-  # is a an approved PR
-  # == will run when called manually, or if a PR is approved.
 
   bitcoin-tests:
     if: |
