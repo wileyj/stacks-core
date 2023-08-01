@@ -46,6 +46,8 @@ on:
           - Slow Tests
           - Stacks-Blockchain Tests
 jobs:
+  # only run this job if triggered manually.
+  # else, created-cache is run in ci.yml
   create-cache:
     # if: inputs.tag != ''
     if: |
