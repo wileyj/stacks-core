@@ -223,7 +223,8 @@ jobs:
             ', github.event.pull_request.head.ref) &&
             github.event_name == 'push'
           )
-        )
+        ) ||
+        inputs.tag == ''
       )
     name: Create Test Cache
     uses: ./.github/workflows/create-cache.yml

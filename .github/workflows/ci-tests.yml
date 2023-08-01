@@ -50,8 +50,8 @@ jobs:
   # else, created-cache is run in ci.yml
   create-cache:
     # if: inputs.tag != ''
-    if: |
-      inputs.workflow != ''
+    # if: |
+    #   inputs.workflow != ''
     name: Create Test Cache
     uses: ./.github/workflows/create-cache.yml
     # uses: wileyj/stacks-blockchain/.github/workflows/create_cache.yml@master
