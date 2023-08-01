@@ -23,28 +23,28 @@ on:
   #       required: false
   #       type: string
   workflow_call:
-    inputs:
-      tag:
-        description: "Tag name of this release (x.y.z)"
-        required: false
-        type: string
+    # inputs:
+    #   tag:
+    #     description: "Tag name of this release (x.y.z)"
+    #     required: false
+    #     type: string
   workflow_dispatch:
-    inputs:
-      tag:
-        description: "Tag name of this release (x.y.z)"
-        required: false
-        type: string
-      workflow:
-        description: "The tag to create (optional)"
-        required: true
-        type: choice
-        options:
-          - All Tests
-          - Atlas Tests
-          - Bitcoin Tests
-          - Epoch Tests
-          - Slow Tests
-          - Stacks-Blockchain Tests
+    # inputs:
+    #   tag:
+    #     description: "Tag name of this release (x.y.z)"
+    #     required: false
+    #     type: string
+    workflow:
+      description: "The tag to create (optional)"
+      required: true
+      type: choice
+      options:
+        - All Tests
+        - Atlas Tests
+        - Bitcoin Tests
+        - Epoch Tests
+        - Slow Tests
+        - Stacks-Blockchain Tests
 jobs:
   create-cache:
     # if: inputs.tag != ''
