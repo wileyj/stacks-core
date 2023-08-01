@@ -67,6 +67,22 @@ jobs:
         run: |
           echo "inputs.workflow: ${{ inputs.workflow }}"
           echo "github.event_name: ${{ github.event_name }}"
+          case ${event} in
+            pull_request|pull_request_target|pull_request_review)
+              echo "is a PR"
+              echo "  setting branch: ${{ github.event.pull_request.head.ref }}"
+              branch=${{ github.event.pull_request.head.ref }}
+              ;;
+            *)
+              echo "not a PR"
+              echo "  setting branch: ${GITHUB_REF#refs/heads/}"
+              branch=${GITHUB_REF#refs/heads/}
+              ;;
+          esac
+          echo "BRANCH_NAME=$branch" >> $GITHUB_ENV
+          echo "NOT PR: github.ref: ${{ github.ref }}"
+          echo "IS PR: github.event.pull_request.base.ref: ${{ github.event.pull_request.base.ref }}"
+
   # atlas-wf-test:
   #   if: |
   #     inputs.tag == '' &&
