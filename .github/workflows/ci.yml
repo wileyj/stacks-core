@@ -262,7 +262,6 @@ jobs:
     needs:
       - rustfmt
       - leaked-cred-test
-      - create-cache
     # # uses: wileyj/stacks-blockchain/.github/workflows/github-release.yml@master
     uses: ./.github/workflows/ci-tests.yml
     secrets: inherit
