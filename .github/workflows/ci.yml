@@ -221,7 +221,7 @@ jobs:
               refs/heads/develoment
               refs/heads/master
             ', github.event.pull_request.head.ref) &&
-            github.event.pull_request.merged == true
+            github.event.pull_request.merged
           )
         )
       )
@@ -311,8 +311,8 @@ jobs:
           echo "github.event_name: ${{ github.event_name }}"
           echo "github.event.action: ${{ github.event.action }}"
           echo "github.event.review.state: ${{ github.event.review.state }}"
-          echo "true if (input || pr approval): ${{ inputs.tag == '' || ( github.event_name == 'pull_request_review' && github.event.action == 'submitted' && github.event.review.state == 'approved') }}"
-          echo "true if (input && not (pr submitted && !(pr comment || pr change requested))): ${{ inputs.tag == '' &&  !( github.event_name == 'pull_request_review' &&  github.event.action == 'submitted' &&  ( github.event.review.state == 'commented' || github.event.review.state == 'changes_requested' ) ) }}"
+          echo "true if (input == '' || pr approval): ${{ inputs.tag == '' || ( github.event_name == 'pull_request_review' && github.event.action == 'submitted' && github.event.review.state == 'approved') }}"
+          echo "true if (input =='' && not (pr submitted && !(pr comment || pr change requested))): ${{ inputs.tag == '' &&  !( github.event_name == 'pull_request_review' &&  github.event.action == 'submitted' &&  ( github.event.review.state == 'commented' || github.event.review.state == 'changes_requested' ) ) }}"
           echo "Create-cache conditionals:"
           echo "    true if inputs.tag != '' ||: ${{ inputs.tag != '' }}"
           echo "    true if inputs.tag == '' ||: ${{ inputs.tag == '' }}"
@@ -325,3 +325,4 @@ jobs:
           echo "    true if ref is master/develpment/next: ${{ contains(' refs/heads/next refs/heads/develoment refs/heads/master', github.event.pull_request.head.ref) }}"
           echo "    true if merged PR (github.event.pull_request.merged) : ${{ github.event.pull_request.merged }}"
           echo "    github.event.pull_request.head.ref: ${{ github.event.pull_request.head.ref }}"
+          echo "    github.event.pull_request.merged: ${{ github.event.pull_request.merged }}"
