@@ -35,7 +35,7 @@ on:
       #   required: false
       #   type: string
       workflow:
-        description: "The tag to create (optional)"
+        description: "Tests to run (required)"
         required: true
         type: choice
         options:
@@ -82,7 +82,10 @@ jobs:
     if: |
       (
         github.event_name == 'workflow_dispatch' &&
-        inputs.workflow != ''
+        (
+          inputs.workflow == 'All Tests' ||
+          inputs.workflow == 'Atlas Tests'
+        )
       )
     # inputs.tag != '' || (
     #   inputs.tag == '' && (
@@ -113,7 +116,10 @@ jobs:
     if: |
       (
         github.event_name == 'workflow_dispatch' &&
-        inputs.workflow != ''
+        (
+          inputs.workflow == 'All Tests' ||
+          inputs.workflow == 'Bitcoin Tests'
+        )
       )
     # inputs.tag != '' || (
     #   inputs.tag == '' && (
@@ -144,7 +150,10 @@ jobs:
     if: |
       (
         github.event_name == 'workflow_dispatch' &&
-        inputs.workflow != ''
+        (
+          inputs.workflow == 'All Tests' ||
+          inputs.workflow == 'Epoch Tests'
+        )
       )
     # inputs.tag != '' || (
     #   inputs.tag == '' && (
@@ -175,7 +184,10 @@ jobs:
     if: |
       (
         github.event_name == 'workflow_dispatch' &&
-        inputs.workflow != ''
+        (
+          inputs.workflow == 'All Tests' ||
+          inputs.workflow == 'Slow Tests'
+        )
       )
     # inputs.tag != '' || (
     #   inputs.tag == '' && (
@@ -207,7 +219,10 @@ jobs:
     if: |
       (
         github.event_name == 'workflow_dispatch' &&
-        inputs.workflow != ''
+        (
+          inputs.workflow == 'All Tests' ||
+          inputs.workflow == 'Stacks-Blockchain Tests'
+        )
       )
     # inputs.tag != '' || (
     #   inputs.tag == '' && (
