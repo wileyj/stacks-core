@@ -65,15 +65,62 @@ jobs:
     # if: ${{ false }}
     name: Atlas Test
     runs-on: ubuntu-latest
-    # needs:
-    #   - create-cache
+    needs:
+      - create-cache
+    strategy:
+      fail-fast: false
+      max-parallel: 2
+      matrix:
+        test-name:
+          - tests::neon_integrations::atlas_integration_test
+          - tests::neon_integrations::atlas_stress_integration_test
     steps:
-      - name: echo
+      - name: Checkout the latest code
+        id: git_checkout
         run: |
-          echo "atlas-tests"
-          echo "inputs.tag: ${{ inputs.tag }}"
-          echo "github.event_name: ${{ github.event_name }}"
-          echo "github.event.action: ${{ github.event.action }}"
-          echo "github.event.review.state: ${{ github.event.review.state }}"
-          echo "true if (input || pr approval): ${{ inputs.tag == '' || ( github.event_name == 'pull_request_review' && github.event.action == 'submitted' && github.event.review.state == 'approved') }}"
-          echo "true if (input && not (pr submitted && !(pr comment || pr change requested))): ${{ inputs.tag == '' &&  !( github.event_name == 'pull_request_review' &&  github.event.action == 'submitted' &&  ( github.event.review.state == 'commented' || github.event.review.state == 'changes_requested' ) ) }}"
+          echo "Checkout the latest code"
+
+      - name: Setup Rust Toolchain
+        id: setup_rust_toolchain
+        run: |
+          echo "Setup Rust Toolchain"
+
+      - name: Restore Cargo Cache
+        id: restore_cargo_cache
+        run: |
+          echo "Restore Cargo Cache"
+
+      - name: Restore Bitcoin Binary Cache
+        id: restore_bitcoin_cache
+        run: |
+          echo "Restore Bitcoin Binary Cache"
+
+      - name: Restore Test Archive Cache
+        id: restore_test-archive_cache
+        run: |
+          echo "Restore Test Archive Cache"
+
+      - name: Restore Target Cache
+        id: restore_target_cache
+        run: |
+          echo "Restore Target Cache"
+
+      - name: Link Bitcoin Binary
+        id: bitcoin_binary
+        run: |
+          echo "Link Bitcoin Binary"
+
+      - name: Run Tests
+        id: run_tests
+        run: |
+          echo "Run Test ${{ matrix.test-name }}"
+
+      - name: Run grcov
+        id: run_grcov
+        run: |
+          echo " Run grcov"
+
+      - name: Upload Code Coverage
+        id: code_coverage
+        run: |
+          echo "Upload Code Coverage"

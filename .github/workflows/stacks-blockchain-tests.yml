@@ -43,8 +43,8 @@ jobs:
     # if: ${{ false }}
     name: Full Genesis Test
     runs-on: ubuntu-latest
-    # needs:
-    #   - create-cache
+    needs:
+      - create-cache
     strategy:
       fail-fast: false
       max-parallel: 2
@@ -52,12 +52,172 @@ jobs:
         test-name:
           - neon_integrations::bitcoind_integration_test
     steps:
-      - name: echo
+      - name: Checkout the latest code
+        id: git_checkout
         run: |
-          echo "full-genesis ${{ matrix.test-name }}"
-          echo "inputs.tag: ${{ inputs.tag }}"
-          echo "github.event_name: ${{ github.event_name }}"
-          echo "github.event.action: ${{ github.event.action }}"
-          echo "github.event.review.state: ${{ github.event.review.state }}"
-          echo "true if (input || pr approval): ${{ inputs.tag == '' || ( github.event_name == 'pull_request_review' && github.event.action == 'submitted' && github.event.review.state == 'approved') }}"
-          echo "true if (input && not (pr submitted && !(pr comment || pr change requested))): ${{ inputs.tag == '' &&  !( github.event_name == 'pull_request_review' &&  github.event.action == 'submitted' &&  ( github.event.review.state == 'commented' || github.event.review.state == 'changes_requested' ) ) }}"
+          echo "Checkout the latest code"
+
+      - name: Setup Rust Toolchain
+        id: setup_rust_toolchain
+        run: |
+          echo "Setup Rust Toolchain"
+
+      - name: Restore Cargo Cache
+        id: restore_cargo_cache
+        run: |
+          echo "Restore Cargo Cache"
+
+      - name: Restore Bitcoin Binary Cache
+        id: restore_bitcoin_cache
+        run: |
+          echo "Restore Bitcoin Binary Cache"
+
+      - name: Restore Genesis Archive Cache
+        id: restore_test-archive_cache
+        run: |
+          echo "Restore Genesis Archive Cache"
+
+      - name: Restore Target Cache
+        id: restore_target_cache
+        run: |
+          echo "Restore Target Cache"
+
+      - name: Link Bitcoin Binary
+        id: bitcoin_binary
+        run: |
+          echo "Link Bitcoin Binary"
+
+      - name: Run Tests
+        id: run_tests
+        run: |
+          echo "Run Test ${{ matrix.test-name }}"
+
+      - name: Run grcov
+        id: run_grcov
+        run: |
+          echo " Run grcov"
+
+      - name: Large Genesis Codecov
+        id: full_genesis_codecov
+        run: |
+          echo "Large Genesis Codecov"
+
+  # unit tests with code coverage
+  unit-tests:
+    # if: ${{ false }}
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout the latest code
+        id: git_checkout
+        run: |
+          echo "Checkout the latest code"
+
+      - name: Setup Rust Toolchain
+        id: setup_rust_toolchain
+        run: |
+          echo "Setup Rust Toolchain"
+
+      - name: Restore Cargo Cache
+        id: restore_cargo_cache
+        run: |
+          echo "Restore Cargo Cache"
+
+      - name: Restore Bitcoin Binary Cache
+        id: restore_bitcoin_cache
+        run: |
+          echo "Restore Bitcoin Binary Cache"
+
+      - name: Restore Test Archive Cache
+        id: restore_test-archive_cache
+        run: |
+          echo "Restore Test Archive Cache"
+
+      - name: Restore Target Cache
+        id: restore_target_cache
+        run: |
+          echo "Restore Target Cache"
+
+      - name: Link Bitcoin Binary
+        id: bitcoin_binary
+        run: |
+          echo "Link Bitcoin Binary"
+
+      - name: Run Tests
+        id: run_tests
+        run: |
+          echo "Run Test  ${{ matrix.test-name }}""
+
+      - name: Run grcov
+        id: run_grcov
+        run: |
+          echo "Run grcov"
+
+      - name: Upload Code Coverage
+        id: code_coverage
+        run: |
+          echo ""
+
+  open-api-validation:
+    # if: ${{ false }}
+    name: OpenAPI Validation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout the latest code
+        id: git_checkout
+        run: |
+          echo "Checkout the latest code"
+
+      - name: Redoc
+        id: run_redoc
+        run: |
+          echo "Redoc"
+
+      - name: check result
+        id: check_redoc
+        run: |
+          echo "check result"
+
+      - name: Upload bundled html
+        id: upload_html_artifact
+        run: |
+          echo "Upload bundled html"
+
+  # Disabled :: net-tests
+  nettest:
+    # disable this job/test for now, since we haven't seen this pass
+    #  on github actions in a while, and the failures can take > 4 hours
+    if: ${{ false }}
+    name: Net-Test
+    runs-on: ubuntu-latest
+    # runs-on: buildjet-4vcpu-ubuntu-2204
+    steps:
+      - name: Checkout the latest code
+        id: git_checkout
+        run: |
+          echo "Checkout the latest code"
+
+      - name: Run network relay tests
+        id: nettest
+        run: |
+          echo "Run network relay tests"
+
+  # Core contract tests
+  core-contracts-clarinet-test:
+    name: Core Contracts Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout the latest code
+        id: git_checkout
+        run: |
+          echo "Checkout the latest code"
+
+      - name: Execute core contract unit tests in Clarinet
+        id: clarinet_unit_test
+        run: |
+          echo "Execute core contract unit tests in Clarinet"
+
+      - name: Export code coverage
+        id: clarinet_codecov
+        run: |
+          echo "Export code coverage"

@@ -43,16 +43,26 @@ jobs:
     runs-on: ubuntu-latest
     # runs-on: buildjet-4vcpu-ubuntu-2204
     steps:
-      - name: echo
-        run: |
-          echo "cargo cache"
-          echo "inputs.tag: ${{ inputs.tag }}"
-          echo "github.event_name: ${{ github.event_name }}"
-          echo "github.event.action: ${{ github.event.action }}"
-          echo "github.event.review.state: ${{ github.event.review.state }}"
-          echo "true if (no input && pr approval): ${{ inputs.tag == '' && ( github.event_name == 'pull_request_review' && github.event.action == 'submitted' && github.event.review.state == 'approved') }}"
-          echo "true if (input && not (pr submitted && !(pr comment || pr change requested))): ${{ inputs.tag == '' &&  !( github.event_name == 'pull_request_review' &&  github.event.action == 'submitted' &&  ( github.event.review.state == 'commented' || github.event.review.state == 'changes_requested' ) ) }}"
+      - name: Check Cargo Cache
+        id: check_cargo_cache
+        run: echo "Check Cargo Cache"
 
+      - name: Install nextest
+        # if: steps.check_cache.outputs.cache-hit != 'true'
+        id: install_nextest
+        run: echo " Install nextest"
+
+      # cargo-llvm-cov instead?
+      # https://github.com/taiki-e/cargo-llvm-cov
+      - name: Install grcov
+        # if: steps.check_cache.outputs.cache-hit != 'true'
+        id: install_grcov
+        run: echo " Install grcov"
+
+      - name: Save Cache
+        # if: steps.check_cache.outputs.cache-hit != 'true'
+        id: save_cache
+        run: echo "Save Cache"
   ##
   ## it is expected that this cache will exist longer so other runs can use it
   ##
@@ -63,9 +73,22 @@ jobs:
     runs-on: ubuntu-latest
     # runs-on: buildjet-2vcpu-ubuntu-2204
     steps:
-      - name: echo
+      - name: Check Bitcoin Cache
+        id: check_bitcoin_cache
         run: |
-          echo "cache-bitcoin-binary"
+          echo "Check Bitcoin Cache"
+
+      - name: Install Bitcoin Binary
+        # if: steps.check_cache.outputs.cache-hit != 'true'
+        id: bitcoin_binary
+        run: |
+          echo "Install Bitcoin Binary"
+
+      - name: Save Cache
+        # if: steps.check_cache.outputs.cache-hit != 'true'
+        id: save_cache
+        run: |
+          echo "Save Cache"
 
   cache-test-archive:
     # if: github.event.review.state == 'approved'
@@ -75,6 +98,89 @@ jobs:
     needs:
       - cache-cargo
     steps:
-      - name: echo
+      - name: Check Target Cache
+        id: check_target_cache
         run: |
-          echo "cache-test-archive"
+          echo "Check Target Cache"
+
+      - name: Check Test Archive Cache
+        id: check_test_archive_cache
+        run: |
+          echo "Check Test Archive Cache"
+
+      - name: Check Genesis Test Archive Cache
+        id: check_genesis_archive_cache
+        run: |
+          echo "Check Genesis Test Archive Cache"
+
+      - name: Checkout the latest code
+        # if: |
+        #   steps.check_target_cache.outputs.cache-hit != 'true' ||
+        #   steps.check_test_archive_cache.outputs.cache-hit != 'true' ||
+        #   steps.check_genesis_archive_cache.outputs.cache-hit != 'true'
+        id: git_checkout
+        run: |
+          echo "Checkout the latest code"
+
+      - name: Setup Rust Toolchain
+        # if: |
+        #   steps.check_target_cache.outputs.cache-hit != 'true' ||
+        #   steps.check_test_archive_cache.outputs.cache-hit != 'true' ||
+        #   steps.check_genesis_archive_cache.outputs.cache-hit != 'true'
+        id: setup_rust_toolchain
+        run: |
+          echo "Setup Rust Toolchain"
+
+      - name: Restore Cargo Cache
+        # if: |
+        #   steps.check_target_cache.outputs.cache-hit != 'true' ||
+        #   steps.check_test_archive_cache.outputs.cache-hit != 'true' ||
+        #   steps.check_genesis_archive_cache.outputs.cache-hit != 'true'
+        id: restore_cargo_cache
+        run: |
+          echo "Restore Cargo Cache"
+
+      - name: Build and Archive Tests
+        # if: |
+        #   steps.check_target_cache.outputs.cache-hit != 'true' ||
+        #   steps.check_test_archive_cache.outputs.cache-hit != 'true' ||
+        #   steps.check_genesis_archive_cache.outputs.cache-hit != 'true'
+        id: archive_tests
+        run: |
+          echo "Build and Archive Tests"
+
+      - name: Build and Archive Genesis Tests
+        # if: |
+        #   steps.check_target_cache.outputs.cache-hit != 'true' ||
+        #   steps.check_genesis_archive_cache.outputs.cache-hit != 'true' ||
+        #   steps.check_genesis_archive_cache.outputs.cache-hit != 'true'
+        id: archive_genesis_tests
+        run: |
+          echo "Build and Archive Genesis Tests"
+
+      - name: Cache Test Archive
+        # if: |
+        #   steps.check_target_cache.outputs.cache-hit != 'true' ||
+        #   steps.check_test_archive_cache.outputs.cache-hit != 'true' ||
+        #   steps.check_genesis_archive_cache.outputs.cache-hit != 'true'
+        id: save_nextest_cache
+        run: |
+          echo "Cache Test Archive"
+
+      - name: Cache Genesis Archive
+        # if: |
+        #   steps.check_target_cache.outputs.cache-hit != 'true' ||
+        #   steps.check_test_archive_cache.outputs.cache-hit != 'true' ||
+        #   steps.check_genesis_archive_cache.outputs.cache-hit != 'true'
+        id: save_genesis_cache
+        run: |
+          echo "Cache Genesis Archive"
+
+      - name: Cache Target
+        # if: |
+        #   steps.check_target_cache.outputs.cache-hit != 'true' ||
+        #   steps.check_test_archive_cache.outputs.cache-hit != 'true' ||
+        #   steps.check_genesis_archive_cache.outputs.cache-hit != 'true'
+        id: save_target_cache
+        run: |
+          echo "Cache Target"

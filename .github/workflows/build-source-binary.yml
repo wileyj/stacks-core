@@ -66,6 +66,33 @@ jobs:
       matrix:
         platform: ${{ fromJson(inputs.arch) }}
     steps:
-      - name: echo
+      - name: Checkout the latest code
+        id: git_checkout
         run: |
-          echo "artifact"
+          echo "Checkout the latest code"
+
+      # - name: Set Vars
+      #   id: set_vars
+      #   run: |
+      #     echo "GITHUB_SHA_SHORT=${GITHUB_SHA::7}" >> $GITHUB_ENV
+      #     echo "GITHUB_REF_SHORT=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
+
+      - name: Set up Docker Buildx
+        id: setup_buildx
+        run: |
+          echo "Set up Docker Buildx"
+
+      - name: Build Binaries
+        id: build_binaries
+        run: |
+          echo "Build Binaries"
+
+      - name: Compress artifact
+        id: compress_artifact
+        run: |
+          echo "Compress artifact"
+
+      - name: Upload artifact
+        id: upload_artifact
+        run: |
+          echo "Upload artifact"

@@ -31,6 +31,55 @@ jobs:
     name: Build Docker Image
     runs-on: ubuntu-latest
     steps:
-      - name: echo
+      - name: Checkout the latest code
+        id: git_checkout
         run: |
-          echo "image"
+          echo "Checkout the latest code"
+
+      - name: Set Vars
+        id: set_vars
+        run: |
+          echo "GITHUB_SHA_SHORT=${GITHUB_SHA::7}" >> $GITHUB_ENV
+          echo "GITHUB_REF_SHORT=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
+
+      - name: Set up QEMU
+        id: docker_qemu
+        run: |
+          echo "Set up QEMU"
+
+      - name: Set up Docker Buildx
+        id: docker_buildx
+        run: |
+          echo "Set up Docker Buildx"
+
+      - name: Extract branch name
+        id: extract_branch
+        run: |
+          event=${{ github.event_name }}
+          case ${event} in
+            pull_request|pull_request_target|pull_request_review)
+              echo "[PR]: true"
+              branch=${{ github.event.pull_request.head.ref }}
+              ;;
+            *)
+              echo "[PR]: false"
+              branch=${GITHUB_REF#refs/heads/}
+              ;;
+          esac
+          echo "setting branch: ${branch}"
+          echo "BRANCH_NAME=$branch" >> $GITHUB_ENV
+
+      - name: Docker Metadata
+        id: docker_metadata
+        run: |
+          echo "Docker Metadata"
+
+      - name: Login to DockerHub
+        id: docker_login
+        run: |
+          echo "Login to DockerHub"
+
+      - name: Build and Push
+        id: docker_build
+        run: |
+          echo "Build and Push"

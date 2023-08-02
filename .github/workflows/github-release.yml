@@ -58,8 +58,6 @@ jobs:
       tag: ${{ inputs.tag }}
       parallel_jobs: 4
       arch: ${{ inputs.arch }}
-      # arch: >-
-      #   ["linux-glibc-x64", "linux-musl-x64", "linux-glibc-arm64", "linux-musl-arm64", "macos-x64", "macos-arm64", "windows-x64"]
     secrets: inherit
 
   create-release:
@@ -74,35 +72,22 @@ jobs:
     needs:
       - build-binaries
     steps:
-      - name: echo
+      - name: Download Artifacts
+        id: download_artifacts
         run: |
-          echo "create-release"
+          echo "Download Artifacts"
 
-  # # run-tests:
-  # #   if: inputs.tag != ''
-  # #   name: Run Tests
-  # #   uses: ./.github/workflows/ci-tests.yml
+      # Generate a checksums file to be added to the release page
+      - name: Generate Checksums
+        id: generate_checksum
+        run: |
+          echo "Generate Checksums"
 
-  # atlas-tests:
-  #   # if: ${{ inputs.tag != '' || (github.ref != format('refs/heads/{0}', github.event.repository.default_branch) && !contains(github.ref, 'refs/pull')) }}
-  #   if: ${{ inputs.tag != '' }}
-  #   name: Bitcoin Tests
-  #   # uses: wileyj/stacks-blockchain/.github/workflows/build-source-binary.yml@master
-  #   uses: ./.github/workflows/atlas-tests.yml
-
-  # slow-tests:
-  #   # if: ${{ inputs.tag != '' || (github.ref != format('refs/heads/{0}', github.event.repository.default_branch) && !contains(github.ref, 'refs/pull')) }}
-  #   if: ${{ inputs.tag != '' }}
-  #   name: Bitcoin Tests
-  #   # uses: wileyj/stacks-blockchain/.github/workflows/build-source-binary.yml@master
-  #   uses: ./.github/workflows/slow-tests.yml
-
-  # stacks-blockchain-tests:
-  #   # if: ${{ inputs.tag != '' || (github.ref != format('refs/heads/{0}', github.event.repository.default_branch) && !contains(github.ref, 'refs/pull')) }}
-  #   if: ${{ inputs.tag != '' }}
-  #   name: Stacks Blockchain Tests
-  #   # uses: wileyj/stacks-blockchain/.github/workflows/build-source-binary.yml@master
-  #   uses: ./.github/workflows/stacks-blockchain-tests.yml
+      # Upload the release archives with the checksums file
+      - name: Upload Release
+        id: upload_release
+        run: |
+          echo "Upload Release"
 
   ## this can be a matrix of (alpine, debian) once the builds are DRY'ed
   docker-alpine:
