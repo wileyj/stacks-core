@@ -68,7 +68,7 @@ jobs:
         dist:
           - alpine
           - debian
-    #
+
     steps:
       - name: Checkout the latest code
         id: git_checkout
@@ -98,27 +98,27 @@ jobs:
 
       - name: Docker Metadata ( ${{matrix.dist}} )
         if: ${{ matrix.dist == 'alpine' }}
-        id: docker_metadata_${{matrix.dist}}
+        id: docker_metadata_alpine
         run: |
           echo "Docker Metadata ( ${{matrix.dist}} )"
 
       - name: Build and Push ( ${{matrix.dist}} )
         if: ${{ matrix.dist == 'alpine' }}
-        id: docker_build_${{matrix.dist}}
+        id: docker_build_alpine
         run: |
           echo "Alpine Build and Push"
 
-      # - name: Docker Metadata ( ${{matrix.dist}} )
-      #   if: ${{ matrix.dist == 'debian' }}
-      #   id: docker_metadata_debian
-      #   run: |
-      #     echo "Docker Metadata ( ${{matrix.dist}} )"
+      - name: Docker Metadata ( ${{matrix.dist}} )
+        if: ${{ matrix.dist == 'debian' }}
+        id: docker_metadata_debian
+        run: |
+          echo "Docker Metadata ( ${{matrix.dist}} )"
 
-      # - name: Build and Push ( ${{matrix.dist}} )
-      #   if: ${{ matrix.dist == 'debian' }}
-      #   id: docker_build_debian
-      #   run: |
-      #     echo "Debian Build and Push"
+      - name: Build and Push ( ${{matrix.dist}} )
+        if: ${{ matrix.dist == 'debian' }}
+        id: docker_build_debian
+        run: |
+          echo "Debian Build and Push"
 
       # - name: Build and Push
       #   if: ${{ matrix.dist == 'debian' }}

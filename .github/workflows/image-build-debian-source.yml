@@ -24,7 +24,6 @@ defaults:
 
 env:
   docker_platforms: linux/amd64
-  os_version: debian
 
 jobs:
   image:

@@ -80,11 +80,11 @@ jobs:
           echo "BRANCH_NAME=$branch" >> $GITHUB_ENV
 
       - name: Docker Metadata ( ${{matrix.dist}} )
-        id: docker_metadata_${{matrix.dist}}
+        id: docker_metadata
         run: |
           echo "Docker Metadata ${{matrix.dist}}"
 
       - name: Build and Push ( ${{matrix.dist}} )
-        id: docker_build_${{matrix.dist}}
+        id: docker_build
         run: |
           echo "Build and Push"
