@@ -108,19 +108,16 @@ jobs:
           event=${{ github.event_name }}
           case ${event} in
             pull_request|pull_request_target|pull_request_review)
-              echo "is a PR"
-              echo "  setting branch: ${{ github.event.pull_request.head.ref }}"
+              echo "[PR]: true"
               branch=${{ github.event.pull_request.head.ref }}
               ;;
             *)
-              echo "not a PR"
-              echo "  setting branch: ${GITHUB_REF#refs/heads/}"
+              echo "[PR]: false"
               branch=${GITHUB_REF#refs/heads/}
               ;;
           esac
-          echo "BRANCH_NAME=$branch" >> $GITHUB_ENV
-          echo "NOT PR: github.ref: ${{ github.ref }}"
-          echo "IS PR: github.event.pull_request.base.ref: ${{ github.event.pull_request.base.ref }}"
+          echo "Setting Branch: ${branch}"
+          echo "BRANCH_NAME=${branch}" >> $GITHUB_ENV
 
       - name: Checkout the latest code
         id: git_checkout
@@ -188,7 +185,7 @@ jobs:
       - rustfmt
       - leaked-cred-test
     # # uses: wileyj/stacks-blockchain/.github/workflows/github-release.yml@master
-    uses: ./.github/workflows/ci-tests.yml
+    uses: ./.github/workflows/release-tests.yml
     secrets: inherit
 
   # run if:
@@ -233,95 +230,110 @@ jobs:
     #     run: |
     #       echo "running  build-source-image"
 
-  create-cache:
-    if: |
-      inputs.tag == '' && (
-        (
-          github.event_name == 'pull_request_review' && 
-          github.event.action == 'submitted' && 
-          github.event.review.state == 'approved'
-        ) || 
-        github.event_name == 'workflow_dispatch' ||
-        github.event_name == 'pull_request_target' ||
-        (
-          contains('
-            refs/heads/develoment
-            refs/heads/master
-          ', github.event.pull_request.head.ref) &&
-          github.event_name == 'push'
-        )
-      )
-    name: Create Test Cache
-    needs:
-      - rustfmt
-      - leaked-cred-test
-    uses: ./.github/workflows/create-cache.yml
-    # uses: wileyj/stacks-blockchain/.github/workflows/create_cache.yml@master
-
-  bitcoin-tests:
-    if: |
-      inputs.tag == '' || (
-        github.event_name == 'pull_request_review' && 
-        github.event.action == 'submitted' && 
-        github.event.review.state == 'approved'
-      )
-    name: Bitcoin Tests
-    needs:
-      - rustfmt
-      - leaked-cred-test
-      - create-cache
-    # uses: wileyj/stacks-blockchain/.github/workflows/image-build-debian-source.yml@master
-    uses: ./.github/workflows/bitcoin-tests.yml
-    # uses: ./.github/workflows/ci-tests.yml
-    # with:
-    #   test: "Bitcoin Tests"
-
-  # run if:
-  # input tag is not provided
-  # or
-  # is a an approved PR
-  # == will run when called manually, or if a PR is approved.
-
-  epoch-tests:
+  ci-tests:
     if: |
       inputs.tag == '' || (
         github.event_name == 'pull_request_review' &&
         github.event.action == 'submitted' &&
         github.event.review.state == 'approved'
       )
-    name: Epoch Tests
+    name: CI Tests
     needs:
       - rustfmt
       - leaked-cred-test
-      - create-cache
-    # uses: wileyj/stacks-blockchain/.github/workflows/build-source-binary.yml@master
-    uses: ./.github/workflows/epoch-tests.yml
-    # uses: ./.github/workflows/ci-tests.yml
-    # with:
-    #   test: "Epoch Tests"
+    uses: ./.github/workflows/ci-tests.yml
+    with:
+      workflow: "CI Tests"
 
-  echo:
-    name: Echo
-    runs-on: ubuntu-latest
-    steps:
-      - name: echo
-        run: |
-          echo "inputs.tag: ${{ inputs.tag }}"
-          echo "github.event_name: ${{ github.event_name }}"
-          echo "github.event.action: ${{ github.event.action }}"
-          echo "github.event.review.state: ${{ github.event.review.state }}"
-          echo "true if (input == '' || pr approval): ${{ inputs.tag == '' || ( github.event_name == 'pull_request_review' && github.event.action == 'submitted' && github.event.review.state == 'approved') }}"
-          echo "true if (input =='' && not (pr submitted && !(pr comment || pr change requested))): ${{ inputs.tag == '' &&  !( github.event_name == 'pull_request_review' &&  github.event.action == 'submitted' &&  ( github.event.review.state == 'commented' || github.event.review.state == 'changes_requested' ) ) }}"
-          echo "Create-cache conditionals:"
-          echo "    true if inputs.tag != '' ||: ${{ inputs.tag != '' }}"
-          echo "    true if inputs.tag == '' ||: ${{ inputs.tag == '' }}"
-          echo "    true if github.event_name == 'pull_request_review: ${{ github.event_name == 'pull_request_review' }}"
-          echo "    true if github.event.action == 'submitted': ${{ github.event.action == 'submitted' }}"
-          echo "    true if github.event.review.state == 'approved': ${{ github.event.review.state == 'approved' }}"
-          echo "    true is PR is approved: ${{ (github.event_name == 'pull_request_review' && github.event.action == 'submitted' && github.event.review.state == 'approved') }}"
-          echo "    true if inputs.tag != '' || (inputs.tag == '' || (github.event_name == 'pull_request_review' && github.event.action == 'submitted' && github.event.review.state == 'approved')): ${{ inputs.tag != '' || (inputs.tag == '' || (github.event_name == 'pull_request_review' && github.event.action == 'submitted' && github.event.review.state == 'approved')) }}"
-          echo "    true if inputs.tag != '' || (inputs.tag == '' && (github.event_name == 'pull_request_review' && github.event.action == 'submitted' && github.event.review.state == 'approved')): ${{ inputs.tag != '' || (inputs.tag == '' && (github.event_name == 'pull_request_review' && github.event.action == 'submitted' && github.event.review.state == 'approved')) }}"
-          echo "    true if ref is master/develpment/next: ${{ contains(' refs/heads/next refs/heads/develoment refs/heads/master', github.event.pull_request.head.ref) }}"
-          echo "    true if merged PR (github.event.pull_request.merged) : ${{ github.event.pull_request.merged }}"
-          echo "    github.event.pull_request.head.ref: ${{ github.event.pull_request.head.ref }}"
-          echo "    github.event.pull_request.merged: ${{ github.event.pull_request.merged }}"
+  # create-cache:
+  #   if: |
+  #     inputs.tag == '' && (
+  #       (
+  #         github.event_name == 'pull_request_review' &&
+  #         github.event.action == 'submitted' &&
+  #         github.event.review.state == 'approved'
+  #       ) ||
+  #       github.event_name == 'workflow_dispatch' ||
+  #       github.event_name == 'pull_request_target' ||
+  #       (
+  #         contains('
+  #           refs/heads/develoment
+  #           refs/heads/master
+  #         ', github.event.pull_request.head.ref) &&
+  #         github.event_name == 'push'
+  #       )
+  #     )
+  #   name: Create Test Cache
+  #   needs:
+  #     - rustfmt
+  #     - leaked-cred-test
+  #   uses: ./.github/workflows/create-cache.yml
+  #   # uses: wileyj/stacks-blockchain/.github/workflows/create_cache.yml@master
+
+  # bitcoin-tests:
+  #   if: |
+  #     inputs.tag == '' || (
+  #       github.event_name == 'pull_request_review' &&
+  #       github.event.action == 'submitted' &&
+  #       github.event.review.state == 'approved'
+  #     )
+  #   name: Bitcoin Tests
+  #   needs:
+  #     - rustfmt
+  #     - leaked-cred-test
+  #     - create-cache
+  #   # uses: wileyj/stacks-blockchain/.github/workflows/image-build-debian-source.yml@master
+  #   uses: ./.github/workflows/bitcoin-tests.yml
+  #   # uses: ./.github/workflows/ci-tests.yml
+  #   # with:
+  #   #   test: "Bitcoin Tests"
+
+  # # run if:
+  # # input tag is not provided
+  # # or
+  # # is a an approved PR
+  # # == will run when called manually, or if a PR is approved.
+
+  # epoch-tests:
+  #   if: |
+  #     inputs.tag == '' || (
+  #       github.event_name == 'pull_request_review' &&
+  #       github.event.action == 'submitted' &&
+  #       github.event.review.state == 'approved'
+  #     )
+  #   name: Epoch Tests
+  #   needs:
+  #     - rustfmt
+  #     - leaked-cred-test
+  #     - create-cache
+  #   # uses: wileyj/stacks-blockchain/.github/workflows/build-source-binary.yml@master
+  #   uses: ./.github/workflows/epoch-tests.yml
+  #   # uses: ./.github/workflows/ci-tests.yml
+  #   # with:
+  #   #   test: "Epoch Tests"
+
+  # echo:
+  #   name: Echo
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: echo
+  #       run: |
+  #         echo "inputs.tag: ${{ inputs.tag }}"
+  #         echo "github.event_name: ${{ github.event_name }}"
+  #         echo "github.event.action: ${{ github.event.action }}"
+  #         echo "github.event.review.state: ${{ github.event.review.state }}"
+  #         echo "true if (input == '' || pr approval): ${{ inputs.tag == '' || ( github.event_name == 'pull_request_review' && github.event.action == 'submitted' && github.event.review.state == 'approved') }}"
+  #         echo "true if (input =='' && not (pr submitted && !(pr comment || pr change requested))): ${{ inputs.tag == '' &&  !( github.event_name == 'pull_request_review' &&  github.event.action == 'submitted' &&  ( github.event.review.state == 'commented' || github.event.review.state == 'changes_requested' ) ) }}"
+  #         echo "Create-cache conditionals:"
+  #         echo "    true if inputs.tag != '' ||: ${{ inputs.tag != '' }}"
+  #         echo "    true if inputs.tag == '' ||: ${{ inputs.tag == '' }}"
+  #         echo "    true if github.event_name == 'pull_request_review: ${{ github.event_name == 'pull_request_review' }}"
+  #         echo "    true if github.event.action == 'submitted': ${{ github.event.action == 'submitted' }}"
+  #         echo "    true if github.event.review.state == 'approved': ${{ github.event.review.state == 'approved' }}"
+  #         echo "    true is PR is approved: ${{ (github.event_name == 'pull_request_review' && github.event.action == 'submitted' && github.event.review.state == 'approved') }}"
+  #         echo "    true if inputs.tag != '' || (inputs.tag == '' || (github.event_name == 'pull_request_review' && github.event.action == 'submitted' && github.event.review.state == 'approved')): ${{ inputs.tag != '' || (inputs.tag == '' || (github.event_name == 'pull_request_review' && github.event.action == 'submitted' && github.event.review.state == 'approved')) }}"
+  #         echo "    true if inputs.tag != '' || (inputs.tag == '' && (github.event_name == 'pull_request_review' && github.event.action == 'submitted' && github.event.review.state == 'approved')): ${{ inputs.tag != '' || (inputs.tag == '' && (github.event_name == 'pull_request_review' && github.event.action == 'submitted' && github.event.review.state == 'approved')) }}"
+  #         echo "    true if ref is master/develpment/next: ${{ contains(' refs/heads/next refs/heads/develoment refs/heads/master', github.event.pull_request.head.ref) }}"
+  #         echo "    true if merged PR (github.event.pull_request.merged) : ${{ github.event.pull_request.merged }}"
+  #         echo "    github.event.pull_request.head.ref: ${{ github.event.pull_request.head.ref }}"
+  #         echo "    github.event.pull_request.merged: ${{ github.event.pull_request.merged }}"
