@@ -16,18 +16,18 @@ on:
   #   workflows: ["Build Distributable Assets"]
   #   types:
   #     - completed
-  workflow_dispatch:
-    inputs:
-      tag:
-        description: "Release Tag"
-        required: true
-        type: string
-      arch:
-        description: "Stringified JSON object listing of platform matrix"
-        required: true
-        type: string
-        default: >-
-          ["linux-glibc-x64", "linux-musl-x64", "linux-glibc-arm64", "linux-musl-arm64", "macos-x64", "macos-arm64", "windows-x64"]
+  # workflow_dispatch:
+  #   inputs:
+  #     tag:
+  #       description: "Release Tag"
+  #       required: true
+  #       type: string
+  #     arch:
+  #       description: "Stringified JSON object listing of platform matrix"
+  #       required: true
+  #       type: string
+  #       default: >-
+  #         ["linux-glibc-x64", "linux-musl-x64", "linux-glibc-arm64", "linux-musl-arm64", "macos-x64", "macos-arm64", "windows-x64"]
   workflow_call:
     inputs:
       tag:

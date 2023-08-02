@@ -6,7 +6,7 @@ name: Slow Tests
 
 on:
   ## run when tagging a release or a tag is pushed (i.e. a manual run with an input tag)
-  workflow_dispatch:
+  # workflow_dispatch:
   workflow_call:
   # push:
   #   paths-ignore:
