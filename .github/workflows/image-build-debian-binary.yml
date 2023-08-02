@@ -54,7 +54,7 @@ jobs:
   image:
     # Only run if a tag is provided manually
     if: inputs.tag != ''
-    name: Build Image
+    name: Build Debian Image
     runs-on: ubuntu-latest
     steps:
       - name: Checkout the latest code

@@ -89,43 +89,60 @@ jobs:
         run: |
           echo "Upload Release"
 
-  ## this can be a matrix of (alpine, debian) once the builds are DRY'ed
-  docker-alpine:
+  docker-build:
     if: |
       inputs.tag != '' || (
         github.ref != format('refs/heads/{0}', github.event.repository.default_branch) && 
         !contains(github.ref, 'refs/pull')
       )
-    name: Docker Alpine (Binary)
-    # uses: wileyj/stacks-blockchain/.github/workflows/image-build-alpine-binary.yml@master
-    uses: ./.github/workflows/image-build-alpine-binary.yml
+    name: Build Docker Images
+    # uses: wileyj/stacks-blockchain/.github/workflows/image-build-binary.yml@master
+    uses: ./.github/workflows/image-build-binary.yml
     needs: build-binaries
     with:
       tag: ${{ inputs.tag }}
-      dist: alpine
-      # docker_platforms: linux/arm64, linux/amd64, linux/amd64/v2, linux/amd64/v3
     secrets: inherit
     # secrets:
     #   DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
     #   DOCKERHUB_PASSWORD: ${{ secrets.DOCKERHUB_PASSWORD }}
 
-  docker-debian:
-    if: |
-      inputs.tag != '' || (
-        github.ref != format('refs/heads/{0}', github.event.repository.default_branch) && 
-        !contains(github.ref, 'refs/pull')
-      )
-    name: Docker Debian (Binary)
-    # uses: wileyj/stacks-blockchain/.github/workflows/image-build-debian-binary.yml@master
-    uses: ./.github/workflows/image-build-debian-binary.yml
-    needs: build-binaries
-    with:
-      tag: ${{ inputs.tag }}
-      dist: debian
-      # docker_platforms: linux/amd64, linux/amd64/v2, linux/amd64/v3
-      # linux_version: debian
-      # build_type: binary
-    secrets: inherit
-    # secrets:
-    #   DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
-    #   DOCKERHUB_PASSWORD: ${{ secrets.DOCKERHUB_PASSWORD }}
+  ## this can be a matrix of (alpine, debian) once the builds are DRY'ed
+  # docker-alpine:
+  #   if: |
+  #     inputs.tag != '' || (
+  #       github.ref != format('refs/heads/{0}', github.event.repository.default_branch) &&
+  #       !contains(github.ref, 'refs/pull')
+  #     )
+  #   name: Docker Alpine (Binary)
+  #   # uses: wileyj/stacks-blockchain/.github/workflows/image-build-alpine-binary.yml@master
+  #   uses: ./.github/workflows/image-build-alpine-binary.yml
+  #   needs: build-binaries
+  #   with:
+  #     tag: ${{ inputs.tag }}
+  #     dist: alpine
+  #     # docker_platforms: linux/arm64, linux/amd64, linux/amd64/v2, linux/amd64/v3
+  #   secrets: inherit
+  #   # secrets:
+  #   #   DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+  #   #   DOCKERHUB_PASSWORD: ${{ secrets.DOCKERHUB_PASSWORD }}
+
+  # docker-debian:
+  #   if: |
+  #     inputs.tag != '' || (
+  #       github.ref != format('refs/heads/{0}', github.event.repository.default_branch) &&
+  #       !contains(github.ref, 'refs/pull')
+  #     )
+  #   name: Docker Debian (Binary)
+  #   # uses: wileyj/stacks-blockchain/.github/workflows/image-build-debian-binary.yml@master
+  #   uses: ./.github/workflows/image-build-debian-binary.yml
+  #   needs: build-binaries
+  #   with:
+  #     tag: ${{ inputs.tag }}
+  #     dist: debian
+  #     # docker_platforms: linux/amd64, linux/amd64/v2, linux/amd64/v3
+  #     # linux_version: debian
+  #     # build_type: binary
+  #   secrets: inherit
+  #   # secrets:
+  #   #   DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+  #   #   DOCKERHUB_PASSWORD: ${{ secrets.DOCKERHUB_PASSWORD }}

@@ -2,7 +2,7 @@
 ## Create the github release and store artifact files (with checksum)
 ##
 
-name: Release Tests
+name: Tests
 
 # Only run when:
 #   - manually triggered via the ci.yml workflow
@@ -22,12 +22,12 @@ on:
   #       description: "The workflow to run from a calling action"
   #       required: false
   #       type: string
-  workflow_call:
-    inputs:
-      workflow:
-        description: "Tests to run (required)"
-        required: true
-        type: string
+  # workflow_call:
+  #   inputs:
+  #     workflow:
+  #       description: "Tests to run (required)"
+  #       required: true
+  #       type: string
   workflow_dispatch:
     inputs:
       workflow:
