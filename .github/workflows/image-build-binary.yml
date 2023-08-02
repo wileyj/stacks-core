@@ -2,7 +2,7 @@
 ## Build the Docker Alpine image from the pre-built downloaded binary asset
 ##
 
-name: Build Alpine Binary Image
+name: Docker
 
 # Only run when:
 #   - manually triggered via the ci.yml workflow
@@ -58,7 +58,7 @@ jobs:
   image:
     # Only run if a tag is provided manually
     if: inputs.tag != ''
-    name: Build Docker Image
+    name: Build Image (Binary)
     runs-on: ubuntu-latest
     ## this can DRY the image build and make multiple files unneeded
     strategy:

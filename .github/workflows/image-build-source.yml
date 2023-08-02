@@ -2,7 +2,7 @@
 ## Build the Docker Debian image from source
 ##
 
-name: Build Linux Source Image
+name: Docker
 
 # Only run when:
 #   - workflow is manually triggered
@@ -27,7 +27,7 @@ env:
 
 jobs:
   image:
-    name: Build Docker Image
+    name: Build Image (Source)
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
