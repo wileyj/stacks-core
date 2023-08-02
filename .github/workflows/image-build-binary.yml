@@ -91,29 +91,37 @@ jobs:
         run: |
           echo "Set up Docker Buildx"
 
-      - name: Docker Metadata (Alpine)
-        if: ${{ matrix.dist == 'alpine' }}
-        id: docker_metadata
-        run: |
-          echo "Docker Metadata (Alpine)"
-
-      - name: Docker Metadata (Debian)
-        if: ${{ matrix.dist == 'debian' }}
-        id: docker_metadata
-        run: |
-          echo "Docker Metadata (Debian)"
-
       - name: Login to DockerHub
         id: docker_login
         run: |
           echo "Login to DockerHub"
 
-      - name: Build and Push
+      - name: Docker Metadata (Alpine)
+        if: ${{ matrix.dist == 'alpine' }}
+        id: docker_metadata_alpine
+        run: |
+          echo "Docker Metadata (Alpine)"
+
+      - name: Build and Push (Alpine)
+        if: ${{ matrix.dist == 'alpine' }}
         id: docker_build
         run: |
-          echo "Build and Push"
+          echo "Alpine Build and Push"
+
+      - name: Docker Metadata (Debian)
+        if: ${{ matrix.dist == 'debian' }}
+        id: docker_metadata_debian
+        run: |
+          echo "Docker Metadata (Debian)"
+
+      - name: Build and Push (Debian)
+        if: ${{ matrix.dist == 'debian' }}
+        id: docker_build
+        run: |
+          echo "Debian Build and Push"
 
       # - name: Build and Push
+      #   if: ${{ matrix.dist == 'debian' }}
       #   id: docker_build
       #   uses: docker/build-push-action@v3
       #   with:
