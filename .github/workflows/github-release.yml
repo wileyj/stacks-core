@@ -89,13 +89,13 @@ jobs:
         run: |
           echo "Upload Release"
 
-  docker-build:
+  docker-image:
     if: |
       inputs.tag != '' || (
         github.ref != format('refs/heads/{0}', github.event.repository.default_branch) && 
         !contains(github.ref, 'refs/pull')
       )
-    name: Build Docker Images
+    name: Docker Image
     # uses: wileyj/stacks-blockchain/.github/workflows/image-build-binary.yml@master
     uses: ./.github/workflows/image-build-binary.yml
     needs: build-binaries

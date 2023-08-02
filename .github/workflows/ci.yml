@@ -183,7 +183,7 @@ jobs:
   # ## Build and push Debian image built from source
   # ##  only if this is not a tagged build
   # ## this will run on all PR updates
-  build-source-image:
+  docker-image:
     if: |
       inputs.tag == '' && 
       !(
@@ -194,7 +194,7 @@ jobs:
           github.event.review.state == 'changes_requested'
         )
       )
-    name: Docker Debian Source Image
+    name: Docker Image (Source)
     # uses: wileyj/stacks-blockchain/.github/workflows/image-build-debian-source.yml@master
     uses: ./.github/workflows/image-build-source.yml
     needs:
