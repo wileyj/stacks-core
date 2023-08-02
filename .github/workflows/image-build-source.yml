@@ -1,0 +1,90 @@
+##
+## Build the Docker Debian image from source
+##
+
+name: Build Linux Source Image
+
+# Only run when:
+#   - workflow is manually triggered
+# #   - manually triggered via the ci.yml workflow
+#   - PR created, ignoring yaml and markdownfiles
+
+on:
+  workflow_dispatch:
+  workflow_call:
+    # secrets:
+    #   DOCKERHUB_USERNAME:
+    #     required: true
+    #   DOCKERHUB_PASSWORD:
+    #     required: true
+
+defaults:
+  run:
+    shell: bash
+
+env:
+  docker_platforms: linux/amd64
+
+jobs:
+  image:
+    name: Build Docker Image
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      max-parallel: 2
+      matrix:
+        dist:
+          - debian
+    steps:
+      - name: Checkout the latest code
+        id: git_checkout
+        run: |
+          echo "Checkout the latest code"
+
+      - name: Set Vars
+        id: set_vars
+        run: |
+          echo "GITHUB_SHA_SHORT=${GITHUB_SHA::7}" >> $GITHUB_ENV
+          echo "GITHUB_REF_SHORT=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
+
+      - name: Set up QEMU
+        id: docker_qemu
+        run: |
+          echo "Set up QEMU"
+
+      - name: Set up Docker Buildx
+        id: docker_buildx
+        run: |
+          echo "Set up Docker Buildx"
+
+      - name: Login to DockerHub
+        id: docker_login
+        run: |
+          echo "Login to DockerHub"
+
+      - name: Extract branch name
+        id: extract_branch
+        run: |
+          event=${{ github.event_name }}
+          case ${event} in
+            pull_request|pull_request_target|pull_request_review)
+              echo "[PR]: true"
+              branch=${{ github.event.pull_request.head.ref }}
+              ;;
+            *)
+              echo "[PR]: false"
+              branch=${GITHUB_REF#refs/heads/}
+              ;;
+          esac
+          echo "setting branch: ${branch}"
+          echo "BRANCH_NAME=$branch" >> $GITHUB_ENV
+
+      - name: Docker Metadata ( ${{matrix.dist}} )
+        id: docker_metadata_${{matrix.dist}}
+        run: |
+          echo "Docker Metadata ${{matrix.dist}}"
+
+      - name: Build and Push ( ${{matrix.dist}} )
+        id: docker_build_${{matrix.dist}}
+        run: |
+          echo "Build and Push"

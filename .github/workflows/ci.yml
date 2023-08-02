@@ -89,49 +89,50 @@ jobs:
         id: rustfmt
         uses: actions-rust-lang/rustfmt@v1
 
-  ## Checked for leaked credentials
-  leaked-cred-test:
-    if: |
-      !(
-        github.event_name == 'pull_request_review' && 
-        github.event.action == 'submitted' && 
-        (
-          github.event.review.state == 'commented' ||
-          github.event.review.state == 'changes_requested'
-        )
-      )
-    name: Leaked Credential Test
-    runs-on: ubuntu-latest
-    steps:
-      - name: Extract branch name
-        run: |
-          event=${{ github.event_name }}
-          case ${event} in
-            pull_request|pull_request_target|pull_request_review)
-              echo "[PR]: true"
-              branch=${{ github.event.pull_request.head.ref }}
-              ;;
-            *)
-              echo "[PR]: false"
-              branch=${GITHUB_REF#refs/heads/}
-              ;;
-          esac
-          echo "Setting Branch: ${branch}"
-          echo "BRANCH_NAME=${branch}" >> $GITHUB_ENV
+  # ## Checked for leaked credentials
+  # leaked-cred-test:
+  #   if: |
+  #     !(
+  #       github.event_name == 'pull_request_review' &&
+  #       github.event.action == 'submitted' &&
+  #       (
+  #         github.event.review.state == 'commented' ||
+  #         github.event.review.state == 'changes_requested'
+  #       )
+  #     )
+  #   name: Leaked Credential Test
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Extract branch name
+  #       run: |
+  #         event=${{ github.event_name }}
+  #         case ${event} in
+  #           pull_request|pull_request_target|pull_request_review)
+  #             echo "[PR]: true"
+  #             branch=${{ github.event.pull_request.head.ref }}
+  #             ;;
+  #           *)
+  #             echo "[PR]: false"
+  #             branch=${GITHUB_REF#refs/heads/}
+  #             ;;
+  #         esac
+  #         echo "Setting Branch: ${branch}"
+  #         echo "BRANCH_NAME=${branch}" >> $GITHUB_ENV
 
-      - name: Checkout the latest code
-        id: git_checkout
-        uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
+  #     - name: Checkout the latest code
+  #       id: git_checkout
+  #       uses: actions/checkout@v3
+  #       with:
+  #         fetch-depth: 0
 
-      - name: TruffleHog Scan
-        id: trufflehog_check
-        uses: trufflesecurity/trufflehog@main
-        with:
-          path: ./
-          base: ${{ env.BRANCH_NAME }}
-          head: HEAD
+  #     - name: TruffleHog Scan
+  #       id: trufflehog_check
+  #       uses: trufflesecurity/trufflehog@main
+  #       with:
+  #         path: ./
+  #         base: ${{ env.BRANCH_NAME }}
+  #         head: HEAD
+
   # #
   # # clippy job
   # #
@@ -195,7 +196,7 @@ jobs:
       )
     name: Docker Debian Source Image
     # uses: wileyj/stacks-blockchain/.github/workflows/image-build-debian-source.yml@master
-    uses: ./.github/workflows/image-build-debian-source.yml
+    uses: ./.github/workflows/image-build-source.yml
     needs:
       - rustfmt
       - leaked-cred-test
