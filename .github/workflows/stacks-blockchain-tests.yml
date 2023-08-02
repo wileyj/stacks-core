@@ -144,7 +144,7 @@ jobs:
       - name: Run Tests
         id: run_tests
         run: |
-          echo "Run Test  ${{ matrix.test-name }}""
+          echo "Run Test ${{ matrix.test-name }}"
 
       - name: Run grcov
         id: run_grcov
@@ -154,7 +154,7 @@ jobs:
       - name: Upload Code Coverage
         id: code_coverage
         run: |
-          echo ""
+          echo "Upload Code Coverage"
 
   open-api-validation:
     # if: ${{ false }}
