@@ -104,7 +104,7 @@ jobs:
 
       - name: Build and Push (Alpine)
         if: ${{ matrix.dist == 'alpine' }}
-        id: docker_build
+        id: docker_build_alpine
         run: |
           echo "Alpine Build and Push"
 
@@ -116,7 +116,7 @@ jobs:
 
       - name: Build and Push (Debian)
         if: ${{ matrix.dist == 'debian' }}
-        id: docker_build
+        id: docker_build_debian
         run: |
           echo "Debian Build and Push"
 
