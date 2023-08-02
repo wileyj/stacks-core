@@ -58,7 +58,7 @@ jobs:
   image:
     # Only run if a tag is provided manually
     if: inputs.tag != ''
-    name: Build Image (Binary)
+    name: Build Image
     runs-on: ubuntu-latest
     ## this can DRY the image build and make multiple files unneeded
     strategy:

@@ -27,7 +27,7 @@ env:
 
 jobs:
   image:
-    name: Build Image (Source)
+    name: Build Image
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
