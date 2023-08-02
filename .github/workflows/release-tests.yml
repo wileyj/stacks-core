@@ -51,7 +51,6 @@ jobs:
   atlas-tests:
     if: |
       (
-        inputs.workflow == '' ||
         inputs.workflow == 'All Tests' ||
         inputs.workflow == 'Atlas Tests' 
       )
@@ -64,7 +63,6 @@ jobs:
   bitcoin-tests:
     if: |
       (
-        inputs.workflow == '' ||
         inputs.workflow == 'All Tests' ||
         inputs.workflow == 'CI Tests' ||
         inputs.workflow == 'Bitcoin Tests'
@@ -78,7 +76,6 @@ jobs:
   epoch-tests:
     if: |
       (
-        inputs.workflow == '' ||
         inputs.workflow == 'All Tests' ||
         inputs.workflow == 'CI Tests' ||
         inputs.workflow == 'Epoch Tests'
@@ -92,7 +89,6 @@ jobs:
   slow-tests:
     if: |
       (
-        inputs.workflow == '' ||
         inputs.workflow == 'All Tests' ||
         inputs.workflow == 'Slow Tests'
       )
@@ -105,7 +101,6 @@ jobs:
   stacks-blockchain-tests:
     if: |
       (
-        inputs.workflow == '' ||
         inputs.workflow == 'All Tests' ||
         inputs.workflow == 'Stacks-Blockchain Tests'
       )

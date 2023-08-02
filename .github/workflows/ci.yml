@@ -187,7 +187,8 @@ jobs:
     # # uses: wileyj/stacks-blockchain/.github/workflows/github-release.yml@master
     uses: ./.github/workflows/release-tests.yml
     secrets: inherit
-
+    with:
+      workflow: "All Tests"
   # run if:
   # input tag is not provided
   # or
@@ -241,7 +242,7 @@ jobs:
     needs:
       - rustfmt
       - leaked-cred-test
-    uses: ./.github/workflows/ci-tests.yml
+    uses: ./.github/workflows/release-tests.yml
     with:
       workflow: "CI Tests"
 
