@@ -348,6 +348,7 @@ jobs:
   slow-tests:
     if: inputs.tag != ''
     name: Slow Tests
+    needs:
       - rustfmt
       - leaked-cred-test
       - create-cache
@@ -357,6 +358,7 @@ jobs:
   stacks-blockchain-tests:
     if: inputs.tag != ''
     name: Stacks Blockchain Tests
+    needs:
       - rustfmt
       - leaked-cred-test
       - create-cache
