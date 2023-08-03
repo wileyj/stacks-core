@@ -52,7 +52,7 @@ jobs:
               | .[]
             '
           `; do
-            echo "*** Deleting action: $ID"
+            echo "*** Deleting action: $ID (https://github.com/${{ github.repository }}/actions/runs/${ID})"
             gh api \
               -H "Accept: application/vnd.github.v3+json" \
               -X DELETE \
