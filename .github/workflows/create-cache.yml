@@ -42,27 +42,70 @@ jobs:
     name: Cargo Cache
     runs-on: ubuntu-latest
     # runs-on: buildjet-4vcpu-ubuntu-2204
+    # steps:
+    #   - name: Check Cargo Cache
+    #     id: check_cargo_cache
+    #     run: echo "Check Cargo Cache"
+
+    #   - name: Install nextest
+    #     # if: steps.check_cache.outputs.cache-hit != 'true'
+    #     id: install_nextest
+    #     run: echo " Install nextest"
+
+    #   # cargo-llvm-cov instead?
+    #   # https://github.com/taiki-e/cargo-llvm-cov
+    #   - name: Install grcov
+    #     # if: steps.check_cache.outputs.cache-hit != 'true'
+    #     id: install_grcov
+    #     run: echo " Install grcov"
+
+    #   - name: Save Cache
+    #     # if: steps.check_cache.outputs.cache-hit != 'true'
+    #     id: save_cache
+    #     run: echo "Save Cache"
     steps:
       - name: Check Cargo Cache
-        id: check_cargo_cache
-        run: echo "Check Cargo Cache"
+        # uses: buildjet/cache@v3
+        uses: actions/cache@v3
+        id: check_cache
+        with:
+          lookup-only: true
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+          key: ${{ github.event.repository.name }}-cargo
+          # key: ${{ github.event.repository.name }}-${{ github.sha }}-cargo
 
       - name: Install nextest
-        # if: steps.check_cache.outputs.cache-hit != 'true'
+        if: steps.check_cache.outputs.cache-hit != 'true'
         id: install_nextest
-        run: echo " Install nextest"
+        uses: taiki-e/install-action@nextest
 
       # cargo-llvm-cov instead?
       # https://github.com/taiki-e/cargo-llvm-cov
       - name: Install grcov
-        # if: steps.check_cache.outputs.cache-hit != 'true'
+        if: steps.check_cache.outputs.cache-hit != 'true'
         id: install_grcov
-        run: echo " Install grcov"
+        uses: taiki-e/install-action@grcov
 
       - name: Save Cache
-        # if: steps.check_cache.outputs.cache-hit != 'true'
+        if: steps.check_cache.outputs.cache-hit != 'true'
         id: save_cache
-        run: echo "Save Cache"
+        # uses: buildjet/cache/save@v3
+        uses: actions/cache/save@v3
+        with:
+          # path: ~/.cargo
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+          key: ${{ github.event.repository.name }}-cargo
+          # key: ${{ github.event.repository.name }}-${{ github.sha }}-cargo
+          # key: ${{ github.event.repository.name }}-${{ github.sha }}-${{ github.run_id }}-cargo
+
   ##
   ## it is expected that this cache will exist longer so other runs can use it
   ##
@@ -72,23 +115,48 @@ jobs:
     name: Bitcoin Binary Cache
     runs-on: ubuntu-latest
     # runs-on: buildjet-2vcpu-ubuntu-2204
+    # steps:
+    #   - name: Check Bitcoin Cache
+    #     id: check_bitcoin_cache
+    #     run: |
+    #       echo "Check Bitcoin Cache"
+
+    #   - name: Install Bitcoin Binary
+    #     # if: steps.check_cache.outputs.cache-hit != 'true'
+    #     id: bitcoin_binary
+    #     run: |
+    #       echo "Install Bitcoin Binary"
+
+    #   - name: Save Cache
+    #     # if: steps.check_cache.outputs.cache-hit != 'true'
+    #     id: save_cache
+    #     run: |
+    #       echo "Save Cache"
     steps:
       - name: Check Bitcoin Cache
-        id: check_bitcoin_cache
-        run: |
-          echo "Check Bitcoin Cache"
+        # uses: buildjet/cache@v3
+        uses: actions/cache@v3
+        id: check_cache
+        with:
+          lookup-only: true
+          path: /tmp/bitcoin
+          key: ${{ github.event.repository.name }}-bitcoin-binaries
 
       - name: Install Bitcoin Binary
-        # if: steps.check_cache.outputs.cache-hit != 'true'
+        if: steps.check_cache.outputs.cache-hit != 'true'
         id: bitcoin_binary
         run: |
-          echo "Install Bitcoin Binary"
+          curl -LSf -# https://bitcoin.org/bin/bitcoin-core-${BTC_VERSION}/bitcoin-${BTC_VERSION}-x86_64-linux-gnu.tar.gz | tar zxf - -C /tmp
+          mv /tmp/bitcoin-${BTC_VERSION} /tmp/bitcoin
 
       - name: Save Cache
-        # if: steps.check_cache.outputs.cache-hit != 'true'
+        if: steps.check_cache.outputs.cache-hit != 'true'
         id: save_cache
-        run: |
-          echo "Save Cache"
+        # uses: buildjet/cache/save@v3
+        uses: actions/cache/save@v3
+        with:
+          path: /tmp/bitcoin
+          key: ${{ github.event.repository.name }}-bitcoin-binaries
 
   cache-test-archive:
     # if: github.event.review.state == 'approved'
@@ -97,90 +165,233 @@ jobs:
     # runs-on: buildjet-4vcpu-ubuntu-2204
     needs:
       - cache-cargo
+    # steps:
+    #   - name: Check Target Cache
+    #     id: check_target_cache
+    #     run: |
+    #       echo "Check Target Cache"
+
+    #   - name: Check Test Archive Cache
+    #     id: check_test_archive_cache
+    #     run: |
+    #       echo "Check Test Archive Cache"
+
+    #   - name: Check Genesis Test Archive Cache
+    #     id: check_genesis_archive_cache
+    #     run: |
+    #       echo "Check Genesis Test Archive Cache"
+
+    #   - name: Checkout the latest code
+    #     # if: |
+    #     #   steps.check_target_cache.outputs.cache-hit != 'true' ||
+    #     #   steps.check_test_archive_cache.outputs.cache-hit != 'true' ||
+    #     #   steps.check_genesis_archive_cache.outputs.cache-hit != 'true'
+    #     id: git_checkout
+    #     run: |
+    #       echo "Checkout the latest code"
+
+    #   - name: Setup Rust Toolchain
+    #     # if: |
+    #     #   steps.check_target_cache.outputs.cache-hit != 'true' ||
+    #     #   steps.check_test_archive_cache.outputs.cache-hit != 'true' ||
+    #     #   steps.check_genesis_archive_cache.outputs.cache-hit != 'true'
+    #     id: setup_rust_toolchain
+    #     run: |
+    #       echo "Setup Rust Toolchain"
+
+    #   - name: Restore Cargo Cache
+    #     # if: |
+    #     #   steps.check_target_cache.outputs.cache-hit != 'true' ||
+    #     #   steps.check_test_archive_cache.outputs.cache-hit != 'true' ||
+    #     #   steps.check_genesis_archive_cache.outputs.cache-hit != 'true'
+    #     id: restore_cargo_cache
+    #     run: |
+    #       echo "Restore Cargo Cache"
+
+    #   - name: Build and Archive Tests
+    #     # if: |
+    #     #   steps.check_target_cache.outputs.cache-hit != 'true' ||
+    #     #   steps.check_test_archive_cache.outputs.cache-hit != 'true' ||
+    #     #   steps.check_genesis_archive_cache.outputs.cache-hit != 'true'
+    #     id: archive_tests
+    #     run: |
+    #       echo "Build and Archive Tests"
+
+    #   - name: Build and Archive Genesis Tests
+    #     # if: |
+    #     #   steps.check_target_cache.outputs.cache-hit != 'true' ||
+    #     #   steps.check_genesis_archive_cache.outputs.cache-hit != 'true' ||
+    #     #   steps.check_genesis_archive_cache.outputs.cache-hit != 'true'
+    #     id: archive_genesis_tests
+    #     run: |
+    #       echo "Build and Archive Genesis Tests"
+
+    #   - name: Cache Test Archive
+    #     # if: |
+    #     #   steps.check_target_cache.outputs.cache-hit != 'true' ||
+    #     #   steps.check_test_archive_cache.outputs.cache-hit != 'true' ||
+    #     #   steps.check_genesis_archive_cache.outputs.cache-hit != 'true'
+    #     id: save_nextest_cache
+    #     run: |
+    #       echo "Cache Test Archive"
+
+    #   - name: Cache Genesis Archive
+    #     # if: |
+    #     #   steps.check_target_cache.outputs.cache-hit != 'true' ||
+    #     #   steps.check_test_archive_cache.outputs.cache-hit != 'true' ||
+    #     #   steps.check_genesis_archive_cache.outputs.cache-hit != 'true'
+    #     id: save_genesis_cache
+    #     run: |
+    #       echo "Cache Genesis Archive"
+
+    #   - name: Cache Target
+    #     # if: |
+    #     #   steps.check_target_cache.outputs.cache-hit != 'true' ||
+    #     #   steps.check_test_archive_cache.outputs.cache-hit != 'true' ||
+    #     #   steps.check_genesis_archive_cache.outputs.cache-hit != 'true'
+    #     id: save_target_cache
+    #     run: |
+    #       echo "Cache Target"
     steps:
       - name: Check Target Cache
+        # uses: buildjet/cache@v3
+        uses: actions/cache@v3
         id: check_target_cache
-        run: |
-          echo "Check Target Cache"
+        with:
+          lookup-only: true
+          # path: ./target/debug
+          # key: ${{ github.event.repository.name }}-target-debug
+          # # key: ${{ github.event.repository.name }}-${{ github.sha }}-target-debug
+          path: ./target
+          key: ${{ github.event.repository.name }}-target
 
       - name: Check Test Archive Cache
+        # uses: buildjet/cache@v3
+        uses: actions/cache@v3
         id: check_test_archive_cache
-        run: |
-          echo "Check Test Archive Cache"
+        with:
+          lookup-only: true
+          path: /tmp/test_archive.tar.zst
+          key: ${{ github.event.repository.name }}-test-archive
+          # key: ${{ github.event.repository.name }}-${{ github.sha }}-test-archive
 
       - name: Check Genesis Test Archive Cache
+        # uses: buildjet/cache@v3
+        uses: actions/cache@v3
         id: check_genesis_archive_cache
-        run: |
-          echo "Check Genesis Test Archive Cache"
+        with:
+          lookup-only: true
+          path: /tmp/genesis_archive.tar.zst
+          key: ${{ github.event.repository.name }}-genesis-archive
+          # key: ${{ github.event.repository.name }}-${{ github.sha }}-genesis-archive
 
       - name: Checkout the latest code
-        # if: |
-        #   steps.check_target_cache.outputs.cache-hit != 'true' ||
-        #   steps.check_test_archive_cache.outputs.cache-hit != 'true' ||
-        #   steps.check_genesis_archive_cache.outputs.cache-hit != 'true'
+        if: |
+          steps.check_target_cache.outputs.cache-hit != 'true' || 
+          steps.check_test_archive_cache.outputs.cache-hit != 'true' || 
+          steps.check_genesis_archive_cache.outputs.cache-hit != 'true'
         id: git_checkout
-        run: |
-          echo "Checkout the latest code"
+        uses: actions/checkout@v3
 
       - name: Setup Rust Toolchain
-        # if: |
-        #   steps.check_target_cache.outputs.cache-hit != 'true' ||
-        #   steps.check_test_archive_cache.outputs.cache-hit != 'true' ||
-        #   steps.check_genesis_archive_cache.outputs.cache-hit != 'true'
+        if: |
+          steps.check_target_cache.outputs.cache-hit != 'true' || 
+          steps.check_test_archive_cache.outputs.cache-hit != 'true' || 
+          steps.check_genesis_archive_cache.outputs.cache-hit != 'true'
         id: setup_rust_toolchain
-        run: |
-          echo "Setup Rust Toolchain"
+        uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          toolchain: stable
+          components: llvm-tools-preview
+          cache: false
 
       - name: Restore Cargo Cache
-        # if: |
-        #   steps.check_target_cache.outputs.cache-hit != 'true' ||
-        #   steps.check_test_archive_cache.outputs.cache-hit != 'true' ||
-        #   steps.check_genesis_archive_cache.outputs.cache-hit != 'true'
+        if: |
+          steps.check_target_cache.outputs.cache-hit != 'true' || 
+          steps.check_test_archive_cache.outputs.cache-hit != 'true' || 
+          steps.check_genesis_archive_cache.outputs.cache-hit != 'true'
         id: restore_cargo_cache
-        run: |
-          echo "Restore Cargo Cache"
+        # uses: buildjet/cache/restore@v3
+        uses: actions/cache/restore@v3
+        with:
+          fail-on-cache-miss: true
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+          key: ${{ github.event.repository.name }}-cargo
+          # key: ${{ github.event.repository.name }}-${{ github.sha }}-cargo
 
       - name: Build and Archive Tests
-        # if: |
-        #   steps.check_target_cache.outputs.cache-hit != 'true' ||
-        #   steps.check_test_archive_cache.outputs.cache-hit != 'true' ||
-        #   steps.check_genesis_archive_cache.outputs.cache-hit != 'true'
+        if: |
+          steps.check_target_cache.outputs.cache-hit != 'true' || 
+          steps.check_test_archive_cache.outputs.cache-hit != 'true' || 
+          steps.check_genesis_archive_cache.outputs.cache-hit != 'true'
         id: archive_tests
         run: |
-          echo "Build and Archive Tests"
+          cargo nextest archive \
+            --build-jobs 8 \
+            --workspace \
+            --tests \
+            --locked \
+            --archive-file /tmp/test_archive.tar.zst
 
       - name: Build and Archive Genesis Tests
-        # if: |
-        #   steps.check_target_cache.outputs.cache-hit != 'true' ||
-        #   steps.check_genesis_archive_cache.outputs.cache-hit != 'true' ||
-        #   steps.check_genesis_archive_cache.outputs.cache-hit != 'true'
+        if: |
+          steps.check_target_cache.outputs.cache-hit != 'true' || 
+          steps.check_genesis_archive_cache.outputs.cache-hit != 'true' || 
+          steps.check_genesis_archive_cache.outputs.cache-hit != 'true'
         id: archive_genesis_tests
         run: |
-          echo "Build and Archive Genesis Tests"
+          cd testnet/stacks-node && cargo nextest archive \
+            --build-jobs 8 \
+            --workspace \
+            --tests \
+            --locked \
+            --features prod-genesis-chainstate \
+            --archive-file /tmp/genesis_archive.tar.zst
 
       - name: Cache Test Archive
-        # if: |
-        #   steps.check_target_cache.outputs.cache-hit != 'true' ||
-        #   steps.check_test_archive_cache.outputs.cache-hit != 'true' ||
-        #   steps.check_genesis_archive_cache.outputs.cache-hit != 'true'
+        if: |
+          steps.check_target_cache.outputs.cache-hit != 'true' || 
+          steps.check_test_archive_cache.outputs.cache-hit != 'true' || 
+          steps.check_genesis_archive_cache.outputs.cache-hit != 'true'
         id: save_nextest_cache
-        run: |
-          echo "Cache Test Archive"
+        # uses: buildjet/cache/save@v3
+        uses: actions/cache/save@v3
+        with:
+          path: /tmp/test_archive.tar.zst
+          key: ${{ github.event.repository.name }}-test-archive
+          # key: ${{ github.event.repository.name }}-${{ github.sha }}-test-archive
+          # key: ${{ github.event.repository.name }}-${{ github.sha }}-${{ github.run_id }}-test-archive
 
       - name: Cache Genesis Archive
-        # if: |
-        #   steps.check_target_cache.outputs.cache-hit != 'true' ||
-        #   steps.check_test_archive_cache.outputs.cache-hit != 'true' ||
-        #   steps.check_genesis_archive_cache.outputs.cache-hit != 'true'
+        if: |
+          steps.check_target_cache.outputs.cache-hit != 'true' || 
+          steps.check_test_archive_cache.outputs.cache-hit != 'true' || 
+          steps.check_genesis_archive_cache.outputs.cache-hit != 'true'
         id: save_genesis_cache
-        run: |
-          echo "Cache Genesis Archive"
+        # uses: buildjet/cache/save@v3
+        uses: actions/cache/save@v3
+        with:
+          path: /tmp/test_archive.tar.zst
+          key: ${{ github.event.repository.name }}-genesis-archive
+          # key: ${{ github.event.repository.name }}-${{ github.sha }}-test-archive
+          # key: ${{ github.event.repository.name }}-${{ github.sha }}-${{ github.run_id }}-test-archive
 
       - name: Cache Target
-        # if: |
-        #   steps.check_target_cache.outputs.cache-hit != 'true' ||
-        #   steps.check_test_archive_cache.outputs.cache-hit != 'true' ||
-        #   steps.check_genesis_archive_cache.outputs.cache-hit != 'true'
+        if: |
+          steps.check_target_cache.outputs.cache-hit != 'true' || 
+          steps.check_test_archive_cache.outputs.cache-hit != 'true' || 
+          steps.check_genesis_archive_cache.outputs.cache-hit != 'true'
         id: save_target_cache
-        run: |
-          echo "Cache Target"
+        # uses: buildjet/cache/save@v3
+        uses: actions/cache/save@v3
+        with:
+          # path: ./target/debug
+          # key: ${{ github.event.repository.name }}-target-debug
+          # # key: ${{ github.event.repository.name }}-${{ github.sha }}-target-debug
+          # # key: ${{ github.event.repository.name }}-${{ github.sha }}-${{ github.run_id }}-target-debug
+          path: ./target
+          key: ${{ github.event.repository.name }}-target
