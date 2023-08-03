@@ -68,31 +68,35 @@ jobs:
     steps:
       - name: Checkout the latest code
         id: git_checkout
-        run: |
-          echo "Checkout the latest code"
+        uses: actions/checkout@v3
 
-      # - name: Set Vars
-      #   id: set_vars
-      #   run: |
-      #     echo "GITHUB_SHA_SHORT=${GITHUB_SHA::7}" >> $GITHUB_ENV
-      #     echo "GITHUB_REF_SHORT=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
+      - name: Set Vars
+        id: set_vars
+        run: |
+          echo "GITHUB_SHA_SHORT=${GITHUB_SHA::7}" >> $GITHUB_ENV
+          echo "GITHUB_REF_SHORT=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
 
       - name: Set up Docker Buildx
         id: setup_buildx
-        run: |
-          echo "Set up Docker Buildx"
+        uses: docker/setup-buildx-action@v2
 
       - name: Build Binaries
         id: build_binaries
-        run: |
-          echo "Build Binaries"
+        uses: docker/build-push-action@v3
+        with:
+          file: build-scripts/Dockerfile.${{ matrix.platform }}
+          outputs: type=local,dest=./release/${{ matrix.platform }}
+          build-args: |
+            OS_ARCH=${{ matrix.platform }}
+            GIT_BRANCH=${{ env.GITHUB_REF_SHORT }}
+            GIT_COMMIT=${{ env.GITHUB_SHA_SHORT }}
 
       - name: Compress artifact
         id: compress_artifact
-        run: |
-          echo "Compress artifact"
+        run: zip --junk-paths ${{ matrix.platform }} ./release/${{ matrix.platform }}/*
 
       - name: Upload artifact
         id: upload_artifact
-        run: |
-          echo "Upload artifact"
+        uses: actions/upload-artifact@v3
+        with:
+          path: ${{ matrix.platform }}.zip

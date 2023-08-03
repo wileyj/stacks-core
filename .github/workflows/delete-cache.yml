@@ -37,8 +37,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
         run: |
           TS=$(date --iso-8601=ns -u -d @$((EPOCHSECONDS-${{ env.EPOCH_1 }})))
-          echo "github.repository: ${{ github.repository }}"
-          echo "TS: ${TS}"
+          echo "Deleting all caches older than: ${TS}"
           gh extension install actions/gh-actions-cache
           gh api \
             --paginate \

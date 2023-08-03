@@ -74,20 +74,35 @@ jobs:
     steps:
       - name: Download Artifacts
         id: download_artifacts
-        run: |
-          echo "Download Artifacts"
+        uses: actions/download-artifact@v3
+        with:
+          name: artifact
+          path: release
 
       # Generate a checksums file to be added to the release page
       - name: Generate Checksums
         id: generate_checksum
-        run: |
-          echo "Generate Checksums"
+        uses: jmgilman/actions-generate-checksum@v1
+        with:
+          output: CHECKSUMS.txt
+          patterns: |
+            release/*.zip
 
       # Upload the release archives with the checksums file
       - name: Upload Release
         id: upload_release
-        run: |
-          echo "Upload Release"
+        uses: softprops/action-gh-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+        with:
+          name: Release ${{ github.event.inputs.tag || github.ref }}
+          tag_name: ${{ github.event.inputs.tag || github.ref }}
+          draft: false
+          prerelease: true
+          fail_on_unmatched_files: true
+          files: |
+            release/*.zip
+            CHECKSUMS.txt
 
   docker-image:
     if: |
