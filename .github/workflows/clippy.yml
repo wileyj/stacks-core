@@ -22,7 +22,7 @@ on:
 
 jobs:
   clippy_check:
-    if: ${{ false }}
+    # if: ${{ false }}
     name: Clippy Check
     runs-on: ubuntu-latest
     steps:
