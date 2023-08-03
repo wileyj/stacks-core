@@ -59,9 +59,10 @@ jobs:
   #   name: Create Test Cache
   #   uses: ./.github/workflows/create-cache.yml
   #   # uses: wileyj/stacks-blockchain/.github/workflows/create_cache.yml@master
+
   check-cache:
     # if: ${{ false }}
-    name: Cache Cache
+    name: Check Cache
     runs-on: ubuntu-latest
     steps:
       - name: Check Bitcoin Cache
