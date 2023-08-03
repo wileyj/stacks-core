@@ -29,5 +29,5 @@ jobs:
       - name: Rust Dependency Check
         id: rust_dep_check
         uses: actions-rs/audit-check@v1
-        # with:
-        #   token: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
