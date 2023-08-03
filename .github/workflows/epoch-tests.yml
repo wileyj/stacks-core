@@ -54,45 +54,39 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
-  # # check to see if cache exists, if not then recreate it
-  # create-cache:
-  #   name: Create Test Cache
-  #   uses: ./.github/workflows/create-cache.yml
-  #   # uses: wileyj/stacks-blockchain/.github/workflows/create_cache.yml@master
+  # check-cache:
+  #   # if: ${{ false }}
+  #   name: Check Cache
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Check Bitcoin Cache
+  #       # uses: buildjet/cache@v3
+  #       uses: actions/cache@v3
+  #       id: check_cache
+  #       with:
+  #         lookup-only: true
+  #         path: /tmp/bitcoin
+  #         key: ${{ github.event.repository.name }}-bitcoin-binaries
 
-  check-cache:
-    # if: ${{ false }}
-    name: Check Cache
-    runs-on: ubuntu-latest
-    steps:
-      - name: Check Bitcoin Cache
-        # uses: buildjet/cache@v3
-        uses: actions/cache@v3
-        id: check_cache
-        with:
-          lookup-only: true
-          path: /tmp/bitcoin
-          key: ${{ github.event.repository.name }}-bitcoin-binaries
-
-      - name: Check Target Cache
-        # uses: buildjet/cache@v3
-        uses: actions/cache@v3
-        id: check_target_cache
-        with:
-          lookup-only: true
-          # path: ./target/debug
-          # key: ${{ github.event.repository.name }}-target-debug
-          # # key: ${{ github.event.repository.name }}-${{ github.sha }}-target-debug
-          path: ./target
-          key: ${{ github.event.repository.name }}-target
+  #     - name: Check Target Cache
+  #       # uses: buildjet/cache@v3
+  #       uses: actions/cache@v3
+  #       id: check_target_cache
+  #       with:
+  #         lookup-only: true
+  #         # path: ./target/debug
+  #         # key: ${{ github.event.repository.name }}-target-debug
+  #         # # key: ${{ github.event.repository.name }}-${{ github.sha }}-target-debug
+  #         path: ./target
+  #         key: ${{ github.event.repository.name }}-target
 
   # epoch tests with code coverage
   epoch-tests:
     # if: ${{ false }}
     name: Epoch Tests
     runs-on: ubuntu-latest
-    needs:
-      - check-cache
+    # needs:
+    #   - check-cache
     strategy:
       fail-fast: false
       max-parallel: 32
