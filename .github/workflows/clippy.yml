@@ -12,7 +12,7 @@ name: Clippy Checks
 
 on:
   workflow_dispatch:
-  workflow_call:
+  # workflow_call:
   # pull_request:
   #   branches:
   #     - develop
@@ -22,7 +22,7 @@ on:
 
 jobs:
   clippy_check:
-    # if: ${{ false }}
+    if: ${{ false }}
     name: Clippy Check
     runs-on: ubuntu-latest
     steps:
