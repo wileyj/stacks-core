@@ -74,50 +74,94 @@ jobs:
     steps:
       - name: Checkout the latest code
         id: git_checkout
-        run: |
-          echo "Checkout the latest code"
+        uses: actions/checkout@v3
 
       - name: Setup Rust Toolchain
         id: setup_rust_toolchain
-        run: |
-          echo "Setup Rust Toolchain"
+        uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          toolchain: stable
+          components: llvm-tools-preview
+          cache: false
 
       - name: Restore Cargo Cache
         id: restore_cargo_cache
-        run: |
-          echo "Restore Cargo Cache"
+        uses: actions/cache/restore@v3
+        with:
+          fail-on-cache-miss: true
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+          key: ${{ github.event.repository.name }}-cargo
+          # key: ${{ github.event.repository.name }}-${{ github.sha }}-cargo
 
       - name: Restore Bitcoin Binary Cache
         id: restore_bitcoin_cache
-        run: |
-          echo "Restore Bitcoin Binary Cache"
+        uses: actions/cache/restore@v3
+        with:
+          fail-on-cache-miss: true
+          path: /tmp/bitcoin
+          key: ${{ github.event.repository.name }}-bitcoin-binaries
 
       - name: Restore Test Archive Cache
         id: restore_test-archive_cache
-        run: |
-          echo "Restore Test Archive Cache"
+        uses: actions/cache/restore@v3
+        with:
+          fail-on-cache-miss: true
+          path: /tmp/test_archive.tar.zst
+          key: ${{ github.event.repository.name }}-test-archive
+          # key: ${{ github.event.repository.name }}-${{ github.sha }}-test-archive
 
       - name: Restore Target Cache
         id: restore_target_cache
-        run: |
-          echo "Restore Target Cache"
+        uses: actions/cache/restore@v3
+        with:
+          fail-on-cache-miss: true
+          path: ./target
+          key: ${{ github.event.repository.name }}-target
+          # key: ${{ github.event.repository.name }}-${{ github.sha }}-target
 
       - name: Link Bitcoin Binary
         id: bitcoin_binary
         run: |
-          echo "Link Bitcoin Binary"
+          sudo ln -s /tmp/bitcoin/bin/bitcoind /bin/
+          ls -al /bin/bitcoind
 
       - name: Run Tests
         id: run_tests
         run: |
-          echo "Run Test: ${{ matrix.test-name }}"
+          cargo nextest run \
+            --test-threads 1 \
+            --run-ignored all \
+            --retries 2 \
+            --final-status-level fail \
+            --archive-file /tmp/test_archive.tar.zst \
+            "${{ matrix.test-name }}"
 
       - name: Run grcov
         id: run_grcov
         run: |
-          echo "Run grcov"
+          grcov . --binary-path ./target/debug/ -s . -t lcov --branch --ignore-not-existing --ignore "/*" -o lcov.info || exit 1
+
+      # - name: Code Coverage
+      #   id: code_coverage
+      #   uses: codecov/codecov-action@v3
+      #   with:
+      #     files: ./lcov.info
+      #     name: ${{ matrix.test-name }}
+      #     fail_ci_if_error: false
 
       - name: Upload Code Coverage
         id: code_coverage
-        run: |
-          echo "Upload Code Coverage"
+        uses: Wandalen/wretry.action@master
+        with:
+          action: codecov/codecov-action@v3
+          with: |
+            files: ./lcov.info
+            name: ${{ matrix.test-name }}
+            fail_ci_if_error: false
+            verbose: true
+          attempt_limit: 3
+          attempt_delay: 10000

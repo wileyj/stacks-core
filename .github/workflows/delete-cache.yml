@@ -1,5 +1,6 @@
 # Only run when:
-#   - called manually or from another workflow
+#   - called manually
+#   - cron
 
 name: Delete Cache
 
@@ -13,6 +14,12 @@ concurrency:
   # group: ${{ github.head_ref || github.run_id }}
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
+
+env:
+  EPOCH_30: 2592000 # seconds in 30 days
+  EPOCH_14: 1209600 # seconds in 14 days
+  EPOCH_7: 44800 # seconds in 7 days
+  EPOCH_1: 86400 # seconds in 1 day
 
 defaults:
   run:
@@ -28,15 +35,8 @@ jobs:
     steps:
       - env:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
-        # run: |
-        #   gh extension install actions/gh-actions-cache
-        #   gh actions-cache delete ${{ github.event.repository.name }}-cargo -R ${{ github.repository }} --confirm
-        #   gh actions-cache delete ${{ github.event.repository.name }}-target -R ${{ github.repository }} --confirm
-        #   gh actions-cache delete ${{ github.event.repository.name }}-test-archive -R ${{ github.repository }} --confirm
-        #   gh actions-cache delete ${{ github.event.repository.name }}-genesis-archive -R ${{ github.repository }} --confirm
-        #   echo "Done"
         run: |
-          TS=$(date --iso-8601=ns -u -d @$((EPOCHSECONDS-86400)))
+          TS=$(date --iso-8601=ns -u -d @$((EPOCHSECONDS-${{ env.EPOCH_1 }})))
           echo "github.repository: ${{ github.repository }}"
           echo "TS: ${TS}"
           gh extension install actions/gh-actions-cache
@@ -61,29 +61,3 @@ jobs:
             | echo;
           done
           echo "Done"
-
-  # delete-workflow-cache:
-  #   # if: ${{ false }}
-  #   name: Delete Cache
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - name: Delete Binary Cache
-  #       env:
-  #         GH_TOKEN: ${{ secrets.GH_TOKEN }}
-  #       run: |
-  #         gh extension install actions/gh-actions-cache
-  #         gh actions-cache delete ${{ github.event.repository.name }}-${{ github.sha }}-cargo -R ${{ github.repository }} --confirm
-  #         gh actions-cache delete ${{ github.event.repository.name }}-${{ github.sha }}-target -R ${{ github.repository }} --confirm
-  #         gh actions-cache delete ${{ github.event.repository.name }}-${{ github.sha }}-test-archive -R ${{ github.repository }} --confirm
-  #         gh actions-cache delete ${{ github.event.repository.name }}-${{ github.sha }}-genesis-archive -R ${{ github.repository }} --confirm
-  #         echo "Done"
-
-# https://github.com/actions/upload-artifact/issues/290#issuecomment-1374207010
-# https://github.com/marketplace/actions/purge-cache
-# https://github.com/marketplace/actions/delete-run-artifacts
-# https://github.com/marketplace/actions/rerun-actions
-#
-#
-#
-# clean up cancelled workflows at the same time (not all triggers will run, but will show up as a cencelled job)
-# clean up jobs older than 14?(?) days
