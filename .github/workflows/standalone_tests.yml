@@ -2,7 +2,7 @@
 ## Create the github release and store artifact files (with checksum)
 ##
 
-name: Tests
+name: Standalone Tests
 
 # Only run when:
 #   - manually triggered via the ci.yml workflow
@@ -42,6 +42,9 @@ on:
           - Epoch Tests
           - Slow Tests
           - Stacks-Blockchain Tests
+
+run-name: ${{ inputs.workflow }}
+
 jobs:
   create-cache:
     name: Create Test Cache
