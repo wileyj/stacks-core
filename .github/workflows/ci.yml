@@ -51,6 +51,8 @@ concurrency:
   group: ${{ github.head_ref || github.run_id }}
   cancel-in-progress: true
 
+run-name: ${{ inputs.tag }}
+
 jobs:
   ##
   ## Execute on every PR, these are generic workflows
