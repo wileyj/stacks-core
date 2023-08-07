@@ -18,11 +18,6 @@ on:
       #   description: "Tag name of this release (x.y.z)"
       #   required: true
       #   type: string
-      parallel_jobs:
-        description: "Number of parallel binary builds"
-        required: false
-        type: number
-        default: 8
       arch:
         description: "Stringified JSON object listing of platform matrix"
         required: true
@@ -35,17 +30,15 @@ on:
         description: "Tag name of this release (x.y.z)"
         required: true
         type: string
-      parallel_jobs:
-        description: "Number of parallel binary builds"
-        required: false
-        type: number
-        default: 8
       arch:
         description: "Stringified JSON object listing of platform matrix"
         required: true
         type: string
         default: >-
           ["linux-glibc-x64", "linux-musl-x64", "linux-glibc-arm64", "linux-musl-arm64", "macos-x64", "macos-arm64", "windows-x64"]
+
+env:
+  parallel_jobs: 8
 
 defaults:
   run:
@@ -66,7 +59,7 @@ jobs:
     name: Create Artifacts
     runs-on: ubuntu-latest
     strategy:
-      max-parallel: ${{ inputs.parallel_jobs }}
+      max-parallel: ${{ env.parallel_jobs }}
       matrix:
         platform: ${{ fromJson(inputs.arch) }}
     steps:
