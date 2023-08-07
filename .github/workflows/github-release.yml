@@ -52,8 +52,8 @@ jobs:
         !contains(github.ref, 'refs/pull')
       )
     name: Build Binaries
-    # uses: wileyj/stacks-blockchain/.github/workflows/build-source-binary.yml@master
-    uses: ./.github/workflows/build-source-binary.yml
+    # uses: wileyj/stacks-blockchain/.github/workflows/create-source-binary.yml@master
+    uses: ./.github/workflows/create-source-binary.yml
     with:
       tag: ${{ inputs.tag }}
       parallel_jobs: 4
