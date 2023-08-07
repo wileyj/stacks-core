@@ -92,7 +92,7 @@ jobs:
         id: docker_build
         uses: docker/build-push-action@v3
         with:
-          file: ./.github/actions/dockerfiles/Dockerfile.${{ env.os_version }}-source
+          file: ./.github/actions/dockerfiles/Dockerfile.${{matrix.dist}}-source
           platforms: ${{ env.docker_platforms }}
           tags: ${{ steps.docker_metadata.outputs.tags }}
           labels: ${{ steps.docker_metadata.outputs.labels }}
