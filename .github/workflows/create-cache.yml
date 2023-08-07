@@ -2,7 +2,7 @@
 ## Create Cache
 ##
 
-name: Create Test Caches
+name: Create Caches
 
 # Run when:
 #   - PR is approved

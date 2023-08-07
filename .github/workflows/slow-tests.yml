@@ -2,7 +2,7 @@
 ## Slow Tests
 ##
 
-name: Slow Tests
+name: Tests::Slow
 
 on:
   ## run when tagging a release or a tag is pushed (i.e. a manual run with an input tag)

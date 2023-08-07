@@ -2,7 +2,7 @@
 ## Release Tests
 ##
 
-name: Epoch Tests
+name: Tests::Epoch
 
 on:
   ## run when create-cache has completed successfully

@@ -2,7 +2,7 @@
 ## Bitcoin Integration Tests
 ##
 
-name: Bitcoin Integration Tests
+name: Tests::Bitcoin
 
 on:
   ## run when create-cache has completed successfully

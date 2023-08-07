@@ -2,12 +2,12 @@
 ## Atlas Tests
 ##
 
-name: Atlas Tests
+name: Tests::Atlas
 
 on:
   ## run when create-cache has completed successfully
   ##  create-cache will run when an input-tag is provided, or a PR is approved
-  workflow_dispatch:
+  # workflow_dispatch:
   workflow_call:
   # workflow_run:
   #   workflows: ["Create Test Caches"]

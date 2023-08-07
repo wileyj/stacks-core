@@ -2,7 +2,7 @@
 ## Stacks Blockchain Tests
 ##
 
-name: Stacks Blockchain Tests
+name: Tests::Stacks Blockchain
 
 on:
   ## run when create-cache has completed successfully
@@ -202,14 +202,6 @@ jobs:
             --retries 2 \
             --final-status-level fail \
             --archive-file /tmp/test_archive.tar.zst
-
-          # cargo nextest run \
-          #   --test-threads num-cpus \
-          #   --run-ignored all \
-          #   --archive-file /tmp/test_archive.tar.zst \
-          #   --retries 2 \
-          #   --final-status-level fail \
-          #   neon_integrations::bitcoind_integration_test
 
       - name: Run grcov
         id: run_grcov

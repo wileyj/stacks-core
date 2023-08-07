@@ -37,6 +37,7 @@ on:
         options:
           - All Tests
           - CI Tests
+          - PR Tests
           - Atlas Tests
           - Bitcoin Tests
           - Epoch Tests
@@ -55,6 +56,7 @@ jobs:
     if: |
       (
         inputs.workflow == 'All Tests' ||
+        inputs.workflow == 'CI Tests' ||
         inputs.workflow == 'Atlas Tests' 
       )
     name: Atlas Tests
@@ -67,6 +69,7 @@ jobs:
     if: |
       (
         inputs.workflow == 'All Tests' ||
+        inputs.workflow == 'PR Tests' ||
         inputs.workflow == 'CI Tests' ||
         inputs.workflow == 'Bitcoin Tests'
       )
@@ -80,6 +83,7 @@ jobs:
     if: |
       (
         inputs.workflow == 'All Tests' ||
+        inputs.workflow == 'PR Tests' ||
         inputs.workflow == 'CI Tests' ||
         inputs.workflow == 'Epoch Tests'
       )
@@ -105,6 +109,7 @@ jobs:
     if: |
       (
         inputs.workflow == 'All Tests' ||
+        inputs.workflow == 'CI Tests' ||
         inputs.workflow == 'Stacks-Blockchain Tests'
       )
     name: Stacks Blockchain Tests
