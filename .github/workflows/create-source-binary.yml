@@ -37,9 +37,6 @@ on:
         default: >-
           ["linux-glibc-x64", "linux-musl-x64", "linux-glibc-arm64", "linux-musl-arm64", "macos-x64", "macos-arm64", "windows-x64"]
 
-env:
-  parallel_jobs: 8
-
 defaults:
   run:
     shell: bash
@@ -59,7 +56,7 @@ jobs:
     name: Create Artifacts
     runs-on: ubuntu-latest
     strategy:
-      max-parallel: ${{ env.parallel_jobs }}
+      max-parallel: 8
       matrix:
         platform: ${{ fromJson(inputs.arch) }}
     steps:
