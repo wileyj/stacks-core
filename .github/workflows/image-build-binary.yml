@@ -54,10 +54,17 @@ defaults:
 env:
   docker_platforms: "linux/arm64, linux/amd64, linux/amd64/v2, linux/amd64/v3"
 
+run-name: ${{ inputs.tag }}
+
 jobs:
   image:
     # Only run if a tag is provided manually
-    if: inputs.tag != ''
+    # if: inputs.tag != ''
+    if: |
+      inputs.tag != '' || (
+        github.ref != format('refs/heads/{0}', github.event.repository.default_branch) &&
+        !contains(github.ref, 'refs/pull')
+      )
     name: Build Image
     runs-on: ubuntu-latest
     ## this can DRY the image build and make multiple files unneeded
@@ -95,9 +102,9 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_PASSWORD }}
       ##
-      ## Alpine docker image
+      ## Alpine image
       ##
-      - name: Docker Metadata ( ${{matrix.dist}} )
+      - name: Docker Metadata ( Alpine )
         if: ${{ matrix.dist == 'alpine' }}
         id: docker_metadata_alpine
         uses: docker/metadata-action@v4
@@ -106,16 +113,16 @@ jobs:
             wileyj/${{ github.event.repository.name }}
           tags: |
             type=raw,value=latest,enable=${{ inputs.tag != '' && (github.ref == format('refs/heads/{0}', github.event.repository.default_branch) )}}
-            type=raw,value=${{ inputs.tag }}-${{ env.os_version }},enable=${{ inputs.tag != '' }}
+            type=raw,value=${{ inputs.tag }}-${{ matrix.dist }},enable=${{ inputs.tag != '' }}
             type=raw,value=${{ inputs.tag }},enable=${{ inputs.tag != '' }}
             type=ref,event=tag,enable=true
 
-      - name: Build and Push ( ${{matrix.dist}} )
+      - name: Build and Push ( Alpine )
         if: ${{ matrix.dist == 'alpine' }}
         id: docker_build_alpine
         uses: docker/build-push-action@v3
         with:
-          file: ./.github/actions/dockerfiles/Dockerfile.${{ env.os_version }}-binary
+          file: ./.github/actions/dockerfiles/Dockerfile.${{ matrix.dist }}-binary
           platforms: ${{ env.docker_platforms }}
           tags: ${{ steps.docker_metadata.outputs.tags }}
           labels: ${{ steps.docker_metadata.outputs.labels }}
@@ -126,9 +133,9 @@ jobs:
             GIT_COMMIT=${{ env.GITHUB_SHA_SHORT }}
           push: true
       ##
-      ## Debian docker image
+      ## Debian image
       ##
-      - name: Docker Metadata ( ${{matrix.dist}} )
+      - name: Docker Metadata ( Debian )
         if: ${{ matrix.dist == 'debian' }}
         id: docker_metadata_debian
         uses: docker/metadata-action@v4
@@ -136,16 +143,16 @@ jobs:
           images: |
             wileyj/${{ github.event.repository.name }}
           tags: |
-            type=raw,value=latest-${{ env.os_version }},enable=${{ inputs.tag != '' && (github.ref == format('refs/heads/{0}', github.event.repository.default_branch) )}}
-            type=raw,value=${{ inputs.tag }}-${{ env.os_version }},enable=${{ inputs.tag != '' }}
+            type=raw,value=latest-${{ matrix.dist }},enable=${{ inputs.tag != '' && (github.ref == format('refs/heads/{0}', github.event.repository.default_branch) )}}
+            type=raw,value=${{ inputs.tag }}-${{ matrix.dist }},enable=${{ inputs.tag != '' }}
 
-      - name: Build and Push ( ${{matrix.dist}} )
+      - name: Build and Push ( Debian )
         if: ${{ matrix.dist == 'debian' }}
         id: docker_build_debian
         uses: docker/build-push-action@v3
         with:
           # file: ./.github/actions/dockerfiles/Dockerfile.${{ inputs.linux_version }}-${{ inputs.build_type }}
-          file: ./.github/actions/dockerfiles/Dockerfile.${{ env.os_version }}-binary
+          file: ./.github/actions/dockerfiles/Dockerfile.${{ matrix.dist }}-binary
           platforms: ${{ env.docker_platforms }}
           tags: ${{ steps.docker_metadata.outputs.tags }}
           labels: ${{ steps.docker_metadata.outputs.labels }}

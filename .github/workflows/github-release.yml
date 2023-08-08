@@ -44,6 +44,8 @@ on:
       GH_TOKEN:
         required: true
 
+run-name: ${{ inputs.tag }}
+
 jobs:
   build-binaries:
     if: |

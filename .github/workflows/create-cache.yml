@@ -2,7 +2,7 @@
 ## Create Cache
 ##
 
-name: Create Caches
+name: Create Test Cache
 
 # Run when:
 #   - PR is approved
@@ -37,9 +37,9 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
-  cache-cargo:
+  cargo:
     # if: github.event.review.state == 'approved'
-    name: Cargo Cache
+    name: Cargo
     runs-on: ubuntu-latest
     # runs-on: buildjet-4vcpu-ubuntu-2204
     steps:
@@ -89,8 +89,8 @@ jobs:
   ## it is expected that this cache will exist longer so other runs can use it
   ##
 
-  cache-bitcoin-binary:
-    name: Bitcoin Binary Cache
+  bitcoin-binary:
+    name: Bitcoin Binary
     runs-on: ubuntu-latest
     # runs-on: buildjet-4vcpu-ubuntu-2204
     steps:
@@ -119,12 +119,12 @@ jobs:
           path: /tmp/bitcoin
           key: ${{ github.event.repository.name }}-bitcoin-binaries
 
-  cache-test-archive:
-    name: Test Archive Cache
+  nextest-archive:
+    name: Test Archive
     runs-on: ubuntu-latest
     # runs-on: buildjet-4vcpu-ubuntu-2204
     needs:
-      - cache-cargo
+      - cargo
     steps:
       - name: Check Target Cache
         # uses: buildjet/cache@v3

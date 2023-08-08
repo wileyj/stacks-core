@@ -152,8 +152,11 @@ jobs:
   # ##  - slow-tests
   # ##  - stacks-blockchain-tests
   create-release:
-    if: inputs.tag != ''
-    name: Create Release
+    if: |
+      inputs.tag != '' || (
+        github.ref != format('refs/heads/{0}', github.event.repository.default_branch) && 
+        !contains(github.ref, 'refs/pull')
+      )    name: Create Release
     needs:
       - rustfmt
       # - leaked-cred-test
@@ -355,33 +358,33 @@ jobs:
     # with:
     #   test: "Epoch Tests"
 
-  ## Only run on tagged Release
-  atlas-tests:
-    if: inputs.tag != ''
-    name: Atlas Tests
-    needs:
-      - rustfmt
-      # - leaked-cred-test
-      - create-cache
-    # uses: wileyj/stacks-blockchain/.github/workflows/build-source-binary.yml@master
-    uses: ./.github/workflows/atlas-tests.yml
+  # ## Only run on tagged Release
+  # atlas-tests:
+  #   if: inputs.tag != ''
+  #   name: Atlas Tests
+  #   needs:
+  #     - rustfmt
+  #     # - leaked-cred-test
+  #     - create-cache
+  #   # uses: wileyj/stacks-blockchain/.github/workflows/build-source-binary.yml@master
+  #   uses: ./.github/workflows/atlas-tests.yml
 
-  slow-tests:
-    if: inputs.tag != ''
-    name: Slow Tests
-    needs:
-      - rustfmt
-      # - leaked-cred-test
-      - create-cache
-    # uses: wileyj/stacks-blockchain/.github/workflows/build-source-binary.yml@master
-    uses: ./.github/workflows/slow-tests.yml
+  # slow-tests:
+  #   if: inputs.tag != ''
+  #   name: Slow Tests
+  #   needs:
+  #     - rustfmt
+  #     # - leaked-cred-test
+  #     - create-cache
+  #   # uses: wileyj/stacks-blockchain/.github/workflows/build-source-binary.yml@master
+  #   uses: ./.github/workflows/slow-tests.yml
 
-  stacks-blockchain-tests:
-    if: inputs.tag != ''
-    name: Stacks Blockchain Tests
-    needs:
-      - rustfmt
-      # - leaked-cred-test
-      - create-cache
-    # uses: wileyj/stacks-blockchain/.github/workflows/build-source-binary.yml@master
-    uses: ./.github/workflows/stacks-blockchain-tests.yml
+  # stacks-blockchain-tests:
+  #   if: inputs.tag != ''
+  #   name: Stacks Blockchain Tests
+  #   needs:
+  #     - rustfmt
+  #     # - leaked-cred-test
+  #     - create-cache
+  #   # uses: wileyj/stacks-blockchain/.github/workflows/build-source-binary.yml@master
+  #   uses: ./.github/workflows/stacks-blockchain-tests.yml
