@@ -130,6 +130,10 @@ jobs:
         run: |
           sudo dd if=/dev/zero of=/mnt/test.img bs=1G count=1 oflag=dsync
           sudo rm -f /mnt/test.img
+      - name: memtest
+        run: |
+          sudo apt install memtester &&
+          sudo memtester 6144 5
       # - name: Checkout the latest code
       #   id: git_checkout
       #   uses: actions/checkout@v3
