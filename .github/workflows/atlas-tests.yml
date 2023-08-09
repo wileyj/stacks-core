@@ -96,6 +96,7 @@ jobs:
       - name: CPU info
         run: |
           echo $HOME
+
           echo ""
           echo ""*************************""
           echo "CPU info:"
@@ -198,7 +199,7 @@ jobs:
         id: run_tests
         timeout-minutes: 30
         run: |
-          cargo nextest run \
+          sudo /home/runner/.cargo/bin/cargo nextest run \
             --test-threads 1 \
             --run-ignored all \
             --retries 2 \
