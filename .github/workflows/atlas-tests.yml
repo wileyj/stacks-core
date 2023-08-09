@@ -138,9 +138,9 @@ jobs:
       #     sudo apt install memtester &&
       #     sudo memtester 6144 5
 
-      # - name: Checkout the latest code
-      #   id: git_checkout
-      #   uses: actions/checkout@v3
+      - name: Checkout the latest code
+        id: git_checkout
+        uses: actions/checkout@v3
 
       # - name: Setup Rust Toolchain
       #   id: setup_rust_toolchain
