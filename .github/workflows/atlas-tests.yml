@@ -120,7 +120,16 @@ jobs:
           echo """*************************"""
           echo "cat /mnt/DATALOSS_WARNING_README.txt"
           cat /mnt/DATALOSS_WARNING_README.txt
+          echo ""
+      - name: dd to home
+        run: |
+          dd if=/dev/zero of=test.img bs=1G count=1 oflag=dsync
+          rm -f test.img
 
+      - name: dd to /mnt
+        run: |
+          dd if=/dev/zero of=/mnt/test.img bs=1G count=1 oflag=dsync
+          rm -f /mnt/test.img
       # - name: Checkout the latest code
       #   id: git_checkout
       #   uses: actions/checkout@v3
