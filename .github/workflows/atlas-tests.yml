@@ -93,46 +93,46 @@ jobs:
           - tests::neon_integrations::atlas_integration_test
           - tests::neon_integrations::atlas_stress_integration_test
     steps:
-      - name: CPU info
-        run: |
-          echo $HOME
+      # - name: CPU info
+      #   run: |
+      #     echo $HOME
 
-          echo ""
-          echo ""*************************""
-          echo "CPU info:"
-          cat /proc/cpuinfo
-          echo ""*************************""
-          echo "Memory:"
-          free -m
-          echo ""*************************""
-          echo "Disk Type:"
-          sudo lsblk -d -o name,rota
-          echo ""*************************""
-          echo "cat /sys/block/sda/queue/rotational"
-          cat /sys/block/sda/queue/rotational
-          echo "*************************"
-          echo "cat /sys/block/sdb/queue/rotational"
-          cat /sys/block/sdb/queue/rotational
-          echo ""*************************""
-          echo "mount -a:"
-          sudo mount
-          sudo df -h
-          echo ""*************************""
-          echo "ls /mnt"
-          sudo ls /mnt
-          echo """*************************"""
-          echo "cat /mnt/DATALOSS_WARNING_README.txt"
-          cat /mnt/DATALOSS_WARNING_README.txt
-          echo ""
-      - name: dd to home
-        run: |
-          sudo dd if=/dev/zero of=./test.img bs=1G count=1 oflag=dsync
-          sudo rm -f ./test.img
+      #     echo ""
+      #     echo ""*************************""
+      #     echo "CPU info:"
+      #     cat /proc/cpuinfo
+      #     echo ""*************************""
+      #     echo "Memory:"
+      #     free -m
+      #     echo ""*************************""
+      #     echo "Disk Type:"
+      #     sudo lsblk -d -o name,rota
+      #     echo ""*************************""
+      #     echo "cat /sys/block/sda/queue/rotational"
+      #     cat /sys/block/sda/queue/rotational
+      #     echo "*************************"
+      #     echo "cat /sys/block/sdb/queue/rotational"
+      #     cat /sys/block/sdb/queue/rotational
+      #     echo ""*************************""
+      #     echo "mount -a:"
+      #     sudo mount
+      #     sudo df -h
+      #     echo ""*************************""
+      #     echo "ls /mnt"
+      #     sudo ls /mnt
+      #     echo """*************************"""
+      #     echo "cat /mnt/DATALOSS_WARNING_README.txt"
+      #     cat /mnt/DATALOSS_WARNING_README.txt
+      #     echo ""
+      # - name: dd to home
+      #   run: |
+      #     sudo dd if=/dev/zero of=./test.img bs=1G count=1 oflag=dsync
+      #     sudo rm -f ./test.img
 
-      - name: dd to /mnt
-        run: |
-          sudo dd if=/dev/zero of=/mnt/test.img bs=1G count=1 oflag=dsync
-          sudo rm -f /mnt/test.img
+      # - name: dd to /mnt
+      #   run: |
+      #     sudo dd if=/dev/zero of=/mnt/test.img bs=1G count=1 oflag=dsync
+      #     sudo rm -f /mnt/test.img
       # - name: memtest
       #   run: |
       #     sudo apt install memtester &&
@@ -199,13 +199,11 @@ jobs:
         id: run_tests
         timeout-minutes: 30
         run: |
-          sudo /home/runner/.cargo/bin/cargo nextest run \
-            --test-threads 1 \
+          cargo nextest run \
+            --test-threads num-cpus \
             --run-ignored all \
             --retries 2 \
             --final-status-level fail \
-            --extract-to /mnt \
-            --extract-overwrite \
             --archive-file /tmp/test_archive.tar.zst \
             "${{ matrix.test-name }}"
 
