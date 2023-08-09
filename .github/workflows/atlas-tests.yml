@@ -106,6 +106,9 @@ jobs:
           echo "Disk Type:"
           sudo lsblk -d -o name,rota
           echo ""
+          echo "mount -a:"
+          sudo mount
+          sudo df -h
 
       - name: Checkout the latest code
         id: git_checkout
