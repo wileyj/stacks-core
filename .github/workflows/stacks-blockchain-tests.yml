@@ -2,6 +2,9 @@
 ## Stacks Blockchain Tests
 ##
 
+## matrix with a partition perhaps?
+## https://github.com/nextest-rs/reuse-build-partition-example/blob/main/.github/workflows/ci.yml
+
 name: Tests::Stacks Blockchain
 
 on:
@@ -136,7 +139,22 @@ jobs:
     # if: ${{ false }}
     name: Unit Tests
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        partition: [1, 2, 3, 4]
     steps:
+      - name: CPU info
+        run: |
+          echo ""
+          echo "CPU info:"
+          cat /proc/cpuinfo
+          echo ""
+          echo "Memory:"
+          free -m
+          echo ""
+          echo "Disk Type:"
+          sudo lsblk -d -o name,rota
+          echo ""
       - name: Checkout the latest code
         id: git_checkout
         uses: actions/checkout@v3
@@ -196,12 +214,16 @@ jobs:
 
       - name: Run Tests
         id: run_tests
+        # timeout-minutes: 30
         run: |
           cargo nextest run \
             --test-threads num-cpus \
             --retries 2 \
             --final-status-level fail \
-            --archive-file /tmp/test_archive.tar.zst
+            --extract-to /mnt \
+            --extract-overwrite \
+            --archive-file /tmp/test_archive.tar.zst \
+            --partition count:${{ matrix.partition }}/4
 
       - name: Run grcov
         id: run_grcov
