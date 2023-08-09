@@ -117,6 +117,9 @@ jobs:
           echo ""*************************""
           echo "ls /mnt"
           sudo ls /mnt
+          echo """*************************"""
+          echo "cat /mnt/DATALOSS_WARNING_README.txt"
+          cat /mnt/DATALOSS_WARNING_README.txt
 
       # - name: Checkout the latest code
       #   id: git_checkout
