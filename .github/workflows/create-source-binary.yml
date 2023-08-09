@@ -2,7 +2,7 @@
 ## Builds binary assets of stacks-blockchain and creates a named tag github (draft) release
 ##
 
-name: Build Binary
+name: Create Binaries
 
 # Only run when:
 #   - manually triggered via the ci.yml workflow with a provided input tag
