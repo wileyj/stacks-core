@@ -130,10 +130,11 @@ jobs:
         run: |
           sudo dd if=/dev/zero of=/mnt/test.img bs=1G count=1 oflag=dsync
           sudo rm -f /mnt/test.img
-      - name: memtest
-        run: |
-          sudo apt install memtester &&
-          sudo memtester 6144 5
+      # - name: memtest
+      #   run: |
+      #     sudo apt install memtester &&
+      #     sudo memtester 6144 5
+
       # - name: Checkout the latest code
       #   id: git_checkout
       #   uses: actions/checkout@v3
@@ -146,85 +147,87 @@ jobs:
       #     components: llvm-tools-preview
       #     cache: false
 
-      # - name: Restore Cargo Cache
-      #   id: restore_cargo_cache
-      #   uses: actions/cache/restore@v3
-      #   with:
-      #     fail-on-cache-miss: true
-      #     path: |
-      #       ~/.cargo/bin/
-      #       ~/.cargo/registry/index/
-      #       ~/.cargo/registry/cache/
-      #       ~/.cargo/git/db/
-      #     key: ${{ github.event.repository.name }}-cargo
-      #     # key: ${{ github.event.repository.name }}-${{ github.sha }}-cargo
+      - name: Restore Cargo Cache
+        id: restore_cargo_cache
+        uses: actions/cache/restore@v3
+        with:
+          fail-on-cache-miss: true
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+          key: ${{ github.event.repository.name }}-cargo
+          # key: ${{ github.event.repository.name }}-${{ github.sha }}-cargo
 
-      # - name: Restore Bitcoin Binary Cache
-      #   id: restore_bitcoin_cache
-      #   uses: actions/cache/restore@v3
-      #   with:
-      #     fail-on-cache-miss: true
-      #     path: /tmp/bitcoin
-      #     key: ${{ github.event.repository.name }}-bitcoin-binaries
+      - name: Restore Bitcoin Binary Cache
+        id: restore_bitcoin_cache
+        uses: actions/cache/restore@v3
+        with:
+          fail-on-cache-miss: true
+          path: /tmp/bitcoin
+          key: ${{ github.event.repository.name }}-bitcoin-binaries
 
-      # - name: Restore Test Archive Cache
-      #   id: restore_test-archive_cache
-      #   uses: actions/cache/restore@v3
-      #   with:
-      #     fail-on-cache-miss: true
-      #     path: /tmp/test_archive.tar.zst
-      #     key: ${{ github.event.repository.name }}-test-archive
-      #     # key: ${{ github.event.repository.name }}-${{ github.sha }}-test-archive
+      - name: Restore Test Archive Cache
+        id: restore_test-archive_cache
+        uses: actions/cache/restore@v3
+        with:
+          fail-on-cache-miss: true
+          path: /tmp/test_archive.tar.zst
+          key: ${{ github.event.repository.name }}-test-archive
+          # key: ${{ github.event.repository.name }}-${{ github.sha }}-test-archive
 
-      # - name: Restore Target Cache
-      #   id: restore_target_cache
-      #   uses: actions/cache/restore@v3
-      #   with:
-      #     fail-on-cache-miss: true
-      #     path: ./target
-      #     key: ${{ github.event.repository.name }}-target
-      #     # key: ${{ github.event.repository.name }}-${{ github.sha }}-target
+      - name: Restore Target Cache
+        id: restore_target_cache
+        uses: actions/cache/restore@v3
+        with:
+          fail-on-cache-miss: true
+          path: ./target
+          key: ${{ github.event.repository.name }}-target
+          # key: ${{ github.event.repository.name }}-${{ github.sha }}-target
 
-      # - name: Link Bitcoin Binary
-      #   id: bitcoin_binary
-      #   run: |
-      #     sudo ln -s /tmp/bitcoin/bin/bitcoind /bin/
-      #     ls -al /bin/bitcoind
+      - name: Link Bitcoin Binary
+        id: bitcoin_binary
+        run: |
+          sudo ln -s /tmp/bitcoin/bin/bitcoind /bin/
+          ls -al /bin/bitcoind
 
-      # - name: Run Tests
-      #   id: run_tests
-      #   timeout-minutes: 30
-      #   run: |
-      #     cargo nextest run \
-      #       --test-threads 1 \
-      #       --run-ignored all \
-      #       --retries 2 \
-      #       --final-status-level fail \
-      #       --archive-file /tmp/test_archive.tar.zst \
-      #       "${{ matrix.test-name }}"
+      - name: Run Tests
+        id: run_tests
+        timeout-minutes: 30
+        run: |
+          cargo nextest run \
+            --test-threads 1 \
+            --run-ignored all \
+            --retries 2 \
+            --final-status-level fail \
+            --extract-to /mnt \
+            --extract-overwrite \
+            --archive-file /tmp/test_archive.tar.zst \
+            "${{ matrix.test-name }}"
 
-      # - name: Run grcov
-      #   id: run_grcov
-      #   run: |
-      #     grcov . --binary-path ./target/debug/ -s . -t lcov --branch --ignore-not-existing --ignore "/*" -o lcov.info || exit 1
+      - name: Run grcov
+        id: run_grcov
+        run: |
+          grcov . --binary-path ./target/debug/ -s . -t lcov --branch --ignore-not-existing --ignore "/*" -o lcov.info || exit 1
 
-      # # - name: Code Coverage
-      # #   id: code_coverage
-      # #   uses: codecov/codecov-action@v3
-      # #   with:
-      # #     files: ./lcov.info
-      # #     name: ${{ matrix.test-name }}
-      # #     fail_ci_if_error: false
-
-      # - name: Upload Code Coverage
+      # - name: Code Coverage
       #   id: code_coverage
-      #   uses: Wandalen/wretry.action@master
+      #   uses: codecov/codecov-action@v3
       #   with:
-      #     action: codecov/codecov-action@v3
-      #     with: |
-      #       files: ./lcov.info
-      #       name: ${{ matrix.test-name }}
-      #       fail_ci_if_error: false
-      #       verbose: true
-      #     attempt_limit: 3
-      #     attempt_delay: 10000
+      #     files: ./lcov.info
+      #     name: ${{ matrix.test-name }}
+      #     fail_ci_if_error: false
+
+      - name: Upload Code Coverage
+        id: code_coverage
+        uses: Wandalen/wretry.action@master
+        with:
+          action: codecov/codecov-action@v3
+          with: |
+            files: ./lcov.info
+            name: ${{ matrix.test-name }}
+            fail_ci_if_error: false
+            verbose: true
+          attempt_limit: 3
+          attempt_delay: 10000
