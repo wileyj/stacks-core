@@ -115,7 +115,9 @@ jobs:
     name: Docker Image (Binary)
     # uses: wileyj/stacks-blockchain/.github/workflows/image-build-binary.yml@master
     uses: ./.github/workflows/image-build-binary.yml
-    needs: build-binaries
+    needs:
+      - build-binaries
+      - create-release
     with:
       tag: ${{ inputs.tag }}
     secrets: inherit
