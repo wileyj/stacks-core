@@ -126,14 +126,6 @@ jobs:
           grcov . --binary-path ./target/debug/ -s . -t lcov --branch --ignore-not-existing --ignore "/*" -o lcov.info || exit 1
           echo "created=true\n" >> $GITHUB_OUTPUT
 
-      # - name: Code Coverage
-      #   id: code_coverage
-      #   uses: codecov/codecov-action@v3
-      #   with:
-      #     files: ./lcov.info
-      #     name: ${{ matrix.test-name }}
-      #     fail_ci_if_error: false
-
       - name: Upload Code Coverage
         # if: inputs.tag != '' && steps.run_grcov.outputs.created == 'true'
         id: code_coverage
