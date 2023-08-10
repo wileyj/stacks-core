@@ -22,7 +22,7 @@ defaults:
 env:
   BITCOIND_TEST: 1
   RUST_BACKTRACE: full
-  SEGMENT_DOWNLOAD_TIMEOUT_MINS: 20
+  SEGMENT_DOWNLOAD_TIMEOUT_MINS: 15
 
 concurrency:
   # group: stacks-blockchain-slow-tests-${{ github.ref }}
@@ -31,39 +31,11 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
-  # check-cache:
-  #   # if: ${{ false }}
-  #   name: Check Cache
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - name: Check Bitcoin Cache
-  #       # uses: buildjet/cache@v3
-  #       uses: actions/cache@v3
-  #       id: check_cache
-  #       with:
-  #         lookup-only: true
-  #         path: /tmp/bitcoin
-  #         key: ${{ github.event.repository.name }}-bitcoin-binaries
-
-  #     - name: Check Target Cache
-  #       # uses: buildjet/cache@v3
-  #       uses: actions/cache@v3
-  #       id: check_target_cache
-  #       with:
-  #         lookup-only: true
-  #         # path: ./target/debug
-  #         # key: ${{ github.event.repository.name }}-target-debug
-  #         # # key: ${{ github.event.repository.name }}-${{ github.sha }}-target-debug
-  #         path: ./target
-  #         key: ${{ github.event.repository.name }}-target
-
   # slow tests with code coverage
   slow-tests:
     # if: ${{ false }}
     name: Slow Tests
     runs-on: ubuntu-latest
-    # needs:
-    #   - check-cache
     strategy:
       fail-fast: false
       max-parallel: 2
@@ -76,13 +48,13 @@ jobs:
         id: git_checkout
         uses: actions/checkout@v3
 
-      - name: Setup Rust Toolchain
-        id: setup_rust_toolchain
-        uses: actions-rust-lang/setup-rust-toolchain@v1
-        with:
-          toolchain: stable
-          components: llvm-tools-preview
-          cache: false
+      # - name: Setup Rust Toolchain
+      #   id: setup_rust_toolchain
+      #   uses: actions-rust-lang/setup-rust-toolchain@v1
+      #   with:
+      #     toolchain: stable
+      #     components: llvm-tools-preview
+      #     cache: false
 
       - name: Restore Cargo Cache
         id: restore_cargo_cache
@@ -131,12 +103,14 @@ jobs:
 
       - name: Run Tests
         id: run_tests
+        timeout-minutes: 30
         run: |
           cargo nextest run \
             --test-threads 1 \
             --run-ignored all \
             --retries 2 \
             --final-status-level fail \
+            --fail-fast \
             --archive-file /tmp/test_archive.tar.zst \
             "${{ matrix.test-name }}"
 

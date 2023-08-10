@@ -141,39 +141,19 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        partition:
-          - 1
-          - 2
-          - 3
-          - 4
-          - 5
-          - 6
-          - 7
-          - 8
+        partition: [1, 2, 3, 4, 5, 6, 7, 8] # partition the tests into 8 jobs
     steps:
-      - name: CPU info
-        run: |
-          echo ""
-          echo "CPU info:"
-          cat /proc/cpuinfo
-          echo ""
-          echo "Memory:"
-          free -m
-          echo ""
-          echo "Disk Type:"
-          sudo lsblk -d -o name,rota
-          echo ""
       - name: Checkout the latest code
         id: git_checkout
         uses: actions/checkout@v3
 
-      - name: Setup Rust Toolchain
-        id: setup_rust_toolchain
-        uses: actions-rust-lang/setup-rust-toolchain@v1
-        with:
-          toolchain: stable
-          components: llvm-tools-preview
-          cache: false
+      # - name: Setup Rust Toolchain
+      #   id: setup_rust_toolchain
+      #   uses: actions-rust-lang/setup-rust-toolchain@v1
+      #   with:
+      #     toolchain: stable
+      #     components: llvm-tools-preview
+      #     cache: false
 
       - name: Restore Cargo Cache
         id: restore_cargo_cache
@@ -228,6 +208,7 @@ jobs:
             --test-threads num-cpus \
             --retries 2 \
             --final-status-level fail \
+            --fail-fast \
             --archive-file /tmp/test_archive.tar.zst \
             --partition count:${{ matrix.partition }}/8
 

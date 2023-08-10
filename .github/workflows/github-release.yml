@@ -58,7 +58,6 @@ jobs:
     uses: ./.github/workflows/create-source-binary.yml
     with:
       tag: ${{ inputs.tag }}
-      parallel_jobs: 4
       arch: ${{ inputs.arch }}
     secrets: inherit
 

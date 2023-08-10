@@ -54,32 +54,6 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
-  # check-cache:
-  #   # if: ${{ false }}
-  #   name: Check Cache
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - name: Check Bitcoin Cache
-  #       # uses: buildjet/cache@v3
-  #       uses: actions/cache@v3
-  #       id: check_cache
-  #       with:
-  #         lookup-only: true
-  #         path: /tmp/bitcoin
-  #         key: ${{ github.event.repository.name }}-bitcoin-binaries
-
-  #     - name: Check Target Cache
-  #       # uses: buildjet/cache@v3
-  #       uses: actions/cache@v3
-  #       id: check_target_cache
-  #       with:
-  #         lookup-only: true
-  #         # path: ./target/debug
-  #         # key: ${{ github.event.repository.name }}-target-debug
-  #         # # key: ${{ github.event.repository.name }}-${{ github.sha }}-target-debug
-  #         path: ./target
-  #         key: ${{ github.event.repository.name }}-target
-
   # atlas integration tests with code coverage
   atlas-tests:
     # if: ${{ false }}
@@ -93,51 +67,6 @@ jobs:
           - tests::neon_integrations::atlas_integration_test
           - tests::neon_integrations::atlas_stress_integration_test
     steps:
-      # - name: CPU info
-      #   run: |
-      #     echo $HOME
-
-      #     echo ""
-      #     echo ""*************************""
-      #     echo "CPU info:"
-      #     cat /proc/cpuinfo
-      #     echo ""*************************""
-      #     echo "Memory:"
-      #     free -m
-      #     echo ""*************************""
-      #     echo "Disk Type:"
-      #     sudo lsblk -d -o name,rota
-      #     echo ""*************************""
-      #     echo "cat /sys/block/sda/queue/rotational"
-      #     cat /sys/block/sda/queue/rotational
-      #     echo "*************************"
-      #     echo "cat /sys/block/sdb/queue/rotational"
-      #     cat /sys/block/sdb/queue/rotational
-      #     echo ""*************************""
-      #     echo "mount -a:"
-      #     sudo mount
-      #     sudo df -h
-      #     echo ""*************************""
-      #     echo "ls /mnt"
-      #     sudo ls /mnt
-      #     echo """*************************"""
-      #     echo "cat /mnt/DATALOSS_WARNING_README.txt"
-      #     cat /mnt/DATALOSS_WARNING_README.txt
-      #     echo ""
-      # - name: dd to home
-      #   run: |
-      #     sudo dd if=/dev/zero of=./test.img bs=1G count=1 oflag=dsync
-      #     sudo rm -f ./test.img
-
-      # - name: dd to /mnt
-      #   run: |
-      #     sudo dd if=/dev/zero of=/mnt/test.img bs=1G count=1 oflag=dsync
-      #     sudo rm -f /mnt/test.img
-      # - name: memtest
-      #   run: |
-      #     sudo apt install memtester &&
-      #     sudo memtester 6144 5
-
       - name: Checkout the latest code
         id: git_checkout
         uses: actions/checkout@v3
@@ -204,6 +133,7 @@ jobs:
             --run-ignored all \
             --retries 2 \
             --final-status-level fail \
+            --fail-fast \
             --archive-file /tmp/test_archive.tar.zst \
             "${{ matrix.test-name }}"
 

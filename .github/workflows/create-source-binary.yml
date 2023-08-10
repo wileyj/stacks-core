@@ -30,11 +30,6 @@ on:
         description: "Tag name of this release (x.y.z)"
         required: true
         type: string
-      parallel_jobs:
-        description: "Number of parallel binary builds"
-        required: false
-        type: number
-        default: 8
       arch:
         description: "Stringified JSON object listing of platform matrix"
         required: true
@@ -57,7 +52,7 @@ jobs:
     name: Build Binaries
     runs-on: ubuntu-latest
     strategy:
-      max-parallel: ${{ inputs.parallel_jobs }}
+      max-parallel: 8
       matrix:
         platform: ${{ fromJson(inputs.arch) }}
     steps:
