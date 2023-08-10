@@ -200,127 +200,104 @@ jobs:
       - rustfmt
     secrets: inherit
 
-  # create-cache:
-  #   if: |
-  #     inputs.tag != '' || (
-  #       inputs.tag == '' && (
-  #         (
-  #           github.event_name == 'pull_request_review' &&
-  #           github.event.action == 'submitted' &&
-  #           github.event.review.state == 'approved'
-  #         ) ||
-  #         github.event_name == 'workflow_dispatch' ||
-  #         github.event_name == 'pull_request_target' ||
-  #         (
-  #           contains('
-  #             refs/heads/develoment
-  #             refs/heads/master
-  #           ', github.event.pull_request.head.ref) &&
-  #           github.event_name == 'push'
-  #         )
-  #       )
-  #     )
-  #   name: Create Test Cache
-  #   needs:
-  #     - rustfmt
-  #   uses: ./.github/workflows/create-cache.yml
-  #   # uses: wileyj/stacks-blockchain/.github/workflows/create_cache.yml@master
+  ## The following tests *can* be DRY'ed, but the output action is incredibly hard to read due the number of steps each workflow runs.
+  ##   - each test will be nested under a single "ci tests" job, with each step listed by itself (no parent of `stacks-blockchain-tests` etc)
+  ##   - if DRY'ing, `create-cache`` is also not needed, since the `standalone-tests` workflow will create the caches as needed
+
+  create-cache:
+    if: |
+      inputs.tag != '' || (
+        inputs.tag == '' && (
+          (
+            github.event_name == 'pull_request_review' &&
+            github.event.action == 'submitted' &&
+            github.event.review.state == 'approved'
+          ) ||
+          github.event_name == 'workflow_dispatch' ||
+          github.event_name == 'pull_request_target' ||
+          (
+            contains('
+              refs/heads/develoment
+              refs/heads/master
+            ', github.event.pull_request.head.ref) &&
+            github.event_name == 'push'
+          )
+        )
+      )
+    name: Create Test Cache
+    needs:
+      - rustfmt
+    uses: ./.github/workflows/create-cache.yml
+    # uses: wileyj/stacks-blockchain/.github/workflows/create_cache.yml@master
 
   ## Tests to run regularly
-
-  ci-tests:
+  stacks-blockchain-tests:
     if: |
-      inputs.tag == '' || (
-        github.event_name == 'pull_request_review' &&
-        github.event.action == 'submitted' &&
-        github.event.review.state == 'approved'
+      inputs.tag != '' || (
+        inputs.tag == '' || (
+          github.event_name == 'pull_request_review' &&
+          github.event.action == 'submitted' &&
+          github.event.review.state == 'approved'
+        )
       )
-    name: CI Tests
+    name: Stacks Blockchain Tests
     needs:
       - rustfmt
-      # - create-cache
-    uses: ./.github/workflows/standalone-tests.yml
+      - create-cache
+    # uses: wileyj/stacks-blockchain/.github/workflows/build-source-binary.yml@master
+    uses: ./.github/workflows/stacks-blockchain-tests.yml
     with:
       tag: ${{ inputs.tags }}
-      workflow: "CI Tests"
-  # stacks-blockchain-tests:
-  #   if: |
-  #     inputs.tag != '' || (
-  #       inputs.tag == '' || (
-  #         github.event_name == 'pull_request_review' &&
-  #         github.event.action == 'submitted' &&
-  #         github.event.review.state == 'approved'
-  #       )
-  #     )
-  #   name: Stacks Blockchain Tests
-  #   needs:
-  #     - rustfmt
-  #     - create-cache
-  #   # uses: wileyj/stacks-blockchain/.github/workflows/build-source-binary.yml@master
-  #   uses: ./.github/workflows/stacks-blockchain-tests.yml
-  #   with:
-  #     tag: ${{ inputs.tags }}
 
-  # bitcoin-tests:
-  #   if: |
-  #     inputs.tag != '' || (
-  #       inputs.tag == '' && (
-  #         github.event_name == 'pull_request_review' &&
-  #         github.event.action == 'submitted' &&
-  #         github.event.review.state == 'approved'
-  #       )
-  #     )
-  #   name: Bitcoin Tests
-  #   needs:
-  #     - rustfmt
-  #     - create-cache
-  #   # uses: wileyj/stacks-blockchain/.github/workflows/image-build-debian-source.yml@master
-  #   uses: ./.github/workflows/bitcoin-tests.yml
-  #   with:
-  #     tag: ${{ inputs.tags }}
+  bitcoin-tests:
+    if: |
+      inputs.tag != '' || (
+        inputs.tag == '' || (
+          github.event_name == 'pull_request_review' &&
+          github.event.action == 'submitted' &&
+          github.event.review.state == 'approved'
+        )
+      )
+    name: Bitcoin Tests
+    needs:
+      - rustfmt
+      - create-cache
+    # uses: wileyj/stacks-blockchain/.github/workflows/image-build-debian-source.yml@master
+    uses: ./.github/workflows/bitcoin-tests.yml
+    with:
+      tag: ${{ inputs.tags }}
 
   ## Only run on tagged Release
-  release-tests:
+  atlas-tests:
     if: inputs.tag != ''
-    name: Release Tests
+    name: Atlas Tests
     needs:
       - rustfmt
-      # - create-cache
-    uses: ./.github/workflows/standalone-tests.yml
+      - create-cache
+    # uses: wileyj/stacks-blockchain/.github/workflows/build-source-binary.yml@master
+    uses: ./.github/workflows/atlas-tests.yml
     with:
       tag: ${{ inputs.tags }}
-      workflow: "Release Tests"
 
-  # atlas-tests:
-  #   if: inputs.tag != ''
-  #   name: Atlas Tests
-  #   needs:
-  #     - rustfmt
-  #     - create-cache
-  #   # uses: wileyj/stacks-blockchain/.github/workflows/build-source-binary.yml@master
-  #   uses: ./.github/workflows/atlas-tests.yml
-  #   with:
-  #     tag: ${{ inputs.tags }}
+  epoch-tests:
+    if: inputs.tag != ''
+    name: Epoch Tests
+    needs:
+      - rustfmt
+      - create-cache
+    # uses: wileyj/stacks-blockchain/.github/workflows/build-source-binary.yml@master
+    uses: ./.github/workflows/epoch-tests.yml
+    with:
+      tag: ${{ inputs.tags }}
 
-  # epoch-tests:
-  #   if: inputs.tag != ''
-  #   name: Epoch Tests
-  #   needs:
-  #     - rustfmt
-  #     - create-cache
-  #   # uses: wileyj/stacks-blockchain/.github/workflows/build-source-binary.yml@master
-  #   uses: ./.github/workflows/epoch-tests.yml
-  #   with:
-  #     tag: ${{ inputs.tags }}
-
-  # slow-tests:
-  #   if: inputs.tag != ''
-  #   name: Slow Tests
-  #   needs:
-  #     - rustfmt
-  #     # - leaked-cred-test
-  #     - create-cache
-  #   # uses: wileyj/stacks-blockchain/.github/workflows/build-source-binary.yml@master
-  #   uses: ./.github/workflows/slow-tests.yml
-  #   with:
-  #     tag: ${{ inputs.tags }}
+  slow-tests:
+    if: inputs.tag != ''
+    name: Slow Tests
+    needs:
+      - rustfmt
+      # - leaked-cred-test
+      - create-cache
+    # uses: wileyj/stacks-blockchain/.github/workflows/build-source-binary.yml@master
+    uses: ./.github/workflows/slow-tests.yml
+    with:
+      tag: ${{ inputs.tags }}
