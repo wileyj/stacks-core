@@ -16,18 +16,16 @@ on:
   #   workflows: ["Build Distributable Assets"]
   #   types:
   #     - completed
-  # workflow_call:
-  #   inputs:
-  #     workflow:
-  #       description: "The workflow to run from a calling action"
-  #       required: false
-  #       type: string
-  # workflow_call:
-  #   inputs:
-  #     workflow:
-  #       description: "Tests to run (required)"
-  #       required: true
-  #       type: string
+  workflow_call:
+    inputs:
+      tag:
+        description: "Release Tag"
+        required: true
+        type: string
+      workflow:
+        description: "Tests to run (required)"
+        required: true
+        type: string
   workflow_dispatch:
     inputs:
       tag:
