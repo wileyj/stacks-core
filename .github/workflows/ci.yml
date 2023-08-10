@@ -284,6 +284,8 @@ jobs:
       - create-cache
     # uses: wileyj/stacks-blockchain/.github/workflows/build-source-binary.yml@master
     uses: ./.github/workflows/epoch-tests.yml
+    with:
+      tag: ${{ inputs.tags }}
 
   slow-tests:
     if: inputs.tag != ''
