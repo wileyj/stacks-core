@@ -11,7 +11,7 @@ on:
     inputs:
       tag:
         description: "Release Tag"
-        required: true
+        required: false
         type: string
   # push:
   #   paths-ignore:
@@ -137,7 +137,7 @@ jobs:
       - name: Upload Code Coverage
         # if: inputs.tag != '' && steps.run_grcov.outputs.created == 'true'
         id: code_coverage
-        uses: Wandalen/wretry.action@master
+        uses: Wandalen/wretry.action@a163f62ae554a8f3cbe27b23db15b60c0ae2e93c
         with:
           action: codecov/codecov-action@v3
           with: |
