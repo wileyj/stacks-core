@@ -228,22 +228,6 @@ jobs:
     # uses: wileyj/stacks-blockchain/.github/workflows/create_cache.yml@master
 
   ## Tests to run regularly
-  bitcoin-tests:
-    if: |
-      inputs.tag != '' || (
-        inputs.tag == '' || (
-          github.event_name == 'pull_request_review' &&
-          github.event.action == 'submitted' &&
-          github.event.review.state == 'approved'
-        )
-      )
-    name: Bitcoin Tests
-    needs:
-      - rustfmt
-      - create-cache
-    # uses: wileyj/stacks-blockchain/.github/workflows/image-build-debian-source.yml@master
-    uses: ./.github/workflows/bitcoin-tests.yml
-
   stacks-blockchain-tests:
     if: |
       inputs.tag != '' || (
@@ -260,17 +244,24 @@ jobs:
     # uses: wileyj/stacks-blockchain/.github/workflows/build-source-binary.yml@master
     uses: ./.github/workflows/stacks-blockchain-tests.yml
 
-  ## Only run on tagged Release
-  epoch-tests:
-    if: inputs.tag != ''
-    name: Epoch Tests
+  bitcoin-tests:
+    # if: inputs.tag != ''
+    if: |
+      inputs.tag != '' || (
+        inputs.tag == '' && (
+          github.event_name == 'pull_request_review' &&
+          github.event.action == 'submitted' &&
+          github.event.review.state == 'approved'
+        )
+      )
+    name: Bitcoin Tests
     needs:
       - rustfmt
-      # - leaked-cred-test
       - create-cache
-    # uses: wileyj/stacks-blockchain/.github/workflows/build-source-binary.yml@master
-    uses: ./.github/workflows/epoch-tests.yml
+    # uses: wileyj/stacks-blockchain/.github/workflows/image-build-debian-source.yml@master
+    uses: ./.github/workflows/bitcoin-tests.yml
 
+  ## Only run on tagged Release
   atlas-tests:
     if: inputs.tag != ''
     name: Atlas Tests
@@ -280,6 +271,16 @@ jobs:
       - create-cache
     # uses: wileyj/stacks-blockchain/.github/workflows/build-source-binary.yml@master
     uses: ./.github/workflows/atlas-tests.yml
+
+  epoch-tests:
+    if: inputs.tag != ''
+    name: Epoch Tests
+    needs:
+      - rustfmt
+      # - leaked-cred-test
+      - create-cache
+    # uses: wileyj/stacks-blockchain/.github/workflows/build-source-binary.yml@master
+    uses: ./.github/workflows/epoch-tests.yml
 
   slow-tests:
     if: inputs.tag != ''

@@ -53,20 +53,6 @@ jobs:
     uses: ./.github/workflows/create-cache.yml
 
   #####################################################
-  bitcoin-tests:
-    if: |
-      (
-        inputs.workflow == 'All Tests' ||
-        inputs.workflow == 'PR Tests' ||
-        inputs.workflow == 'CI Tests' ||
-        inputs.workflow == 'Bitcoin Tests'
-      )
-    name: Bitcoin Tests
-    needs:
-      - create-cache
-    # uses: wileyj/stacks-blockchain/.github/workflows/build-source-binary.yml@master
-    uses: ./.github/workflows/bitcoin-tests.yml
-
   stacks-blockchain-tests:
     if: |
       (
@@ -94,6 +80,19 @@ jobs:
       - create-cache
     # uses: wileyj/stacks-blockchain/.github/workflows/build-source-binary.yml@master
     uses: ./.github/workflows/atlas-tests.yml
+
+  bitcoin-tests:
+    if: |
+      (
+        inputs.workflow == 'All Tests' ||
+        inputs.workflow == 'PR Tests' ||
+        inputs.workflow == 'Bitcoin Tests'
+      )
+    name: Bitcoin Tests
+    needs:
+      - create-cache
+    # uses: wileyj/stacks-blockchain/.github/workflows/build-source-binary.yml@master
+    uses: ./.github/workflows/bitcoin-tests.yml
 
   epoch-tests:
     if: |
