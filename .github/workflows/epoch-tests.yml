@@ -9,6 +9,11 @@ on:
   ##  create-cache will run when an input-tag is provided, or a PR is approved
   # workflow_dispatch:
   workflow_call:
+    inputs:
+      tag:
+        description: "Release Tag"
+        required: true
+        type: string
   # workflow_run:
   #   workflows: ["CI"]
   #   types:
@@ -160,19 +165,14 @@ jobs:
             "${{ matrix.test-name }}"
 
       - name: Run grcov
+        # if: inputs.tag != ''
         id: run_grcov
         run: |
           grcov . --binary-path ./target/debug/ -s . -t lcov --branch --ignore-not-existing --ignore "/*" -o lcov.info || exit 1
-
-      # - name: Code Coverage
-      #   id: code_coverage
-      #   uses: codecov/codecov-action@v3
-      #   with:
-      #     files: ./lcov.info
-      #     name: ${{ matrix.test-name }}
-      #     fail_ci_if_error: false
+          echo "created=true\n" >> $GITHUB_OUTPUT
 
       - name: Upload Code Coverage
+        # if: inputs.tag != '' && steps.run_grcov.outputs.created == 'true'
         id: code_coverage
         uses: Wandalen/wretry.action@master
         with:

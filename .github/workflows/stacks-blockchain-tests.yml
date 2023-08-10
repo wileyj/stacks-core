@@ -12,6 +12,11 @@ on:
   ##  create-cache will run when an input-tag is provided, or a PR is approved
   # workflow_dispatch:
   workflow_call:
+    inputs:
+      tag:
+        description: "Release Tag"
+        required: true
+        type: string
   # push:
   #   paths-ignore:
   #     - "**.md"
@@ -122,17 +127,25 @@ jobs:
             "${{ matrix.test-name }}"
 
       - name: Run grcov
+        # if: inputs.tag != ''
         id: run_grcov
         run: |
           grcov . --binary-path ./target/debug/ -s . -t lcov --branch --ignore-not-existing --ignore "/*" -o lcov.info
+          echo "created=true\n" >> $GITHUB_OUTPUT
 
-      - name: Large Genesis Codecov
-        id: full_genesis_codecov
-        uses: codecov/codecov-action@v3
+      - name: Upload Code Coverage
+        # if: inputs.tag != '' && steps.run_grcov.outputs.created == 'true'
+        id: code_coverage
+        uses: Wandalen/wretry.action@master
         with:
-          files: ./lcov.info
-          name: large_genesis
-          fail_ci_if_error: true
+          action: codecov/codecov-action@v3
+          with: |
+            files: ./lcov.info
+            name: large_genesis
+            fail_ci_if_error: false
+            verbose: true
+          attempt_limit: 3
+          attempt_delay: 10000
 
   # unit tests with code coverage
   unit-tests:
@@ -213,19 +226,14 @@ jobs:
             --partition count:${{ matrix.partition }}/8
 
       - name: Run grcov
+        if: inputs.tag != ''
         id: run_grcov
         run: |
           grcov . --binary-path ./target/debug/ -s . -t lcov --branch --ignore-not-existing --ignore "/*" -o lcov.info
-
-      # - name: Unit Test Codecov
-      #   id: codedov
-      #   uses: codecov/codecov-action@v3
-      #   with:
-      #     files: ./lcov.info
-      #     name: unit_tests
-      #     fail_ci_if_error: true
+          echo "created=true\n" >> $GITHUB_OUTPUT
 
       - name: Upload Code Coverage
+        if: inputs.tag != '' && steps.run_grcov.outputs.created == 'true'
         id: code_coverage
         uses: Wandalen/wretry.action@master
         with:
