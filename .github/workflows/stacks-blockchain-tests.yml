@@ -147,13 +147,13 @@ jobs:
         id: git_checkout
         uses: actions/checkout@v3
 
-      # - name: Setup Rust Toolchain
-      #   id: setup_rust_toolchain
-      #   uses: actions-rust-lang/setup-rust-toolchain@v1
-      #   with:
-      #     toolchain: stable
-      #     components: llvm-tools-preview
-      #     cache: false
+      - name: Setup Rust Toolchain
+        id: setup_rust_toolchain
+        uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          toolchain: stable
+          components: llvm-tools-preview
+          cache: false
 
       - name: Restore Cargo Cache
         id: restore_cargo_cache
