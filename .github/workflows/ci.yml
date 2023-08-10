@@ -200,31 +200,31 @@ jobs:
       - rustfmt
     secrets: inherit
 
-  create-cache:
-    if: |
-      inputs.tag != '' || (
-        inputs.tag == '' && (
-          (
-            github.event_name == 'pull_request_review' &&
-            github.event.action == 'submitted' &&
-            github.event.review.state == 'approved'
-          ) ||
-          github.event_name == 'workflow_dispatch' ||
-          github.event_name == 'pull_request_target' ||
-          (
-            contains('
-              refs/heads/develoment
-              refs/heads/master
-            ', github.event.pull_request.head.ref) &&
-            github.event_name == 'push'
-          )
-        )
-      )
-    name: Create Test Cache
-    needs:
-      - rustfmt
-    uses: ./.github/workflows/create-cache.yml
-    # uses: wileyj/stacks-blockchain/.github/workflows/create_cache.yml@master
+  # create-cache:
+  #   if: |
+  #     inputs.tag != '' || (
+  #       inputs.tag == '' && (
+  #         (
+  #           github.event_name == 'pull_request_review' &&
+  #           github.event.action == 'submitted' &&
+  #           github.event.review.state == 'approved'
+  #         ) ||
+  #         github.event_name == 'workflow_dispatch' ||
+  #         github.event_name == 'pull_request_target' ||
+  #         (
+  #           contains('
+  #             refs/heads/develoment
+  #             refs/heads/master
+  #           ', github.event.pull_request.head.ref) &&
+  #           github.event_name == 'push'
+  #         )
+  #       )
+  #     )
+  #   name: Create Test Cache
+  #   needs:
+  #     - rustfmt
+  #   uses: ./.github/workflows/create-cache.yml
+  #   # uses: wileyj/stacks-blockchain/.github/workflows/create_cache.yml@master
 
   ## Tests to run regularly
 
@@ -238,7 +238,7 @@ jobs:
     name: CI Tests
     needs:
       - rustfmt
-      - create-cache
+      # - create-cache
     uses: ./.github/workflows/standalone-tests.yml
     with:
       tag: ${{ inputs.tags }}
@@ -285,7 +285,7 @@ jobs:
     name: Release Tests
     needs:
       - rustfmt
-      - create-cache
+      # - create-cache
     uses: ./.github/workflows/standalone-tests.yml
     with:
       tag: ${{ inputs.tags }}
