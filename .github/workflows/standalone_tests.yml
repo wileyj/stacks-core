@@ -52,19 +52,7 @@ jobs:
     # uses: wileyj/stacks-blockchain/.github/workflows/create_cache.yml@master
     uses: ./.github/workflows/create-cache.yml
 
-  atlas-tests:
-    if: |
-      (
-        inputs.workflow == 'All Tests' ||
-        inputs.workflow == 'CI Tests' ||
-        inputs.workflow == 'Atlas Tests' 
-      )
-    name: Atlas Tests
-    needs:
-      - create-cache
-    # uses: wileyj/stacks-blockchain/.github/workflows/build-source-binary.yml@master
-    uses: ./.github/workflows/atlas-tests.yml
-
+  #####################################################
   bitcoin-tests:
     if: |
       (
@@ -79,12 +67,39 @@ jobs:
     # uses: wileyj/stacks-blockchain/.github/workflows/build-source-binary.yml@master
     uses: ./.github/workflows/bitcoin-tests.yml
 
-  epoch-tests:
+  stacks-blockchain-tests:
     if: |
       (
         inputs.workflow == 'All Tests' ||
         inputs.workflow == 'PR Tests' ||
         inputs.workflow == 'CI Tests' ||
+        inputs.workflow == 'Stacks-Blockchain Tests'
+      )
+    name: Stacks Blockchain Tests
+    needs:
+      - create-cache
+    # uses: wileyj/stacks-blockchain/.github/workflows/build-source-binary.yml@master
+    uses: ./.github/workflows/stacks-blockchain-tests.yml
+
+  #####################################################
+  atlas-tests:
+    if: |
+      (
+        inputs.workflow == 'All Tests' ||
+        inputs.workflow == 'PR Tests' ||
+        inputs.workflow == 'Atlas Tests' 
+      )
+    name: Atlas Tests
+    needs:
+      - create-cache
+    # uses: wileyj/stacks-blockchain/.github/workflows/build-source-binary.yml@master
+    uses: ./.github/workflows/atlas-tests.yml
+
+  epoch-tests:
+    if: |
+      (
+        inputs.workflow == 'All Tests' ||
+        inputs.workflow == 'PR Tests' ||
         inputs.workflow == 'Epoch Tests'
       )
     name: Epoch Tests
@@ -104,16 +119,3 @@ jobs:
       - create-cache
     # uses: wileyj/stacks-blockchain/.github/workflows/build-source-binary.yml@master
     uses: ./.github/workflows/slow-tests.yml
-
-  stacks-blockchain-tests:
-    if: |
-      (
-        inputs.workflow == 'All Tests' ||
-        inputs.workflow == 'CI Tests' ||
-        inputs.workflow == 'Stacks-Blockchain Tests'
-      )
-    name: Stacks Blockchain Tests
-    needs:
-      - create-cache
-    # uses: wileyj/stacks-blockchain/.github/workflows/build-source-binary.yml@master
-    uses: ./.github/workflows/stacks-blockchain-tests.yml

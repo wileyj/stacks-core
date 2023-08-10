@@ -202,7 +202,7 @@ jobs:
 
       - name: Run Tests
         id: run_tests
-        # timeout-minutes: 30
+        timeout-minutes: 30
         run: |
           cargo nextest run \
             --test-threads num-cpus \
@@ -273,7 +273,6 @@ jobs:
     if: ${{ false }}
     name: Net-Test
     runs-on: ubuntu-latest
-    # runs-on: buildjet-4vcpu-ubuntu-2204
     steps:
       - name: Checkout the latest code
         id: git_checkout
