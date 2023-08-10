@@ -242,6 +242,8 @@ jobs:
       - create-cache
     # uses: wileyj/stacks-blockchain/.github/workflows/build-source-binary.yml@master
     uses: ./.github/workflows/stacks-blockchain-tests.yml
+    with:
+      tag: ${{ inputs.tags }}
 
   bitcoin-tests:
     # if: inputs.tag != ''
@@ -259,6 +261,8 @@ jobs:
       - create-cache
     # uses: wileyj/stacks-blockchain/.github/workflows/image-build-debian-source.yml@master
     uses: ./.github/workflows/bitcoin-tests.yml
+    with:
+      tag: ${{ inputs.tags }}
 
   ## Only run on tagged Release
   atlas-tests:
@@ -269,6 +273,8 @@ jobs:
       - create-cache
     # uses: wileyj/stacks-blockchain/.github/workflows/build-source-binary.yml@master
     uses: ./.github/workflows/atlas-tests.yml
+    with:
+      tag: ${{ inputs.tags }}
 
   epoch-tests:
     if: inputs.tag != ''
@@ -288,3 +294,5 @@ jobs:
       - create-cache
     # uses: wileyj/stacks-blockchain/.github/workflows/build-source-binary.yml@master
     uses: ./.github/workflows/slow-tests.yml
+    with:
+      tag: ${{ inputs.tags }}
