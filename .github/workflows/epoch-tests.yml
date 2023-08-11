@@ -129,7 +129,7 @@ jobs:
           action: codecov/codecov-action@v3
           with: |
             files: ./lcov.info
-            name: ${{ matrix.test-name }}
+            name: epoch_tests
             fail_ci_if_error: false
             verbose: true
           attempt_limit: 3
