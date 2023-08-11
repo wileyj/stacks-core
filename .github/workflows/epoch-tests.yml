@@ -100,7 +100,7 @@ jobs:
         timeout-minutes: 30
         run: |
           cargo nextest run \
-            --test-threads num-cpus \
+            --test-threads 1 \
             --run-ignored all \
             --retries 2 \
             --final-status-level fail \
