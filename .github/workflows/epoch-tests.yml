@@ -28,7 +28,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        partition: [1, 2, 3, 4] # partition the tests into 4 jobs
+        partition: [1, 2, 3, 4, 5, 6, 7, 8] # partition the tests into 4 jobs
     steps:
       ## Checkout the code
       - name: Checkout the latest code
@@ -106,7 +106,7 @@ jobs:
             --final-status-level fail \
             --fail-fast \
             --archive-file /tmp/test_archive.tar.zst \
-            --partition count:${{ matrix.partition }}/4 \
+            --partition count:${{ matrix.partition }}/8 \
             -E '(
               test(/^tests::epoch_2*/) &
               not test(/^tests::epoch_21::test_pox_reorg_flap_duel/) &
