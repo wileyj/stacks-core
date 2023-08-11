@@ -8,11 +8,11 @@ on:
   ## run when tagging a release or a tag is pushed (i.e. a manual run with an input tag)
   # workflow_dispatch:
   workflow_call:
-    inputs:
-      tag:
-        description: "Release Tag"
-        required: false
-        type: string
+    # inputs:
+    #   tag:
+    #     description: "Release Tag"
+    #     required: false
+    #     type: string
   # push:
   #   paths-ignore:
   #     - "**.md"
@@ -38,7 +38,6 @@ concurrency:
 jobs:
   # slow tests with code coverage
   slow-tests:
-    # if: ${{ false }}
     name: Slow Tests
     runs-on: ubuntu-latest
     strategy:

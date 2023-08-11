@@ -12,11 +12,11 @@ on:
   ##  create-cache will run when an input-tag is provided, or a PR is approved
   # workflow_dispatch:
   workflow_call:
-    inputs:
-      tag:
-        description: "Release Tag"
-        required: false
-        type: string
+    # inputs:
+    #   tag:
+    #     description: "Release Tag"
+    #     required: false
+    #     type: string
   # push:
   #   paths-ignore:
   #     - "**.md"

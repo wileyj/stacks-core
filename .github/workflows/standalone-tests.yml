@@ -18,20 +18,20 @@ on:
   #     - completed
   workflow_call:
     inputs:
-      tag:
-        description: "Release Tag"
-        required: true
-        type: string
+      # tag:
+      #   description: "Release Tag"
+      #   required: true
+      #   type: string
       workflow:
         description: "Tests to run (required)"
         required: true
         type: string
   workflow_dispatch:
     inputs:
-      tag:
-        description: "Release Tag"
-        required: true
-        type: string
+      # tag:
+      #   description: "Release Tag"
+      #   required: true
+      #   type: string
       workflow:
         description: "Tests to run (required)"
         required: true
@@ -67,8 +67,8 @@ jobs:
       - create-cache
     # uses: wileyj/stacks-blockchain/.github/workflows/build-source-binary.yml@master
     uses: ./.github/workflows/stacks-blockchain-tests.yml
-    with:
-      tag: ${{ inputs.tags }}
+    # with:
+    #   tag: ${{ inputs.tags }}
 
   bitcoin-tests:
     if: |
@@ -82,8 +82,8 @@ jobs:
       - create-cache
     # uses: wileyj/stacks-blockchain/.github/workflows/build-source-binary.yml@master
     uses: ./.github/workflows/bitcoin-tests.yml
-    with:
-      tag: ${{ inputs.tags }}
+    # with:
+    #   tag: ${{ inputs.tags }}
 
   #####################################################
   atlas-tests:
@@ -97,8 +97,8 @@ jobs:
       - create-cache
     # uses: wileyj/stacks-blockchain/.github/workflows/build-source-binary.yml@master
     uses: ./.github/workflows/atlas-tests.yml
-    with:
-      tag: ${{ inputs.tags }}
+    # with:
+    #   tag: ${{ inputs.tags }}
 
   epoch-tests:
     if: |
@@ -111,8 +111,8 @@ jobs:
       - create-cache
     # uses: wileyj/stacks-blockchain/.github/workflows/build-source-binary.yml@master
     uses: ./.github/workflows/epoch-tests.yml
-    with:
-      tag: ${{ inputs.tags }}
+    # with:
+    #   tag: ${{ inputs.tags }}
 
   slow-tests:
     if: |
@@ -125,5 +125,5 @@ jobs:
       - create-cache
     # uses: wileyj/stacks-blockchain/.github/workflows/build-source-binary.yml@master
     uses: ./.github/workflows/slow-tests.yml
-    with:
-      tag: ${{ inputs.tags }}
+    # with:
+    #   tag: ${{ inputs.tags }}
