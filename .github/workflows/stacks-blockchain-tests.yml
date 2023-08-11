@@ -1,33 +1,9 @@
-##
-## Stacks Blockchain Tests
-##
-
-## matrix with a partition perhaps?
-## https://github.com/nextest-rs/reuse-build-partition-example/blob/main/.github/workflows/ci.yml
+## Github workflow to run full genesis and unit tests
 
 name: Tests::Stacks Blockchain
 
 on:
-  ## run when create-cache has completed successfully
-  ##  create-cache will run when an input-tag is provided, or a PR is approved
-  # workflow_dispatch:
   workflow_call:
-    # inputs:
-    #   tag:
-    #     description: "Release Tag"
-    #     required: false
-    #     type: string
-  # push:
-  #   paths-ignore:
-  #     - "**.md"
-  #     - "**.yml"
-  #   tags:
-  #     - "[0-9]+.[0-9]+.[0-9]+.[0-9]+.[0-9]+" # 2.1.0.0.0
-  #     - "[0-9]+.[0-9]+.[0-9].[0-9]+.[0-9]+-rc[0-9]+" # 2.1.0.0.0-rc1
-  # workflow_run:
-  #   workflows: ["Create Test Caches"]
-  #   types:
-  #     - completed
 
 defaults:
   run:
@@ -39,18 +15,16 @@ env:
   SEGMENT_DOWNLOAD_TIMEOUT_MINS: 15
 
 concurrency:
-  # https://github.com/orgs/community/discussions/13496
-  # group: stacks-blockchain-tests-${{ github.ref }}
   group: stacks-blockchain-tests-${{ github.workflow }}-${{ github.ref }}
   # Only cancel in progress if this is for a PR
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
-  # full genesis test with code coverage
+  # Full genesis test with code coverage
   full-genesis:
-    # if: ${{ false }}
     name: Full Genesis Test
     runs-on: ubuntu-latest
+    ## run a maximum of 2 concurrent tests from the test matrix
     strategy:
       fail-fast: false
       max-parallel: 2
@@ -58,10 +32,12 @@ jobs:
         test-name:
           - neon_integrations::bitcoind_integration_test
     steps:
+      ## Checkout the code
       - name: Checkout the latest code
         id: git_checkout
         uses: actions/checkout@v3
 
+      ## Install rust toolchain (llvm-tools-preview)
       - name: Setup Rust Toolchain
         id: setup_rust_toolchain
         uses: actions-rust-lang/setup-rust-toolchain@v1
@@ -70,6 +46,7 @@ jobs:
           components: llvm-tools-preview
           cache: false
 
+      ## Restore cargo cache data
       - name: Restore Cargo Cache
         id: restore_cargo_cache
         uses: actions/cache/restore@v3
@@ -83,6 +60,7 @@ jobs:
           key: ${{ github.event.repository.name }}-cargo
           # key: ${{ github.event.repository.name }}-${{ github.sha }}-cargo
 
+      ## Restore bitcoin cache data
       - name: Restore Bitcoin Binary Cache
         id: restore_bitcoin_cache
         uses: actions/cache/restore@v3
@@ -91,6 +69,7 @@ jobs:
           path: /tmp/bitcoin
           key: ${{ github.event.repository.name }}-bitcoin-binaries
 
+      ## Restore genesis test archive cache data
       - name: Restore Genesis Archive Cache
         id: restore_test-archive_cache
         uses: actions/cache/restore@v3
@@ -100,6 +79,7 @@ jobs:
           key: ${{ github.event.repository.name }}-genesis-archive
           # key: ${{ github.event.repository.name }}-${{ github.sha }}-genesis-archive
 
+      ## Restore target cache data
       - name: Restore Target Cache
         id: restore_target_cache
         uses: actions/cache/restore@v3
@@ -109,12 +89,14 @@ jobs:
           key: ${{ github.event.repository.name }}-target
           # key: ${{ github.event.repository.name }}-${{ github.sha }}-target
 
+      ## Symlink bitoind to $PATH
       - name: Link Bitcoin Binary
         id: bitcoin_binary
         run: |
           sudo ln -s /tmp/bitcoin/bin/bitcoind /bin/
           ls -al /bin/bitcoind
 
+      ## Run matrix test
       - name: Run Tests
         id: run_tests
         run: |
@@ -126,15 +108,16 @@ jobs:
             --archive-file /tmp/genesis_archive.tar.zst \
             "${{ matrix.test-name }}"
 
+      ## Generate code coverage using grcov
       - name: Run grcov
-        # if: inputs.tag != ''
         id: run_grcov
         run: |
           grcov . --binary-path ./target/debug/ -s . -t lcov --branch --ignore-not-existing --ignore "/*" -o lcov.info
           echo "created=true\n" >> $GITHUB_OUTPUT
 
+      ## Upload coverage to codecov
+      ##   - use wretry action, to retry on a failed upload
       - name: Upload Code Coverage
-        # if: inputs.tag != '' && steps.run_grcov.outputs.created == 'true'
         id: code_coverage
         uses: Wandalen/wretry.action@a163f62ae554a8f3cbe27b23db15b60c0ae2e93c
         with:
@@ -151,14 +134,17 @@ jobs:
   unit-tests:
     name: Unit Tests
     runs-on: ubuntu-latest
+    ## partition the tests in 8 shards
     strategy:
       matrix:
         partition: [1, 2, 3, 4, 5, 6, 7, 8] # partition the tests into 8 jobs
     steps:
+      ## checkout the code
       - name: Checkout the latest code
         id: git_checkout
         uses: actions/checkout@v3
 
+      ## install rust toolchain
       - name: Setup Rust Toolchain
         id: setup_rust_toolchain
         uses: actions-rust-lang/setup-rust-toolchain@v1
@@ -167,6 +153,7 @@ jobs:
           components: llvm-tools-preview
           cache: false
 
+      ## Restore cargo cache data
       - name: Restore Cargo Cache
         id: restore_cargo_cache
         uses: actions/cache/restore@v3
@@ -180,6 +167,7 @@ jobs:
           key: ${{ github.event.repository.name }}-cargo
           # key: ${{ github.event.repository.name }}-${{ github.sha }}-cargo
 
+      ## Restore bitcoin cache data
       - name: Restore Bitcoin Binary Cache
         id: restore_bitcoin_cache
         uses: actions/cache/restore@v3
@@ -188,6 +176,7 @@ jobs:
           path: /tmp/bitcoin
           key: ${{ github.event.repository.name }}-bitcoin-binaries
 
+      ## Restore test archive cache data
       - name: Restore Test Archive Cache
         id: restore_test-archive_cache
         uses: actions/cache/restore@v3
@@ -197,6 +186,7 @@ jobs:
           key: ${{ github.event.repository.name }}-test-archive
           # key: ${{ github.event.repository.name }}-${{ github.sha }}-test-archive
 
+      ## Restore target cache data
       - name: Restore Target Cache
         id: restore_target_cache
         uses: actions/cache/restore@v3
@@ -206,12 +196,15 @@ jobs:
           key: ${{ github.event.repository.name }}-target
           # key: ${{ github.event.repository.name }}-${{ github.sha }}-target
 
+      ## Symlink bitoind to $PATH
       - name: Link Bitcoin Binary
         id: bitcoin_binary
         run: |
           sudo ln -s /tmp/bitcoin/bin/bitcoind /bin/
           ls -al /bin/bitcoind
 
+      ## Run test shards (defined as matrix.partition)
+      ##   - timeout after 30 minutes
       - name: Run Tests
         id: run_tests
         timeout-minutes: 30
@@ -224,6 +217,7 @@ jobs:
             --archive-file /tmp/test_archive.tar.zst \
             --partition count:${{ matrix.partition }}/8
 
+      ## Generate code coverage using grcov
       - name: Run grcov
         if: inputs.tag != ''
         id: run_grcov
@@ -231,6 +225,8 @@ jobs:
           grcov . --binary-path ./target/debug/ -s . -t lcov --branch --ignore-not-existing --ignore "/*" -o lcov.info
           echo "created=true\n" >> $GITHUB_OUTPUT
 
+      ## Upload coverage to codecov
+      ##   - use wretry action, to retry on a failed upload
       - name: Upload Code Coverage
         if: inputs.tag != '' && steps.run_grcov.outputs.created == 'true'
         id: code_coverage
@@ -246,25 +242,28 @@ jobs:
           attempt_delay: 10000
 
   open-api-validation:
-    # if: ${{ false }}
     name: OpenAPI Validation
     runs-on: ubuntu-latest
     steps:
+      ## checkout the code
       - name: Checkout the latest code
         id: git_checkout
         uses: actions/checkout@v3
 
+      ## Use redoc to generate HTML of openapi.yml
       - name: Redoc
         id: run_redoc
         uses: seeebiii/redoc-cli-github-action@v10
         with:
           args: "bundle -o ./open-api-docs.html ./docs/rpc/openapi.yaml"
 
+      ## Test the resultant html
       - name: check result
         id: check_redoc
         run: |
           test -f ./open-api-docs.html || (echo "Missing ./open-api-docs.html from previous step." && exit 1)
 
+      ## Upload the html file artifact
       - name: Upload bundled html
         id: upload_html_artifact
         uses: actions/upload-artifact@v3
@@ -273,14 +272,14 @@ jobs:
           path: |
             ./open-api-docs.html
 
-  # Disabled :: net-tests
+  ## Disabled
+  ##   - this test can take several hours to run
   nettest:
-    # disable this job/test for now, since we haven't seen this pass
-    #  on github actions in a while, and the failures can take > 4 hours
     if: ${{ false }}
     name: Net-Test
     runs-on: ubuntu-latest
     steps:
+      ## checkout the code
       - name: Checkout the latest code
         id: git_checkout
         uses: actions/checkout@v3
@@ -296,19 +295,28 @@ jobs:
     name: Core Contracts Test
     runs-on: ubuntu-latest
     steps:
+      ## checkout the code
       - name: Checkout the latest code
         id: git_checkout
         uses: actions/checkout@v3
 
+      ## Use Clarinet to run contract unit-tests
       - name: Execute core contract unit tests in Clarinet
         id: clarinet_unit_test
         uses: docker://hirosystems/clarinet:latest
         with:
           args: test --coverage --manifest-path=./contrib/core-contract-tests/Clarinet.toml
 
-      - name: Export code coverage
-        id: clarinet_codecov
-        uses: codecov/codecov-action@v3
+      ## Upload coverage to codecov
+      ##   - use wretry action, to retry on a failed upload
+      - name: Upload Code Coverage
+        id: code_coverage
+        uses: Wandalen/wretry.action@a163f62ae554a8f3cbe27b23db15b60c0ae2e93c
         with:
-          files: ./coverage.lcov
-          verbose: true
+          action: codecov/codecov-action@v3
+          with: |
+            files: ./coverage.lcov
+            fail_ci_if_error: false
+            verbose: true
+          attempt_limit: 3
+          attempt_delay: 10000

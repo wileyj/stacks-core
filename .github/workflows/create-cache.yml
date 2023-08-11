@@ -1,23 +1,10 @@
-##
-## Create Cache
-##
+## Github workflow to create reusable caches
 
 name: Create Test Cache
-
-# Run when:
-#   - PR is approved
-#     - files changed are *.rs or *.clar (i.e. no .yml or .md files)
-#  https://github.com/marketplace/actions/paths-changes-filter
 
 on:
   workflow_dispatch:
   workflow_call:
-  # pull_request_review:
-  #   types: [submitted]
-  # pull_request_target:
-  #   paths:
-  #     - "**.rs"
-  #     - "**.clar"
 
 defaults:
   run:
@@ -29,20 +16,22 @@ env:
   BTC_VERSION: "0.20.0"
 
 concurrency:
-  # group: stacks-bitcoin-cache-${{ github.ref }}
-  # # Only cancel in progress if this is for a PR
-  # cancel-in-progress: ${{ github.event_name == 'pull_request' }}
   group: create-cache-${{ github.workflow }}-${{ github.ref }}
   # Only cancel in progress if this is for a PR
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
+##
+## Cache will exist longer than workflow execution so other runners have access
+##   ex: a failed job should have access to the cache for however long `cleanup.yml` is set to delete old caches
+##       however, this is only relevant if the commit sha does not change between runs
+
 jobs:
   cargo:
-    # if: github.event.review.state == 'approved'
     name: Cargo
     runs-on: ubuntu-latest
     # runs-on: buildjet-4vcpu-ubuntu-2204
     steps:
+      ## Perform a lookup to check if the cache already exists
       - name: Check Cargo Cache
         # uses: buildjet/cache@v3
         uses: actions/cache@v3
@@ -57,6 +46,7 @@ jobs:
           key: ${{ github.event.repository.name }}-cargo
           # key: ${{ github.event.repository.name }}-${{ github.sha }}-cargo
 
+      ## If cargo cache is not found, install nextest
       - name: Install nextest
         if: steps.check_cache.outputs.cache-hit != 'true'
         id: install_nextest
@@ -64,18 +54,19 @@ jobs:
 
       # cargo-llvm-cov instead?
       # https://github.com/taiki-e/cargo-llvm-cov
+      ## If cargo cache is not found, install grcov
       - name: Install grcov
         if: steps.check_cache.outputs.cache-hit != 'true'
         id: install_grcov
         uses: taiki-e/install-action@grcov
 
+      ## If cargo cache is not found, create it using commit sha
       - name: Save Cache
         if: steps.check_cache.outputs.cache-hit != 'true'
         id: save_cache
         # uses: buildjet/cache/save@v3
         uses: actions/cache/save@v3
         with:
-          # path: ~/.cargo
           path: |
             ~/.cargo/bin/
             ~/.cargo/registry/index/
@@ -83,17 +74,13 @@ jobs:
             ~/.cargo/git/db/
           key: ${{ github.event.repository.name }}-cargo
           # key: ${{ github.event.repository.name }}-${{ github.sha }}-cargo
-          # key: ${{ github.event.repository.name }}-${{ github.sha }}-${{ github.run_id }}-cargo
-
-  ##
-  ## it is expected that this cache will exist longer so other runs can use it
-  ##
 
   bitcoin-binary:
     name: Bitcoin Binary
     runs-on: ubuntu-latest
     # runs-on: buildjet-4vcpu-ubuntu-2204
     steps:
+      ## Perform a lookup to check if the cache already exists
       - name: Check Bitcoin Cache
         # uses: buildjet/cache@v3
         uses: actions/cache@v3
@@ -102,7 +89,7 @@ jobs:
           lookup-only: true
           path: /tmp/bitcoin
           key: ${{ github.event.repository.name }}-bitcoin-binaries
-
+      ## if bitcoin cache is not found, download and extract it
       - name: Install Bitcoin Binary
         if: steps.check_cache.outputs.cache-hit != 'true'
         id: bitcoin_binary
@@ -110,6 +97,7 @@ jobs:
           curl -LSf -# https://bitcoin.org/bin/bitcoin-core-${BTC_VERSION}/bitcoin-${BTC_VERSION}-x86_64-linux-gnu.tar.gz | tar zxf - -C /tmp
           mv /tmp/bitcoin-${BTC_VERSION} /tmp/bitcoin
 
+      ## If bitcoin cache is not found, create it (no sha is used since it is versioned)
       - name: Save Cache
         if: steps.check_cache.outputs.cache-hit != 'true'
         id: save_cache
@@ -126,6 +114,7 @@ jobs:
     needs:
       - cargo
     steps:
+      ## Perform a lookup to check if the target cache already exists
       - name: Check Target Cache
         # uses: buildjet/cache@v3
         uses: actions/cache@v3
@@ -138,6 +127,7 @@ jobs:
           path: ./target
           key: ${{ github.event.repository.name }}-target
 
+      ## Perform a lookup to check if the test archive cache already exists
       - name: Check Test Archive Cache
         # uses: buildjet/cache@v3
         uses: actions/cache@v3
@@ -148,6 +138,7 @@ jobs:
           key: ${{ github.event.repository.name }}-test-archive
           # key: ${{ github.event.repository.name }}-${{ github.sha }}-test-archive
 
+      ## Perform a lookup to check if the genesis test archive cache already exists
       - name: Check Genesis Test Archive Cache
         # uses: buildjet/cache@v3
         uses: actions/cache@v3
@@ -158,6 +149,10 @@ jobs:
           key: ${{ github.event.repository.name }}-genesis-archive
           # key: ${{ github.event.repository.name }}-${{ github.sha }}-genesis-archive
 
+      ## If all of the caches are found, checkout the code
+      ##   - Target cache
+      ##   - Test archive cache
+      ##   - Genesis test archive cache
       - name: Checkout the latest code
         if: |
           steps.check_target_cache.outputs.cache-hit != 'true' || 
@@ -166,6 +161,10 @@ jobs:
         id: git_checkout
         uses: actions/checkout@v3
 
+      ## If all of the caches are found, install rust toolchain
+      ##   - Target cache
+      ##   - Test archive cache
+      ##   - Genesis test archive cache
       - name: Setup Rust Toolchain
         if: |
           steps.check_target_cache.outputs.cache-hit != 'true' || 
@@ -178,6 +177,10 @@ jobs:
           components: llvm-tools-preview
           cache: false
 
+      ## If all of the caches are found, restore the cargo cache
+      ##   - Target cache
+      ##   - Test archive cache
+      ##   - Genesis test archive cache
       - name: Restore Cargo Cache
         if: |
           steps.check_target_cache.outputs.cache-hit != 'true' || 
@@ -196,6 +199,10 @@ jobs:
           key: ${{ github.event.repository.name }}-cargo
           # key: ${{ github.event.repository.name }}-${{ github.sha }}-cargo
 
+      ## If all of the caches are found, build and archive tests
+      ##   - Target cache
+      ##   - Test archive cache
+      ##   - Genesis test archive cache
       - name: Build and Archive Tests
         if: |
           steps.check_target_cache.outputs.cache-hit != 'true' || 
@@ -210,6 +217,10 @@ jobs:
             --locked \
             --archive-file /tmp/test_archive.tar.zst
 
+      ## If all of the caches are found, build and archive genesis tests
+      ##   - Target cache
+      ##   - Test archive cache
+      ##   - Genesis test archive cache
       - name: Build and Archive Genesis Tests
         if: |
           steps.check_target_cache.outputs.cache-hit != 'true' || 
@@ -225,6 +236,10 @@ jobs:
             --features prod-genesis-chainstate \
             --archive-file /tmp/genesis_archive.tar.zst
 
+      ## If all of the caches are found, save test archive cache
+      ##   - Target cache
+      ##   - Test archive cache
+      ##   - Genesis test archive cache
       - name: Cache Test Archive
         if: |
           steps.check_target_cache.outputs.cache-hit != 'true' || 
@@ -239,6 +254,10 @@ jobs:
           # key: ${{ github.event.repository.name }}-${{ github.sha }}-test-archive
           # key: ${{ github.event.repository.name }}-${{ github.sha }}-${{ github.run_id }}-test-archive
 
+      ## If all of the caches are found, save genesis test archive cache
+      ##   - Target cache
+      ##   - Test archive cache
+      ##   - Genesis test archive cache
       - name: Cache Genesis Archive
         if: |
           steps.check_target_cache.outputs.cache-hit != 'true' || 
@@ -253,6 +272,10 @@ jobs:
           # key: ${{ github.event.repository.name }}-${{ github.sha }}-test-archive
           # key: ${{ github.event.repository.name }}-${{ github.sha }}-${{ github.run_id }}-test-archive
 
+      ## If all of the caches are found, save target cache
+      ##   - Target cache
+      ##   - Test archive cache
+      ##   - Genesis test archive cache
       - name: Cache Target
         if: |
           steps.check_target_cache.outputs.cache-hit != 'true' || 

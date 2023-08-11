@@ -1,29 +1,8 @@
-##
-## Builds binary assets of stacks-blockchain and creates a named tag github (draft) release
-##
+## Github workflow to create multi-arch binaries from source
 
 name: Create Binaries
 
-# Only run when:
-#   - manually triggered via the ci.yml workflow with a provided input tag
-
 on:
-  # push:
-  #   tags:
-  #     - "[0-9]+.[0-9]+.[0-9]+.[0-9]+.[0-9]+" # 2.1.0.0.0
-  #     - "[0-9]+.[0-9]+.[0-9].[0-9]+.[0-9]+-rc[0-9]+" # 2.1.0.0.0-rc1
-  # workflow_dispatch:
-  #   inputs:
-  #     # tag:
-  #     #   description: "Tag name of this release (x.y.z)"
-  #     #   required: true
-  #     #   type: string
-  #     arch:
-  #       description: "Stringified JSON object listing of platform matrix"
-  #       required: true
-  #       type: string
-  #       default: >-
-  #         ["linux-glibc-x64", "linux-musl-x64", "linux-glibc-arm64", "linux-musl-arm64", "macos-x64", "macos-arm64", "windows-x64"]
   workflow_call:
     inputs:
       tag:
@@ -41,35 +20,48 @@ defaults:
   run:
     shell: bash
 
+## change the display name to the tag being built
 run-name: ${{ inputs.tag }}
+
 jobs:
+  ## Runs when the following is true:
+  ##  - tag is provided
+  ##  - workflow is building default branch (master)
   artifact:
     if: |
-      inputs.tag != '' || (
-        github.ref != format('refs/heads/{0}', github.event.repository.default_branch) &&
-        !contains(github.ref, 'refs/pull')
-      )
+      inputs.tag != '' && 
+      github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+    # if: |
+    #   inputs.tag != '' || (
+    #     github.ref != format('refs/heads/{0}', github.event.repository.default_branch) &&
+    #     !contains(github.ref, 'refs/pull')
+    #   )
     name: Build Binaries
     runs-on: ubuntu-latest
     strategy:
+      ## run a maximum of 8 builds concurrently, using the matrix defined in inputs.arch
       max-parallel: 8
       matrix:
         platform: ${{ fromJson(inputs.arch) }}
     steps:
+      ## checkout the code
       - name: Checkout the latest code
         id: git_checkout
         uses: actions/checkout@v3
 
+      ## Set some vars to be used in the build process
       - name: Set Vars
         id: set_vars
         run: |
           echo "GITHUB_SHA_SHORT=${GITHUB_SHA::7}" >> $GITHUB_ENV
           echo "GITHUB_REF_SHORT=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
 
+      ## Setup docker buildx
       - name: Set up Docker Buildx
         id: setup_buildx
         uses: docker/setup-buildx-action@v2
 
+      ## Build the binaries using defined dockerfiles
       - name: Build Binary (${{ matrix.platform }})
         id: build_binaries
         uses: docker/build-push-action@v3
@@ -81,10 +73,12 @@ jobs:
             GIT_BRANCH=${{ env.GITHUB_REF_SHORT }}
             GIT_COMMIT=${{ env.GITHUB_SHA_SHORT }}
 
+      ## compress the artifact
       - name: Compress artifact
         id: compress_artifact
         run: zip --junk-paths ${{ matrix.platform }} ./release/${{ matrix.platform }}/*
 
+      ## upload the artifact to the github action (used in `github-release.yml` to create a release)
       - name: Upload artifact
         id: upload_artifact
         uses: actions/upload-artifact@v3

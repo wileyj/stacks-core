@@ -1,10 +1,5 @@
 name: CI
 
-## Only run when:
-##   - manually triggered
-##   - PR's are (re)opened
-##   - push to master (i.e. merge develop -> master)
-
 on:
   push:
     branches:
@@ -22,12 +17,11 @@ on:
     types:
       - opened
       - reopened
-      # - closed ## this will run if a PR is opened, then closed (i.e. by a spammer). best to leave it disabled
       - synchronize
     paths-ignore:
       - "**.md"
       - "**.yml"
-    # ## might be better to use inclusive v exclusive paths
+    ## might be better to use inclusive v exclusive paths here, ex:
     # paths:
     #   - "**.rs"
     #   - "**.clar"
@@ -37,24 +31,26 @@ on:
     paths-ignore:
       - "**.md"
       - "**.yml"
-  # pull_request_review_comment:
-  #   branches-ignore:
-  #     - "**"
-  #   # pr review request for change: `submitted`
-  #   # pr review approval:
 
 defaults:
   run:
     shell: bash
 
 concurrency:
-  group: ${{ github.head_ref || github.run_id }}
+  # group: ${{ github.head_ref || github.run_id }}
+  group: ci-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 run-name: ${{ inputs.tag }}
 
 jobs:
+  ##
   ## Jobs to execute everytime workflow runs
+  ##   do not run if the trigger is any of the following:
+  ##   - PR review submitted (not approved)
+  ##   and any of:
+  ##     - PR review comment
+  ##     - PR change is requested
   rustfmt:
     if: |
       !(
@@ -83,70 +79,16 @@ jobs:
         id: rustfmt
         uses: actions-rust-lang/rustfmt@v1
 
-  # ## Checked for leaked credentials
-  # leaked-cred-test:
-  #   if: |
-  #     !(
-  #       github.event_name == 'pull_request_review' &&
-  #       github.event.action == 'submitted' &&
-  #       (
-  #         github.event.review.state == 'commented' ||
-  #         github.event.review.state == 'changes_requested'
-  #       )
-  #     )
-  #   name: Leaked Credential Test
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - name: Extract branch name
-  #       run: |
-  #         event=${{ github.event_name }}
-  #         case ${event} in
-  #           pull_request|pull_request_target|pull_request_review)
-  #             echo "[PR]: true"
-  #             branch=${{ github.event.pull_request.head.ref }}
-  #             ;;
-  #           *)
-  #             echo "[PR]: false"
-  #             branch=${GITHUB_REF#refs/heads/}
-  #             ;;
-  #         esac
-  #         echo "Setting Branch: ${branch}"
-  #         echo "BRANCH_NAME=${branch}" >> $GITHUB_ENV
-
-  #     - name: Checkout the latest code
-  #       id: git_checkout
-  #       uses: actions/checkout@v3
-  #       with:
-  #         fetch-depth: 0
-
-  #     - name: TruffleHog Scan
-  #       id: trufflehog_check
-  #       uses: trufflesecurity/trufflehog@main
-  #       with:
-  #         path: ./
-  #         base: ${{ env.BRANCH_NAME }}
-  #         head: HEAD
-
-  # #
-  # # clippy job
-  # #
-  # # audit job
-  # #
-  # #
-
+  ######################################################################################
   ## Create a tagged github release
+  ##
   ## Runs when the following is true:
-  ##  - input tag is provided
-  ##  - default branch
+  ##  - tag is provided
+  ##  - workflow is building default branch (master)
   create-release:
     if: |
       inputs.tag != '' && 
       github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
-    # if: |
-    #   inputs.tag != '' && (
-    #     github.ref != format('refs/heads/{0}', github.event.repository.default_branch) &&
-    #     !contains(github.ref, 'refs/pull')
-    #   )
     name: Create Release
     needs:
       - rustfmt
@@ -159,11 +101,14 @@ jobs:
     secrets: inherit
 
   ## Build and push Debian image built from source
-  ## Runs on:
-  ##   - PR status changes (synchronize, approval)
-  ## - will NOT run on:
-  ##   - PR comment
-  ##   - PR change requested
+  ##
+  ## Runs when:
+  ##   - tag is not provided
+  ##   and the following are not true:
+  ##     - PR review submitted (not approved)
+  ##     and any of:
+  ##       - PR review comment
+  ##       - PR change is requested
   docker-image:
     if: |
       inputs.tag == '' && 
@@ -182,10 +127,17 @@ jobs:
       - rustfmt
     secrets: inherit
 
-  ## The following tests *can* be DRY'ed, but the output action is incredibly hard to read due the number of steps each workflow runs.
-  ##   - each test will be nested under a single "ci tests" job, with each step listed by itself (no parent of `stacks-blockchain-tests` etc)
-  ##   - if DRY'ing, `create-cache`` is also not needed, since the `standalone-tests` workflow will create the caches as needed
-
+  ## Create a reusable cache for tests
+  ##
+  ## Runs when:
+  ##   - tag is provided
+  ##   or:
+  ##     - no tag provided
+  ##       and any of:
+  ##         - PR is approved (any approval will trigger)
+  ##         - this workflow is called manually
+  ##         - PR is opened
+  ##         - commit to either (development, master) branch
   create-cache:
     if: |
       inputs.tag != '' || (
@@ -213,6 +165,12 @@ jobs:
     # uses: wileyj/stacks-blockchain/.github/workflows/create_cache.yml@master
 
   ## Tests to run regularly
+  ##
+  ## Runs when:
+  ##   - tag is provided
+  ##   either or of the following:
+  ##     - tag is not provided
+  ##     - PR is approved
   stacks-blockchain-tests:
     if: |
       inputs.tag != '' || (
@@ -228,8 +186,6 @@ jobs:
       - create-cache
     # uses: wileyj/stacks-blockchain/.github/workflows/build-source-binary.yml@master
     uses: ./.github/workflows/stacks-blockchain-tests.yml
-    # with:
-    #   tag: ${{ inputs.tags }}
 
   bitcoin-tests:
     if: |
@@ -246,10 +202,11 @@ jobs:
       - create-cache
     # uses: wileyj/stacks-blockchain/.github/workflows/image-build-debian-source.yml@master
     uses: ./.github/workflows/bitcoin-tests.yml
-    # with:
-    #   tag: ${{ inputs.tags }}
 
-  ## Only run on tagged Release
+  ## Test to run on a tagged release
+  ##
+  ## Runs when:
+  ##   - tag is provided
   atlas-tests:
     if: inputs.tag != ''
     name: Atlas Tests
@@ -258,8 +215,6 @@ jobs:
       - create-cache
     # uses: wileyj/stacks-blockchain/.github/workflows/build-source-binary.yml@master
     uses: ./.github/workflows/atlas-tests.yml
-    # with:
-    #   tag: ${{ inputs.tags }}
 
   epoch-tests:
     if: inputs.tag != ''
@@ -269,8 +224,6 @@ jobs:
       - create-cache
     # uses: wileyj/stacks-blockchain/.github/workflows/build-source-binary.yml@master
     uses: ./.github/workflows/epoch-tests.yml
-    # with:
-    #   tag: ${{ inputs.tags }}
 
   slow-tests:
     if: inputs.tag != ''
@@ -281,5 +234,3 @@ jobs:
       - create-cache
     # uses: wileyj/stacks-blockchain/.github/workflows/build-source-binary.yml@master
     uses: ./.github/workflows/slow-tests.yml
-    # with:
-    #   tag: ${{ inputs.tags }}

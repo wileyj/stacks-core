@@ -1,47 +1,10 @@
-##
-## Atlas Tests
-##
+## Github workflow to run atlas tests
 
 name: Tests::Atlas
 
 on:
-  ## run when create-cache has completed successfully
-  ##  create-cache will run when an input-tag is provided, or a PR is approved
-  # workflow_dispatch:
   workflow_call:
-    # inputs:
-    #   tag:
-    #     description: "Release Tag"
-    #     required: false
-    #     type: string
-  # workflow_run:
-  #   workflows: ["Create Test Caches"]
-  #   types:
-  #     - completed
-  # ## old
-  # ## run when tagging a release or a PR is approved
-  # workflow_dispatch:
-  # # workflow_call:
-  # # pull_request_target:
-  # #   paths:
-  # #     - "**.rs"
-  # #     - "**.clar"
-  # # pull_request_target:
-  # #   # Ignore if a commit only includes changes to a Markdown file.
-  # #   paths-ignore:
-  # #     - "**/*.md"
-  # # push:
-  # #   paths-ignore:
-  # #     - "*.md"
-  # #   tags:
-  # #     - "[0-9]+.[0-9]+.[0-9]+.[0-9]+.[0-9]+" # 2.1.0.0.0
-  # #     - "[0-9]+.[0-9]+.[0-9].[0-9]+.[0-9]+-rc[0-9]+" # 2.1.0.0.0-rc1
-  # # pull_request_review:
-  # #   types: [submitted]
-  # workflow_run:
-  #   workflows: ["Create Test Caches"]
-  #   types:
-  #     - completed
+
 defaults:
   run:
     shell: bash
@@ -52,8 +15,6 @@ env:
   SEGMENT_DOWNLOAD_TIMEOUT_MINS: 15
 
 concurrency:
-  # https://github.com/orgs/community/discussions/13496
-  # group: stacks-blockchain-tests-${{ github.ref }}
   group: atlas-tests-${{ github.workflow }}-${{ github.ref }}
   # Only cancel in progress if this is for a PR
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
@@ -61,9 +22,9 @@ concurrency:
 jobs:
   # atlas integration tests with code coverage
   atlas-tests:
-    # if: ${{ false }}
     name: Atlas Test
     runs-on: ubuntu-latest
+    ## run a maximum of 2 concurrent tests from the test matrix
     strategy:
       fail-fast: false
       max-parallel: 2
@@ -72,10 +33,12 @@ jobs:
           - tests::neon_integrations::atlas_integration_test
           - tests::neon_integrations::atlas_stress_integration_test
     steps:
+      ## Checkout the code
       - name: Checkout the latest code
         id: git_checkout
         uses: actions/checkout@v3
 
+      ## Install rust toolchain (llvm-tools-preview)
       - name: Setup Rust Toolchain
         id: setup_rust_toolchain
         uses: actions-rust-lang/setup-rust-toolchain@v1
@@ -84,6 +47,7 @@ jobs:
           components: llvm-tools-preview
           cache: false
 
+      ## Restore cargo cache data
       - name: Restore Cargo Cache
         id: restore_cargo_cache
         uses: actions/cache/restore@v3
@@ -97,6 +61,7 @@ jobs:
           key: ${{ github.event.repository.name }}-cargo
           # key: ${{ github.event.repository.name }}-${{ github.sha }}-cargo
 
+      ## Restore bitcoin cache data
       - name: Restore Bitcoin Binary Cache
         id: restore_bitcoin_cache
         uses: actions/cache/restore@v3
@@ -105,6 +70,7 @@ jobs:
           path: /tmp/bitcoin
           key: ${{ github.event.repository.name }}-bitcoin-binaries
 
+      ## Restore test archive cache data
       - name: Restore Test Archive Cache
         id: restore_test-archive_cache
         uses: actions/cache/restore@v3
@@ -114,6 +80,7 @@ jobs:
           key: ${{ github.event.repository.name }}-test-archive
           # key: ${{ github.event.repository.name }}-${{ github.sha }}-test-archive
 
+      ## Restore target cache data
       - name: Restore Target Cache
         id: restore_target_cache
         uses: actions/cache/restore@v3
@@ -123,12 +90,14 @@ jobs:
           key: ${{ github.event.repository.name }}-target
           # key: ${{ github.event.repository.name }}-${{ github.sha }}-target
 
+      ## Symlink bitoind to $PATH
       - name: Link Bitcoin Binary
         id: bitcoin_binary
         run: |
           sudo ln -s /tmp/bitcoin/bin/bitcoind /bin/
           ls -al /bin/bitcoind
 
+      ## Run matrix test
       - name: Run Tests
         id: run_tests
         timeout-minutes: 30
@@ -142,15 +111,16 @@ jobs:
             --archive-file /tmp/test_archive.tar.zst \
             "${{ matrix.test-name }}"
 
+      ## Generate code coverage using grcov
       - name: Run grcov
-        # if: inputs.tag != ''
         id: run_grcov
         run: |
           grcov . --binary-path ./target/debug/ -s . -t lcov --branch --ignore-not-existing --ignore "/*" -o lcov.info || exit 1
           echo "created=true\n" >> $GITHUB_OUTPUT
 
+      ## Upload coverage to codecov
+      ##   - use wretry action, to retry on a failed upload
       - name: Upload Code Coverage
-        # if: inputs.tag != '' && steps.run_grcov.outputs.created == 'true'
         id: code_coverage
         uses: Wandalen/wretry.action@a163f62ae554a8f3cbe27b23db15b60c0ae2e93c
         with:

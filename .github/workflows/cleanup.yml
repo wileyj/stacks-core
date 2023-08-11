@@ -1,20 +1,18 @@
-# Only run when:
-#   - called manually
-#   - cron
+## Github workflow to clean up old caches and workflow runs
 
 name: Cleanup
 
 on:
   workflow_dispatch:
-  workflow_call:
+  # ## Runs every day at 00:00:00
   # schedule:
-  #   - cron: '0 0 * * *'  # every day at midnight
+  #   - cron: '0 0 * * *'
 
 concurrency:
-  # group: ${{ github.head_ref || github.run_id }}
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: cleanup-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+## set some basic values for timing
 env:
   EPOCH_30: 2592000 # seconds in 30 days
   EPOCH_14: 1209600 # seconds in 14 days
@@ -32,8 +30,8 @@ defaults:
     shell: bash
 
 jobs:
-  ## delete any action that has been completed for x days
-  ## - 2 day
+  ## Use the gh cli and API to delete any action that has been completed for x days
+  ## - currently set for: 2 days (EPOCH_2)
   delete-old-actions:
     name: Delete Completed Actions
     runs-on: ubuntu-latest
@@ -66,8 +64,8 @@ jobs:
           done
           echo "Done"
 
-  ## delete actions that have been failed/skipped for at least x days
-  ## - 1 day
+  ## Use the gh cli and API to delete actions that have been failed/skipped for at least x days
+  ## - currently set for: 1 days (EPOCH_1)
   delete-failed-actions:
     name: Delete Failed Workflows
     runs-on: ubuntu-latest
@@ -100,8 +98,8 @@ jobs:
           done
           echo "Done"
 
-  ## delete caches that have existed for at least 1 days
-  ## - 1 day
+  ## Use the gh cli and API to delete caches that have existed for at least 1 days
+  ## - currently set for: 1 days (EPOCH_1)
   delete-old-caches:
     # if: ${{ false }}
     name: Delete Caches
