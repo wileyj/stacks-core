@@ -78,8 +78,8 @@ jobs:
 
       - name: Rustfmt
         id: rustfmt
-        uses: actions-rust-lang/rustfmt@dca1cf90ad6b8e45afbed2061803befbb2d159e9 # v1.6.0
-
+        uses: actions-rust-lang/rustfmt@1
+        # uses: actions-rust-lang/rustfmt@dca1cf90ad6b8e45afbed2061803befbb2d159e9 # v1.6.0
 
   # ######################################################################################
   # ## Create a tagged github release
