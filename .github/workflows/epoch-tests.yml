@@ -81,8 +81,8 @@ jobs:
             ~/.cargo/registry/index/
             ~/.cargo/registry/cache/
             ~/.cargo/git/db/
-          key: ${{ github.event.repository.name }}-cargo
-          # key: ${{ github.event.repository.name }}-${{ github.sha }}-cargo
+          # key: ${{ github.event.repository.name }}-cargo
+          key: ${{ github.event.repository.name }}-${{ github.sha }}-cargo
 
       ## Restore bitcoin cache data
       - name: Restore Bitcoin Binary Cache
@@ -100,8 +100,8 @@ jobs:
         with:
           fail-on-cache-miss: true
           path: /tmp/test_archive.tar.zst
-          key: ${{ github.event.repository.name }}-test-archive
-          # key: ${{ github.event.repository.name }}-${{ github.sha }}-test-archive
+          # key: ${{ github.event.repository.name }}-test-archive
+          key: ${{ github.event.repository.name }}-${{ github.sha }}-test-archive
 
       ## Restore nextest target cache data
       - name: Restore Target Cache
@@ -110,8 +110,8 @@ jobs:
         with:
           fail-on-cache-miss: true
           path: ./target
-          key: ${{ github.event.repository.name }}-target
-          # key: ${{ github.event.repository.name }}-${{ github.sha }}-target
+          # key: ${{ github.event.repository.name }}-target
+          key: ${{ github.event.repository.name }}-${{ github.sha }}-target
 
       ## Symlink bitoind to $PATH
       - name: Link Bitcoin Binary

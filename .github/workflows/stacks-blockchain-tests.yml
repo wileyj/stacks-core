@@ -57,8 +57,8 @@ jobs:
             ~/.cargo/registry/index/
             ~/.cargo/registry/cache/
             ~/.cargo/git/db/
-          key: ${{ github.event.repository.name }}-cargo
-          # key: ${{ github.event.repository.name }}-${{ github.sha }}-cargo
+          # key: ${{ github.event.repository.name }}-cargo
+          key: ${{ github.event.repository.name }}-${{ github.sha }}-cargo
 
       ## Restore bitcoin cache data
       - name: Restore Bitcoin Binary Cache
@@ -76,8 +76,8 @@ jobs:
         with:
           fail-on-cache-miss: true
           path: /tmp/genesis_archive.tar.zst
-          key: ${{ github.event.repository.name }}-genesis-archive
-          # key: ${{ github.event.repository.name }}-${{ github.sha }}-genesis-archive
+          # key: ${{ github.event.repository.name }}-genesis-archive
+          key: ${{ github.event.repository.name }}-${{ github.sha }}-genesis-archive
 
       ## Restore nextest target cache data
       - name: Restore Target Cache
@@ -86,8 +86,8 @@ jobs:
         with:
           fail-on-cache-miss: true
           path: ./target
-          key: ${{ github.event.repository.name }}-target
-          # key: ${{ github.event.repository.name }}-${{ github.sha }}-target
+          # key: ${{ github.event.repository.name }}-target
+          key: ${{ github.event.repository.name }}-${{ github.sha }}-target
 
       ## Symlink bitoind to $PATH
       - name: Link Bitcoin Binary
@@ -164,8 +164,8 @@ jobs:
             ~/.cargo/registry/index/
             ~/.cargo/registry/cache/
             ~/.cargo/git/db/
-          key: ${{ github.event.repository.name }}-cargo
-          # key: ${{ github.event.repository.name }}-${{ github.sha }}-cargo
+          # key: ${{ github.event.repository.name }}-cargo
+          key: ${{ github.event.repository.name }}-${{ github.sha }}-cargo
 
       ## Restore bitcoin cache data
       - name: Restore Bitcoin Binary Cache
@@ -183,8 +183,8 @@ jobs:
         with:
           fail-on-cache-miss: true
           path: /tmp/test_archive.tar.zst
-          key: ${{ github.event.repository.name }}-test-archive
-          # key: ${{ github.event.repository.name }}-${{ github.sha }}-test-archive
+          # key: ${{ github.event.repository.name }}-test-archive
+          key: ${{ github.event.repository.name }}-${{ github.sha }}-test-archive
 
       ## Restore target cache data
       - name: Restore Target Cache
@@ -193,8 +193,8 @@ jobs:
         with:
           fail-on-cache-miss: true
           path: ./target
-          key: ${{ github.event.repository.name }}-target
-          # key: ${{ github.event.repository.name }}-${{ github.sha }}-target
+          # key: ${{ github.event.repository.name }}-target
+          key: ${{ github.event.repository.name }}-${{ github.sha }}-target
 
       ## Symlink bitoind to $PATH
       - name: Link Bitcoin Binary
@@ -228,7 +228,6 @@ jobs:
       ## Upload coverage to codecov
       ##   - use wretry action, to retry on a failed upload 3x
       - name: Upload Code Coverage
-        if: inputs.tag != '' && steps.run_grcov.outputs.created == 'true'
         id: code_coverage
         uses: Wandalen/wretry.action@a163f62ae554a8f3cbe27b23db15b60c0ae2e93c # v1.3.0
         with:

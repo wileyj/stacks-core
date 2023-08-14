@@ -15,11 +15,11 @@ env:
   LLVM_PROFILE_FILE: "stacks-blockchain-%p-%m.profraw"
   BTC_VERSION: "0.20.0"
 
+## Since this is used in several different steps, do not cancel it when mutliple jobs are running
 # concurrency:
 #   group: create-cache-${{ github.workflow }}-${{ github.ref }}
 #   # Only cancel in progress if this is for a PR
-#   cancel-in-progress: false
-#   # cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+#   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 ##
 ## Cache will exist longer than workflow execution so other runners have access
@@ -44,8 +44,8 @@ jobs:
             ~/.cargo/registry/index/
             ~/.cargo/registry/cache/
             ~/.cargo/git/db/
-          key: ${{ github.event.repository.name }}-cargo
-          # key: ${{ github.event.repository.name }}-${{ github.sha }}-cargo
+          # key: ${{ github.event.repository.name }}-cargo
+          key: ${{ github.event.repository.name }}-${{ github.sha }}-cargo
 
       ## If cargo cache is not found, install nextest
       - name: Install nextest
@@ -77,8 +77,8 @@ jobs:
             ~/.cargo/registry/index/
             ~/.cargo/registry/cache/
             ~/.cargo/git/db/
-          key: ${{ github.event.repository.name }}-cargo
-          # key: ${{ github.event.repository.name }}-${{ github.sha }}-cargo
+          # key: ${{ github.event.repository.name }}-cargo
+          key: ${{ github.event.repository.name }}-${{ github.sha }}-cargo
 
   bitcoin-binary:
     name: Bitcoin Binary
@@ -127,8 +127,8 @@ jobs:
         with:
           lookup-only: true
           path: ./target
-          key: ${{ github.event.repository.name }}-target
-          # key: ${{ github.event.repository.name }}-${{ github.sha }}-target
+          # key: ${{ github.event.repository.name }}-target
+          key: ${{ github.event.repository.name }}-${{ github.sha }}-target
 
       ## Perform a lookup to check if the test archive cache already exists
       - name: Check Test Archive Cache
@@ -138,8 +138,8 @@ jobs:
         with:
           lookup-only: true
           path: /tmp/test_archive.tar.zst
-          key: ${{ github.event.repository.name }}-test-archive
-          # key: ${{ github.event.repository.name }}-${{ github.sha }}-test-archive
+          # key: ${{ github.event.repository.name }}-test-archive
+          key: ${{ github.event.repository.name }}-${{ github.sha }}-test-archive
 
       ## Perform a lookup to check if the genesis test archive cache already exists
       - name: Check Genesis Test Archive Cache
@@ -149,8 +149,8 @@ jobs:
         with:
           lookup-only: true
           path: /tmp/genesis_archive.tar.zst
-          key: ${{ github.event.repository.name }}-genesis-archive
-          # key: ${{ github.event.repository.name }}-${{ github.sha }}-genesis-archive
+          # key: ${{ github.event.repository.name }}-genesis-archive
+          key: ${{ github.event.repository.name }}-${{ github.sha }}-genesis-archive
 
       ## If all of the caches are found, checkout the code
       ##   - Target cache
@@ -199,8 +199,8 @@ jobs:
             ~/.cargo/registry/index/
             ~/.cargo/registry/cache/
             ~/.cargo/git/db/
-          key: ${{ github.event.repository.name }}-cargo
-          # key: ${{ github.event.repository.name }}-${{ github.sha }}-cargo
+          # key: ${{ github.event.repository.name }}-cargo
+          key: ${{ github.event.repository.name }}-${{ github.sha }}-cargo
 
       ## If all of the caches are found, build and archive tests
       ##   - Target cache
@@ -253,8 +253,8 @@ jobs:
         uses: actions/cache/save@88522ab9f39a2ea568f7027eddc7d8d8bc9d59c8 # v3.3.1
         with:
           path: /tmp/test_archive.tar.zst
-          key: ${{ github.event.repository.name }}-test-archive
-          # key: ${{ github.event.repository.name }}-${{ github.sha }}-test-archive
+          # key: ${{ github.event.repository.name }}-test-archive
+          key: ${{ github.event.repository.name }}-${{ github.sha }}-test-archive
 
       ## If all of the caches are found, save genesis test archive cache
       ##   - Target cache
@@ -270,8 +270,8 @@ jobs:
         uses: actions/cache/save@88522ab9f39a2ea568f7027eddc7d8d8bc9d59c8 # v3.3.1
         with:
           path: /tmp/test_archive.tar.zst
-          key: ${{ github.event.repository.name }}-genesis-archive
-          # key: ${{ github.event.repository.name }}-${{ github.sha }}-test-archive
+          # key: ${{ github.event.repository.name }}-genesis-archive
+          key: ${{ github.event.repository.name }}-${{ github.sha }}-test-archive
 
       ## If all of the caches are found, save target cache
       ##   - Target cache
@@ -287,5 +287,5 @@ jobs:
         uses: actions/cache/save@88522ab9f39a2ea568f7027eddc7d8d8bc9d59c8 # v3.3.1
         with:
           path: ./target
-          key: ${{ github.event.repository.name }}-target
-          # key: ${{ github.event.repository.name }}-${{ github.sha }}-target
+          # key: ${{ github.event.repository.name }}-target
+          key: ${{ github.event.repository.name }}-${{ github.sha }}-target
