@@ -66,18 +66,18 @@ jobs:
     steps:
       - name: Checkout the latest code
         id: git_checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
 
       - name: Setup Rust Toolchain
         id: setup_rust_toolchain
-        uses: actions-rust-lang/setup-rust-toolchain@v1
+        uses: actions-rust-lang/setup-rust-toolchain@f3c84ee10bf5a86e7a5d607d487bf17d57670965 # v1.5.0
         with:
           components: rustfmt
           cache: false
 
       - name: Rustfmt
         id: rustfmt
-        uses: actions-rust-lang/rustfmt@v1
+        uses: actions-rust-lang/rustfmt@dca1cf90ad6b8e45afbed2061803befbb2d159e9 # v1.6.0
 
   ######################################################################################
   ## Create a tagged github release

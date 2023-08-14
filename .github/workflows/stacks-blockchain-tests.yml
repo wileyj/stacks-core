@@ -35,12 +35,12 @@ jobs:
       ## Checkout the code
       - name: Checkout the latest code
         id: git_checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
 
       ## Install rust toolchain (llvm-tools-preview)
       - name: Setup Rust Toolchain
         id: setup_rust_toolchain
-        uses: actions-rust-lang/setup-rust-toolchain@v1
+        uses: actions-rust-lang/setup-rust-toolchain@f3c84ee10bf5a86e7a5d607d487bf17d57670965 # v1.5.0
         with:
           toolchain: stable
           components: llvm-tools-preview
@@ -49,7 +49,7 @@ jobs:
       ## Restore cargo cache data
       - name: Restore Cargo Cache
         id: restore_cargo_cache
-        uses: actions/cache/restore@v3
+        uses: actions/cache/restore@88522ab9f39a2ea568f7027eddc7d8d8bc9d59c8 # v3.3.1
         with:
           fail-on-cache-miss: true
           path: |
@@ -63,26 +63,26 @@ jobs:
       ## Restore bitcoin cache data
       - name: Restore Bitcoin Binary Cache
         id: restore_bitcoin_cache
-        uses: actions/cache/restore@v3
+        uses: actions/cache/restore@88522ab9f39a2ea568f7027eddc7d8d8bc9d59c8 # v3.3.1
         with:
           fail-on-cache-miss: true
           path: /tmp/bitcoin
           key: ${{ github.event.repository.name }}-bitcoin-binaries
 
-      ## Restore genesis test archive cache data
+      ## Restore genesis nextest archive cache data
       - name: Restore Genesis Archive Cache
         id: restore_test-archive_cache
-        uses: actions/cache/restore@v3
+        uses: actions/cache/restore@88522ab9f39a2ea568f7027eddc7d8d8bc9d59c8 # v3.3.1
         with:
           fail-on-cache-miss: true
           path: /tmp/genesis_archive.tar.zst
           key: ${{ github.event.repository.name }}-genesis-archive
           # key: ${{ github.event.repository.name }}-${{ github.sha }}-genesis-archive
 
-      ## Restore target cache data
+      ## Restore nextest target cache data
       - name: Restore Target Cache
         id: restore_target_cache
-        uses: actions/cache/restore@v3
+        uses: actions/cache/restore@88522ab9f39a2ea568f7027eddc7d8d8bc9d59c8 # v3.3.1
         with:
           fail-on-cache-miss: true
           path: ./target
@@ -96,7 +96,7 @@ jobs:
           sudo ln -s /tmp/bitcoin/bin/bitcoind /bin/
           ls -al /bin/bitcoind
 
-      ## Run matrix test
+      ## Run test matrix using cached archive file
       - name: Run Tests
         id: run_tests
         run: |
@@ -116,12 +116,12 @@ jobs:
           echo "created=true\n" >> $GITHUB_OUTPUT
 
       ## Upload coverage to codecov
-      ##   - use wretry action, to retry on a failed upload
+      ##   - use wretry action, to retry on a failed upload 3x
       - name: Upload Code Coverage
         id: code_coverage
-        uses: Wandalen/wretry.action@a163f62ae554a8f3cbe27b23db15b60c0ae2e93c
+        uses: Wandalen/wretry.action@a163f62ae554a8f3cbe27b23db15b60c0ae2e93c # v1.3.0
         with:
-          action: codecov/codecov-action@v3
+          action: codecov/codecov-action@eaaf4bedf32dbdc6b720b63067d99c4d77d6047d # v3.1.4
           with: |
             files: ./lcov.info
             name: large_genesis
@@ -142,12 +142,12 @@ jobs:
       ## checkout the code
       - name: Checkout the latest code
         id: git_checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
 
       ## install rust toolchain
       - name: Setup Rust Toolchain
         id: setup_rust_toolchain
-        uses: actions-rust-lang/setup-rust-toolchain@v1
+        uses: actions-rust-lang/setup-rust-toolchain@f3c84ee10bf5a86e7a5d607d487bf17d57670965 # v1.5.0
         with:
           toolchain: stable
           components: llvm-tools-preview
@@ -156,7 +156,7 @@ jobs:
       ## Restore cargo cache data
       - name: Restore Cargo Cache
         id: restore_cargo_cache
-        uses: actions/cache/restore@v3
+        uses: actions/cache/restore@88522ab9f39a2ea568f7027eddc7d8d8bc9d59c8 # v3.3.1
         with:
           fail-on-cache-miss: true
           path: |
@@ -170,7 +170,7 @@ jobs:
       ## Restore bitcoin cache data
       - name: Restore Bitcoin Binary Cache
         id: restore_bitcoin_cache
-        uses: actions/cache/restore@v3
+        uses: actions/cache/restore@88522ab9f39a2ea568f7027eddc7d8d8bc9d59c8 # v3.3.1
         with:
           fail-on-cache-miss: true
           path: /tmp/bitcoin
@@ -179,7 +179,7 @@ jobs:
       ## Restore test archive cache data
       - name: Restore Test Archive Cache
         id: restore_test-archive_cache
-        uses: actions/cache/restore@v3
+        uses: actions/cache/restore@88522ab9f39a2ea568f7027eddc7d8d8bc9d59c8 # v3.3.1
         with:
           fail-on-cache-miss: true
           path: /tmp/test_archive.tar.zst
@@ -189,7 +189,7 @@ jobs:
       ## Restore target cache data
       - name: Restore Target Cache
         id: restore_target_cache
-        uses: actions/cache/restore@v3
+        uses: actions/cache/restore@88522ab9f39a2ea568f7027eddc7d8d8bc9d59c8 # v3.3.1
         with:
           fail-on-cache-miss: true
           path: ./target
@@ -203,7 +203,7 @@ jobs:
           sudo ln -s /tmp/bitcoin/bin/bitcoind /bin/
           ls -al /bin/bitcoind
 
-      ## Run test shards (defined as matrix.partition)
+      ## Run test shards using cached archive file (defined as matrix.partition)
       ##   - timeout after 30 minutes
       - name: Run Tests
         id: run_tests
@@ -226,13 +226,13 @@ jobs:
           echo "created=true\n" >> $GITHUB_OUTPUT
 
       ## Upload coverage to codecov
-      ##   - use wretry action, to retry on a failed upload
+      ##   - use wretry action, to retry on a failed upload 3x
       - name: Upload Code Coverage
         if: inputs.tag != '' && steps.run_grcov.outputs.created == 'true'
         id: code_coverage
-        uses: Wandalen/wretry.action@a163f62ae554a8f3cbe27b23db15b60c0ae2e93c
+        uses: Wandalen/wretry.action@a163f62ae554a8f3cbe27b23db15b60c0ae2e93c # v1.3.0
         with:
-          action: codecov/codecov-action@v3
+          action: codecov/codecov-action@eaaf4bedf32dbdc6b720b63067d99c4d77d6047d # v3.1.4
           with: |
             files: ./lcov.info
             name: unit_tests
@@ -248,12 +248,12 @@ jobs:
       ## checkout the code
       - name: Checkout the latest code
         id: git_checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
 
       ## Use redoc to generate HTML of openapi.yml
       - name: Redoc
         id: run_redoc
-        uses: seeebiii/redoc-cli-github-action@v10
+        uses: seeebiii/redoc-cli-github-action@c9649b33918da5eb290b81cd03a943caea091540 # v10
         with:
           args: "bundle -o ./open-api-docs.html ./docs/rpc/openapi.yaml"
 
@@ -266,7 +266,7 @@ jobs:
       ## Upload the html file artifact
       - name: Upload bundled html
         id: upload_html_artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce # v3.1.2
         with:
           name: open-api-bundle
           path: |
@@ -282,7 +282,7 @@ jobs:
       ## checkout the code
       - name: Checkout the latest code
         id: git_checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
 
       - name: Run network relay tests
         id: nettest
@@ -298,7 +298,7 @@ jobs:
       ## checkout the code
       - name: Checkout the latest code
         id: git_checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
 
       ## Use Clarinet to run contract unit-tests
       - name: Execute core contract unit tests in Clarinet
@@ -308,12 +308,12 @@ jobs:
           args: test --coverage --manifest-path=./contrib/core-contract-tests/Clarinet.toml
 
       ## Upload coverage to codecov
-      ##   - use wretry action, to retry on a failed upload
+      ##   - use wretry action, to retry on a failed upload 3x
       - name: Upload Code Coverage
         id: code_coverage
-        uses: Wandalen/wretry.action@a163f62ae554a8f3cbe27b23db15b60c0ae2e93c
+        uses: Wandalen/wretry.action@a163f62ae554a8f3cbe27b23db15b60c0ae2e93c # v1.3.0
         with:
-          action: codecov/codecov-action@v3
+          action: codecov/codecov-action@eaaf4bedf32dbdc6b720b63067d99c4d77d6047d # v3.1.4
           with: |
             files: ./coverage.lcov
             fail_ci_if_error: false
