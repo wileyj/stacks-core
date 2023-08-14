@@ -28,8 +28,14 @@ on:
 ## Set the display name to the test being run
 run-name: ${{ inputs.workflow }}
 
+concurrency:
+  group: standalone-tests-${{ github.workflow }}-${{ github.ref }}
+  # Only cancel in progress if this is for a PR
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
   ## Runs every time
+  ##   - note: this job
   create-cache:
     name: Create Test Cache
     # uses: wileyj/stacks-blockchain/.github/workflows/create_cache.yml@master
