@@ -50,7 +50,7 @@ jobs:
       - name: Install nextest
         if: steps.check_cache.outputs.cache-hit != 'true'
         id: install_nextest
-        uses: taiki-e/install-action@https://github.com/taiki-e/install-action/commit/7412a5eb82f4686390763b0f92637284e91b6627 # v2.15.3
+        uses: taiki-e/install-action@7412a5eb82f4686390763b0f92637284e91b6627 # v2.15.3
         with:
           tool: nextest # can be versioned, ex: tool@1.1.1.1
 
@@ -60,7 +60,7 @@ jobs:
       - name: Install grcov
         if: steps.check_cache.outputs.cache-hit != 'true'
         id: install_grcov
-        uses: taiki-e/install-action@https://github.com/taiki-e/install-action/commit/7412a5eb82f4686390763b0f92637284e91b6627 # v2.15.3
+        uses: taiki-e/install-action@7412a5eb82f4686390763b0f92637284e91b6627 # v2.15.3
         with:
           tool: grcov # can be versioned, ex: tool@1.1.1.1
 
