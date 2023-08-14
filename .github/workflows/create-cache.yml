@@ -18,7 +18,8 @@ env:
 concurrency:
   group: create-cache-${{ github.workflow }}-${{ github.ref }}
   # Only cancel in progress if this is for a PR
-  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+  cancel-in-progress: false
+  # cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 ##
 ## Cache will exist longer than workflow execution so other runners have access
