@@ -31,7 +31,7 @@ run-name: ${{ inputs.workflow }}
 concurrency:
   group: standalone-tests-${{ github.workflow }}-${{ github.ref }}
   # Only cancel in progress if this is for a PR
-  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+  cancel-in-progress: false
 
 jobs:
   ## Runs every time
