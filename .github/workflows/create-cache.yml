@@ -15,11 +15,11 @@ env:
   LLVM_PROFILE_FILE: "stacks-blockchain-%p-%m.profraw"
   BTC_VERSION: "0.20.0"
 
-concurrency:
-  group: create-cache-${{ github.workflow }}-${{ github.ref }}
-  # Only cancel in progress if this is for a PR
-  cancel-in-progress: false
-  # cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+# concurrency:
+#   group: create-cache-${{ github.workflow }}-${{ github.ref }}
+#   # Only cancel in progress if this is for a PR
+#   cancel-in-progress: false
+#   # cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 ##
 ## Cache will exist longer than workflow execution so other runners have access
