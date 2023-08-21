@@ -143,7 +143,7 @@ jobs:
               ## Loop over the items in the actions_caches array
               .actions_caches[]
               ## Retrieve the keys: id (used for deleting), last_accessed_at (used for comparison) and key (used for comparison)
-              ##   - Filter the result based on the item's timestamp and if the key does not match
+              ##   - Filter out the id based on (last_accessed_at < TS and key is not stacks-blockchain-bitcoin-binaries
               ##   - If an item matches our conditional, store the id as ID in the for loop
               | { id, last_accessed_at, key }
               | select((.last_accessed_at < $TS) and (.key != "stacks-blockchain-bitcoin-binaries" ))
