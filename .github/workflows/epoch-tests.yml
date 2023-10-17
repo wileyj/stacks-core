@@ -64,7 +64,7 @@ jobs:
       ## cleanup runner
       - name: Cleanup Runner
         id: runner_cleanup
-        uses: ./.github/workflows/cleanup-runner.yml
+        uses: wileyj/runner-cleanup@main
 
       ## Install rust toolchain (llvm-tools-preview)
       - name: Setup Rust Toolchain
