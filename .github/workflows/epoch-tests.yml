@@ -56,15 +56,15 @@ jobs:
           - tests::epoch_24::fix_to_pox_contract
           - tests::epoch_24::verify_auto_unlock_behavior
     steps:
-      ## cleanup runner
-      - name: Cleanup Runner
-        id: runner_cleanup
-        uses: ./.github/workflows/cleanup-runner.yml
-
       ## Checkout the code
       - name: Checkout the latest code
         id: git_checkout
         uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
+
+      ## cleanup runner
+      - name: Cleanup Runner
+        id: runner_cleanup
+        uses: ./.github/workflows/cleanup-runner.yml
 
       ## Install rust toolchain (llvm-tools-preview)
       - name: Setup Rust Toolchain
