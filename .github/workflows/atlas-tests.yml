@@ -33,6 +33,11 @@ jobs:
           - tests::neon_integrations::atlas_integration_test
           - tests::neon_integrations::atlas_stress_integration_test
     steps:
+      ## cleanup runner
+      - name: Cleanup Runner
+        id: runner_cleanup
+        uses: ./.github/workflows/cleanup-runner.yml
+
       ## Checkout the code
       - name: Checkout the latest code
         id: git_checkout

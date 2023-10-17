@@ -32,6 +32,11 @@ jobs:
         test-name:
           - neon_integrations::bitcoind_integration_test
     steps:
+      ## cleanup runner
+      - name: Cleanup Runner
+        id: runner_cleanup
+        uses: ./.github/workflows/cleanup-runner.yml
+      
       ## Checkout the code
       - name: Checkout the latest code
         id: git_checkout
@@ -139,6 +144,11 @@ jobs:
       matrix:
         partition: [1, 2, 3, 4, 5, 6, 7, 8] # partition the tests into 8 jobs
     steps:
+      ## cleanup runner
+      - name: Cleanup Runner
+        id: runner_cleanup
+        uses: ./.github/workflows/cleanup-runner.yml
+
       ## checkout the code
       - name: Checkout the latest code
         id: git_checkout
@@ -294,6 +304,11 @@ jobs:
     name: Core Contracts Test
     runs-on: ubuntu-latest
     steps:
+      ## cleanup runner
+      - name: Cleanup Runner
+        id: runner_cleanup
+        uses: ./.github/workflows/cleanup-runner.yml
+
       ## checkout the code
       - name: Checkout the latest code
         id: git_checkout

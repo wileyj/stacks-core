@@ -71,6 +71,11 @@ jobs:
           - tests::neon_integrations::use_latest_tip_integration_test
           - tests::should_succeed_handling_malformed_and_valid_txs
     steps:
+      ## cleanup runner
+      - name: Cleanup Runner
+        id: runner_cleanup
+        uses: ./.github/workflows/cleanup-runner.yml
+
       ## Checkout the code
       - name: Checkout the latest code
         id: git_checkout
