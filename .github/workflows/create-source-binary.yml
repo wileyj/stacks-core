@@ -42,7 +42,7 @@ jobs:
       ## cleanup runner
       - name: Cleanup Runner
         id: runner_cleanup
-        uses: wileyj/runner-cleanup@main
+        uses: stacks-network/runner-cleanup@main
 
       ## Checkout the code
       - name: Checkout the latest code
