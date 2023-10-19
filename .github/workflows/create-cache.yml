@@ -30,11 +30,9 @@ jobs:
   cargo:
     name: Cargo
     runs-on: ubuntu-latest
-    # runs-on: buildjet-4vcpu-ubuntu-2204
     steps:
       ## Perform a lookup to check if the cache already exists
       - name: Check Cargo Cache
-        # uses: buildjet/cache@e376f15c6ec6dc595375c78633174c7e5f92dc0e # v3
         uses: actions/cache@88522ab9f39a2ea568f7027eddc7d8d8bc9d59c8 # v3.3.1
         id: check_cache
         with:
@@ -69,7 +67,6 @@ jobs:
       - name: Save Cache
         if: steps.check_cache.outputs.cache-hit != 'true'
         id: save_cache
-        # uses: buildjet/cache/save@e376f15c6ec6dc595375c78633174c7e5f92dc0e # v3
         uses: actions/cache/save@88522ab9f39a2ea568f7027eddc7d8d8bc9d59c8 # v3.3.1
         with:
           path: |
@@ -83,11 +80,9 @@ jobs:
   bitcoin-binary:
     name: Bitcoin Binary
     runs-on: ubuntu-latest
-    # runs-on: buildjet-4vcpu-ubuntu-2204
     steps:
       ## Perform a lookup to check if the cache already exists
       - name: Check Bitcoin Cache
-        # uses: buildjet/cache@e376f15c6ec6dc595375c78633174c7e5f92dc0e # v3
         uses: actions/cache@88522ab9f39a2ea568f7027eddc7d8d8bc9d59c8 # v3.3.1
         id: check_cache
         with:
@@ -106,7 +101,6 @@ jobs:
       - name: Save Cache
         if: steps.check_cache.outputs.cache-hit != 'true'
         id: save_cache
-        # uses: buildjet/cache/save@e376f15c6ec6dc595375c78633174c7e5f92dc0e # v3
         uses: actions/cache/save@88522ab9f39a2ea568f7027eddc7d8d8bc9d59c8 # v3.3.1
         with:
           path: /tmp/bitcoin
@@ -115,13 +109,11 @@ jobs:
   nextest-archive:
     name: Test Archive
     runs-on: ubuntu-latest
-    # runs-on: buildjet-4vcpu-ubuntu-2204
     needs:
       - cargo
     steps:
       ## Perform a lookup to check if the target cache already exists
       - name: Check Target Cache
-        # uses: buildjet/cache@e376f15c6ec6dc595375c78633174c7e5f92dc0e # v3
         uses: actions/cache@88522ab9f39a2ea568f7027eddc7d8d8bc9d59c8 # v3.3.1
         id: check_target_cache
         with:
@@ -132,7 +124,6 @@ jobs:
 
       ## Perform a lookup to check if the test archive cache already exists
       - name: Check Test Archive Cache
-        # uses: buildjet/cache@e376f15c6ec6dc595375c78633174c7e5f92dc0e # v3
         uses: actions/cache@88522ab9f39a2ea568f7027eddc7d8d8bc9d59c8 # v3.3.1
         id: check_test_archive_cache
         with:
@@ -143,7 +134,6 @@ jobs:
 
       ## Perform a lookup to check if the genesis test archive cache already exists
       - name: Check Genesis Test Archive Cache
-        # uses: buildjet/cache@e376f15c6ec6dc595375c78633174c7e5f92dc0e # v3
         uses: actions/cache@88522ab9f39a2ea568f7027eddc7d8d8bc9d59c8 # v3.3.1
         id: check_genesis_archive_cache
         with:
@@ -251,7 +241,6 @@ jobs:
           steps.check_test_archive_cache.outputs.cache-hit != 'true' || 
           steps.check_genesis_archive_cache.outputs.cache-hit != 'true'
         id: save_nextest_cache
-        # uses: buildjet/cache/save@e376f15c6ec6dc595375c78633174c7e5f92dc0e # v3
         uses: actions/cache/save@88522ab9f39a2ea568f7027eddc7d8d8bc9d59c8 # v3.3.1
         with:
           path: /tmp/test_archive.tar.zst
@@ -268,7 +257,6 @@ jobs:
           steps.check_test_archive_cache.outputs.cache-hit != 'true' || 
           steps.check_genesis_archive_cache.outputs.cache-hit != 'true'
         id: save_genesis_cache
-        # uses: buildjet/cache/save@e376f15c6ec6dc595375c78633174c7e5f92dc0e # v3
         uses: actions/cache/save@88522ab9f39a2ea568f7027eddc7d8d8bc9d59c8 # v3.3.1
         with:
           path: /tmp/test_archive.tar.zst
@@ -285,7 +273,6 @@ jobs:
           steps.check_test_archive_cache.outputs.cache-hit != 'true' || 
           steps.check_genesis_archive_cache.outputs.cache-hit != 'true'
         id: save_target_cache
-        # uses: buildjet/cache/save@e376f15c6ec6dc595375c78633174c7e5f92dc0e # v3
         uses: actions/cache/save@88522ab9f39a2ea568f7027eddc7d8d8bc9d59c8 # v3.3.1
         with:
           path: ./target
