@@ -69,20 +69,6 @@ jobs:
           attempt_limit: 3
           attempt_delay: 10000
 
-      # ## Restore cargo cache data
-      # - name: Restore Cargo Cache
-      #   id: restore_cargo_cache
-      #   uses: actions/cache/restore@88522ab9f39a2ea568f7027eddc7d8d8bc9d59c8 # v3.3.1
-      #   with:
-      #     fail-on-cache-miss: true
-      #     path: |
-      #       ~/.cargo/bin/
-      #       ~/.cargo/registry/index/
-      #       ~/.cargo/registry/cache/
-      #       ~/.cargo/git/db/
-      #     # key: ${{ github.event.repository.name }}-cargo
-      #     key: ${{ github.event.repository.name }}-${{ github.sha }}-cargo
-
       ## Restore bitcoin cache data
       ##   - use wretry action, to retry on a failed upload 3x
       - name:  Restore Bitcoin Binary Cache
@@ -96,15 +82,6 @@ jobs:
             key: ${{ github.event.repository.name }}-bitcoin-binaries
           attempt_limit: 3
           attempt_delay: 10000
-
-      # ## Restore bitcoin cache data
-      # - name: Restore Bitcoin Binary Cache
-      #   id: restore_bitcoin_cache
-      #   uses: actions/cache/restore@88522ab9f39a2ea568f7027eddc7d8d8bc9d59c8 # v3.3.1
-      #   with:
-      #     fail-on-cache-miss: true
-      #     path: /tmp/bitcoin
-      #     key: ${{ github.event.repository.name }}-bitcoin-binaries
 
       ## Restore genesis nextest archive cache data
       ##   - use wretry action, to retry on a failed upload 3x
@@ -120,16 +97,6 @@ jobs:
           attempt_limit: 3
           attempt_delay: 10000
 
-      # ## Restore genesis nextest archive cache data
-      # - name: Restore Genesis Archive Cache
-      #   id: restore_test-archive_cache
-      #   uses: actions/cache/restore@88522ab9f39a2ea568f7027eddc7d8d8bc9d59c8 # v3.3.1
-      #   with:
-      #     fail-on-cache-miss: true
-      #     path: /tmp/genesis_archive.tar.zst
-      #     # key: ${{ github.event.repository.name }}-genesis-archive
-      #     key: ${{ github.event.repository.name }}-${{ github.sha }}-genesis-archive
-
       ## Restore nextest target cache data
       ##   - use wretry action, to retry on a failed upload 3x
       - name:  Restore Target Cache
@@ -143,16 +110,6 @@ jobs:
             key: ${{ github.event.repository.name }}-${{ github.sha }}-target
           attempt_limit: 3
           attempt_delay: 10000
-
-      # ## Restore nextest target cache data
-      # - name: Restore Target Cache
-      #   id: restore_target_cache
-      #   uses: actions/cache/restore@88522ab9f39a2ea568f7027eddc7d8d8bc9d59c8 # v3.3.1
-      #   with:
-      #     fail-on-cache-miss: true
-      #     path: ./target
-      #     # key: ${{ github.event.repository.name }}-target
-      #     key: ${{ github.event.repository.name }}-${{ github.sha }}-target
 
       ## Symlink bitoind to $PATH
       - name: Link Bitcoin Binary
@@ -224,47 +181,58 @@ jobs:
           cache: false
 
       ## Restore cargo cache data
-      - name: Restore Cargo Cache
+      ##   - use wretry action, to retry on a failed upload 3x
+      - name:  Restore Cargo Cache
         id: restore_cargo_cache
-        uses: actions/cache/restore@88522ab9f39a2ea568f7027eddc7d8d8bc9d59c8 # v3.3.1
+        uses: Wandalen/wretry.action@a163f62ae554a8f3cbe27b23db15b60c0ae2e93c # v1.3.0
         with:
-          fail-on-cache-miss: true
-          path: |
-            ~/.cargo/bin/
-            ~/.cargo/registry/index/
-            ~/.cargo/registry/cache/
-            ~/.cargo/git/db/
-          # key: ${{ github.event.repository.name }}-cargo
-          key: ${{ github.event.repository.name }}-${{ github.sha }}-cargo
+          action: actions/cache/restore@88522ab9f39a2ea568f7027eddc7d8d8bc9d59c8 # v3.3.1
+          with: |
+            fail-on-cache-miss: true
+            path: |
+              ~/.cargo/bin/
+              ~/.cargo/registry/index/
+              ~/.cargo/registry/cache/
+              ~/.cargo/git/db/
+            key: ${{ github.event.repository.name }}-${{ github.sha }}-cargo
+          attempt_limit: 3
+          attempt_delay: 10000
 
       ## Restore bitcoin cache data
-      - name: Restore Bitcoin Binary Cache
+      - name:  Restore Bitcoin Binary Cache
         id: restore_bitcoin_cache
-        uses: actions/cache/restore@88522ab9f39a2ea568f7027eddc7d8d8bc9d59c8 # v3.3.1
+        uses: Wandalen/wretry.action@a163f62ae554a8f3cbe27b23db15b60c0ae2e93c # v1.3.0
         with:
-          fail-on-cache-miss: true
-          path: /tmp/bitcoin
-          key: ${{ github.event.repository.name }}-bitcoin-binaries
+          action: actions/cache/restore@88522ab9f39a2ea568f7027eddc7d8d8bc9d59c8 # v3.3.1
+          with: |
+            fail-on-cache-miss: true
+            path: /tmp/bitcoin
+            key: ${{ github.event.repository.name }}-bitcoin-binaries
 
-      ## Restore test archive cache data
-      - name: Restore Test Archive Cache
+      ## Restore nextest archive cache data
+      - name:  Restore Test Archive Cache
         id: restore_test-archive_cache
-        uses: actions/cache/restore@88522ab9f39a2ea568f7027eddc7d8d8bc9d59c8 # v3.3.1
+        uses: Wandalen/wretry.action@a163f62ae554a8f3cbe27b23db15b60c0ae2e93c # v1.3.0
         with:
-          fail-on-cache-miss: true
-          path: /tmp/test_archive.tar.zst
-          # key: ${{ github.event.repository.name }}-test-archive
-          key: ${{ github.event.repository.name }}-${{ github.sha }}-test-archive
+          action: actions/cache/restore@88522ab9f39a2ea568f7027eddc7d8d8bc9d59c8 # v3.3.1
+          with: |
+            fail-on-cache-miss: true
+            path: /tmp/test_archive.tar.zst
+            key: ${{ github.event.repository.name }}-${{ github.sha }}-test-archive
 
-      ## Restore target cache data
-      - name: Restore Target Cache
+      ## Restore nextest target cache data
+      ##   - use wretry action, to retry on a failed upload 3x
+      - name:  Restore Target Cache
         id: restore_target_cache
-        uses: actions/cache/restore@88522ab9f39a2ea568f7027eddc7d8d8bc9d59c8 # v3.3.1
+        uses: Wandalen/wretry.action@a163f62ae554a8f3cbe27b23db15b60c0ae2e93c # v1.3.0
         with:
-          fail-on-cache-miss: true
-          path: ./target
-          # key: ${{ github.event.repository.name }}-target
-          key: ${{ github.event.repository.name }}-${{ github.sha }}-target
+          action: actions/cache/restore@88522ab9f39a2ea568f7027eddc7d8d8bc9d59c8 # v3.3.1
+          with: |
+            fail-on-cache-miss: true
+            path: ./target
+            key: ${{ github.event.repository.name }}-${{ github.sha }}-target
+          attempt_limit: 3
+          attempt_delay: 10000
 
       ## Symlink bitoind to $PATH
       - name: Link Bitcoin Binary
