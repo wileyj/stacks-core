@@ -33,17 +33,18 @@ jobs:
     steps:
       ## Perform a lookup to check if the cache already exists
       - name: Check Cargo Cache
-        uses: actions/cache@88522ab9f39a2ea568f7027eddc7d8d8bc9d59c8 # v3.3.1
         id: check_cache
-        with:
-          lookup-only: true
-          path: |
-            ~/.cargo/bin/
-            ~/.cargo/registry/index/
-            ~/.cargo/registry/cache/
-            ~/.cargo/git/db/
-          # key: ${{ github.event.repository.name }}-cargo
-          key: ${{ github.event.repository.name }}-${{ github.sha }}-cargo
+        uses: wileyj/runner-cache/check/cargo@main
+        # uses: actions/cache@88522ab9f39a2ea568f7027eddc7d8d8bc9d59c8 # v3.3.1
+        # with:
+        #   lookup-only: true
+        #   path: |
+        #     ~/.cargo/bin/
+        #     ~/.cargo/registry/index/
+        #     ~/.cargo/registry/cache/
+        #     ~/.cargo/git/db/
+        #   # key: ${{ github.event.repository.name }}-cargo
+        #   key: ${{ github.event.repository.name }}-${{ github.sha }}-cargo
 
       ## If cargo cache is not found, install nextest
       - name: Install nextest
@@ -67,15 +68,16 @@ jobs:
       - name: Save Cache
         if: steps.check_cache.outputs.cache-hit != 'true'
         id: save_cache
-        uses: actions/cache/save@88522ab9f39a2ea568f7027eddc7d8d8bc9d59c8 # v3.3.1
-        with:
-          path: |
-            ~/.cargo/bin/
-            ~/.cargo/registry/index/
-            ~/.cargo/registry/cache/
-            ~/.cargo/git/db/
-          # key: ${{ github.event.repository.name }}-cargo
-          key: ${{ github.event.repository.name }}-${{ github.sha }}-cargo
+        uses: wileyj/runner-cache/save/cargo@main
+        # uses: actions/cache/save@88522ab9f39a2ea568f7027eddc7d8d8bc9d59c8 # v3.3.1
+        # with:
+        #   path: |
+        #     ~/.cargo/bin/
+        #     ~/.cargo/registry/index/
+        #     ~/.cargo/registry/cache/
+        #     ~/.cargo/git/db/
+        #   # key: ${{ github.event.repository.name }}-cargo
+        #   key: ${{ github.event.repository.name }}-${{ github.sha }}-cargo
 
   bitcoin-binary:
     name: Bitcoin Binary
@@ -83,12 +85,14 @@ jobs:
     steps:
       ## Perform a lookup to check if the cache already exists
       - name: Check Bitcoin Cache
-        uses: actions/cache@88522ab9f39a2ea568f7027eddc7d8d8bc9d59c8 # v3.3.1
         id: check_cache
-        with:
-          lookup-only: true
-          path: /tmp/bitcoin
-          key: ${{ github.event.repository.name }}-bitcoin-binaries
+        uses: wileyj/runner-cache/check/bitcoin@main
+        # uses: actions/cache@88522ab9f39a2ea568f7027eddc7d8d8bc9d59c8 # v3.3.1
+        # with:
+        #   lookup-only: true
+        #   path: /tmp/bitcoin
+        #   key: ${{ github.event.repository.name }}-bitcoin-binaries
+
       ## if bitcoin cache is not found, download and extract it
       - name: Install Bitcoin Binary
         if: steps.check_cache.outputs.cache-hit != 'true'
@@ -101,10 +105,11 @@ jobs:
       - name: Save Cache
         if: steps.check_cache.outputs.cache-hit != 'true'
         id: save_cache
-        uses: actions/cache/save@88522ab9f39a2ea568f7027eddc7d8d8bc9d59c8 # v3.3.1
-        with:
-          path: /tmp/bitcoin
-          key: ${{ github.event.repository.name }}-bitcoin-binaries
+        uses: wileyj/runner-cache/save/bitcoin@main
+        # uses: actions/cache/save@88522ab9f39a2ea568f7027eddc7d8d8bc9d59c8 # v3.3.1
+        # with:
+        #   path: /tmp/bitcoin
+        #   key: ${{ github.event.repository.name }}-bitcoin-binaries
 
   nextest-archive:
     name: Test Archive
@@ -114,35 +119,38 @@ jobs:
     steps:
       ## Perform a lookup to check if the target cache already exists
       - name: Check Target Cache
-        uses: actions/cache@88522ab9f39a2ea568f7027eddc7d8d8bc9d59c8 # v3.3.1
         id: check_target_cache
-        with:
-          lookup-only: true
-          path: ./target
-          # key: ${{ github.event.repository.name }}-target
-          key: ${{ github.event.repository.name }}-${{ github.sha }}-target
+        uses: wileyj/runner-cache/check/target@main
+        # uses: actions/cache@88522ab9f39a2ea568f7027eddc7d8d8bc9d59c8 # v3.3.1
+        # with:
+        #   lookup-only: true
+        #   path: ./target
+        #   # key: ${{ github.event.repository.name }}-target
+        #   key: ${{ github.event.repository.name }}-${{ github.sha }}-target
 
       ## Perform a lookup to check if the test archive cache already exists
       - name: Check Test Archive Cache
-        uses: actions/cache@88522ab9f39a2ea568f7027eddc7d8d8bc9d59c8 # v3.3.1
         id: check_test_archive_cache
-        with:
-          lookup-only: true
-          path: /tmp/test_archive.tar.zst
-          # key: ${{ github.event.repository.name }}-test-archive
-          key: ${{ github.event.repository.name }}-${{ github.sha }}-test-archive
+        uses: wileyj/runner-cache/check/test-archive@main
+        # uses: actions/cache@88522ab9f39a2ea568f7027eddc7d8d8bc9d59c8 # v3.3.1
+        # with:
+        #   lookup-only: true
+        #   path: /tmp/test_archive.tar.zst
+        #   # key: ${{ github.event.repository.name }}-test-archive
+        #   key: ${{ github.event.repository.name }}-${{ github.sha }}-test-archive
 
       ## Perform a lookup to check if the genesis test archive cache already exists
       - name: Check Genesis Test Archive Cache
-        uses: actions/cache@88522ab9f39a2ea568f7027eddc7d8d8bc9d59c8 # v3.3.1
         id: check_genesis_archive_cache
-        with:
-          lookup-only: true
-          path: /tmp/genesis_archive.tar.zst
-          # key: ${{ github.event.repository.name }}-genesis-archive
-          key: ${{ github.event.repository.name }}-${{ github.sha }}-genesis-archive
+        uses: wileyj/runner-cache/check/genesis-test-archive@main
+        # uses: actions/cache@88522ab9f39a2ea568f7027eddc7d8d8bc9d59c8 # v3.3.1
+        # with:
+        #   lookup-only: true
+        #   path: /tmp/genesis_archive.tar.zst
+        #   # key: ${{ github.event.repository.name }}-genesis-archive
+        #   key: ${{ github.event.repository.name }}-${{ github.sha }}-genesis-archive
 
-      ## If all of the caches are found, checkout the code
+      ## If any of the caches are found, checkout the code
       ##   - Target cache
       ##   - Test archive cache
       ##   - Genesis test archive cache
@@ -154,7 +162,7 @@ jobs:
         id: git_checkout
         uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
 
-      ## If all of the caches are found, install rust toolchain
+      ## If any of the caches are found, install rust toolchain
       ##   - Target cache
       ##   - Test archive cache
       ##   - Genesis test archive cache
@@ -170,7 +178,7 @@ jobs:
           components: llvm-tools-preview
           cache: false
 
-      ## If all of the caches are found, restore the cargo cache
+      ## If any of the caches are found, restore the cargo cache
       ##   - Target cache
       ##   - Nextest archive cache
       ##   - Genesis nextest archive cache
@@ -180,21 +188,22 @@ jobs:
           steps.check_test_archive_cache.outputs.cache-hit != 'true' || 
           steps.check_genesis_archive_cache.outputs.cache-hit != 'true'
         id: restore_cargo_cache
-        uses: Wandalen/wretry.action@a163f62ae554a8f3cbe27b23db15b60c0ae2e93c # v1.3.0
-        with:
-          action: actions/cache/restore@88522ab9f39a2ea568f7027eddc7d8d8bc9d59c8 # v3.3.1
-          with: |
-            fail-on-cache-miss: true
-            path: |
-              ~/.cargo/bin/
-              ~/.cargo/registry/index/
-              ~/.cargo/registry/cache/
-              ~/.cargo/git/db/
-            key: ${{ github.event.repository.name }}-${{ github.sha }}-cargo
-          attempt_limit: 3
-          attempt_delay: 10000
+        uses: wileyj/runner-cache/restore/cargo@main
+        # uses: Wandalen/wretry.action@a163f62ae554a8f3cbe27b23db15b60c0ae2e93c # v1.3.0
+        # with:
+        #   action: actions/cache/restore@88522ab9f39a2ea568f7027eddc7d8d8bc9d59c8 # v3.3.1
+        #   with: |
+        #     fail-on-cache-miss: true
+        #     path: |
+        #       ~/.cargo/bin/
+        #       ~/.cargo/registry/index/
+        #       ~/.cargo/registry/cache/
+        #       ~/.cargo/git/db/
+        #     key: ${{ github.event.repository.name }}-${{ github.sha }}-cargo
+        #   attempt_limit: 3
+        #   attempt_delay: 10000
 
-      ## If all of the caches are found, build and archive tests
+      ## If any of the caches are found, build and archive tests
       ##   - Target cache
       ##   - Nextest archive cache
       ##   - Genesis nextest archive cache
@@ -212,7 +221,7 @@ jobs:
             --locked \
             --archive-file /tmp/test_archive.tar.zst
 
-      ## If all of the caches are found, build and archive genesis tests
+      ## If any of the caches are not found, build and archive genesis tests
       ##   - Target cache
       ##   - Nextest archive cache
       ##   - Genesis nextest archive cache
@@ -231,7 +240,7 @@ jobs:
             --features prod-genesis-chainstate \
             --archive-file /tmp/genesis_archive.tar.zst
 
-      ## If all of the caches are found, save test archive cache
+      ## If any of the caches are not found, save test archive cache
       ##   - Target cache
       ##   - Nextest archive cache
       ##   - Genesis nextest archive cache
@@ -241,13 +250,14 @@ jobs:
           steps.check_test_archive_cache.outputs.cache-hit != 'true' || 
           steps.check_genesis_archive_cache.outputs.cache-hit != 'true'
         id: save_nextest_cache
-        uses: actions/cache/save@88522ab9f39a2ea568f7027eddc7d8d8bc9d59c8 # v3.3.1
-        with:
-          path: /tmp/test_archive.tar.zst
-          # key: ${{ github.event.repository.name }}-test-archive
-          key: ${{ github.event.repository.name }}-${{ github.sha }}-test-archive
+        uses: wileyj/runner-cache/save/test-archive@main
+        # uses: actions/cache/save@88522ab9f39a2ea568f7027eddc7d8d8bc9d59c8 # v3.3.1
+        # with:
+        #   path: /tmp/test_archive.tar.zst
+        #   # key: ${{ github.event.repository.name }}-test-archive
+        #   key: ${{ github.event.repository.name }}-${{ github.sha }}-test-archive
 
-      ## If all of the caches are found, save genesis test archive cache
+      ## If any of the caches are not found, save genesis test archive cache
       ##   - Target cache
       ##   - Nextest archive cache
       ##   - Genesis nextest archive cache
@@ -257,13 +267,14 @@ jobs:
           steps.check_test_archive_cache.outputs.cache-hit != 'true' || 
           steps.check_genesis_archive_cache.outputs.cache-hit != 'true'
         id: save_genesis_cache
-        uses: actions/cache/save@88522ab9f39a2ea568f7027eddc7d8d8bc9d59c8 # v3.3.1
-        with:
-          path: /tmp/test_archive.tar.zst
-          # key: ${{ github.event.repository.name }}-genesis-archive
-          key: ${{ github.event.repository.name }}-${{ github.sha }}-test-archive
+        uses: wileyj/runner-cache/save/genesis-test-archive@main
+        # uses: actions/cache/save@88522ab9f39a2ea568f7027eddc7d8d8bc9d59c8 # v3.3.1
+        # with:
+        #   path: /tmp/test_archive.tar.zst
+        #   # key: ${{ github.event.repository.name }}-genesis-archive
+        #   key: ${{ github.event.repository.name }}-${{ github.sha }}-test-archive
 
-      ## If all of the caches are found, save target cache
+      ## If any of the caches are not found, save target cache
       ##   - Target cache
       ##   - Nextest archive cache
       ##   - Genesis nextest archive cache
@@ -273,8 +284,9 @@ jobs:
           steps.check_test_archive_cache.outputs.cache-hit != 'true' || 
           steps.check_genesis_archive_cache.outputs.cache-hit != 'true'
         id: save_target_cache
-        uses: actions/cache/save@88522ab9f39a2ea568f7027eddc7d8d8bc9d59c8 # v3.3.1
-        with:
-          path: ./target
-          # key: ${{ github.event.repository.name }}-target
-          key: ${{ github.event.repository.name }}-${{ github.sha }}-target
+        uses: wileyj/runner-cache/save/target@main
+        # uses: actions/cache/save@88522ab9f39a2ea568f7027eddc7d8d8bc9d59c8 # v3.3.1
+        # with:
+        #   path: ./target
+        #   # key: ${{ github.event.repository.name }}-target
+        #   key: ${{ github.event.repository.name }}-${{ github.sha }}-target
