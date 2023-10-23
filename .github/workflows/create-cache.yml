@@ -15,12 +15,6 @@ env:
   LLVM_PROFILE_FILE: "stacks-blockchain-%p-%m.profraw"
   BTC_VERSION: "0.20.0"
 
-## Since this is used in several different steps, do not cancel it when mutliple jobs are running
-# concurrency:
-#   group: create-cache-${{ github.workflow }}-${{ github.ref }}
-#   # Only cancel in progress if this is for a PR
-#   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
-
 ##
 ## Cache will exist longer than workflow execution so other runners have access
 ##   ex: a failed job should have access to the cache for however long `cleanup.yml` is set to delete old caches
@@ -35,16 +29,6 @@ jobs:
       - name: Check Cargo Cache
         id: check_cache
         uses: wileyj/runner-cache/cargo@main
-        # uses: actions/cache@88522ab9f39a2ea568f7027eddc7d8d8bc9d59c8 # v3.3.1
-        # with:
-        #   lookup-only: true
-        #   path: |
-        #     ~/.cargo/bin/
-        #     ~/.cargo/registry/index/
-        #     ~/.cargo/registry/cache/
-        #     ~/.cargo/git/db/
-        #   # key: ${{ github.event.repository.name }}-cargo
-        #   key: ${{ github.event.repository.name }}-${{ github.sha }}-cargo
 
       ## If cargo cache is not found, install nextest
       - name: Install nextest
@@ -71,15 +55,6 @@ jobs:
         uses: wileyj/runner-cache/cargo@main
         with:
           action: save
-        # uses: actions/cache/save@88522ab9f39a2ea568f7027eddc7d8d8bc9d59c8 # v3.3.1
-        # with:
-        #   path: |
-        #     ~/.cargo/bin/
-        #     ~/.cargo/registry/index/
-        #     ~/.cargo/registry/cache/
-        #     ~/.cargo/git/db/
-        #   # key: ${{ github.event.repository.name }}-cargo
-        #   key: ${{ github.event.repository.name }}-${{ github.sha }}-cargo
 
   bitcoin-binary:
     name: Bitcoin Binary
@@ -89,11 +64,6 @@ jobs:
       - name: Check Bitcoin Cache
         id: check_cache
         uses: wileyj/runner-cache/bitcoin@main
-        # uses: actions/cache@88522ab9f39a2ea568f7027eddc7d8d8bc9d59c8 # v3.3.1
-        # with:
-        #   lookup-only: true
-        #   path: /tmp/bitcoin
-        #   key: ${{ github.event.repository.name }}-bitcoin-binaries
 
       ## if bitcoin cache is not found, download and extract it
       - name: Install Bitcoin Binary
@@ -110,10 +80,6 @@ jobs:
         uses: wileyj/runner-cache/bitcoin@main
         with:
           action: save
-        # uses: actions/cache/save@88522ab9f39a2ea568f7027eddc7d8d8bc9d59c8 # v3.3.1
-        # with:
-        #   path: /tmp/bitcoin
-        #   key: ${{ github.event.repository.name }}-bitcoin-binaries
 
   nextest-archive:
     name: Test Archive
@@ -125,34 +91,16 @@ jobs:
       - name: Check Target Cache
         id: check_target_cache
         uses: wileyj/runner-cache/target@main
-        # uses: actions/cache@88522ab9f39a2ea568f7027eddc7d8d8bc9d59c8 # v3.3.1
-        # with:
-        #   lookup-only: true
-        #   path: ./target
-        #   # key: ${{ github.event.repository.name }}-target
-        #   key: ${{ github.event.repository.name }}-${{ github.sha }}-target
 
       ## Perform a lookup to check if the test archive cache already exists
       - name: Check Test Archive Cache
         id: check_test_archive_cache
         uses: wileyj/runner-cache/test-archive@main
-        # uses: actions/cache@88522ab9f39a2ea568f7027eddc7d8d8bc9d59c8 # v3.3.1
-        # with:
-        #   lookup-only: true
-        #   path: /tmp/test_archive.tar.zst
-        #   # key: ${{ github.event.repository.name }}-test-archive
-        #   key: ${{ github.event.repository.name }}-${{ github.sha }}-test-archive
 
       ## Perform a lookup to check if the genesis test archive cache already exists
       - name: Check Genesis Test Archive Cache
         id: check_genesis_archive_cache
         uses: wileyj/runner-cache/genesis-test-archive@main
-        # uses: actions/cache@88522ab9f39a2ea568f7027eddc7d8d8bc9d59c8 # v3.3.1
-        # with:
-        #   lookup-only: true
-        #   path: /tmp/genesis_archive.tar.zst
-        #   # key: ${{ github.event.repository.name }}-genesis-archive
-        #   key: ${{ github.event.repository.name }}-${{ github.sha }}-genesis-archive
 
       ## If any of the caches are found, checkout the code
       ##   - Target cache
@@ -195,19 +143,6 @@ jobs:
         uses: wileyj/runner-cache/cargo@main
         with:
           action: restore
-        # uses: Wandalen/wretry.action@a163f62ae554a8f3cbe27b23db15b60c0ae2e93c # v1.3.0
-        # with:
-        #   action: actions/cache/restore@88522ab9f39a2ea568f7027eddc7d8d8bc9d59c8 # v3.3.1
-        #   with: |
-        #     fail-on-cache-miss: true
-        #     path: |
-        #       ~/.cargo/bin/
-        #       ~/.cargo/registry/index/
-        #       ~/.cargo/registry/cache/
-        #       ~/.cargo/git/db/
-        #     key: ${{ github.event.repository.name }}-${{ github.sha }}-cargo
-        #   attempt_limit: 3
-        #   attempt_delay: 10000
 
       ## If any of the caches are found, build and archive tests
       ##   - Target cache
@@ -259,11 +194,6 @@ jobs:
         uses: wileyj/runner-cache/test-archive@main
         with:
           action: save
-        # uses: actions/cache/save@88522ab9f39a2ea568f7027eddc7d8d8bc9d59c8 # v3.3.1
-        # with:
-        #   path: /tmp/test_archive.tar.zst
-        #   # key: ${{ github.event.repository.name }}-test-archive
-        #   key: ${{ github.event.repository.name }}-${{ github.sha }}-test-archive
 
       ## If any of the caches are not found, save genesis test archive cache
       ##   - Target cache
@@ -278,11 +208,6 @@ jobs:
         uses: wileyj/runner-cache/genesis-test-archive@main
         with:
           action: save
-        # uses: actions/cache/save@88522ab9f39a2ea568f7027eddc7d8d8bc9d59c8 # v3.3.1
-        # with:
-        #   path: /tmp/test_archive.tar.zst
-        #   # key: ${{ github.event.repository.name }}-genesis-archive
-        #   key: ${{ github.event.repository.name }}-${{ github.sha }}-test-archive
 
       ## If any of the caches are not found, save target cache
       ##   - Target cache
@@ -297,8 +222,3 @@ jobs:
         uses: wileyj/runner-cache/target@main
         with:
           action: save
-        # uses: actions/cache/save@88522ab9f39a2ea568f7027eddc7d8d8bc9d59c8 # v3.3.1
-        # with:
-        #   path: ./target
-        #   # key: ${{ github.event.repository.name }}-target
-        #   key: ${{ github.event.repository.name }}-${{ github.sha }}-target

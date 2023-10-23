@@ -59,19 +59,6 @@ jobs:
         uses: wileyj/runner-cache/cargo@main
         with:
           action: restore
-        # uses: Wandalen/wretry.action@a163f62ae554a8f3cbe27b23db15b60c0ae2e93c # v1.3.0
-        # with:
-        #   action: actions/cache/restore@88522ab9f39a2ea568f7027eddc7d8d8bc9d59c8 # v3.3.1
-        #   with: |
-        #     fail-on-cache-miss: true
-        #     path: |
-        #       ~/.cargo/bin/
-        #       ~/.cargo/registry/index/
-        #       ~/.cargo/registry/cache/
-        #       ~/.cargo/git/db/
-        #     key: ${{ github.event.repository.name }}-${{ github.sha }}-cargo
-        #   attempt_limit: 3
-        #   attempt_delay: 10000
 
       ## Restore nextest target cache data
       ##   - use wretry action, to retry on a failed upload 3x
@@ -80,15 +67,6 @@ jobs:
         uses: wileyj/runner-cache/target@main
         with:
           action: restore
-        # uses: Wandalen/wretry.action@a163f62ae554a8f3cbe27b23db15b60c0ae2e93c # v1.3.0
-        # with:
-        #   action: actions/cache/restore@88522ab9f39a2ea568f7027eddc7d8d8bc9d59c8 # v3.3.1
-        #   with: |
-        #     fail-on-cache-miss: true
-        #     path: ./target
-        #     key: ${{ github.event.repository.name }}-${{ github.sha }}-target
-        #   attempt_limit: 3
-        #   attempt_delay: 10000
                 
       ## Restore bitcoin cache data
       ##   - use wretry action, to retry on a failed upload 3x
@@ -97,15 +75,6 @@ jobs:
         uses: wileyj/runner-cache/bitcoin@main
         with:
           action: restore
-        # uses: Wandalen/wretry.action@a163f62ae554a8f3cbe27b23db15b60c0ae2e93c # v1.3.0
-        # with:
-        #   action: actions/cache/restore@88522ab9f39a2ea568f7027eddc7d8d8bc9d59c8 # v3.3.1
-        #   with: |
-        #     fail-on-cache-miss: true
-        #     path: /tmp/bitcoin
-        #     key: ${{ github.event.repository.name }}-bitcoin-binaries
-        #   attempt_limit: 3
-        #   attempt_delay: 10000
 
       ## Restore genesis nextest archive cache data
       ##   - use wretry action, to retry on a failed upload 3x
@@ -114,15 +83,6 @@ jobs:
         uses: wileyj/runner-cache/genesis-test-archive@main
         with:
           action: restore
-        # uses: Wandalen/wretry.action@a163f62ae554a8f3cbe27b23db15b60c0ae2e93c # v1.3.0
-        # with:
-        #   action: actions/cache/restore@88522ab9f39a2ea568f7027eddc7d8d8bc9d59c8 # v3.3.1
-        #   with: |
-        #     fail-on-cache-miss: true
-        #     path: /tmp/genesis_archive.tar.zst
-        #     key: ${{ github.event.repository.name }}-${{ github.sha }}-genesis-archive
-        #   attempt_limit: 3
-        #   attempt_delay: 10000
           
       ## Symlink bitoind to $PATH
       - name: Link Bitcoin Binary

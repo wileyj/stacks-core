@@ -92,7 +92,6 @@ jobs:
     name: Create Release
     needs:
       - rustfmt
-    # # uses: wileyj/stacks-blockchain/.github/workflows/github-release.yml@master
     uses: ./.github/workflows/github-release.yml
     with:
       tag: ${{ inputs.tag }}
@@ -121,7 +120,6 @@ jobs:
         )
       )
     name: Docker Image (Source)
-    # uses: wileyj/stacks-blockchain/.github/workflows/image-build-debian-source.yml@master
     uses: ./.github/workflows/image-build-source.yml
     needs:
       - rustfmt
@@ -162,7 +160,6 @@ jobs:
     needs:
       - rustfmt
     uses: ./.github/workflows/create-cache.yml
-    # uses: wileyj/stacks-blockchain/.github/workflows/create_cache.yml@master
 
   ## Tests to run regularly
   ##
@@ -184,7 +181,6 @@ jobs:
     needs:
       - rustfmt
       - create-cache
-    # uses: wileyj/stacks-blockchain/.github/workflows/build-source-binary.yml@master
     uses: ./.github/workflows/stacks-blockchain-tests.yml
 
   bitcoin-tests:
@@ -200,7 +196,6 @@ jobs:
     needs:
       - rustfmt
       - create-cache
-    # uses: wileyj/stacks-blockchain/.github/workflows/image-build-debian-source.yml@master
     uses: ./.github/workflows/bitcoin-tests.yml
 
   ## Test to run on a tagged release
@@ -213,7 +208,6 @@ jobs:
     needs:
       - rustfmt
       - create-cache
-    # uses: wileyj/stacks-blockchain/.github/workflows/build-source-binary.yml@master
     uses: ./.github/workflows/atlas-tests.yml
 
   epoch-tests:
@@ -222,7 +216,6 @@ jobs:
     needs:
       - rustfmt
       - create-cache
-    # uses: wileyj/stacks-blockchain/.github/workflows/build-source-binary.yml@master
     uses: ./.github/workflows/epoch-tests.yml
 
   slow-tests:
@@ -232,5 +225,4 @@ jobs:
       - rustfmt
       # - leaked-cred-test
       - create-cache
-    # uses: wileyj/stacks-blockchain/.github/workflows/build-source-binary.yml@master
     uses: ./.github/workflows/slow-tests.yml
