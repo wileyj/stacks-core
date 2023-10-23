@@ -34,7 +34,7 @@ jobs:
       ## Perform a lookup to check if the cache already exists
       - name: Check Cargo Cache
         id: check_cache
-        uses: wileyj/runner-cache/check/cargo@main
+        uses: wileyj/runner-cache/cargo@main
         # uses: actions/cache@88522ab9f39a2ea568f7027eddc7d8d8bc9d59c8 # v3.3.1
         # with:
         #   lookup-only: true
@@ -68,7 +68,9 @@ jobs:
       - name: Save Cache
         if: steps.check_cache.outputs.cache-hit != 'true'
         id: save_cache
-        uses: wileyj/runner-cache/save/cargo@main
+        uses: wileyj/runner-cache/cargo@main
+        with:
+          action: save
         # uses: actions/cache/save@88522ab9f39a2ea568f7027eddc7d8d8bc9d59c8 # v3.3.1
         # with:
         #   path: |
@@ -86,7 +88,7 @@ jobs:
       ## Perform a lookup to check if the cache already exists
       - name: Check Bitcoin Cache
         id: check_cache
-        uses: wileyj/runner-cache/check/bitcoin@main
+        uses: wileyj/runner-cache/bitcoin@main
         # uses: actions/cache@88522ab9f39a2ea568f7027eddc7d8d8bc9d59c8 # v3.3.1
         # with:
         #   lookup-only: true
@@ -105,7 +107,9 @@ jobs:
       - name: Save Cache
         if: steps.check_cache.outputs.cache-hit != 'true'
         id: save_cache
-        uses: wileyj/runner-cache/save/bitcoin@main
+        uses: wileyj/runner-cache/bitcoin@main
+        with:
+          action: save
         # uses: actions/cache/save@88522ab9f39a2ea568f7027eddc7d8d8bc9d59c8 # v3.3.1
         # with:
         #   path: /tmp/bitcoin
@@ -120,7 +124,7 @@ jobs:
       ## Perform a lookup to check if the target cache already exists
       - name: Check Target Cache
         id: check_target_cache
-        uses: wileyj/runner-cache/check/target@main
+        uses: wileyj/runner-cache/target@main
         # uses: actions/cache@88522ab9f39a2ea568f7027eddc7d8d8bc9d59c8 # v3.3.1
         # with:
         #   lookup-only: true
@@ -131,7 +135,7 @@ jobs:
       ## Perform a lookup to check if the test archive cache already exists
       - name: Check Test Archive Cache
         id: check_test_archive_cache
-        uses: wileyj/runner-cache/check/test-archive@main
+        uses: wileyj/runner-cache/test-archive@main
         # uses: actions/cache@88522ab9f39a2ea568f7027eddc7d8d8bc9d59c8 # v3.3.1
         # with:
         #   lookup-only: true
@@ -142,7 +146,7 @@ jobs:
       ## Perform a lookup to check if the genesis test archive cache already exists
       - name: Check Genesis Test Archive Cache
         id: check_genesis_archive_cache
-        uses: wileyj/runner-cache/check/genesis-test-archive@main
+        uses: wileyj/runner-cache/genesis-test-archive@main
         # uses: actions/cache@88522ab9f39a2ea568f7027eddc7d8d8bc9d59c8 # v3.3.1
         # with:
         #   lookup-only: true
@@ -188,7 +192,9 @@ jobs:
           steps.check_test_archive_cache.outputs.cache-hit != 'true' || 
           steps.check_genesis_archive_cache.outputs.cache-hit != 'true'
         id: restore_cargo_cache
-        uses: wileyj/runner-cache/restore/cargo@main
+        uses: wileyj/runner-cache/cargo@main
+        with:
+          action: restore
         # uses: Wandalen/wretry.action@a163f62ae554a8f3cbe27b23db15b60c0ae2e93c # v1.3.0
         # with:
         #   action: actions/cache/restore@88522ab9f39a2ea568f7027eddc7d8d8bc9d59c8 # v3.3.1
@@ -250,7 +256,9 @@ jobs:
           steps.check_test_archive_cache.outputs.cache-hit != 'true' || 
           steps.check_genesis_archive_cache.outputs.cache-hit != 'true'
         id: save_nextest_cache
-        uses: wileyj/runner-cache/save/test-archive@main
+        uses: wileyj/runner-cache/test-archive@main
+        with:
+          action: save
         # uses: actions/cache/save@88522ab9f39a2ea568f7027eddc7d8d8bc9d59c8 # v3.3.1
         # with:
         #   path: /tmp/test_archive.tar.zst
@@ -267,7 +275,9 @@ jobs:
           steps.check_test_archive_cache.outputs.cache-hit != 'true' || 
           steps.check_genesis_archive_cache.outputs.cache-hit != 'true'
         id: save_genesis_cache
-        uses: wileyj/runner-cache/save/genesis-test-archive@main
+        uses: wileyj/runner-cache/genesis-test-archive@main
+        with:
+          action: save
         # uses: actions/cache/save@88522ab9f39a2ea568f7027eddc7d8d8bc9d59c8 # v3.3.1
         # with:
         #   path: /tmp/test_archive.tar.zst
@@ -284,7 +294,9 @@ jobs:
           steps.check_test_archive_cache.outputs.cache-hit != 'true' || 
           steps.check_genesis_archive_cache.outputs.cache-hit != 'true'
         id: save_target_cache
-        uses: wileyj/runner-cache/save/target@main
+        uses: wileyj/runner-cache/target@main
+        with:
+          action: save
         # uses: actions/cache/save@88522ab9f39a2ea568f7027eddc7d8d8bc9d59c8 # v3.3.1
         # with:
         #   path: ./target

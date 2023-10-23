@@ -56,25 +56,33 @@ jobs:
       ##   - use wretry action, to retry on a failed upload 3x
       - name:  Restore Cargo Cache
         id: restore_cargo_cache
-        uses: wileyj/runner-cache/restore/cargo@main
+        uses: wileyj/runner-cache/cargo@main
+        with:
+          action: restore
 
       ## Restore nextest target cache data
       ##   - use wretry action, to retry on a failed upload 3x
       - name:  Restore Target Cache
         id: restore_target_cache
-        uses: wileyj/runner-cache/restore/target@main
+        uses: wileyj/runner-cache/target@main
+        with:
+          action: restore
 
       ## Restore bitcoin cache data
       ##   - use wretry action, to retry on a failed upload 3x
       - name:  Restore Bitcoin Binary Cache
         id: restore_bitcoin_cache
-        uses: wileyj/runner-cache/restore/bitcoin@main
- 
+        uses: wileyj/runner-cache/bitcoin@main
+        with:
+          action: restore
+
       ## Restore genesis nextest archive cache data
       ##   - use wretry action, to retry on a failed upload 3x
       - name:  Restore Genesis Archive Cache
         id: restore_test
-        uses: wileyj/runner-cache/restore/genesis-test-archive@main
+        uses: wileyj/runner-cache/genesis-test-archive@main
+        with:
+          action: restore
 
       ## Symlink bitoind to $PATH
       - name: Link Bitcoin Binary
