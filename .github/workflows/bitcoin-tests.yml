@@ -15,7 +15,6 @@ env:
   SEGMENT_DOWNLOAD_TIMEOUT_MINS: 15
   RETRIES: 3
   RETRY_DELAY: 10000
-  TEST_TIMEOUT: 30
 
 concurrency:
   group: bitcoin-tests-${{ github.workflow }}-${{ github.ref }}
@@ -132,7 +131,7 @@ jobs:
       ##   - timeout after 30 minutes
       - name: Run Tests
         id: run_tests
-        timeout-minutes: ${{ env.TEST_TIMEOUT}}
+        timeout-minutes: 30
         run: |
           cargo nextest run \
             --test-threads 1  \
