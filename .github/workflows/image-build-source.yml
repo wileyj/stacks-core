@@ -40,15 +40,8 @@ jobs:
           images: |
             ${{env.docker-org}}/${{ github.event.repository.name }}
           tags: |
-            type=raw,value=latest,enable=${{ inputs.tag != '' && matrix.dist == 'alpine' && (github.ref == format('refs/heads/{0}', github.event.repository.default_branch) )}}
-            type=raw,value=${{ inputs.tag }}-${{ matrix.dist }},enable=${{ inputs.tag != '' && matrix.dist == 'alpine' }}
-            type=raw,value=${{ inputs.tag }},enable=${{ inputs.tag != '' && matrix.dist == 'alpine' }}
-            type=ref,event=tag,enable=${{ inputs.tag != '' && matrix.dist == 'alpine' }}
-            type=raw,value=${{ env.BRANCH_NAME }},enable=${{ matrix.dist == 'debian' }}
-            type=ref,event=pr,enable=${{ matrix.dist == 'debian' }}
-          # tags: |
-          #   type=raw,value=${{ env.BRANCH_NAME }},enable=${{ matrix.dist == 'debian' }}
-          #   type=ref,event=pr,enable=${{ matrix.dist == 'debian' }}
+            type=raw,value=${{ env.BRANCH_NAME }}
+            type=ref,event=pr
 
       ## Build docker image
       - name: Build and Push ( ${{matrix.dist}} )

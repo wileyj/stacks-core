@@ -90,23 +90,28 @@ jobs:
       ##  Alpine Image                                     ##
       #######################################################
       ## Set Alpine docker metatdata
-      - name: Docker Metadata ( Alpine )
-        if: ${{ matrix.dist == 'alpine' }}
-        id: docker_metadata_alpine
+      # - name: Docker Metadata ( Alpine )
+      - name: Docker Metadata ( ${{matrix.dist}} )
+        # if: ${{ matrix.dist == 'alpine' }}
+        # id: docker_metadata_alpine
+        id: docker_metadata
         uses: docker/metadata-action@818d4b7b91585d195f67373fd9cb0332e31a7175 #v4.6.0
         with:
           images: |
             ${{env.docker-org}}/${{ github.event.repository.name }}
           tags: |
-            type=raw,value=latest,enable=${{ inputs.tag != '' && (github.ref == format('refs/heads/{0}', github.event.repository.default_branch) )}}
-            type=raw,value=${{ inputs.tag }}-${{ matrix.dist }},enable=${{ inputs.tag != '' }}
-            type=raw,value=${{ inputs.tag }},enable=${{ inputs.tag != '' }}
-            type=ref,event=tag,enable=true
+            type=raw,value=latest,enable=${{ inputs.tag != '' && (github.ref == format('refs/heads/{0}', github.event.repository.default_branch) ) && matrix.dist == 'alpine' }}
+            type=raw,value=${{ inputs.tag }}-${{ matrix.dist }},enable=${{ inputs.tag != '' && matrix.dist == 'alpine'}}
+            type=raw,value=${{ inputs.tag }},enable=${{ inputs.tag != '' && matrix.dist == 'alpine' }}
+            type=ref,event=tag,enable=${{ matrix.dist == 'alpine' }}
+            type=raw,value=latest-${{ matrix.dist }},enable=${{ inputs.tag != '' && (github.ref == format('refs/heads/{0}', github.event.repository.default_branch) ) && matrix.dist == 'debian' }}
+            type=raw,value=${{ inputs.tag }}-${{ matrix.dist }},enable=${{ inputs.tag != '' && matrix.dist == 'debian' }}
 
       ## Build Alpine based docker image
-      - name: Build and Push ( Alpine )
-        if: ${{ matrix.dist == 'alpine' }}
-        id: docker_build_alpine
+      - name: Build and Push ( ${{matrix.dist}} )
+        # if: ${{ matrix.dist == 'alpine' }}
+        # id: docker_build_alpine
+        id: docker_build
         uses: docker/build-push-action@2eb1c1961a95fc15694676618e422e8ba1d63825 # v4.1.1
         with:
           file: ./.github/actions/dockerfiles/Dockerfile.${{ matrix.dist }}-binary
@@ -120,34 +125,34 @@ jobs:
             GIT_COMMIT=${{ env.GITHUB_SHA_SHORT }}
           push: ${{ env.DOCKER_PUSH }}
 
-      #######################################################
-      ##  Debian Image                                     ##
-      #######################################################
-      ## Set Debian docker metatdata
-      - name: Docker Metadata ( Debian )
-        if: ${{ matrix.dist == 'debian' }}
-        id: docker_metadata_debian
-        uses: docker/metadata-action@818d4b7b91585d195f67373fd9cb0332e31a7175 #v4.6.0
-        with:
-          images: |
-            ${{env.docker-org}}/${{ github.event.repository.name }}
-          tags: |
-            type=raw,value=latest-${{ matrix.dist }},enable=${{ inputs.tag != '' && (github.ref == format('refs/heads/{0}', github.event.repository.default_branch) )}}
-            type=raw,value=${{ inputs.tag }}-${{ matrix.dist }},enable=${{ inputs.tag != '' }}
+      # #######################################################
+      # ##  Debian Image                                     ##
+      # #######################################################
+      # ## Set Debian docker metatdata
+      # - name: Docker Metadata ( Debian )
+      #   if: ${{ matrix.dist == 'debian' }}
+      #   id: docker_metadata_debian
+      #   uses: docker/metadata-action@818d4b7b91585d195f67373fd9cb0332e31a7175 #v4.6.0
+      #   with:
+      #     images: |
+      #       ${{env.docker-org}}/${{ github.event.repository.name }}
+      #     tags: |
+      #       type=raw,value=latest-${{ matrix.dist }},enable=${{ inputs.tag != '' && (github.ref == format('refs/heads/{0}', github.event.repository.default_branch) )}}
+      #       type=raw,value=${{ inputs.tag }}-${{ matrix.dist }},enable=${{ inputs.tag != '' }}
 
-      ## Build Debian based docker image
-      - name: Build and Push ( Debian )
-        if: ${{ matrix.dist == 'debian' }}
-        id: docker_build_debian
-        uses: docker/build-push-action@2eb1c1961a95fc15694676618e422e8ba1d63825 # v4.1.1
-        with:
-          file: ./.github/actions/dockerfiles/Dockerfile.${{ matrix.dist }}-binary
-          platforms: ${{ env.docker_platforms }}
-          tags: ${{ steps.docker_metadata_debian.outputs.tags }}
-          labels: ${{ steps.docker_metadata_debian.outputs.labels }}
-          build-args: |
-            TAG=${{ inputs.tag}}
-            STACKS_NODE_VERSION=${{ inputs.tag || env.GITHUB_SHA_SHORT }}
-            GIT_BRANCH=${{ env.GITHUB_REF_SHORT }}
-            GIT_COMMIT=${{ env.GITHUB_SHA_SHORT }}
-          push: ${{ env.DOCKER_PUSH }}
+      # ## Build Debian based docker image
+      # - name: Build and Push ( Debian )
+      #   if: ${{ matrix.dist == 'debian' }}
+      #   id: docker_build_debian
+      #   uses: docker/build-push-action@2eb1c1961a95fc15694676618e422e8ba1d63825 # v4.1.1
+      #   with:
+      #     file: ./.github/actions/dockerfiles/Dockerfile.${{ matrix.dist }}-binary
+      #     platforms: ${{ env.docker_platforms }}
+      #     tags: ${{ steps.docker_metadata_debian.outputs.tags }}
+      #     labels: ${{ steps.docker_metadata_debian.outputs.labels }}
+      #     build-args: |
+      #       TAG=${{ inputs.tag}}
+      #       STACKS_NODE_VERSION=${{ inputs.tag || env.GITHUB_SHA_SHORT }}
+      #       GIT_BRANCH=${{ env.GITHUB_REF_SHORT }}
+      #       GIT_COMMIT=${{ env.GITHUB_SHA_SHORT }}
+      #     push: ${{ env.DOCKER_PUSH }}
