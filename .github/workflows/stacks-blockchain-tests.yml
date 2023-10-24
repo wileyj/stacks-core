@@ -12,7 +12,10 @@ defaults:
 env:
   BITCOIND_TEST: 1
   RUST_BACKTRACE: full
-  SEGMENT_DOWNLOAD_TIMEOUT_MINS: 15
+  SEGMENT_DOWNLOAD_TIMEOUT_MINS: 3
+  RETRIES: 3
+  RETRY_DELAY: 10000
+  TEST_TIMEOUT: 30
 
 concurrency:
   group: stacks-blockchain-tests-${{ github.workflow }}-${{ github.ref }}
@@ -35,7 +38,7 @@ jobs:
       ## cleanup runner
       - name: Cleanup Runner
         id: runner_cleanup
-        uses: wileyj/runner-cleanup@main
+        uses: wileyj/actions/cleanup@main
 
       ## Checkout the code
       - name: Checkout the latest code
@@ -52,47 +55,32 @@ jobs:
           cache: false
 
       ## Restore cargo cache data
-      - name: Restore Cargo Cache
+      - name:  Restore Cargo Cache
         id: restore_cargo_cache
-        uses: actions/cache/restore@88522ab9f39a2ea568f7027eddc7d8d8bc9d59c8 # v3.3.1
+        uses: wileyj/actions/stacks-blockchain-cache/cargo@main
         with:
-          fail-on-cache-miss: true
-          path: |
-            ~/.cargo/bin/
-            ~/.cargo/registry/index/
-            ~/.cargo/registry/cache/
-            ~/.cargo/git/db/
-          # key: ${{ github.event.repository.name }}-cargo
-          key: ${{ github.event.repository.name }}-${{ github.sha }}-cargo
-
-      ## Restore bitcoin cache data
-      - name: Restore Bitcoin Binary Cache
-        id: restore_bitcoin_cache
-        uses: actions/cache/restore@88522ab9f39a2ea568f7027eddc7d8d8bc9d59c8 # v3.3.1
-        with:
-          fail-on-cache-miss: true
-          path: /tmp/bitcoin
-          key: ${{ github.event.repository.name }}-bitcoin-binaries
-
-      ## Restore genesis nextest archive cache data
-      - name: Restore Genesis Archive Cache
-        id: restore_test-archive_cache
-        uses: actions/cache/restore@88522ab9f39a2ea568f7027eddc7d8d8bc9d59c8 # v3.3.1
-        with:
-          fail-on-cache-miss: true
-          path: /tmp/genesis_archive.tar.zst
-          # key: ${{ github.event.repository.name }}-genesis-archive
-          key: ${{ github.event.repository.name }}-${{ github.sha }}-genesis-archive
+          action: restore
 
       ## Restore nextest target cache data
-      - name: Restore Target Cache
+      - name:  Restore Target Cache
         id: restore_target_cache
-        uses: actions/cache/restore@88522ab9f39a2ea568f7027eddc7d8d8bc9d59c8 # v3.3.1
+        uses: wileyj/actions/stacks-blockchain-cache/target@main
         with:
-          fail-on-cache-miss: true
-          path: ./target
-          # key: ${{ github.event.repository.name }}-target
-          key: ${{ github.event.repository.name }}-${{ github.sha }}-target
+          action: restore
+
+      ## Restore bitcoin cache data
+      - name:  Restore Bitcoin Binary Cache
+        id: restore_bitcoin_cache
+        uses: wileyj/actions/stacks-blockchain-cache/bitcoin@main
+        with:
+          action: restore
+
+      ## Restore genesis nextest archive cache data
+      - name:  Restore Genesis Archive Cache
+        id: restore_test
+        uses: wileyj/actions/stacks-blockchain-cache/genesis-test-archive@main
+        with:
+          action: restore
 
       ## Symlink bitoind to $PATH
       - name: Link Bitcoin Binary
@@ -132,8 +120,8 @@ jobs:
             name: large_genesis
             fail_ci_if_error: false
             verbose: true
-          attempt_limit: 3
-          attempt_delay: 10000
+          attempt_limit: ${{ env.RETRIES}}
+          attempt_delay: ${{ env.RETRY_DELAY}}
 
   # unit tests with code coverage
   unit-tests:
@@ -147,7 +135,7 @@ jobs:
       ## cleanup runner
       - name: Cleanup Runner
         id: runner_cleanup
-        uses: wileyj/runner-cleanup@main
+        uses: stacks-network/runner-cleanup@main
 
       ## checkout the code
       - name: Checkout the latest code
@@ -164,47 +152,32 @@ jobs:
           cache: false
 
       ## Restore cargo cache data
-      - name: Restore Cargo Cache
+      - name:  Restore Cargo Cache
         id: restore_cargo_cache
-        uses: actions/cache/restore@88522ab9f39a2ea568f7027eddc7d8d8bc9d59c8 # v3.3.1
+        uses: wileyj/runner-cache/cargo@main
         with:
-          fail-on-cache-miss: true
-          path: |
-            ~/.cargo/bin/
-            ~/.cargo/registry/index/
-            ~/.cargo/registry/cache/
-            ~/.cargo/git/db/
-          # key: ${{ github.event.repository.name }}-cargo
-          key: ${{ github.event.repository.name }}-${{ github.sha }}-cargo
+          action: restore
 
-      ## Restore bitcoin cache data
-      - name: Restore Bitcoin Binary Cache
-        id: restore_bitcoin_cache
-        uses: actions/cache/restore@88522ab9f39a2ea568f7027eddc7d8d8bc9d59c8 # v3.3.1
-        with:
-          fail-on-cache-miss: true
-          path: /tmp/bitcoin
-          key: ${{ github.event.repository.name }}-bitcoin-binaries
-
-      ## Restore test archive cache data
-      - name: Restore Test Archive Cache
-        id: restore_test-archive_cache
-        uses: actions/cache/restore@88522ab9f39a2ea568f7027eddc7d8d8bc9d59c8 # v3.3.1
-        with:
-          fail-on-cache-miss: true
-          path: /tmp/test_archive.tar.zst
-          # key: ${{ github.event.repository.name }}-test-archive
-          key: ${{ github.event.repository.name }}-${{ github.sha }}-test-archive
-
-      ## Restore target cache data
-      - name: Restore Target Cache
+      ## Restore nextest target cache data
+      - name:  Restore Target Cache
         id: restore_target_cache
-        uses: actions/cache/restore@88522ab9f39a2ea568f7027eddc7d8d8bc9d59c8 # v3.3.1
+        uses: wileyj/runner-cache/target@main
         with:
-          fail-on-cache-miss: true
-          path: ./target
-          # key: ${{ github.event.repository.name }}-target
-          key: ${{ github.event.repository.name }}-${{ github.sha }}-target
+          action: restore
+                
+      ## Restore bitcoin cache data
+      - name:  Restore Bitcoin Binary Cache
+        id: restore_bitcoin_cache
+        uses: wileyj/runner-cache/bitcoin@main
+        with:
+          action: restore
+
+      ## Restore nextest archive cache data
+      - name:  Restore Test Archive Cache
+        id: restore_test-archive_cache
+        uses: wileyj/runner-cache/test-archive@main
+        with:
+          action: restore
 
       ## Symlink bitoind to $PATH
       - name: Link Bitcoin Binary
@@ -217,7 +190,7 @@ jobs:
       ##   - timeout after 30 minutes
       - name: Run Tests
         id: run_tests
-        timeout-minutes: 30
+        timeout-minutes: ${{ env.TEST_TIMEOUT}}
         run: |
           cargo nextest run \
             --test-threads num-cpus \
@@ -236,7 +209,7 @@ jobs:
           echo "created=true\n" >> $GITHUB_OUTPUT
 
       ## Upload coverage to codecov
-      ##   - use wretry action, to retry on a failed upload 3x
+      ##   - use wretry action, to retry on a failed upload
       - name: Upload Code Coverage
         id: code_coverage
         uses: Wandalen/wretry.action@a163f62ae554a8f3cbe27b23db15b60c0ae2e93c # v1.3.0
@@ -247,8 +220,8 @@ jobs:
             name: unit_tests
             fail_ci_if_error: false
             verbose: true
-          attempt_limit: 3
-          attempt_delay: 10000
+          attempt_limit: ${{ env.RETRIES}}
+          attempt_delay: ${{ env.RETRY_DELAY}}
 
   open-api-validation:
     name: OpenAPI Validation
@@ -317,7 +290,7 @@ jobs:
           args: test --coverage --manifest-path=./contrib/core-contract-tests/Clarinet.toml
 
       ## Upload coverage to codecov
-      ##   - use wretry action, to retry on a failed upload 3x
+      ##   - use wretry action, to retry on a failed upload
       - name: Upload Code Coverage
         id: code_coverage
         uses: Wandalen/wretry.action@a163f62ae554a8f3cbe27b23db15b60c0ae2e93c # v1.3.0
@@ -327,5 +300,5 @@ jobs:
             files: ./coverage.lcov
             fail_ci_if_error: false
             verbose: true
-          attempt_limit: 3
-          attempt_delay: 10000
+          attempt_limit: ${{env.RETRIES}}
+          attempt_delay: ${{env.RETRY_DELAY}}

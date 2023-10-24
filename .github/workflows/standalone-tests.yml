@@ -27,11 +27,6 @@ on:
 ## Set the display name to the test being run
 run-name: ${{ inputs.workflow }}
 
-# concurrency:
-#   group: ${{ inputs.workflow }}-tests-${{ github.workflow }}-${{ github.ref }}
-#   # Only cancel in progress if this is for a PR
-#   cancel-in-progress: false
-
 jobs:
   ## Runs every time
   ##   - note: this job

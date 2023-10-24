@@ -15,12 +15,6 @@ env:
   LLVM_PROFILE_FILE: "stacks-blockchain-%p-%m.profraw"
   BTC_VERSION: "0.20.0"
 
-## Since this is used in several different steps, do not cancel it when mutliple jobs are running
-# concurrency:
-#   group: create-cache-${{ github.workflow }}-${{ github.ref }}
-#   # Only cancel in progress if this is for a PR
-#   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
-
 ##
 ## Cache will exist longer than workflow execution so other runners have access
 ##   ex: a failed job should have access to the cache for however long `cleanup.yml` is set to delete old caches
@@ -30,22 +24,11 @@ jobs:
   cargo:
     name: Cargo
     runs-on: ubuntu-latest
-    # runs-on: buildjet-4vcpu-ubuntu-2204
     steps:
       ## Perform a lookup to check if the cache already exists
       - name: Check Cargo Cache
-        # uses: buildjet/cache@e376f15c6ec6dc595375c78633174c7e5f92dc0e # v3
-        uses: actions/cache@88522ab9f39a2ea568f7027eddc7d8d8bc9d59c8 # v3.3.1
         id: check_cache
-        with:
-          lookup-only: true
-          path: |
-            ~/.cargo/bin/
-            ~/.cargo/registry/index/
-            ~/.cargo/registry/cache/
-            ~/.cargo/git/db/
-          # key: ${{ github.event.repository.name }}-cargo
-          key: ${{ github.event.repository.name }}-${{ github.sha }}-cargo
+        uses: wileyj/actions/stacks-blockchain-cache/cargo@main
 
       ## If cargo cache is not found, install nextest
       - name: Install nextest
@@ -69,31 +52,19 @@ jobs:
       - name: Save Cache
         if: steps.check_cache.outputs.cache-hit != 'true'
         id: save_cache
-        # uses: buildjet/cache/save@e376f15c6ec6dc595375c78633174c7e5f92dc0e # v3
-        uses: actions/cache/save@88522ab9f39a2ea568f7027eddc7d8d8bc9d59c8 # v3.3.1
+        uses: wileyj/actions/stacks-blockchain-cache/cargo@main
         with:
-          path: |
-            ~/.cargo/bin/
-            ~/.cargo/registry/index/
-            ~/.cargo/registry/cache/
-            ~/.cargo/git/db/
-          # key: ${{ github.event.repository.name }}-cargo
-          key: ${{ github.event.repository.name }}-${{ github.sha }}-cargo
+          action: save
 
   bitcoin-binary:
     name: Bitcoin Binary
     runs-on: ubuntu-latest
-    # runs-on: buildjet-4vcpu-ubuntu-2204
     steps:
       ## Perform a lookup to check if the cache already exists
       - name: Check Bitcoin Cache
-        # uses: buildjet/cache@e376f15c6ec6dc595375c78633174c7e5f92dc0e # v3
-        uses: actions/cache@88522ab9f39a2ea568f7027eddc7d8d8bc9d59c8 # v3.3.1
         id: check_cache
-        with:
-          lookup-only: true
-          path: /tmp/bitcoin
-          key: ${{ github.event.repository.name }}-bitcoin-binaries
+        uses: wileyj/actions/stacks-blockchain-cache/bitcoin@main
+
       ## if bitcoin cache is not found, download and extract it
       - name: Install Bitcoin Binary
         if: steps.check_cache.outputs.cache-hit != 'true'
@@ -106,53 +77,32 @@ jobs:
       - name: Save Cache
         if: steps.check_cache.outputs.cache-hit != 'true'
         id: save_cache
-        # uses: buildjet/cache/save@e376f15c6ec6dc595375c78633174c7e5f92dc0e # v3
-        uses: actions/cache/save@88522ab9f39a2ea568f7027eddc7d8d8bc9d59c8 # v3.3.1
+        uses: wileyj/actions/stacks-blockchain-cache/bitcoin@main
         with:
-          path: /tmp/bitcoin
-          key: ${{ github.event.repository.name }}-bitcoin-binaries
+          action: save
 
   nextest-archive:
     name: Test Archive
     runs-on: ubuntu-latest
-    # runs-on: buildjet-4vcpu-ubuntu-2204
     needs:
       - cargo
     steps:
       ## Perform a lookup to check if the target cache already exists
       - name: Check Target Cache
-        # uses: buildjet/cache@e376f15c6ec6dc595375c78633174c7e5f92dc0e # v3
-        uses: actions/cache@88522ab9f39a2ea568f7027eddc7d8d8bc9d59c8 # v3.3.1
         id: check_target_cache
-        with:
-          lookup-only: true
-          path: ./target
-          # key: ${{ github.event.repository.name }}-target
-          key: ${{ github.event.repository.name }}-${{ github.sha }}-target
+        uses: wileyj/actions/stacks-blockchain-cache/target@main
 
       ## Perform a lookup to check if the test archive cache already exists
       - name: Check Test Archive Cache
-        # uses: buildjet/cache@e376f15c6ec6dc595375c78633174c7e5f92dc0e # v3
-        uses: actions/cache@88522ab9f39a2ea568f7027eddc7d8d8bc9d59c8 # v3.3.1
         id: check_test_archive_cache
-        with:
-          lookup-only: true
-          path: /tmp/test_archive.tar.zst
-          # key: ${{ github.event.repository.name }}-test-archive
-          key: ${{ github.event.repository.name }}-${{ github.sha }}-test-archive
+        uses: wileyj/actions/stacks-blockchain-cache/test-archive@main
 
       ## Perform a lookup to check if the genesis test archive cache already exists
       - name: Check Genesis Test Archive Cache
-        # uses: buildjet/cache@e376f15c6ec6dc595375c78633174c7e5f92dc0e # v3
-        uses: actions/cache@88522ab9f39a2ea568f7027eddc7d8d8bc9d59c8 # v3.3.1
         id: check_genesis_archive_cache
-        with:
-          lookup-only: true
-          path: /tmp/genesis_archive.tar.zst
-          # key: ${{ github.event.repository.name }}-genesis-archive
-          key: ${{ github.event.repository.name }}-${{ github.sha }}-genesis-archive
+        uses: wileyj/actions/stacks-blockchain-cache/genesis-test-archive@main
 
-      ## If all of the caches are found, checkout the code
+      ## If any of the caches are found, checkout the code
       ##   - Target cache
       ##   - Test archive cache
       ##   - Genesis test archive cache
@@ -164,7 +114,7 @@ jobs:
         id: git_checkout
         uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
 
-      ## If all of the caches are found, install rust toolchain
+      ## If any of the caches are found, install rust toolchain
       ##   - Target cache
       ##   - Test archive cache
       ##   - Genesis test archive cache
@@ -180,7 +130,7 @@ jobs:
           components: llvm-tools-preview
           cache: false
 
-      ## If all of the caches are found, restore the cargo cache
+      ## If any of the caches are found, restore the cargo cache
       ##   - Target cache
       ##   - Nextest archive cache
       ##   - Genesis nextest archive cache
@@ -190,19 +140,11 @@ jobs:
           steps.check_test_archive_cache.outputs.cache-hit != 'true' || 
           steps.check_genesis_archive_cache.outputs.cache-hit != 'true'
         id: restore_cargo_cache
-        # uses: buildjet/cache/restore@e376f15c6ec6dc595375c78633174c7e5f92dc0e # v3
-        uses: actions/cache/restore@88522ab9f39a2ea568f7027eddc7d8d8bc9d59c8 # v3.3.1
+        uses: wileyj/actions/stacks-blockchain-cache/cargo@main
         with:
-          fail-on-cache-miss: true
-          path: |
-            ~/.cargo/bin/
-            ~/.cargo/registry/index/
-            ~/.cargo/registry/cache/
-            ~/.cargo/git/db/
-          # key: ${{ github.event.repository.name }}-cargo
-          key: ${{ github.event.repository.name }}-${{ github.sha }}-cargo
+          action: restore
 
-      ## If all of the caches are found, build and archive tests
+      ## If any of the caches are found, build and archive tests
       ##   - Target cache
       ##   - Nextest archive cache
       ##   - Genesis nextest archive cache
@@ -220,7 +162,7 @@ jobs:
             --locked \
             --archive-file /tmp/test_archive.tar.zst
 
-      ## If all of the caches are found, build and archive genesis tests
+      ## If any of the caches are not found, build and archive genesis tests
       ##   - Target cache
       ##   - Nextest archive cache
       ##   - Genesis nextest archive cache
@@ -239,7 +181,7 @@ jobs:
             --features prod-genesis-chainstate \
             --archive-file /tmp/genesis_archive.tar.zst
 
-      ## If all of the caches are found, save test archive cache
+      ## If any of the caches are not found, save test archive cache
       ##   - Target cache
       ##   - Nextest archive cache
       ##   - Genesis nextest archive cache
@@ -249,14 +191,11 @@ jobs:
           steps.check_test_archive_cache.outputs.cache-hit != 'true' || 
           steps.check_genesis_archive_cache.outputs.cache-hit != 'true'
         id: save_nextest_cache
-        # uses: buildjet/cache/save@e376f15c6ec6dc595375c78633174c7e5f92dc0e # v3
-        uses: actions/cache/save@88522ab9f39a2ea568f7027eddc7d8d8bc9d59c8 # v3.3.1
+        uses: wileyj/actions/stacks-blockchain-cache/test-archive@main
         with:
-          path: /tmp/test_archive.tar.zst
-          # key: ${{ github.event.repository.name }}-test-archive
-          key: ${{ github.event.repository.name }}-${{ github.sha }}-test-archive
+          action: save
 
-      ## If all of the caches are found, save genesis test archive cache
+      ## If any of the caches are not found, save genesis test archive cache
       ##   - Target cache
       ##   - Nextest archive cache
       ##   - Genesis nextest archive cache
@@ -266,14 +205,11 @@ jobs:
           steps.check_test_archive_cache.outputs.cache-hit != 'true' || 
           steps.check_genesis_archive_cache.outputs.cache-hit != 'true'
         id: save_genesis_cache
-        # uses: buildjet/cache/save@e376f15c6ec6dc595375c78633174c7e5f92dc0e # v3
-        uses: actions/cache/save@88522ab9f39a2ea568f7027eddc7d8d8bc9d59c8 # v3.3.1
+        uses: wileyj/actions/stacks-blockchain-cache/genesis-test-archive@main
         with:
-          path: /tmp/test_archive.tar.zst
-          # key: ${{ github.event.repository.name }}-genesis-archive
-          key: ${{ github.event.repository.name }}-${{ github.sha }}-test-archive
+          action: save
 
-      ## If all of the caches are found, save target cache
+      ## If any of the caches are not found, save target cache
       ##   - Target cache
       ##   - Nextest archive cache
       ##   - Genesis nextest archive cache
@@ -283,9 +219,6 @@ jobs:
           steps.check_test_archive_cache.outputs.cache-hit != 'true' || 
           steps.check_genesis_archive_cache.outputs.cache-hit != 'true'
         id: save_target_cache
-        # uses: buildjet/cache/save@e376f15c6ec6dc595375c78633174c7e5f92dc0e # v3
-        uses: actions/cache/save@88522ab9f39a2ea568f7027eddc7d8d8bc9d59c8 # v3.3.1
+        uses: wileyj/actions/stacks-blockchain-cache/target@main
         with:
-          path: ./target
-          # key: ${{ github.event.repository.name }}-target
-          key: ${{ github.event.repository.name }}-${{ github.sha }}-target
+          action: save
