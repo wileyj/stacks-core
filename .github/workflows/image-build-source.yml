@@ -7,7 +7,7 @@ on:
         required: false
         type: string
         description: "Docker repo org for uploading images (defaults to github org)"
-        default: ${GITHUB_REPOSITORY_OWNER}
+        default: "${GITHUB_REPOSITORY_OWNER}""
   workflow_call:
     inputs:
       docker-org:
