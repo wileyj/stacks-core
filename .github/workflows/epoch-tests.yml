@@ -15,7 +15,6 @@ env:
   SEGMENT_DOWNLOAD_TIMEOUT_MINS: 15
   RETRIES: 3
   RETRY_DELAY: 10000
-  TEST_TIMEOUT: 30
 
 concurrency:
   group: epoch-tests-${{ github.workflow }}-${{ github.ref }}
