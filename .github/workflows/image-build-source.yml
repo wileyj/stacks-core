@@ -2,7 +2,19 @@ name: Docker Image (Source)
 
 on:
   workflow_dispatch:
+    inputs:
+      docker-org:
+        required: false
+        type: string
+        description: "Docker repo org for uploading images (defaults to github org)"
+        default: "${{ github.repository_owner }}"
   workflow_call:
+    inputs:
+      docker-org:
+        required: false
+        type: string
+        description: "Docker repo org for uploading images (defaults to github org)"
+        default: "${{ github.repository_owner }}"
 
 defaults:
   run:
