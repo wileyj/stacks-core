@@ -2,19 +2,7 @@ name: Docker Image (Source)
 
 on:
   workflow_dispatch:
-    inputs:
-      docker-org:
-        required: false
-        type: string
-        description: "Docker repo org for uploading images (defaults to github org)"
-        default: "${GITHUB_REPOSITORY_OWNER}"
   workflow_call:
-    inputs:
-      docker-org:
-        required: false
-        type: string
-        description: "Docker repo org for uploading images (defaults to github org)"
-        default: "${GITHUB_REPOSITORY_OWNER}"
 
 defaults:
   run:
@@ -23,6 +11,7 @@ defaults:
 ## Define which docker arch to build for
 env:
   docker_platforms: linux/amd64
+  docker-org: ${{ github.repository_owner }}
 
 jobs:
   ## Runs anytime `ci.yml` runs or when manually called
@@ -92,7 +81,7 @@ jobs:
         uses: docker/metadata-action@818d4b7b91585d195f67373fd9cb0332e31a7175 #v4.6.0
         with:
           images: |
-            wileyj/${{ github.event.repository.name }}
+            ${{env.docker-org}}/${{ github.event.repository.name }}
           tags: |
             type=raw,value=${{ env.BRANCH_NAME }}
             type=ref,event=pr
