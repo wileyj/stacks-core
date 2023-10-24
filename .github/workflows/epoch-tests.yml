@@ -13,6 +13,9 @@ env:
   BITCOIND_TEST: 1
   RUST_BACKTRACE: full
   SEGMENT_DOWNLOAD_TIMEOUT_MINS: 15
+  RETRIES: 3
+  RETRY_DELAY: 10000
+  TEST_TIMEOUT: 30
 
 concurrency:
   group: epoch-tests-${{ github.workflow }}-${{ github.ref }}
@@ -60,7 +63,6 @@ jobs:
       - name: Cleanup Runner
         id: runner_cleanup
         uses: wileyj/actions/cleanup@main
-        # uses: stacks-network/runner-cleanup@main
 
       ## Checkout the code
       - name: Checkout the latest code
@@ -77,38 +79,30 @@ jobs:
           cache: false
 
       ## Restore cargo cache data
-      ##   - use wretry action, to retry on a failed upload 3x
       - name:  Restore Cargo Cache
         id: restore_cargo_cache
         uses: wileyj/actions/stacks-blockchain-cache/cargo@main
-        # uses: wileyj/runner-cache/cargo@main
         with:
           action: restore
                   
       ## Restore nextest target cache data
-      ##   - use wretry action, to retry on a failed upload 3x
       - name:  Restore Target Cache
         id: restore_target_cache
         uses: wileyj/actions/stacks-blockchain-cache/target@main
-        # uses: wileyj/runner-cache/target@main
         with:
           action: restore
 
       ## Restore bitcoin cache data
-      ##   - use wretry action, to retry on a failed upload 3x
       - name:  Restore Bitcoin Binary Cache
         id: restore_bitcoin_cache
         uses: wileyj/actions/stacks-blockchain-cache/bitcoin@main
-        # uses: wileyj/runner-cache/bitcoin@main
         with:
           action: restore
 
       ## Restore nextest archive cache data
-      ##   - use wretry action, to retry on a failed upload 3x
       - name: Restore Test Archive Cache
         id: restore_test-archive_cache
         uses: wileyj/actions/stacks-blockchain-cache/test-archive@main
-        # uses: wileyj/runner-cache/test-archive@main
         with:
           action: restore
 
@@ -141,7 +135,7 @@ jobs:
           echo "created=true\n" >> $GITHUB_OUTPUT
 
       ## Upload coverage to codecov
-      ##   - use wretry action, to retry on a failed upload 3x
+      ##   - use wretry action, to retry on a failed upload
       - name: Upload Code Coverage
         id: code_coverage
         uses: Wandalen/wretry.action@a163f62ae554a8f3cbe27b23db15b60c0ae2e93c # v1.3.0
@@ -152,5 +146,5 @@ jobs:
             name: ${{ matrix.test-name }}
             fail_ci_if_error: false
             verbose: true
-          attempt_limit: 3
-          attempt_delay: 10000
+          attempt_limit: ${{ env.RETRIES}}
+          attempt_delay: ${{ env.RETRY_DELAY}}

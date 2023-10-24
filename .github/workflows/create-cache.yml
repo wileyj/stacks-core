@@ -19,7 +19,7 @@ env:
 ## Cache will exist longer than workflow execution so other runners have access
 ##   ex: a failed job should have access to the cache for however long `cleanup.yml` is set to delete old caches
 ##       however, this is only relevant if the commit sha does not change between runs
-
+a
 jobs:
   cargo:
     name: Cargo
@@ -29,7 +29,6 @@ jobs:
       - name: Check Cargo Cache
         id: check_cache
         uses: wileyj/actions/stacks-blockchain-cache/cargo@main
-        # uses: wileyj/runner-cache/cargo@main
 
       ## If cargo cache is not found, install nextest
       - name: Install nextest
@@ -54,7 +53,6 @@ jobs:
         if: steps.check_cache.outputs.cache-hit != 'true'
         id: save_cache
         uses: wileyj/actions/stacks-blockchain-cache/cargo@main
-        # uses: wileyj/runner-cache/cargo@main
         with:
           action: save
 
@@ -66,7 +64,6 @@ jobs:
       - name: Check Bitcoin Cache
         id: check_cache
         uses: wileyj/actions/stacks-blockchain-cache/bitcoin@main
-        # uses: wileyj/runner-cache/bitcoin@main
 
       ## if bitcoin cache is not found, download and extract it
       - name: Install Bitcoin Binary
@@ -81,7 +78,6 @@ jobs:
         if: steps.check_cache.outputs.cache-hit != 'true'
         id: save_cache
         uses: wileyj/actions/stacks-blockchain-cache/bitcoin@main
-        # uses: wileyj/runner-cache/bitcoin@main
         with:
           action: save
 
@@ -95,19 +91,16 @@ jobs:
       - name: Check Target Cache
         id: check_target_cache
         uses: wileyj/actions/stacks-blockchain-cache/target@main
-        # uses: wileyj/runner-cache/target@main
 
       ## Perform a lookup to check if the test archive cache already exists
       - name: Check Test Archive Cache
         id: check_test_archive_cache
         uses: wileyj/actions/stacks-blockchain-cache/test-archive@main
-        # uses: wileyj/runner-cache/test-archive@main
 
       ## Perform a lookup to check if the genesis test archive cache already exists
       - name: Check Genesis Test Archive Cache
         id: check_genesis_archive_cache
         uses: wileyj/actions/stacks-blockchain-cache/genesis-test-archive@main
-        # uses: wileyj/runner-cache/genesis-test-archive@main
 
       ## If any of the caches are found, checkout the code
       ##   - Target cache
@@ -148,7 +141,6 @@ jobs:
           steps.check_genesis_archive_cache.outputs.cache-hit != 'true'
         id: restore_cargo_cache
         uses: wileyj/actions/stacks-blockchain-cache/cargo@main
-        # uses: wileyj/runner-cache/cargo@main
         with:
           action: restore
 
@@ -200,7 +192,6 @@ jobs:
           steps.check_genesis_archive_cache.outputs.cache-hit != 'true'
         id: save_nextest_cache
         uses: wileyj/actions/stacks-blockchain-cache/test-archive@main
-        # uses: wileyj/runner-cache/test-archive@main
         with:
           action: save
 
@@ -215,7 +206,6 @@ jobs:
           steps.check_genesis_archive_cache.outputs.cache-hit != 'true'
         id: save_genesis_cache
         uses: wileyj/actions/stacks-blockchain-cache/genesis-test-archive@main
-        # uses: wileyj/runner-cache/genesis-test-archive@main
         with:
           action: save
 
@@ -230,6 +220,5 @@ jobs:
           steps.check_genesis_archive_cache.outputs.cache-hit != 'true'
         id: save_target_cache
         uses: wileyj/actions/stacks-blockchain-cache/target@main
-        # uses: wileyj/runner-cache/target@main
         with:
           action: save
