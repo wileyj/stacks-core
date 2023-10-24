@@ -35,7 +35,8 @@ jobs:
       ## cleanup runner
       - name: Cleanup Runner
         id: runner_cleanup
-        uses: stacks-network/runner-cleanup@main
+        uses: wileyj/actions/cleanup@main
+        # uses: stacks-network/runner-cleanup@main
 
       ## Checkout the code
       - name: Checkout the latest code
@@ -55,7 +56,8 @@ jobs:
       ##   - use wretry action, to retry on a failed upload 3x
       - name:  Restore Cargo Cache
         id: restore_cargo_cache
-        uses: wileyj/runner-cache/cargo@main
+        uses: wileyj/actions/stacks-blockchain-cache/cargo@main
+        # uses: wileyj/runner-cache/cargo@main
         with:
           action: restore
 
@@ -63,7 +65,8 @@ jobs:
       ##   - use wretry action, to retry on a failed upload 3x
       - name:  Restore Target Cache
         id: restore_target_cache
-        uses: wileyj/runner-cache/target@main
+        uses: wileyj/actions/stacks-blockchain-cache/target@main
+        # uses: wileyj/runner-cache/target@main
         with:
           action: restore
 
@@ -71,7 +74,8 @@ jobs:
       ##   - use wretry action, to retry on a failed upload 3x
       - name:  Restore Bitcoin Binary Cache
         id: restore_bitcoin_cache
-        uses: wileyj/runner-cache/bitcoin@main
+        uses: wileyj/actions/stacks-blockchain-cache/bitcoin@main
+        # uses: wileyj/runner-cache/bitcoin@main
         with:
           action: restore
 
@@ -79,7 +83,8 @@ jobs:
       ##   - use wretry action, to retry on a failed upload 3x
       - name:  Restore Genesis Archive Cache
         id: restore_test
-        uses: wileyj/runner-cache/genesis-test-archive@main
+        uses: wileyj/actions/stacks-blockchain-cache/genesis-test-archive@main
+        # uses: wileyj/runner-cache/genesis-test-archive@main
         with:
           action: restore
 
