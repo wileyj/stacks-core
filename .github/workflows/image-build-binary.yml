@@ -80,8 +80,10 @@ jobs:
         with:
           file: ./.github/actions/dockerfiles/Dockerfile.${{ matrix.dist }}-binary
           platforms: ${{ env.docker_platforms }}
-          tags: ${{ steps.docker_metadata_alpine.outputs.tags }}
-          labels: ${{ steps.docker_metadata_alpine.outputs.labels }}
+          # tags: ${{ steps.docker_metadata_alpine.outputs.tags }}
+          tags: ${{ steps.docker_metadata.outputs.tags }}
+          # labels: ${{ steps.docker_metadata_alpine.outputs.labels }}
+          labels: ${{ steps.docker_metadata.outputs.labels }}
           build-args: |
             TAG=${{ inputs.tag}}
             STACKS_NODE_VERSION=${{ inputs.tag || env.GITHUB_SHA_SHORT }}
