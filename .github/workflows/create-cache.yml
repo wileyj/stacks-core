@@ -11,7 +11,8 @@ defaults:
     shell: bash
 
 env:
-  RUSTFLAGS: "-Cinstrument-coverage"
+  # RUSTFLAGS: "-Cinstrument-coverage -Dwarnings"
+  RUSTFLAGS: "-Cinstrument-coverage -Awarnings"
   LLVM_PROFILE_FILE: "stacks-blockchain-%p-%m.profraw"
   BTC_VERSION: "0.20.0"
 
