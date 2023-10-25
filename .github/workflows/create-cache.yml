@@ -11,7 +11,8 @@ defaults:
     shell: bash
 
 env:
-  RUSTFLAGS: "-Cinstrument-coverage"
+  # RUSTFLAGS: "-Cinstrument-coverage -Dwarnings"
+  RUSTFLAGS: "-Cinstrument-coverage -Awarnings"
   LLVM_PROFILE_FILE: "stacks-blockchain-%p-%m.profraw"
   BTC_VERSION: "0.20.0"
 
@@ -112,7 +113,7 @@ jobs:
           steps.check_test_archive_cache.outputs.cache-hit != 'true' || 
           steps.check_genesis_archive_cache.outputs.cache-hit != 'true'
         id: git_checkout
-        uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
 
       ## If any of the caches are found, install rust toolchain
       ##   - Target cache
