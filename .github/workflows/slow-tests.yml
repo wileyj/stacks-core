@@ -75,10 +75,10 @@ jobs:
         with:
           action: restore
 
-      ## Restore genesis nextest archive cache data
-      - name:  Restore Genesis Archive Cache
-        id: restore_test
-        uses: wileyj/actions/stacks-blockchain-cache/genesis-test-archive@main
+      ## Restore nextest archive cache data
+      - name:  Restore Test Archive Cache
+        id: restore_test_cache
+        uses: wileyj/runner-cache/test-archive@main
         with:
           action: restore
 

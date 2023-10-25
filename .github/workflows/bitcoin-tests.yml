@@ -114,9 +114,9 @@ jobs:
           action: restore
 
       ## Restore nextest archive cache data
-      - name: Restore Test Archive Cache
-        id: restore_test-archive_cache
-        uses: wileyj/actions/stacks-blockchain-cache/test-archive@main
+      - name:  Restore Test Archive Cache
+        id: restore_test_cache
+        uses: wileyj/runner-cache/test-archive@main
         with:
           action: restore
           
