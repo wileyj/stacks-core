@@ -26,8 +26,11 @@ jobs:
   slow-tests:
     name: Slow Tests
     runs-on: ubuntu-latest
+    ## continue tests even if we have a failure
+    continue-on-error: true
     ## run a maximum of 2 concurrent tests from the test matrix
     strategy:
+      ## continue with the matrix even if we've had a failure
       fail-fast: false
       max-parallel: 2
       matrix:
@@ -35,64 +38,10 @@ jobs:
           - tests::epoch_21::test_pox_reorg_flap_duel
           - tests::epoch_21::test_pox_reorg_flap_reward_cycles ## really, really slow test
     steps:
-      # ## cleanup runner
-      # - name: Cleanup Runner
-      #   id: runner_cleanup
-      #   uses: wileyj/actions/cleanup@main
-
-      # ## Checkout the code
-      # - name: Checkout the latest code
-      #   id: git_checkout
-      #   uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
-
-      # ## Install rust toolchain (llvm-tools-preview)
-      # - name: Setup Rust Toolchain
-      #   id: setup_rust_toolchain
-      #   uses: actions-rust-lang/setup-rust-toolchain@f3c84ee10bf5a86e7a5d607d487bf17d57670965 # v1.5.0
-      #   with:
-      #     toolchain: stable
-      #     components: llvm-tools-preview
-      #     cache: false
-
-      # ## Restore cargo cache data
-      # - name:  Restore Cargo Cache
-      #   id: restore_cargo_cache
-      #   uses: wileyj/actions/stacks-blockchain/cache/cargo@main
-      #   with:
-      #     action: restore
-
-      # ## Restore nextest target cache data
-      # - name:  Restore Target Cache
-      #   id: restore_target_cache
-      #   uses: wileyj/actions/stacks-blockchain/cache/target@main
-      #   with:
-      #     action: restore
-
-      # ## Restore bitcoin cache data
-      # - name:  Restore Bitcoin Binary Cache
-      #   id: restore_bitcoin_cache
-      #   uses: wileyj/actions/stacks-blockchain/cache/bitcoin@main
-      #   with:
-      #     action: restore
-
-      # ## Symlink bitoind to $PATH
-      # - name: Link Bitcoin Binary
-      #   id: bitcoin_binary
-      #   run: |
-      #     sudo ln -s /tmp/bitcoin/bin/bitcoind /bin/
-      #     ls -al /bin/bitcoind
-
       ## Setup test environment
       - name:  Setup Test Environment
         id: setup_tests
         uses: wileyj/actions/stacks-blockchain/testenv@main
-
-      # ## Restore nextest archive cache data
-      # - name:  Restore Test Archive Cache
-      #   id: restore_test_cache
-      #   uses: wileyj/runner-cache/test-archive@main
-      #   with:
-      #     action: restore
 
       ## Run test matrix using cached archive file
       ##   - timeout after 30 minutes
@@ -120,8 +69,8 @@ jobs:
       ##   - use wretry action, to retry on a failed upload
       - name: Upload Code Coverage
         id: code_coverage
-        # uses: Wandalen/wretry.action@a163f62ae554a8f3cbe27b23db15b60c0ae2e93c # v1.3.0
-        uses: wileyj/wretry.action@a163f62ae554a8f3cbe27b23db15b60c0ae2e93c # v1.3.0
+        uses: Wandalen/wretry.action@a163f62ae554a8f3cbe27b23db15b60c0ae2e93c # v1.3.0
+        # uses: wileyj/wretry.action@a163f62ae554a8f3cbe27b23db15b60c0ae2e93c # v1.3.0
         with:
           action: codecov/codecov-action@eaaf4bedf32dbdc6b720b63067d99c4d77d6047d # v3.1.4
           with: |
