@@ -7,12 +7,12 @@ on:
         description: "Release Tag"
         required: true
         type: string
-      arch:
-        description: "Stringified JSON object listing of platform matrix"
-        required: true
-        type: string
-        default: >-
-          ["linux-glibc-x64", "linux-musl-x64", "linux-glibc-arm64", "linux-musl-arm64", "macos-x64", "macos-arm64", "windows-x64"]
+      # arch:
+      #   description: "Stringified JSON object listing of platform matrix"
+      #   required: true
+      #   type: string
+      #   default: >-
+      #     ["linux-glibc-x64", "linux-musl-x64", "linux-glibc-arm64", "linux-musl-arm64", "macos-x64", "macos-arm64", "windows-x64"]
     secrets:
       GH_TOKEN:
         required: true
@@ -34,7 +34,7 @@ jobs:
     uses: ./.github/workflows/create-source-binary.yml
     with:
       tag: ${{ inputs.tag }}
-      arch: ${{ inputs.arch }}
+      # arch: ${{ inputs.arch }}
     secrets: inherit
 
   ## Runs when the following is true:
@@ -57,6 +57,7 @@ jobs:
           name: artifact
           path: release
 
+      ## TODO: change this to be a sha512 since that's what we email via announce list
       # Generate a checksums file to be added to the release page
       - name: Generate Checksums
         id: generate_checksum

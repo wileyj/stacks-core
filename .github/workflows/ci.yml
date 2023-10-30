@@ -181,7 +181,7 @@ jobs:
     needs:
       - rustfmt
       - create-cache
-    uses: ./.github/workflows/stacks-blockchain-tests.yml
+    uses: ./.github/workflows/stacks-blockchain/tests.yml
 
   bitcoin-tests:
     if: |
@@ -223,6 +223,5 @@ jobs:
     name: Slow Tests
     needs:
       - rustfmt
-      # - leaked-cred-test
       - create-cache
     uses: ./.github/workflows/slow-tests.yml

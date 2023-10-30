@@ -36,7 +36,7 @@ jobs:
       ## Set docker metatdata
       - name: Docker Metadata ( ${{matrix.dist}} )
         id: docker_metadata
-        uses: docker/metadata-action@818d4b7b91585d195f67373fd9cb0332e31a7175 #v4.6.0
+        uses: docker/metadata-action@96383f45573cb7f253c731d3b3ab81c87ef81934 #v5.0.0
         with:
           images: |
             ${{env.docker-org}}/${{ github.event.repository.name }}
@@ -47,7 +47,7 @@ jobs:
       ## Build docker image
       - name: Build and Push ( ${{matrix.dist}} )
         id: docker_build
-        uses: docker/build-push-action@2eb1c1961a95fc15694676618e422e8ba1d63825 # v4.1.1
+        uses: docker/build-push-action@0565240e2d4ab88bba5387d719585280857ece09 # v5.0.0
         with:
           file: ./.github/actions/dockerfiles/Dockerfile.${{matrix.dist}}-source
           platforms: ${{ env.docker_platforms }}
