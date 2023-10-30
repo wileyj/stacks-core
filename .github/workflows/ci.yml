@@ -181,7 +181,7 @@ jobs:
     needs:
       - rustfmt
       - create-cache
-    uses: ./.github/workflows/stacks-blockchain/tests.yml
+    uses: ./.github/workflows/stacks-blockchain-tests.yml
 
   bitcoin-tests:
     if: |

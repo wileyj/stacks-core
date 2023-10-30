@@ -17,7 +17,7 @@ env:
   RETRY_DELAY: 10000
 
 concurrency:
-  group: stacks-blockchain/tests-${{ github.workflow }}-${{ github.ref }}
+  group: stacks-blockchain-tests-${{ github.workflow }}-${{ github.ref }}
   # Only cancel in progress if this is for a PR
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
@@ -84,7 +84,7 @@ jobs:
       ## Setup test environment
       - name:  Setup Test Environment
         id: setup_tests
-        uses: wileyj/stacks-blockchain/tests@main
+        uses: wileyj/stacks-blockchain/testenv@main
         with:
             genesis: true
 
@@ -189,7 +189,7 @@ jobs:
       ## Setup test environment
       - name:  Setup Test Environment
         id: setup_tests
-        uses: wileyj/stacks-blockchain/tests@main
+        uses: wileyj/stacks-blockchain/testenv@main
 
       # ## Restore nextest archive cache data
       # - name:  Restore Test Archive Cache
