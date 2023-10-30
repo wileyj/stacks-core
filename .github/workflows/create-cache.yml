@@ -29,13 +29,13 @@ jobs:
       ## Perform a lookup to check if the cache already exists
       - name: Check Cargo Cache
         id: check_cache
-        uses: wileyj/actions/stacks-blockchain-cache/cargo@main
+        uses: wileyj/actions/stacks-blockchain/cache/cargo@main
 
       ## If cargo cache is not found, install nextest
       - name: Install nextest
         if: steps.check_cache.outputs.cache-hit != 'true'
         id: install_nextest
-        uses: taiki-e/install-action@7412a5eb82f4686390763b0f92637284e91b6627 # v2.15.3
+        uses: taiki-e/install-action@ac89944b5b150d78567ab6c02badfbe48b0b55aa # v2.20.16
         with:
           tool: nextest # can be versioned, ex: tool@1.1.1.1
 
@@ -45,7 +45,7 @@ jobs:
       - name: Install grcov
         if: steps.check_cache.outputs.cache-hit != 'true'
         id: install_grcov
-        uses: taiki-e/install-action@7412a5eb82f4686390763b0f92637284e91b6627 # v2.15.3
+        uses: taiki-e/install-action@ac89944b5b150d78567ab6c02badfbe48b0b55aa # v2.20.16
         with:
           tool: grcov # can be versioned, ex: tool@1.1.1.1
 
@@ -53,7 +53,7 @@ jobs:
       - name: Save Cache
         if: steps.check_cache.outputs.cache-hit != 'true'
         id: save_cache
-        uses: wileyj/actions/stacks-blockchain-cache/cargo@main
+        uses: wileyj/actions/stacks-blockchain/cache/cargo@main
         with:
           action: save
 
@@ -64,7 +64,7 @@ jobs:
       ## Perform a lookup to check if the cache already exists
       - name: Check Bitcoin Cache
         id: check_cache
-        uses: wileyj/actions/stacks-blockchain-cache/bitcoin@main
+        uses: wileyj/actions/stacks-blockchain/cache/bitcoin@main
 
       ## if bitcoin cache is not found, download and extract it
       - name: Install Bitcoin Binary
@@ -78,7 +78,7 @@ jobs:
       - name: Save Cache
         if: steps.check_cache.outputs.cache-hit != 'true'
         id: save_cache
-        uses: wileyj/actions/stacks-blockchain-cache/bitcoin@main
+        uses: wileyj/actions/stacks-blockchain/cache/bitcoin@main
         with:
           action: save
 
@@ -91,17 +91,17 @@ jobs:
       ## Perform a lookup to check if the target cache already exists
       - name: Check Target Cache
         id: check_target_cache
-        uses: wileyj/actions/stacks-blockchain-cache/target@main
+        uses: wileyj/actions/stacks-blockchain/cache/target@main
 
       ## Perform a lookup to check if the test archive cache already exists
       - name: Check Test Archive Cache
         id: check_test_archive_cache
-        uses: wileyj/actions/stacks-blockchain-cache/test-archive@main
+        uses: wileyj/actions/stacks-blockchain/cache/test-archive@main
 
       ## Perform a lookup to check if the genesis test archive cache already exists
       - name: Check Genesis Test Archive Cache
         id: check_genesis_archive_cache
-        uses: wileyj/actions/stacks-blockchain-cache/genesis-test-archive@main
+        uses: wileyj/actions/stacks-blockchain/cache/genesis-test-archive@main
 
       ## If any of the caches are found, checkout the code
       ##   - Target cache
@@ -141,7 +141,7 @@ jobs:
           steps.check_test_archive_cache.outputs.cache-hit != 'true' || 
           steps.check_genesis_archive_cache.outputs.cache-hit != 'true'
         id: restore_cargo_cache
-        uses: wileyj/actions/stacks-blockchain-cache/cargo@main
+        uses: wileyj/actions/stacks-blockchain/cache/cargo@main
         with:
           action: restore
 
@@ -182,6 +182,20 @@ jobs:
             --features prod-genesis-chainstate \
             --archive-file /tmp/genesis_archive.tar.zst
 
+      ## If any of the caches are not found, save target cache
+      ##   - Target cache
+      ##   - Nextest archive cache
+      ##   - Genesis nextest archive cache
+      - name: Cache Target
+        if: |
+          steps.check_target_cache.outputs.cache-hit != 'true' || 
+          steps.check_test_archive_cache.outputs.cache-hit != 'true' || 
+          steps.check_genesis_archive_cache.outputs.cache-hit != 'true'
+        id: save_target_cache
+        uses: wileyj/actions/stacks-blockchain/cache/target@main
+        with:
+          action: save
+
       ## If any of the caches are not found, save test archive cache
       ##   - Target cache
       ##   - Nextest archive cache
@@ -192,7 +206,7 @@ jobs:
           steps.check_test_archive_cache.outputs.cache-hit != 'true' || 
           steps.check_genesis_archive_cache.outputs.cache-hit != 'true'
         id: save_nextest_cache
-        uses: wileyj/actions/stacks-blockchain-cache/test-archive@main
+        uses: wileyj/actions/stacks-blockchain/cache/test-archive@main
         with:
           action: save
 
@@ -206,20 +220,6 @@ jobs:
           steps.check_test_archive_cache.outputs.cache-hit != 'true' || 
           steps.check_genesis_archive_cache.outputs.cache-hit != 'true'
         id: save_genesis_cache
-        uses: wileyj/actions/stacks-blockchain-cache/genesis-test-archive@main
-        with:
-          action: save
-
-      ## If any of the caches are not found, save target cache
-      ##   - Target cache
-      ##   - Nextest archive cache
-      ##   - Genesis nextest archive cache
-      - name: Cache Target
-        if: |
-          steps.check_target_cache.outputs.cache-hit != 'true' || 
-          steps.check_test_archive_cache.outputs.cache-hit != 'true' || 
-          steps.check_genesis_archive_cache.outputs.cache-hit != 'true'
-        id: save_target_cache
-        uses: wileyj/actions/stacks-blockchain-cache/target@main
+        uses: wileyj/actions/stacks-blockchain/cache/genesis-test-archive@main
         with:
           action: save
