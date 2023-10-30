@@ -84,7 +84,7 @@ jobs:
       ## Setup test environment
       - name:  Setup Test Environment
         id: setup_tests
-        uses: wileyj/stacks-blockchain/testenv@main
+        uses: wileyj/actions/stacks-blockchain/testenv@main
         with:
             genesis: true
 
@@ -189,7 +189,7 @@ jobs:
       ## Setup test environment
       - name:  Setup Test Environment
         id: setup_tests
-        uses: wileyj/stacks-blockchain/testenv@main
+        uses: wileyj/actions/stacks-blockchain/testenv@main
 
       # ## Restore nextest archive cache data
       # - name:  Restore Test Archive Cache
