@@ -61,26 +61,31 @@ jobs:
     name: Bitcoin Binary
     runs-on: ubuntu-latest
     steps:
-      ## Perform a lookup to check if the cache already exists
-      - name: Check Bitcoin Cache
-        id: check_cache
-        uses: wileyj/actions/stacks-blockchain/cache/bitcoin@main
-
-      ## if bitcoin cache is not found, download and extract it
-      - name: Install Bitcoin Binary
-        if: steps.check_cache.outputs.cache-hit != 'true'
-        id: bitcoin_binary
-        run: |
-          curl -LSf -# https://github.com/stacks-network/bitcoin/releases/download/v${BTC_VERSION}/bitcoin-${BTC_VERSION}-x86_64-linux-gnu.tar.gz | tar zxf - -C /tmp
-          mv /tmp/bitcoin-${BTC_VERSION} /tmp/bitcoin
-
-      ## If bitcoin cache is not found, create it (no sha is used since it is versioned)
-      - name: Save Cache
-        if: steps.check_cache.outputs.cache-hit != 'true'
+      - name: Bitcoin Cache
         id: save_cache
         uses: wileyj/actions/stacks-blockchain/cache/bitcoin@main
         with:
           action: save
+      # ## Perform a lookup to check if the cache already exists
+      # - name: Check Bitcoin Cache
+      #   id: check_cache
+      #   uses: wileyj/actions/stacks-blockchain/cache/bitcoin@main
+
+      # ## if bitcoin cache is not found, download and extract it
+      # - name: Install Bitcoin Binary
+      #   if: steps.check_cache.outputs.cache-hit != 'true'
+      #   id: bitcoin_binary
+      #   run: |
+      #     curl -LSf -# https://github.com/stacks-network/bitcoin/releases/download/v${BTC_VERSION}/bitcoin-${BTC_VERSION}-x86_64-linux-gnu.tar.gz | tar zxf - -C /tmp
+      #     mv /tmp/bitcoin-${BTC_VERSION} /tmp/bitcoin
+
+      # ## If bitcoin cache is not found, create it (no sha is used since it is versioned)
+      # - name: Save Cache
+      #   if: steps.check_cache.outputs.cache-hit != 'true'
+      #   id: save_cache
+      #   uses: wileyj/actions/stacks-blockchain/cache/bitcoin@main
+      #   with:
+      #     action: save
 
   nextest-archive:
     name: Test Archive
