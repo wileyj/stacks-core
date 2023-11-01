@@ -100,9 +100,11 @@ jobs:
     needs:
       - cargo
     steps:
-      - name: Cache Test Archives
+      - name: Cache Nexttest Archives
         id: cache-test-archives
         uses: wileyj/actions/stacks-blockchain/cache/archive-tests@main
+        with:
+          genesis: true
 
       # - name: Check Target Cache
       #   id: check-target-cache
