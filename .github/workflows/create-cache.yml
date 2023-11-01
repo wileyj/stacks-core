@@ -27,42 +27,49 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       ## Perform a lookup to check if the cache already exists
-      - name: Check Cargo Cache
-        id: check_cache
-        uses: wileyj/actions/stacks-blockchain/cache/cargo@main
-
-      ## If cargo cache is not found, install nextest
-      - name: Install nextest
-        if: steps.check_cache.outputs.cache-hit != 'true'
-        id: install_nextest
-        uses: taiki-e/install-action@ac89944b5b150d78567ab6c02badfbe48b0b55aa # v2.20.16
-        with:
-          tool: nextest # can be versioned, ex: tool@1.1.1.1
-
-      # cargo-llvm-cov instead?
-      # https://github.com/taiki-e/cargo-llvm-cov
-      ## If cargo cache is not found, install grcov
-      - name: Install grcov
-        if: steps.check_cache.outputs.cache-hit != 'true'
-        id: install_grcov
-        uses: taiki-e/install-action@ac89944b5b150d78567ab6c02badfbe48b0b55aa # v2.20.16
-        with:
-          tool: grcov # can be versioned, ex: tool@1.1.1.1
-
-      ## If cargo cache is not found, create it using commit sha
-      - name: Save Cache
-        if: steps.check_cache.outputs.cache-hit != 'true'
-        id: save_cache
+      - name: Cargo Cache
+        id: cargo-cache
         uses: wileyj/actions/stacks-blockchain/cache/cargo@main
         with:
           action: save
+
+      # ## Perform a lookup to check if the cache already exists
+      # - name: Check Cargo Cache
+      #   id: check_cache
+      #   uses: wileyj/actions/stacks-blockchain/cache/cargo@main
+
+      # ## If cargo cache is not found, install nextest
+      # - name: Install nextest
+      #   if: steps.check_cache.outputs.cache-hit != 'true'
+      #   id: install_nextest
+      #   uses: taiki-e/install-action@ac89944b5b150d78567ab6c02badfbe48b0b55aa # v2.20.16
+      #   with:
+      #     tool: nextest # can be versioned, ex: tool@1.1.1.1
+
+      # # cargo-llvm-cov instead?
+      # # https://github.com/taiki-e/cargo-llvm-cov
+      # ## If cargo cache is not found, install grcov
+      # - name: Install grcov
+      #   if: steps.check_cache.outputs.cache-hit != 'true'
+      #   id: install_grcov
+      #   uses: taiki-e/install-action@ac89944b5b150d78567ab6c02badfbe48b0b55aa # v2.20.16
+      #   with:
+      #     tool: grcov # can be versioned, ex: tool@1.1.1.1
+
+      # ## If cargo cache is not found, create it using commit sha
+      # - name: Save Cache
+      #   if: steps.check_cache.outputs.cache-hit != 'true'
+      #   id: save_cache
+      #   uses: wileyj/actions/stacks-blockchain/cache/cargo@main
+      #   with:
+      #     action: save
 
   bitcoin-binary:
     name: Bitcoin Binary
     runs-on: ubuntu-latest
     steps:
       - name: Bitcoin Cache
-        id: save_cache
+        id: bitcoin-cache
         uses: wileyj/actions/stacks-blockchain/cache/bitcoin@main
         with:
           action: save
@@ -93,138 +100,207 @@ jobs:
     needs:
       - cargo
     steps:
-      ## Perform a lookup to check if the target cache already exists
       - name: Check Target Cache
-        id: check_target_cache
+        id: check-target-cache
         uses: wileyj/actions/stacks-blockchain/cache/target@main
 
-      ## Perform a lookup to check if the test archive cache already exists
       - name: Check Test Archive Cache
-        id: check_test_archive_cache
+        id: check-test-archive-cache
         uses: wileyj/actions/stacks-blockchain/cache/test-archive@main
 
-      ## Perform a lookup to check if the genesis test archive cache already exists
       - name: Check Genesis Test Archive Cache
-        id: check_genesis_archive_cache
+        id: check-genesis-test-archive-cache
         uses: wileyj/actions/stacks-blockchain/cache/genesis-test-archive@main
 
-      ## If any of the caches are found, checkout the code
+      ## If any of the caches are not found, restore the cargo cache
       ##   - Target cache
       ##   - Test archive cache
-      ##   - Genesis test archive cache
-      - name: Checkout the latest code
-        if: |
-          steps.check_target_cache.outputs.cache-hit != 'true' || 
-          steps.check_test_archive_cache.outputs.cache-hit != 'true' || 
-          steps.check_genesis_archive_cache.outputs.cache-hit != 'true'
-        id: git_checkout
-        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
-
-      ## If any of the caches are found, install rust toolchain
-      ##   - Target cache
-      ##   - Test archive cache
-      ##   - Genesis test archive cache
-      - name: Setup Rust Toolchain
-        if: |
-          steps.check_target_cache.outputs.cache-hit != 'true' || 
-          steps.check_test_archive_cache.outputs.cache-hit != 'true' || 
-          steps.check_genesis_archive_cache.outputs.cache-hit != 'true'
-        id: setup_rust_toolchain
-        uses: actions-rust-lang/setup-rust-toolchain@f3c84ee10bf5a86e7a5d607d487bf17d57670965 # v1.5.0
-        with:
-          toolchain: stable
-          components: llvm-tools-preview
-          cache: false
-
-      ## If any of the caches are found, restore the cargo cache
-      ##   - Target cache
-      ##   - Nextest archive cache
       ##   - Genesis nextest archive cache
       - name: Restore Cargo Cache
         if: |
-          steps.check_target_cache.outputs.cache-hit != 'true' || 
-          steps.check_test_archive_cache.outputs.cache-hit != 'true' || 
-          steps.check_genesis_archive_cache.outputs.cache-hit != 'true'
-        id: restore_cargo_cache
+          steps.check-target-cache.outputs.cache-hit != 'true' || 
+          steps.check-test-archive-cache.outputs.cache-hit != 'true' || 
+          steps.check-genesis-test-archive-cache.outputs.cache-hit != 'true'
+        id: restore-cargo-cache
         uses: wileyj/actions/stacks-blockchain/cache/cargo@main
         with:
           action: restore
 
-      ## If any of the caches are found, build and archive tests
+      ## If any of the caches are not found, build and archive tests
       ##   - Target cache
-      ##   - Nextest archive cache
+      ##   - Test archive cache
       ##   - Genesis nextest archive cache
       - name: Build and Archive Tests
         if: |
-          steps.check_target_cache.outputs.cache-hit != 'true' || 
-          steps.check_test_archive_cache.outputs.cache-hit != 'true' || 
-          steps.check_genesis_archive_cache.outputs.cache-hit != 'true'
-        id: archive_tests
-        run: |
-          cargo nextest archive \
-            --build-jobs 8 \
-            --workspace \
-            --tests \
-            --locked \
-            --archive-file /tmp/test_archive.tar.zst
-
-      ## If any of the caches are not found, build and archive genesis tests
-      ##   - Target cache
-      ##   - Nextest archive cache
-      ##   - Genesis nextest archive cache
-      - name: Build and Archive Genesis Tests
-        if: |
-          steps.check_target_cache.outputs.cache-hit != 'true' || 
-          steps.check_genesis_archive_cache.outputs.cache-hit != 'true' || 
-          steps.check_genesis_archive_cache.outputs.cache-hit != 'true'
-        id: archive_genesis_tests
-        run: |
-          cd testnet/stacks-node && cargo nextest archive \
-            --build-jobs 8 \
-            --workspace \
-            --tests \
-            --locked \
-            --features prod-genesis-chainstate \
-            --archive-file /tmp/genesis_archive.tar.zst
-
-      ## If any of the caches are not found, save target cache
-      ##   - Target cache
-      ##   - Nextest archive cache
-      ##   - Genesis nextest archive cache
-      - name: Cache Target
-        if: |
-          steps.check_target_cache.outputs.cache-hit != 'true' || 
-          steps.check_test_archive_cache.outputs.cache-hit != 'true' || 
-          steps.check_genesis_archive_cache.outputs.cache-hit != 'true'
-        id: save_target_cache
-        uses: wileyj/actions/stacks-blockchain/cache/target@main
-        with:
-          action: save
-
-      ## If any of the caches are not found, save test archive cache
-      ##   - Target cache
-      ##   - Nextest archive cache
-      ##   - Genesis nextest archive cache
-      - name: Cache Test Archive
-        if: |
-          steps.check_target_cache.outputs.cache-hit != 'true' || 
-          steps.check_test_archive_cache.outputs.cache-hit != 'true' || 
-          steps.check_genesis_archive_cache.outputs.cache-hit != 'true'
-        id: save_nextest_cache
+          steps.check-target-cache.outputs.cache-hit != 'true' || 
+          steps.check-test-archive-cache.outputs.cache-hit != 'true' || 
+          steps.check-genesis-test-archive-cache.outputs.cache-hit != 'true'
+        id: test-cache
         uses: wileyj/actions/stacks-blockchain/cache/test-archive@main
         with:
           action: save
 
-      ## If any of the caches are not found, save genesis test archive cache
+      ## If any of the caches are not found, build and archive genesis tests
       ##   - Target cache
-      ##   - Nextest archive cache
+      ##   - Test archive cache
       ##   - Genesis nextest archive cache
-      - name: Cache Genesis Archive
+      - name: Build and Archive Genesis Tests
         if: |
-          steps.check_target_cache.outputs.cache-hit != 'true' || 
-          steps.check_test_archive_cache.outputs.cache-hit != 'true' || 
-          steps.check_genesis_archive_cache.outputs.cache-hit != 'true'
-        id: save_genesis_cache
+          steps.check-target-cache.outputs.cache-hit != 'true' || 
+          steps.check-test-archive-cache.outputs.cache-hit != 'true' || 
+          steps.check-genesis-test-archive-cache.outputs.cache-hit != 'true'
+        id: genesis-test-cache
         uses: wileyj/actions/stacks-blockchain/cache/genesis-test-archive@main
         with:
           action: save
+
+      ## If any of the caches are not found, build and archive genesis tests
+      ##   - Target cache
+      ##   - Test archive cache
+      ##   - Genesis nextest archive cache
+      - name: Cache Cargo Target
+        if: |
+          steps.check-target-cache.outputs.cache-hit != 'true' || 
+          steps.check-test-archive-cache.outputs.cache-hit != 'true' || 
+          steps.check-genesis-test-archive-cache.outputs.cache-hit != 'true'
+        id: target-cache
+        uses: wileyj/actions/stacks-blockchain/cache/target@main
+        with:
+          action: save
+
+
+      # ## Perform a lookup to check if the target cache already exists
+      # - name: Check Target Cache
+      #   id: check_target_cache
+      #   uses: wileyj/actions/stacks-blockchain/cache/target@main
+
+      # ## Perform a lookup to check if the test archive cache already exists
+      # - name: Check Test Archive Cache
+      #   id: check_test_archive_cache
+      #   uses: wileyj/actions/stacks-blockchain/cache/test-archive@main
+
+      # ## Perform a lookup to check if the genesis test archive cache already exists
+      # - name: Check Genesis Test Archive Cache
+      #   id: check_genesis_archive_cache
+      #   uses: wileyj/actions/stacks-blockchain/cache/genesis-test-archive@main
+
+      # ## If any of the caches are found, checkout the code
+      # ##   - Target cache
+      # ##   - Test archive cache
+      # ##   - Genesis test archive cache
+      # - name: Checkout the latest code
+      #   if: |
+      #     steps.check_target_cache.outputs.cache-hit != 'true' || 
+      #     steps.check_test_archive_cache.outputs.cache-hit != 'true' || 
+      #     steps.check_genesis_archive_cache.outputs.cache-hit != 'true'
+      #   id: git_checkout
+      #   uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+
+      # ## If any of the caches are found, install rust toolchain
+      # ##   - Target cache
+      # ##   - Test archive cache
+      # ##   - Genesis test archive cache
+      # - name: Setup Rust Toolchain
+      #   if: |
+      #     steps.check_target_cache.outputs.cache-hit != 'true' || 
+      #     steps.check_test_archive_cache.outputs.cache-hit != 'true' || 
+      #     steps.check_genesis_archive_cache.outputs.cache-hit != 'true'
+      #   id: setup_rust_toolchain
+      #   uses: actions-rust-lang/setup-rust-toolchain@f3c84ee10bf5a86e7a5d607d487bf17d57670965 # v1.5.0
+      #   with:
+      #     toolchain: stable
+      #     components: llvm-tools-preview
+      #     cache: false
+
+      # ## If any of the caches are found, restore the cargo cache
+      # ##   - Target cache
+      # ##   - Nextest archive cache
+      # ##   - Genesis nextest archive cache
+      # - name: Restore Cargo Cache
+      #   if: |
+      #     steps.check_target_cache.outputs.cache-hit != 'true' || 
+      #     steps.check_test_archive_cache.outputs.cache-hit != 'true' || 
+      #     steps.check_genesis_archive_cache.outputs.cache-hit != 'true'
+      #   id: restore_cargo_cache
+      #   uses: wileyj/actions/stacks-blockchain/cache/cargo@main
+      #   with:
+      #     action: restore
+
+      # ## If any of the caches are found, build and archive tests
+      # ##   - Target cache
+      # ##   - Nextest archive cache
+      # ##   - Genesis nextest archive cache
+      # - name: Build and Archive Tests
+      #   if: |
+      #     steps.check_target_cache.outputs.cache-hit != 'true' || 
+      #     steps.check_test_archive_cache.outputs.cache-hit != 'true' || 
+      #     steps.check_genesis_archive_cache.outputs.cache-hit != 'true'
+      #   id: archive_tests
+      #   run: |
+      #     cargo nextest archive \
+      #       --build-jobs 8 \
+      #       --workspace \
+      #       --tests \
+      #       --locked \
+      #       --archive-file /tmp/test_archive.tar.zst
+
+      # ## If any of the caches are not found, build and archive genesis tests
+      # ##   - Target cache
+      # ##   - Nextest archive cache
+      # ##   - Genesis nextest archive cache
+      # - name: Build and Archive Genesis Tests
+      #   if: |
+      #     steps.check_target_cache.outputs.cache-hit != 'true' || 
+      #     steps.check_genesis_archive_cache.outputs.cache-hit != 'true' || 
+      #     steps.check_genesis_archive_cache.outputs.cache-hit != 'true'
+      #   id: archive_genesis_tests
+      #   run: |
+      #     cd testnet/stacks-node && cargo nextest archive \
+      #       --build-jobs 8 \
+      #       --workspace \
+      #       --tests \
+      #       --locked \
+      #       --features prod-genesis-chainstate \
+      #       --archive-file /tmp/genesis_archive.tar.zst
+
+      # ## If any of the caches are not found, save target cache
+      # ##   - Target cache
+      # ##   - Nextest archive cache
+      # ##   - Genesis nextest archive cache
+      # - name: Cache Target
+      #   if: |
+      #     steps.check_target_cache.outputs.cache-hit != 'true' || 
+      #     steps.check_test_archive_cache.outputs.cache-hit != 'true' || 
+      #     steps.check_genesis_archive_cache.outputs.cache-hit != 'true'
+      #   id: save_target_cache
+      #   uses: wileyj/actions/stacks-blockchain/cache/target@main
+      #   with:
+      #     action: save
+
+      # ## If any of the caches are not found, save test archive cache
+      # ##   - Target cache
+      # ##   - Nextest archive cache
+      # ##   - Genesis nextest archive cache
+      # - name: Cache Test Archive
+      #   if: |
+      #     steps.check_target_cache.outputs.cache-hit != 'true' || 
+      #     steps.check_test_archive_cache.outputs.cache-hit != 'true' || 
+      #     steps.check_genesis_archive_cache.outputs.cache-hit != 'true'
+      #   id: save_nextest_cache
+      #   uses: wileyj/actions/stacks-blockchain/cache/test-archive@main
+      #   with:
+      #     action: save
+
+      # ## If any of the caches are not found, save genesis test archive cache
+      # ##   - Target cache
+      # ##   - Nextest archive cache
+      # ##   - Genesis nextest archive cache
+      # - name: Cache Genesis Archive
+      #   if: |
+      #     steps.check_target_cache.outputs.cache-hit != 'true' || 
+      #     steps.check_test_archive_cache.outputs.cache-hit != 'true' || 
+      #     steps.check_genesis_archive_cache.outputs.cache-hit != 'true'
+      #   id: save_genesis_cache
+      #   uses: wileyj/actions/stacks-blockchain/cache/genesis-test-archive@main
+      #   with:
+      #     action: save
