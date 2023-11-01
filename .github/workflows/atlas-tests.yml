@@ -15,6 +15,9 @@ env:
   SEGMENT_DOWNLOAD_TIMEOUT_MINS: 15
   RETRIES: 3
   RETRY_DELAY: 10000
+  RUSTFLAGS: "-Cinstrument-coverage -Awarnings"
+  LLVM_PROFILE_FILE: "stacks-blockchain-%p-%m.profraw"
+  BTC_VERSION: "0.20.0"
 
 concurrency:
   group: atlas-tests-${{ github.workflow }}-${{ github.ref }}
@@ -64,6 +67,8 @@ jobs:
         uses: wileyj/actions/codecov@main
         with:
           test-name: ${{ matrix.test-name }}
+          # rust-flags: ""
+          # llvm-profile: ""
           
       # ## Generate code coverage using grcov
       # - name: Run grcov
