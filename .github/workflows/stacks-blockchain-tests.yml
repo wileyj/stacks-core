@@ -55,28 +55,13 @@ jobs:
             --archive-file /tmp/genesis_archive.tar.zst \
             "${{ matrix.test-name }}"
 
-      ## Generate code coverage using grcov
-      - name: Run grcov
-        id: run_grcov
-        run: |
-          grcov . --binary-path ./target/debug/ -s . -t lcov --branch --ignore-not-existing --ignore "/*" -o lcov.info
-          echo "created=true\n" >> $GITHUB_OUTPUT
-
-      ## Upload coverage to codecov
-      ##   - use wretry action, to retry on a failed upload 3x
-      - name: Upload Code Coverage
-        id: code_coverage
-        uses: Wandalen/wretry.action@a163f62ae554a8f3cbe27b23db15b60c0ae2e93c # v1.3.0
-        # uses: wileyj/wretry.action@a163f62ae554a8f3cbe27b23db15b60c0ae2e93c # v1.3.0
+      ## codecov
+      - name: Code Coverage
+        id: codecov
+        uses: wileyj/actions/codecov@main
         with:
-          action: codecov/codecov-action@eaaf4bedf32dbdc6b720b63067d99c4d77d6047d # v3.1.4
-          with: |
-            files: ./lcov.info
-            name: large_genesis
-            fail_ci_if_error: false
-            verbose: true
-          attempt_limit: ${{ env.RETRIES}}
-          attempt_delay: ${{ env.RETRY_DELAY}}
+          test-name: large_genesis
+          filename: ./lcov.info
 
   # unit tests with code coverage
   unit-tests:
@@ -117,30 +102,6 @@ jobs:
         with:
           test-name: ${{ matrix.test-name }}
 
-      # ## Generate code coverage using grcov
-      # - name: Run grcov
-      #   if: inputs.tag != ''
-      #   id: run_grcov
-      #   run: |
-      #     grcov . --binary-path ./target/debug/ -s . -t lcov --branch --ignore-not-existing --ignore "/*" -o lcov.info
-      #     echo "created=true\n" >> $GITHUB_OUTPUT
-
-      # ## Upload coverage to codecov
-      # ##   - use wretry action, to retry on a failed upload
-      # - name: Upload Code Coverage
-      #   id: code_coverage
-      #   uses: Wandalen/wretry.action@a163f62ae554a8f3cbe27b23db15b60c0ae2e93c # v1.3.0
-      #   # uses: wileyj/wretry.action@a163f62ae554a8f3cbe27b23db15b60c0ae2e93c # v1.3.0
-      #   with:
-      #     action: codecov/codecov-action@eaaf4bedf32dbdc6b720b63067d99c4d77d6047d # v3.1.4
-      #     with: |
-      #       files: ./lcov.info
-      #       name: unit_tests
-      #       fail_ci_if_error: false
-      #       verbose: true
-      #     attempt_limit: ${{ env.RETRIES}}
-      #     attempt_delay: ${{ env.RETRY_DELAY}}
-
   open-api-validation:
     name: OpenAPI Validation
     runs-on: ubuntu-latest
@@ -152,33 +113,6 @@ jobs:
         with:
           input: ./docs/rpc/openapi.yaml
           output: ./open-api-docs.html
-
-      # ## checkout the code
-      # - name: Checkout the latest code
-      #   id: git_checkout
-      #   uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
-
-      # ## Use redoc to generate HTML of openapi.yml
-      # - name: Redoc
-      #   id: run_redoc
-      #   uses: seeebiii/redoc-cli-github-action@c9649b33918da5eb290b81cd03a943caea091540 # v10
-      #   with:
-      #     args: "bundle -o ./open-api-docs.html ./docs/rpc/openapi.yaml"
-
-      # ## Test the resultant html
-      # - name: check result
-      #   id: check_redoc
-      #   run: |
-      #     test -f ./open-api-docs.html || (echo "Missing ./open-api-docs.html from previous step." && exit 1)
-
-      # ## Upload the html file artifact
-      # - name: Upload bundled html
-      #   id: upload_html_artifact
-      #   uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce # v3.1.2
-      #   with:
-      #     name: open-api-bundle
-      #     path: |
-      #       ./open-api-docs.html
 
   ## Disabled
   ##   - this test can take several hours to run
@@ -215,7 +149,7 @@ jobs:
         with:
           args: test --coverage --manifest-path=./contrib/core-contract-tests/Clarinet.toml
 
-      ## grcov
+      ## codecov
       - name: Code Coverage
         id: codecov
         uses: wileyj/actions/codecov@main
@@ -223,18 +157,3 @@ jobs:
           test-name: ${{ matrix.test-name }}
           upload-only: true
           filename: ./coverage.lcov
-
-      # ## Upload coverage to codecov
-      # ##   - use wretry action, to retry on a failed upload
-      # - name: Upload Code Coverage
-      #   id: code_coverage
-      #   uses: Wandalen/wretry.action@a163f62ae554a8f3cbe27b23db15b60c0ae2e93c # v1.3.0
-      #   # uses: wileyj/wretry.action@a163f62ae554a8f3cbe27b23db15b60c0ae2e93c # v1.3.0
-      #   with:
-      #     action: codecov/codecov-action@eaaf4bedf32dbdc6b720b63067d99c4d77d6047d # v3.1.4
-      #     with: |
-      #       files: ./coverage.lcov
-      #       fail_ci_if_error: false
-      #       verbose: true
-      #     attempt_limit: ${{env.RETRIES}}
-      #     attempt_delay: ${{env.RETRY_DELAY}}
