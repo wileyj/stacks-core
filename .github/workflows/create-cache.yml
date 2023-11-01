@@ -102,8 +102,8 @@ jobs:
     steps:
       - name: Cache Test Archives
         id: cache-test-archives
-        uses: wileyj/actions/stacks-blockchain/cache/archive-test@main
-        
+        uses: wileyj/actions/stacks-blockchain/cache/archive-tests@main
+
       # - name: Check Target Cache
       #   id: check-target-cache
       #   uses: wileyj/actions/stacks-blockchain/cache/target@main
