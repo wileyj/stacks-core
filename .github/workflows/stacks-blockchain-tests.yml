@@ -145,7 +145,7 @@ jobs:
       ## Use Clarinet to run contract unit-tests
       - name: Execute core contract unit tests in Clarinet
         id: clarinet_unit_test
-        uses: docker://hirosystems/clarinet:latest
+        uses: docker://hirosystems/clarinet:1.1.0
         with:
           args: test --coverage --manifest-path=./contrib/core-contract-tests/Clarinet.toml
 
