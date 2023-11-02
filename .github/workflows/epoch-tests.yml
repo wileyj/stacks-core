@@ -80,25 +80,9 @@ jobs:
             --archive-file /tmp/test_archive.tar.zst \
             "${{ matrix.test-name }}"
 
-      ## Generate code coverage using grcov
-      - name: Run grcov
-        id: run_grcov
-        run: |
-          grcov . --binary-path ./target/debug/ -s . -t lcov --branch --ignore-not-existing --ignore "/*" -o lcov.info || exit 1
-          echo "created=true\n" >> $GITHUB_OUTPUT
-
-      ## Upload coverage to codecov
-      ##   - use wretry action, to retry on a failed upload
-      - name: Upload Code Coverage
-        id: code_coverage
-        uses: Wandalen/wretry.action@a163f62ae554a8f3cbe27b23db15b60c0ae2e93c # v1.3.0
-        # uses: wileyj/wretry.action@a163f62ae554a8f3cbe27b23db15b60c0ae2e93c # v1.3.0
+      ## grcov
+      - name: Code Coverage
+        id: codecov
+        uses: wileyj/actions/codecov@main
         with:
-          action: codecov/codecov-action@eaaf4bedf32dbdc6b720b63067d99c4d77d6047d # v3.1.4
-          with: |
-            files: ./lcov.info
-            name: ${{ matrix.test-name }}
-            fail_ci_if_error: false
-            verbose: true
-          attempt_limit: ${{ env.RETRIES}}
-          attempt_delay: ${{ env.RETRY_DELAY}}
+          test-name: ${{ matrix.test-name }}
