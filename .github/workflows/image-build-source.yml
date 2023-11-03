@@ -26,7 +26,7 @@ jobs:
         dist:
           - debian
     steps:
-      # Default Docker setup
+      ## Setup Docker for the builds
       - name: Docker setup
         uses: wileyj/actions/docker@main
         with:

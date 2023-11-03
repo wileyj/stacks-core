@@ -80,7 +80,7 @@ jobs:
             --archive-file /tmp/test_archive.tar.zst \
             "${{ matrix.test-name }}"
 
-      ## grcov
+      ## Create and upload code coverage
       - name: Code Coverage
         id: codecov
         uses: wileyj/actions/codecov@main

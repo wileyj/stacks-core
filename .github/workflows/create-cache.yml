@@ -22,6 +22,7 @@ env:
 ##       however, this is only relevant if the commit sha does not change between runs
 
 jobs:
+  ## Cache cargo data
   cargo:
     name: Cargo
     runs-on: ubuntu-latest
@@ -32,7 +33,8 @@ jobs:
         uses: wileyj/actions/stacks-blockchain/cache/cargo@main
         with:
           action: save
-
+          
+  ## Cache the bitcoin binary
   bitcoin-binary:
     name: Bitcoin Binary
     runs-on: ubuntu-latest
@@ -43,6 +45,7 @@ jobs:
         with:
           action: save
 
+  ## Cache nextest archives for tests
   nextest-archive:
     name: Test Archive
     runs-on: ubuntu-latest

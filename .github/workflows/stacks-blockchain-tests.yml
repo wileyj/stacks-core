@@ -95,18 +95,18 @@ jobs:
             --archive-file /tmp/test_archive.tar.zst \
             --partition count:${{ matrix.partition }}/8
 
-      ## grcov
+      ## Create and upload code coverage
       - name: Code Coverage
         id: codecov
         uses: wileyj/actions/codecov@main
         with:
           test-name: ${{ matrix.test-name }}
 
+  ## Generate and upload openapi html artifact
   open-api-validation:
     name: OpenAPI Validation
     runs-on: ubuntu-latest
     steps:
-      ## Generate and store openapi html artifact
       - name: OpenAPI
         id: openapi
         uses: wileyj/actions/openapi@main
@@ -137,7 +137,7 @@ jobs:
     name: Core Contracts Test
     runs-on: ubuntu-latest
     steps:
-      ## checkout the code
+      ## Checkout the code
       - name: Checkout the latest code
         id: git_checkout
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
@@ -149,7 +149,7 @@ jobs:
         with:
           args: test --coverage --manifest-path=./contrib/core-contract-tests/Clarinet.toml
 
-      ## codecov
+      ## Upload code coverage
       - name: Code Coverage
         id: codecov
         uses: wileyj/actions/codecov@main

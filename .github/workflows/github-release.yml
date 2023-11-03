@@ -50,17 +50,17 @@ jobs:
           name: artifact
           path: release
 
-      ## TODO: change this to be a sha512 since that's what we email via announce list
-      # Generate a checksums file to be added to the release page
+      ## Generate a checksums file to be added to the release page
       - name: Generate Checksums
         id: generate_checksum
         uses: jmgilman/actions-generate-checksum@24a35957fba81c6cbaefeb1e3d59ee56e3db5077 # v1.0.0
         with:
+          method: sha512
           output: CHECKSUMS.txt
           patterns: |
             release/*.zip
 
-      # Upload the release archives with the checksums file
+      ## Upload the release archives with the checksums file
       - name: Upload Release
         id: upload_release
         uses: softprops/action-gh-release@de2c0eb89ae2a093876385947365aca7b0e5f844 #v0.1.15

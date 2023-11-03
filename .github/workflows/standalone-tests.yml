@@ -28,11 +28,9 @@ on:
 run-name: ${{ inputs.workflow }}
 
 jobs:
-  ## Runs every time
-  ##   - note: this job
+  ## Runs every time to either create the required caches or confirm they already exist
   create-cache:
     name: Create Test Cache
-    # uses: wileyj/stacks-blockchain/.github/workflows/create_cache.yml@master
     uses: ./.github/workflows/create-cache.yml
 
   #####################################################
@@ -51,7 +49,6 @@ jobs:
     name: Stacks Blockchain Tests
     needs:
       - create-cache
-    # uses: wileyj/stacks-blockchain/.github/workflows/build-source-binary.yml@master
     uses: ./.github/workflows/stacks-blockchain-tests.yml
 
   ## Runs when:
@@ -69,7 +66,6 @@ jobs:
     name: Bitcoin Tests
     needs:
       - create-cache
-    # uses: wileyj/stacks-blockchain/.github/workflows/build-source-binary.yml@master
     uses: ./.github/workflows/bitcoin-tests.yml
 
   #####################################################
@@ -86,7 +82,6 @@ jobs:
     name: Atlas Tests
     needs:
       - create-cache
-    # uses: wileyj/stacks-blockchain/.github/workflows/build-source-binary.yml@master
     uses: ./.github/workflows/atlas-tests.yml
 
   ## Runs when:
@@ -102,7 +97,6 @@ jobs:
     name: Epoch Tests
     needs:
       - create-cache
-    # uses: wileyj/stacks-blockchain/.github/workflows/build-source-binary.yml@master
     uses: ./.github/workflows/epoch-tests.yml
 
   ## Runs when:
@@ -118,5 +112,4 @@ jobs:
     name: Slow Tests
     needs:
       - create-cache
-    # uses: wileyj/stacks-blockchain/.github/workflows/build-source-binary.yml@master
     uses: ./.github/workflows/slow-tests.yml
