@@ -55,7 +55,7 @@ jobs:
             --archive-file /tmp/genesis_archive.tar.zst \
             "${{ matrix.test-name }}"
 
-      ## codecov
+      ## Upload code coverage
       - name: Code Coverage
         id: codecov
         uses: wileyj/actions/codecov@main
