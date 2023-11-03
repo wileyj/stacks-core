@@ -44,7 +44,7 @@ jobs:
       ## Setup test environment
       - name:  Setup Test Environment
         id: setup_tests
-        uses: wileyj/actions/stacks-blockchain/testenv@main
+        uses: stacks-network/actions/stacks-blockchain/testenv@main
 
       ## Run test matrix using cached archive file
       ##   - timeout after 30 minutes
@@ -61,9 +61,9 @@ jobs:
             --archive-file /tmp/test_archive.tar.zst \
             "${{ matrix.test-name }}"
 
-      ## grcov
+      ## Create and upload code coverage
       - name: Code Coverage
         id: codecov
-        uses: wileyj/actions/codecov@main
+        uses: stacks-network/actions/codecov@main
         with:
           test-name: ${{ matrix.test-name }}

@@ -39,7 +39,7 @@ jobs:
       ## Setup test environment
       - name:  Setup Test Environment
         id: setup_tests
-        uses: wileyj/actions/stacks-blockchain/testenv@main
+        uses: stacks-network/actions/stacks-blockchain/testenv@main
         with:
             genesis: true
 
@@ -55,10 +55,10 @@ jobs:
             --archive-file /tmp/genesis_archive.tar.zst \
             "${{ matrix.test-name }}"
 
-      ## codecov
+      ## Upload code coverage
       - name: Code Coverage
         id: codecov
-        uses: wileyj/actions/codecov@main
+        uses: stacks-network/actions/codecov@main
         with:
           test-name: large_genesis
           filename: ./lcov.info
@@ -79,7 +79,7 @@ jobs:
       ## Setup test environment
       - name:  Setup Test Environment
         id: setup_tests
-        uses: wileyj/actions/stacks-blockchain/testenv@main
+        uses: stacks-network/actions/stacks-blockchain/testenv@main
 
       ## Run test shards using cached archive file (defined as matrix.partition)
       ##   - timeout after 30 minutes
@@ -95,21 +95,21 @@ jobs:
             --archive-file /tmp/test_archive.tar.zst \
             --partition count:${{ matrix.partition }}/8
 
-      ## grcov
+      ## Create and upload code coverage
       - name: Code Coverage
         id: codecov
-        uses: wileyj/actions/codecov@main
+        uses: stacks-network/actions/codecov@main
         with:
           test-name: ${{ matrix.test-name }}
 
+  ## Generate and upload openapi html artifact
   open-api-validation:
     name: OpenAPI Validation
     runs-on: ubuntu-latest
     steps:
-      ## grcov
-      - name: Code Coverage
-        id: codecov
-        uses: wileyj/actions/openapi@main
+      - name: OpenAPI
+        id: openapi
+        uses: stacks-network/actions/openapi@main
         with:
           input: ./docs/rpc/openapi.yaml
           output: ./open-api-docs.html
@@ -137,7 +137,7 @@ jobs:
     name: Core Contracts Test
     runs-on: ubuntu-latest
     steps:
-      ## checkout the code
+      ## Checkout the code
       - name: Checkout the latest code
         id: git_checkout
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
@@ -149,10 +149,10 @@ jobs:
         with:
           args: test --coverage --manifest-path=./contrib/core-contract-tests/Clarinet.toml
 
-      ## codecov
+      ## Upload code coverage
       - name: Code Coverage
         id: codecov
-        uses: wileyj/actions/codecov@main
+        uses: stacks-network/actions/codecov@main
         with:
           test-name: ${{ matrix.test-name }}
           upload-only: true

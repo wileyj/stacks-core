@@ -39,9 +39,9 @@ jobs:
       matrix:
         platform: ${{ fromJson(inputs.arch) }}
     steps:
-      # Default Docker setup
+      ## Setup Docker for the builds
       - name: Docker setup
-        uses: wileyj/actions/docker@main
+        uses: stacks-network/actions/docker@main
           
       ## Build the binaries using defined dockerfiles
       - name: Build Binary (${{ matrix.platform }})
@@ -55,12 +55,12 @@ jobs:
             GIT_BRANCH=${{ env.GITHUB_REF_SHORT }}
             GIT_COMMIT=${{ env.GITHUB_SHA_SHORT }}
 
-      ## Compress the artifact
+      ## Compress the binary artifact
       - name: Compress artifact
         id: compress_artifact
         run: zip --junk-paths ${{ matrix.platform }} ./release/${{ matrix.platform }}/*
 
-      ## Upload the artifact to the github action (used in `github-release.yml` to create a release)
+      ## Upload the binary artifact to the github action (used in `github-release.yml` to create a release)
       - name: Upload artifact
         id: upload_artifact
         uses: actions/upload-artifact@a8a3f3ad30e3422c9c7b888a15615d19a852ae32 # v3.1.3
