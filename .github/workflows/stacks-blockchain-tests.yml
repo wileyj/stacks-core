@@ -106,9 +106,9 @@ jobs:
     name: OpenAPI Validation
     runs-on: ubuntu-latest
     steps:
-      ## grcov
-      - name: Code Coverage
-        id: codecov
+      ## Generate and store openapi html artifact
+      - name: OpenAPI
+        id: openapi
         uses: wileyj/actions/openapi@main
         with:
           input: ./docs/rpc/openapi.yaml

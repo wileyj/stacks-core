@@ -49,8 +49,8 @@ jobs:
     needs:
       - cargo
     steps:
-      - name: Cache Nexttest Archives
-        id: cache-test-archives
-        uses: wileyj/actions/stacks-blockchain/cache/archive-tests@main
+      - name: Build Nexttest Cache
+        id: nextest-cache
+        uses: wileyj/actions/stacks-blockchain/cache/build-cache@main
         with:
           genesis: true
