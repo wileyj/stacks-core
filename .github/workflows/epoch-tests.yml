@@ -64,7 +64,7 @@ jobs:
       ## Setup test environment
       - name:  Setup Test Environment
         id: setup_tests
-        uses: wileyj/actions/stacks-blockchain/testenv@main
+        uses: stacks-network/actionsstacks-blockchain/testenv@main
 
       ## Run test matrix using cached archive file
       - name: Run Tests
@@ -83,6 +83,6 @@ jobs:
       ## Create and upload code coverage
       - name: Code Coverage
         id: codecov
-        uses: wileyj/actions/codecov@main
+        uses: stacks-network/actionscodecov@main
         with:
           test-name: ${{ matrix.test-name }}
