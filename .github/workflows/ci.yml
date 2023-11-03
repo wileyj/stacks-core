@@ -28,9 +28,6 @@ on:
   pull_request_review:
     types:
       - submitted
-    paths-ignore:
-      - "**.md"
-      - "**.yml"
 
 defaults:
   run:
