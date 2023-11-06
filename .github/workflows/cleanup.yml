@@ -31,7 +31,7 @@ defaults:
     shell: bash
 
 jobs:
-  ## Use the gh cli and API to delete any action that has been completed (and was successful) for x days
+  ## Use the `gh` cli and API to delete any action that has been completed (and was successful) for x days
   ##   - currently set for: 2 days (EPOCH_2)
   delete-old-actions:
     name: Delete Completed Actions
