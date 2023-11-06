@@ -26,11 +26,12 @@ jobs:
   full-genesis:
     name: Full Genesis Test
     runs-on: ubuntu-latest
-    ## continue tests even if we have a failure
+    ## Continue the workflow in case a step fails (ex a single test fails)
     continue-on-error: true
-    ## run a maximum of 2 concurrent tests from the test matrix
     strategy:
+      ## Continue with the test matrix even if we've had a failure
       fail-fast: false
+      ## Run a maximum of 2 concurrent tests from the test matrix
       max-parallel: 2
       matrix:
         test-name:
@@ -43,7 +44,8 @@ jobs:
         with:
             genesis: true
 
-      ## Run test matrix using cached archive file
+      ## Run test matrix using restored cache of archive file
+      ##   - Test will timeout after 30 minutes
       - name: Run Tests
         id: run_tests
         run: |
@@ -55,7 +57,7 @@ jobs:
             --archive-file /tmp/genesis_archive.tar.zst \
             "${{ matrix.test-name }}"
 
-      ## Upload code coverage
+      ## Upload code coverage file
       - name: Code Coverage
         id: codecov
         uses: stacks-network/actions/codecov@main
@@ -63,26 +65,27 @@ jobs:
           test-name: large_genesis
           filename: ./lcov.info
 
-  # unit tests with code coverage
+  # Unit tests with code coverage
   unit-tests:
     name: Unit Tests
     runs-on: ubuntu-latest
-    ## continue tests even if we have a failure
+    ## Continue the workflow in case a step fails (ex a single test fails)
     continue-on-error: true
-    ## partition the tests in 8 shards
     strategy:
-      ## continue with the matrix even if we've had a failure
+      ## Continue the workflow in case a step fails (ex a single test fails)
       fail-fast: false
       matrix:
-        partition: [1, 2, 3, 4, 5, 6, 7, 8] # partition the tests into 8 jobs
+        ## Partition the tests into 8 jobs
+        ##   - This is used in a later step when running `cargo nextest run ... --partition count:num/8`
+        partition: [1, 2, 3, 4, 5, 6, 7, 8]
     steps:
       ## Setup test environment
       - name:  Setup Test Environment
         id: setup_tests
         uses: stacks-network/actions/stacks-blockchain/testenv@main
 
-      ## Run test shards using cached archive file (defined as matrix.partition)
-      ##   - timeout after 30 minutes
+      ## Run test matrix using restored cache of archive file
+      ##   - Test will timeout after 30 minutes
       - name: Run Tests
         id: run_tests
         timeout-minutes: 30
@@ -95,7 +98,7 @@ jobs:
             --archive-file /tmp/test_archive.tar.zst \
             --partition count:${{ matrix.partition }}/8
 
-      ## Create and upload code coverage
+      ## Create and upload code coverage file
       - name: Code Coverage
         id: codecov
         uses: stacks-network/actions/codecov@main
@@ -142,14 +145,14 @@ jobs:
         id: git_checkout
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
 
-      ## Use Clarinet to run contract unit-tests
+      ## Use Clarinet to run contract unit-tests and create code coverage file
       - name: Execute core contract unit tests in Clarinet
         id: clarinet_unit_test
         uses: docker://hirosystems/clarinet:1.8.0
         with:
           args: test --coverage --manifest-path=./contrib/core-contract-tests/Clarinet.toml
 
-      ## Upload code coverage
+      ## Upload code coverage file
       - name: Code Coverage
         id: codecov
         uses: stacks-network/actions/codecov@main

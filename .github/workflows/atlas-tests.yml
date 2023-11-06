@@ -15,9 +15,6 @@ env:
   SEGMENT_DOWNLOAD_TIMEOUT_MINS: 15
   RETRIES: 3
   RETRY_DELAY: 10000
-  # RUSTFLAGS: "-Cinstrument-coverage -Awarnings"
-  # LLVM_PROFILE_FILE: "stacks-blockchain-%p-%m.profraw"
-  # BTC_VERSION: "0.20.0"
 
 concurrency:
   group: atlas-tests-${{ github.workflow }}-${{ github.ref }}
@@ -25,16 +22,16 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
-  # atlas integration tests with code coverage
+  # Atlas integration tests with code coverage
   atlas-tests:
     name: Atlas Test
     runs-on: ubuntu-latest
-    ## continue tests even if we have a failure
+    ## Continue the workflow in case a step fails (ex a single test fails)
     continue-on-error: true
-    ## run a maximum of 2 concurrent tests from the test matrix
     strategy:
-      ## continue with the matrix even if we've had a failure
+      ## Continue with the test matrix even if we've had a failure
       fail-fast: false
+      ## Run a maximum of 2 concurrent tests from the test matrix
       max-parallel: 2
       matrix:
         test-name:
@@ -46,8 +43,8 @@ jobs:
         id: setup_tests
         uses: stacks-network/actions/stacks-blockchain/testenv@main
 
-      ## Run test matrix using cached archive file
-      ##   - timeout after 30 minutes
+      ## Run test matrix using restored cache of archive file
+      ##   - Test will timeout after 30 minutes
       - name: Run Tests
         id: run_tests
         timeout-minutes: 30
@@ -61,7 +58,7 @@ jobs:
             --archive-file /tmp/test_archive.tar.zst \
             "${{ matrix.test-name }}"
 
-      ## Create and upload code coverage
+      ## Create and upload code coverage file
       - name: Code Coverage
         id: codecov
         uses: stacks-network/actions/codecov@main
