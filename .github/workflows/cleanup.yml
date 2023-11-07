@@ -42,7 +42,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
         run: |
           ## Set a timestamp in iso-8601 format for x days in the past, defined by a variable
-          TS=$(date --iso-8601=ns -u -d @$((EPOCHSECONDS-${{ env.EPOCH_2 }})))
+          TS=$(date --iso-8601=ns -u -d @$((EPOCHSECONDS-${{ env.EPOCH_14 }})))
           echo "Deleting all actions older than: ${TS}"
           ## Retrieve a list of all actions
           gh api \
@@ -84,7 +84,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
         run: |
           ## Set a timestamp in iso-8601 format for x days in the past, defined by a variable
-          TS=$(date --iso-8601=ns -u -d @$((EPOCHSECONDS-${{ env.EPOCH_1 }})))
+          TS=$(date --iso-8601=ns -u -d @$((EPOCHSECONDS-${{ env.EPOCH_14 }})))
           echo "Deleting all failed/skipped actions older than: ${TS}"
           ## Retrieve a list of all actions
           gh api \
@@ -128,7 +128,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
         run: |
           ## Set a timestamp in iso-8601 format for x days in the past, defined by a variable
-          TS=$(date --iso-8601=ns -u -d @$((EPOCHSECONDS-${{ env.EPOCH_1 }})))
+          TS=$(date --iso-8601=ns -u -d @$((EPOCHSECONDS-${{ env.EPOCH_14 }})))
           echo "Deleting all caches older than: ${TS}"
           ## Install the gh actions-cache extension
           gh extension install actions/gh-actions-cache
