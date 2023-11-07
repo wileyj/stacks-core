@@ -40,7 +40,7 @@ jobs:
       ## Setup test environment
       - name:  Setup Test Environment
         id: setup_tests
-        uses: stacks-network/actions/stacks-blockchain/testenv@main
+        uses: wileyj/actions/stacks-blockchain/testenv@main
         with:
             genesis: true
 
@@ -60,7 +60,7 @@ jobs:
       ## Upload code coverage file
       - name: Code Coverage
         id: codecov
-        uses: stacks-network/actions/codecov@main
+        uses: wileyj/actions/codecov@main
         with:
           test-name: large_genesis
           filename: ./lcov.info
@@ -82,7 +82,7 @@ jobs:
       ## Setup test environment
       - name:  Setup Test Environment
         id: setup_tests
-        uses: stacks-network/actions/stacks-blockchain/testenv@main
+        uses: wileyj/actions/stacks-blockchain/testenv@main
 
       ## Run test matrix using restored cache of archive file
       ##   - Test will timeout after 30 minutes
@@ -101,7 +101,7 @@ jobs:
       ## Create and upload code coverage file
       - name: Code Coverage
         id: codecov
-        uses: stacks-network/actions/codecov@main
+        uses: wileyj/actions/codecov@main
         with:
           test-name: ${{ matrix.test-name }}
 
@@ -112,7 +112,7 @@ jobs:
     steps:
       - name: OpenAPI
         id: openapi
-        uses: stacks-network/actions/openapi@main
+        uses: wileyj/actions/openapi@main
         with:
           input: ./docs/rpc/openapi.yaml
           output: ./open-api-docs.html
@@ -155,7 +155,7 @@ jobs:
       ## Upload code coverage file
       - name: Code Coverage
         id: codecov
-        uses: stacks-network/actions/codecov@main
+        uses: wileyj/actions/codecov@main
         with:
           test-name: ${{ matrix.test-name }}
           upload-only: true

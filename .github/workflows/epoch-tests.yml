@@ -64,7 +64,7 @@ jobs:
       ## Setup test environment
       - name:  Setup Test Environment
         id: setup_tests
-        uses: stacks-network/actions/stacks-blockchain/testenv@main
+        uses: wileyj/actions/stacks-blockchain/testenv@main
 
       ## Run test matrix using restored cache of archive file
       ##   - Test will timeout after 30 minutes
@@ -84,6 +84,6 @@ jobs:
       ## Create and upload code coverage file
       - name: Code Coverage
         id: codecov
-        uses: stacks-network/actions/codecov@main
+        uses: wileyj/actions/codecov@main
         with:
           test-name: ${{ matrix.test-name }}
