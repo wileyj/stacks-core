@@ -34,6 +34,7 @@ jobs:
   ## Use the `gh` cli and API to delete any action that has been completed (and was successful) for x days
   ##   - currently set for: 2 days (EPOCH_2)
   delete-old-actions:
+    if: ${{ false }}
     name: Delete Completed Actions
     runs-on: ubuntu-latest
     steps:
@@ -76,6 +77,7 @@ jobs:
   ## Use the gh cli and API to delete any action that has been completed (and was unsuccessful) for x days
   ##   - currently set for: 1 days (EPOCH_1)
   delete-failed-actions:
+    if: ${{ false }}
     name: Delete Failed Workflows
     runs-on: ubuntu-latest
     steps:
@@ -119,7 +121,7 @@ jobs:
   ##   - currently set for: 1 days (EPOCH_1)
   ##   - ignore caches with a key of `stacks-blockchain-bitcoin-binaries`
   delete-old-caches:
-    # if: ${{ false }}
+    if: ${{ false }}
     name: Delete Caches
     runs-on: ubuntu-latest
     steps:
