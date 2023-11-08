@@ -1,0 +1,47 @@
+## Github workflow to clean up old caches and workflow runs
+##   TODO: look into using  https://github.com/actions/github-script
+
+name: Workflow Cleanup
+
+on:
+  workflow_dispatch:
+    inputs:
+      cache-ttl:
+        description: "How many days to keep a cache (default: 7)"
+        required: false
+        default: "7"
+      workflow-ttl:
+        description: "How many days to keep a successful workflow (default: 30)"
+        required: false
+        default: "30"
+      failed-workflow-ttl:
+        description: "How many days to keep failed workflows (default: 15)"
+        required: false
+        default: "15"
+  schedule:
+    ## Run every day at 00:00:00
+    - cron: "0 0 * * *"
+
+## Sets default values since we're allowing inputs when manually triggering this workflow
+env:
+  CACHE_TTL: 7
+  WORKFLOW_TTL: 30
+  FAILED_WORKFLOW_TTL: 15
+
+concurrency:
+  group: cleanup-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  workflow-cleanup:
+    name: Workflow Cleanup
+    runs-on: ubuntu-latest
+    steps:
+      - name: Cleanup
+        id: cleanup
+        uses: wileyj/actions/cleanup/actions@main  
+        with:
+          token: ${{ secrets.GH_TOKEN }}
+          cache-ttl: ${{ inputs.cache-ttl || env.CACHE_TTL}}
+          workflow-ttl: ${{ inputs.workflow-ttl || env.WORKFLOW_TTL}}
+          failed-workflow-ttl: ${{ inputs.failed-workflow-ttl || env.FAILED_WORKFLOW_TTL }}
