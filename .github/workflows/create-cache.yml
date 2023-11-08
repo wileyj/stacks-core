@@ -29,7 +29,7 @@ jobs:
       ## Perform a lookup to check if the cache already exists
       - name: Cargo Cache
         id: cargo-cache
-        uses: wileyj/actions/stacks-blockchain/cache/cargo@main
+        uses: stacks-network/actions/stacks-blockchain/cache/cargo@main
         with:
           action: save
           
@@ -40,7 +40,7 @@ jobs:
     steps:
       - name: Bitcoin Cache
         id: bitcoin-cache
-        uses: wileyj/actions/stacks-blockchain/cache/bitcoin@main
+        uses: stacks-network/actions/stacks-blockchain/cache/bitcoin@main
         with:
           action: save
 
@@ -53,6 +53,6 @@ jobs:
     steps:
       - name: Build Nexttest Cache
         id: nextest-cache
-        uses: wileyj/actions/stacks-blockchain/cache/build-cache@main
+        uses: stacks-network/actions/stacks-blockchain/cache/build-cache@main
         with:
           genesis: true
