@@ -14,7 +14,7 @@ on:
         required: false
         type: string
         default: >-
-          ["linux-glibc-x64", "linux-musl-x64", "linux-glibc-arm64", "linux-musl-arm64", "macos-x64", "macos-arm64", "windows-x64"]
+          ["linux-glibc-x64", "linux-musl-x64", "linux-glibc-arm64", "linux-glibc-armv7", "linux-musl-arm64", "linux-musl-armv7", "macos-x64", "macos-arm64", "windows-x64"]
 
 defaults:
   run:
@@ -34,8 +34,8 @@ jobs:
     name: Build Binaries
     runs-on: ubuntu-latest
     strategy:
-      ## Run a maximum of 8 builds concurrently, using the matrix defined in inputs.arch
-      max-parallel: 8
+      ## Run a maximum of 10 builds concurrently, using the matrix defined in inputs.arch
+      max-parallel: 10
       matrix:
         platform: ${{ fromJson(inputs.arch) }}
     steps:
