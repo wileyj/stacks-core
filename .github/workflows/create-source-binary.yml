@@ -34,8 +34,8 @@ jobs:
     name: Build Binaries
     runs-on: ubuntu-latest
     strategy:
-      ## Run a maximum of 8 builds concurrently, using the matrix defined in inputs.arch
-      max-parallel: 8
+      ## Run a maximum of 10 builds concurrently, using the matrix defined in inputs.arch
+      max-parallel: 10
       matrix:
         platform: ${{ fromJson(inputs.arch) }}
     steps:
