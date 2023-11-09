@@ -15,8 +15,6 @@ RUN case ${TARGETARCH} in \
     "arm")  BIN_ARCH=linux-musl-armv7  ;; \
     "*") exit 1 ;; \
     esac \
-    && echo "echo TARGETARCH: ${TARGETARCH}" \
-    && echo "echo BIN_ARCH: ${BIN_ARCH}" \
     && echo "wget  -q https://github.com/${REPO}/releases/download/${TAG}/${BIN_ARCH}.zip -O /${BIN_ARCH}.zip" \
     && wget  -q https://github.com/${REPO}/releases/download/${TAG}/${BIN_ARCH}.zip -O /${BIN_ARCH}.zip \
     && unzip ${BIN_ARCH}.zip -d /out
