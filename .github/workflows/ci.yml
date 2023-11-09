@@ -34,8 +34,8 @@ defaults:
     shell: bash
 
 concurrency:
-  # group: ${{ github.head_ref || github.run_id }}
-  group: ci-${{ github.workflow }}-${{ github.ref }}
+  group: ci-${{ github.head_ref || github.run_id }}
+  # group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 run-name: ${{ inputs.tag }}

@@ -29,7 +29,7 @@ env:
   FAILED_WORKFLOW_TTL: 15
 
 concurrency:
-  group: cleanup-${{ github.workflow }}-${{ github.ref }}
+  group: cleanup-${{ github.head_ref || github.run_id }}
   cancel-in-progress: true
 
 jobs:

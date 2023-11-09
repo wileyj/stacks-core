@@ -13,6 +13,11 @@ env:
   docker_platforms: linux/amd64
   docker-org: ${{ github.repository_owner }}
 
+concurrency:
+  group: docker-image-sourcebinary-${{ github.head_ref || github.run_id }}
+  # group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   ## Runs anytime `ci.yml` runs or when manually called
   image:
