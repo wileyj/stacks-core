@@ -3,19 +3,6 @@
 name: Create Binaries
 
 on:
-  workflow_dispatch:
-    inputs:
-      tag:
-        description: "Tag name of this release (x.y.z)"
-        required: true
-        type: string
-        default: 
-      arch:
-        description: "Stringified JSON object listing of platform matrix"
-        required: false
-        type: string
-        default: >-
-          ["linux-musl-armv7", "linux-glibc-armv7"]
   workflow_call:
     inputs:
       tag:
