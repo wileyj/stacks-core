@@ -23,8 +23,8 @@ env:
   docker-org: ${{ github.repository_owner }}
 
 concurrency:
-  group: docker-image-binary-${{ github.head_ref || github.run_id }}
-  # group: ${{ github.workflow }}-${{ github.ref }}
+  group: docker-image-binary-${{ github.head_ref || github.ref }}
+  # group: docker-image-binary-${{ github.head_ref || github.run_id }}
   cancel-in-progress: true
 
 run-name: ${{ inputs.tag }}

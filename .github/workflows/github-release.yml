@@ -12,8 +12,8 @@ on:
         required: true
 
 concurrency:
-  group: github-release-${{ github.head_ref || github.run_id }}
-  # group: ${{ github.workflow }}-${{ github.ref }}
+  group: github-release-${{ github.head_ref || github.ref }}
+  # group: github-release-${{ github.head_ref || github.run_id }}
   cancel-in-progress: true
 
 run-name: ${{ inputs.tag }}
