@@ -54,12 +54,22 @@ jobs:
         timeout-minutes: ${{ fromJSON(env.TEST_TIMEOUT) }}
         run: |
           cargo nextest run \
-            --test-threads 1 \
-            --run-ignored all \
-            --retries ${{ fromJSON(env.TEST_RETRIES) }} \
-            --final-status-level fail \
             --archive-file /tmp/genesis_archive.tar.zst \
+            --test-threads 1 \
+            --retries ${{ fromJSON(env.TEST_RETRIES) }} \
+            --run-ignored all \
+            --no-fail-fast \
+            --success-output immediate-final \
+            --status-level fail \
             "${{ matrix.test-name }}"
+        # run: |
+        #   cargo nextest run \
+        #     --test-threads 1 \
+        #     --run-ignored all \
+        #     --retries ${{ fromJSON(env.TEST_RETRIES) }} \
+        #     --final-status-level fail \
+        #     --archive-file /tmp/genesis_archive.tar.zst \
+        #     "${{ matrix.test-name }}"
 
       ## Upload code coverage file
       - name: Code Coverage
@@ -69,6 +79,10 @@ jobs:
           test-name: large_genesis
           filename: ./lcov.info
 
+      - name: Check Failures
+        if: steps.run_tests.outputs.status == 'failure' || steps.codecov.outputs.status == 'failure'
+        run: exit 1
+          
   # Unit tests with code coverage
   unit-tests:
     name: Unit Tests
@@ -95,12 +109,22 @@ jobs:
         timeout-minutes: ${{ fromJSON(env.TEST_TIMEOUT) }}
         run: |
           cargo nextest run \
+            --archive-file /tmp/test_archive.tar.zst \
             --test-threads num-cpus \
             --retries ${{ fromJSON(env.TEST_RETRIES) }} \
-            --final-status-level fail \
-            --fail-fast \
-            --archive-file /tmp/test_archive.tar.zst \
+            --run-ignored all \
+            --no-fail-fast \
+            --success-output immediate-final \
+            --status-level fail \
             --partition count:${{ matrix.partition }}/8
+        # run: |
+        #   cargo nextest run \
+        #     --test-threads num-cpus \
+        #     --retries ${{ fromJSON(env.TEST_RETRIES) }} \
+        #     --final-status-level fail \
+        #     --fail-fast \
+        #     --archive-file /tmp/test_archive.tar.zst \
+        #     --partition count:${{ matrix.partition }}/8
 
       ## Create and upload code coverage file
       - name: Code Coverage
@@ -108,6 +132,10 @@ jobs:
         uses: wileyj/actions/codecov@main
         with:
           test-name: ${{ matrix.test-name }}
+
+      - name: Check Failures
+        if: steps.run_tests.outputs.status == 'failure' || steps.codecov.outputs.status == 'failure'
+        run: exit 1
 
   ## Generate and upload openapi html artifact
   open-api-validation:
