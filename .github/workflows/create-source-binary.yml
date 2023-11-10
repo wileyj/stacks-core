@@ -23,6 +23,11 @@ defaults:
 ## change the display name to the tag being built
 run-name: ${{ inputs.tag }}
 
+concurrency:
+  group: create-binary-${{ github.head_ref || github.ref || github.run_id}}
+  ## Only cancel in progress if this is for a PR
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
   ## Runs when the following is true:
   ##  - tag is provided

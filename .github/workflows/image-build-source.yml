@@ -14,8 +14,8 @@ env:
   docker-org: ${{ github.repository_owner }}
 
 concurrency:
-  group: docker-image-sourcebinary-${{ github.head_ref || github.ref || github.run_id }}
-  # group: docker-image-sourcebinary-${{ github.head_ref || github.run_id }}
+  group: docker-image-source-${{ github.head_ref || github.ref || github.run_id }}
+  ## Always cancel duplicate jobs
   cancel-in-progress: true
 
 jobs:

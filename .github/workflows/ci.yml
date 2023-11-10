@@ -35,7 +35,7 @@ defaults:
 
 concurrency:
   group: ci-${{ github.head_ref || github.ref }}
-  # group: ${{ github.workflow }}-${{ github.ref }}
+  ## Always cancel duplicate jobs
   cancel-in-progress: true
 
 run-name: ${{ inputs.tag }}

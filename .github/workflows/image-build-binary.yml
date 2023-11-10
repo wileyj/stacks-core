@@ -24,7 +24,7 @@ env:
 
 concurrency:
   group: docker-image-binary-${{ github.head_ref || github.ref || github.run_id }}
-  # group: docker-image-binary-${{ github.head_ref || github.run_id }}
+  ## Always cancel duplicate jobs
   cancel-in-progress: true
 
 run-name: ${{ inputs.tag }}

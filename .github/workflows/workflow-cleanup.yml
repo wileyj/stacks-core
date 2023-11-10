@@ -28,6 +28,11 @@ env:
   WORKFLOW_TTL: 30
   FAILED_WORKFLOW_TTL: 15
 
+concurrency:
+  group: cleanup-${{ github.head_ref || github.ref }}
+  ## Always cancel duplicate jobs
+  cancel-in-progress: true
+
 jobs:
   workflow-cleanup:
     name: Workflow Cleanup
