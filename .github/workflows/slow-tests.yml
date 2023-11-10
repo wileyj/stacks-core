@@ -57,7 +57,7 @@ jobs:
             --test-threads 1 \
             --retries ${{ fromJSON(env.TEST_RETRIES) }} \
             --run-ignored all \
-            --no-fail-fast \
+            --fail-fast \
             --success-output immediate-final \
             --status-level fail \
             "${{ matrix.test-name }}"

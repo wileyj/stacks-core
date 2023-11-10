@@ -18,7 +18,7 @@ env:
   RETRY_DELAY: 10000
   TEST_TIMEOUT: 30
   TEST_RETRIES: 2
-
+# panic!("TEST FAILED");
 concurrency:
   group: bitcoin-tests-${{ github.head_ref || github.ref || github.run_id}}
   ## Only cancel in progress if this is for a PR
@@ -40,7 +40,7 @@ jobs:
         test-name:
           - tests::bitcoin_regtest::bitcoind_integration_test
           - tests::integrations::integration_test_get_info
-          - tests::neon_integrations::antientropy_integration_test
+          - tests::neon_integrations::antientropy_integration_test ## forced failure
           - tests::neon_integrations::bad_microblock_pubkey
           - tests::neon_integrations::bitcoind_forking_test
           - tests::neon_integrations::bitcoind_integration_test
@@ -95,7 +95,7 @@ jobs:
             --test-threads 1 \
             --retries ${{ fromJSON(env.TEST_RETRIES) }} \
             --run-ignored all \
-            --no-fail-fast \
+            --fail-fast \
             --success-output immediate-final \
             --status-level fail \
             "${{ matrix.test-name }}"

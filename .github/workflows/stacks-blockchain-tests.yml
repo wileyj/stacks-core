@@ -58,7 +58,7 @@ jobs:
             --test-threads 1 \
             --retries ${{ fromJSON(env.TEST_RETRIES) }} \
             --run-ignored all \
-            --no-fail-fast \
+            --fail-fast \
             --success-output immediate-final \
             --status-level fail \
             "${{ matrix.test-name }}"
@@ -115,10 +115,10 @@ jobs:
         run: |
           cargo nextest run \
             --archive-file /tmp/test_archive.tar.zst \
-            --test-threads num-cpus \
+            --test-threads 1 \
             --retries ${{ fromJSON(env.TEST_RETRIES) }} \
             --run-ignored all \
-            --no-fail-fast \
+            --fail-fast \
             --success-output immediate-final \
             --status-level fail \
             --partition count:${{ matrix.partition }}/8
