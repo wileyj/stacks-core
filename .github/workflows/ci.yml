@@ -156,27 +156,27 @@ jobs:
       - rustfmt
     uses: ./.github/workflows/create-cache.yml
 
-  # ## Tests to run regularly
-  # ##
-  # ## Runs when:
-  # ##   - tag is provided
-  # ##   either or of the following:
-  # ##     - tag is not provided
-  # ##     - PR is approved
-  # stacks-blockchain-tests:
-  #   if: |
-  #     inputs.tag != '' || (
-  #       inputs.tag == '' || (
-  #         github.event_name == 'pull_request_review' &&
-  #         github.event.action == 'submitted' &&
-  #         github.event.review.state == 'approved'
-  #       )
-  #     )
-  #   name: Stacks Blockchain Tests
-  #   needs:
-  #     - rustfmt
-  #     - create-cache
-  #   uses: ./.github/workflows/stacks-blockchain-tests.yml
+  ## Tests to run regularly
+  ##
+  ## Runs when:
+  ##   - tag is provided
+  ##   either or of the following:
+  ##     - tag is not provided
+  ##     - PR is approved
+  stacks-blockchain-tests:
+    if: |
+      inputs.tag != '' || (
+        inputs.tag == '' || (
+          github.event_name == 'pull_request_review' &&
+          github.event.action == 'submitted' &&
+          github.event.review.state == 'approved'
+        )
+      )
+    name: Stacks Blockchain Tests
+    needs:
+      - rustfmt
+      - create-cache
+    uses: ./.github/workflows/stacks-blockchain-tests.yml
 
   bitcoin-tests:
     if: |
