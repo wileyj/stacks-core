@@ -14,7 +14,7 @@ env:
   docker-org: ${{ github.repository_owner }}
 
 concurrency:
-  group: docker-image-sourcebinary-${{ github.head_ref || github.ref }}
+  group: docker-image-sourcebinary-${{ github.head_ref || github.ref || github.run_id }}
   # group: docker-image-sourcebinary-${{ github.head_ref || github.run_id }}
   cancel-in-progress: true
 
