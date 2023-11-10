@@ -29,8 +29,8 @@ jobs:
   slow-tests:
     name: Slow Tests
     runs-on: ubuntu-latest
-    ## Continue the workflow in case a step fails (ex a single test fails)
-    continue-on-error: true
+    # ## Continue the workflow in case a step fails (ex a single test fails)
+    # continue-on-error: true
     strategy:
       ## Continue with the test matrix even if we've had a failure
       fail-fast: false
@@ -77,6 +77,11 @@ jobs:
         uses: wileyj/actions/codecov@main
         with:
           test-name: ${{ matrix.test-name }}
+
+      - name: Status Output
+        run: |
+          echo "run_tests: ${{ steps.run_tests.outputs.status }}"
+          echo "codecov: ${{ steps.codecov.outputs.status }}"
 
       - name: Check Failures
         if: steps.run_tests.outputs.status == 'failure' || steps.codecov.outputs.status == 'failure'
