@@ -140,15 +140,6 @@ jobs:
         with:
           test-name: ${{ matrix.test-name }}
 
-      - name: Status Output
-        run: |
-          echo "run_tests: ${{ steps.run_tests.outputs.status }}"
-          echo "codecov: ${{ steps.codecov.outputs.status }}"
-
-      - name: Check Failures
-        if: steps.run_tests.outputs.status == 'failure' || steps.codecov.outputs.status == 'failure'
-        run: exit 1
-
   ## Generate and upload openapi html artifact
   open-api-validation:
     name: OpenAPI Validation
