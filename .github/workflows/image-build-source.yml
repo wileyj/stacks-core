@@ -45,6 +45,7 @@ jobs:
         with:
           images: |
             ${{env.docker-org}}/${{ github.event.repository.name }}
+            ${{env.docker-org}}/stacks-core
           tags: |
             type=raw,value=${{ env.BRANCH_NAME }}
             type=ref,event=pr
