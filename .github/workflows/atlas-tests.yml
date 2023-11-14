@@ -51,24 +51,19 @@ jobs:
       - name: Run Tests
         id: run_tests
         timeout-minutes: ${{ fromJSON(env.TEST_TIMEOUT) }}
-        run: |
-          cargo nextest run \
-            --archive-file /tmp/test_archive.tar.zst \
-            --test-threads num-cpus \
-            --retries ${{ fromJSON(env.TEST_RETRIES) }} \
-            --run-ignored all \
-            --fail-fast \
-            --success-output immediate-final \
-            --status-level fail \
-            "${{ matrix.test-name }}"
+        uses: wileyj/actions/stacks-blockchain/run-tests@main
+        with:
+          test-name: ${{ matrix.test-name }}
+
         # run: |
         #   cargo nextest run \
-        #     --test-threads num-cpus \
-        #     --run-ignored all \
-        #     --retries ${{ fromJSON(env.TEST_RETRIES) }} \
-        #     --final-status-level fail \
-        #     --fail-fast \
         #     --archive-file /tmp/test_archive.tar.zst \
+        #     --test-threads num-cpus \
+        #     --retries ${{ fromJSON(env.TEST_RETRIES) }} \
+        #     --run-ignored all \
+        #     --fail-fast \
+        #     --success-output immediate-final \
+        #     --status-level fail \
         #     "${{ matrix.test-name }}"
 
       ## Create and upload code coverage file
