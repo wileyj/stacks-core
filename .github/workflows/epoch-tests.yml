@@ -67,14 +67,14 @@ jobs:
       ## Setup test environment
       - name:  Setup Test Environment
         id: setup_tests
-        uses: wileyj/actions/stacks-blockchain/testenv@main
+        uses: wileyj/actions/stacks-core/testenv@main
 
       ## Run test matrix using restored cache of archive file
       ##   - Test will timeout after env.TEST_TIMEOUT minutes
       - name: Run Tests
         id: run_tests
         timeout-minutes: ${{ fromJSON(env.TEST_TIMEOUT) }}
-        uses: wileyj/actions/stacks-blockchain/run-tests@main
+        uses: wileyj/actions/stacks-core/run-tests@main
         with:
           test-name: ${{ matrix.test-name }}
           threads: 1  
