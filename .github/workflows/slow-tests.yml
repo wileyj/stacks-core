@@ -29,8 +29,6 @@ jobs:
   slow-tests:
     name: Slow Tests
     runs-on: ubuntu-latest
-    # ## Continue the workflow in case a step fails (ex a single test fails)
-    # continue-on-error: true
     strategy:
       ## Continue with the test matrix even if we've had a failure
       fail-fast: false
@@ -44,34 +42,21 @@ jobs:
       ## Setup test environment
       - name:  Setup Test Environment
         id: setup_tests
-        uses: wileyj/actions/stacks-core/testenv@main
+        uses: stacks-network/actions/stacks-core/testenv@main
 
       ## Run test matrix using restored cache of archive file
       ##   - Test will timeout after env.TEST_TIMEOUT minutes
       - name: Run Tests
         id: run_tests
         timeout-minutes: ${{ fromJSON(env.TEST_TIMEOUT) }}
-        uses: wileyj/actions/stacks-core/run-tests@main
+        uses: stacks-network/actions/stacks-core/run-tests@main
         with:
           test-name: ${{ matrix.test-name }}
-          threads: 1 
-      # - name: Run Tests
-      #   id: run_tests
-      #   timeout-minutes: ${{ fromJSON(env.TEST_TIMEOUT) }}
-      #   run: |
-      #     cargo nextest run \
-      #       --archive-file /tmp/test_archive.tar.zst \
-      #       --test-threads 1 \
-      #       --retries ${{ fromJSON(env.TEST_RETRIES) }} \
-      #       --run-ignored all \
-      #       --fail-fast \
-      #       --success-output immediate-final \
-      #       --status-level fail \
-      #       "${{ matrix.test-name }}"
+          threads: 1
 
       ## Create and upload code coverage file
       - name: Code Coverage
         id: codecov
-        uses: wileyj/actions/codecov@main
+        uses: stacks-network/actions/codecov@main
         with:
           test-name: ${{ matrix.test-name }}

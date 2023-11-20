@@ -32,7 +32,6 @@ jobs:
     uses: ./.github/workflows/create-source-binary.yml
     with:
       tag: ${{ inputs.tag }}
-      # arch: ${{ inputs.arch }}
     secrets: inherit
 
   ## Runs when the following is true:
