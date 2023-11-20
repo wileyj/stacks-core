@@ -1,3 +1,4 @@
+## The main Github Actions workflow
 name: CI
 
 on:

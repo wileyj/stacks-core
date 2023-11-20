@@ -1,3 +1,5 @@
+## Github workflow to build a docker image from source
+
 name: Docker Image (Source)
 
 on:
@@ -37,7 +39,7 @@ jobs:
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_PASSWORD }}
-          
+
       ## Set docker metatdata
       - name: Docker Metadata ( ${{matrix.dist}} )
         id: docker_metadata

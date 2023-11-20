@@ -9,7 +9,7 @@ defaults:
   run:
     shell: bash
 
-## env vars are transferred to `setup_tests` composite action step
+## env vars are transferred to composite action steps
 env:
   BITCOIND_TEST: 1
   RUST_BACKTRACE: full
@@ -35,12 +35,13 @@ jobs:
       ## Run a maximum of 2 concurrent tests from the test matrix
       max-parallel: 2
       matrix:
+        ## Each of these tests should take ~20 minutes if they are successful
         test-name:
           - tests::epoch_21::test_pox_reorg_flap_duel
-          - tests::epoch_21::test_pox_reorg_flap_reward_cycles ## really, really slow test
+          - tests::epoch_21::test_pox_reorg_flap_reward_cycles
     steps:
       ## Setup test environment
-      - name:  Setup Test Environment
+      - name: Setup Test Environment
         id: setup_tests
         uses: stacks-network/actions/stacks-core/testenv@main
 

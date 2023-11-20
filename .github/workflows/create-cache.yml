@@ -10,6 +10,7 @@ defaults:
   run:
     shell: bash
 
+## env vars are transferred to composite action steps
 env:
   RUSTFLAGS: "-Cinstrument-coverage -Awarnings"
   LLVM_PROFILE_FILE: "stacks-blockchain-%p-%m.profraw"
@@ -36,7 +37,7 @@ jobs:
         uses: stacks-network/actions/stacks-core/cache/cargo@main
         with:
           action: save
-          
+
   ## Cache the bitcoin binary
   bitcoin-binary:
     name: Bitcoin Binary

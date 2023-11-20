@@ -1,3 +1,5 @@
+## Github workflow to build a multiarch docker image from pre-built binaries
+
 name: Docker Image (Binary)
 
 on:
@@ -54,7 +56,6 @@ jobs:
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_PASSWORD }}
-          
 
       ## Set docker metatdata
       ## - depending on the matrix.dist, different tags will be enabled

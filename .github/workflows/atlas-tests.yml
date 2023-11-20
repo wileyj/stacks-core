@@ -9,7 +9,7 @@ defaults:
   run:
     shell: bash
 
-## env vars are transferred to `setup_tests` composite action step
+## env vars are transferred to composite action steps
 env:
   BITCOIND_TEST: 1
   RUST_BACKTRACE: full
@@ -40,7 +40,7 @@ jobs:
           - tests::neon_integrations::atlas_stress_integration_test
     steps:
       ## Setup test environment
-      - name:  Setup Test Environment
+      - name: Setup Test Environment
         id: setup_tests
         uses: stacks-network/actions/stacks-core/testenv@main
 

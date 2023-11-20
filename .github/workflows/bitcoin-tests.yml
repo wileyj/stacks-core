@@ -9,7 +9,7 @@ defaults:
   run:
     shell: bash
 
-## env vars are transferred to `setup_tests` composite action step
+## env vars are transferred to composite action steps
 env:
   BITCOIND_TEST: 1
   RUST_BACKTRACE: full
@@ -78,10 +78,10 @@ jobs:
           - tests::should_succeed_handling_malformed_and_valid_txs
     steps:
       ## Setup test environment
-      - name:  Setup Test Environment
+      - name: Setup Test Environment
         id: setup_tests
         uses: stacks-network/actions/stacks-core/testenv@main
-          
+
       ## Run test matrix using restored cache of archive file
       ##   - Test will timeout after env.TEST_TIMEOUT minutes
       - name: Run Tests

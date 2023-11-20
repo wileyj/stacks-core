@@ -1,3 +1,5 @@
+## Github workflow to create a github release and upload binary artifacts
+
 name: Github Release
 
 on:

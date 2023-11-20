@@ -9,7 +9,7 @@ defaults:
   run:
     shell: bash
 
-## env vars are transferred to `setup_tests` composite action step
+## env vars are transferred to composite action steps
 env:
   BITCOIND_TEST: 1
   RUST_BACKTRACE: full
@@ -39,11 +39,11 @@ jobs:
           - neon_integrations::bitcoind_integration_test
     steps:
       ## Setup test environment
-      - name:  Setup Test Environment
+      - name: Setup Test Environment
         id: setup_tests
         uses: stacks-network/actions/stacks-core/testenv@main
         with:
-            genesis: true
+          genesis: true
 
       ## Run test matrix using restored cache of archive file
       ##   - Test will timeout after env.TEST_TIMEOUT minutes
@@ -53,7 +53,7 @@ jobs:
         uses: stacks-network/actions/stacks-core/run-tests@main
         with:
           test-name: ${{ matrix.test-name }}
-          threads: 1 
+          threads: 1
           archive-file: /tmp/genesis_archive.tar.zst
 
       ## Upload code coverage file
@@ -72,7 +72,7 @@ jobs:
       - name: Check Failures
         if: steps.run_tests.outputs.status == 'failure' || steps.codecov.outputs.status == 'failure'
         run: exit 1
-          
+
   # Unit tests with code coverage
   unit-tests:
     name: Unit Tests
@@ -88,7 +88,7 @@ jobs:
         partition: [1, 2, 3, 4, 5, 6, 7, 8]
     steps:
       ## Setup test environment
-      - name:  Setup Test Environment
+      - name: Setup Test Environment
         id: setup_tests
         uses: stacks-network/actions/stacks-core/testenv@main
 
