@@ -61,6 +61,7 @@ jobs:
           labels: ${{ steps.docker_metadata.outputs.labels }}
           build-args: |
             STACKS_NODE_VERSION=${{ env.GITHUB_SHA_SHORT }}
+            REPO=${{ github.event.repository }}
             GIT_BRANCH=${{ env.GITHUB_REF_SHORT }}
             GIT_COMMIT=${{ env.GITHUB_SHA_SHORT }}
           push: ${{ env.DOCKER_PUSH }}
