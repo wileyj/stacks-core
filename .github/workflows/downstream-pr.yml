@@ -20,3 +20,5 @@ jobs:
       - name: Open Downstream PR (${{ github.ref_name }})
         id: create-pr
         uses: wileyj/actions/stacks-core/downstream-pr@main
+        with:
+          token: ${{ secrets.GH_TOKEN }}
