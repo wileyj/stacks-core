@@ -6,6 +6,7 @@ on:
     branches:
       - master
       - develop
+      - next
     paths-ignore:
       - "**.md"
       - "**.yml"
@@ -30,12 +31,8 @@ on:
     types:
       - submitted
 
-defaults:
-  run:
-    shell: bash
-
 concurrency:
-  group: ci-${{ github.head_ref || github.ref }}
+  group: ci-${{ github.head_ref || github.ref || github.run_id }}
   ## Always cancel duplicate jobs
   cancel-in-progress: true
 
@@ -131,7 +128,7 @@ jobs:
   ##         - PR is approved (any approval will trigger)
   ##         - this workflow is called manually
   ##         - PR is opened
-  ##         - commit to either (development, master) branch
+  ##         - commit to either (master|develop|next) branch
   create-cache:
     if: |
       inputs.tag != '' || (
@@ -145,8 +142,9 @@ jobs:
           github.event_name == 'pull_request_target' ||
           (
             contains('
-              refs/heads/develoment
               refs/heads/master
+              refs/heads/develop
+              refs/heads/next
             ', github.event.pull_request.head.ref) &&
             github.event_name == 'push'
           )

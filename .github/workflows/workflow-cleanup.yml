@@ -28,7 +28,7 @@ env:
   FAILED_WORKFLOW_TTL: 15 ## number of days to keep a failed workflow
 
 concurrency:
-  group: cleanup-${{ github.head_ref || github.ref }}
+  group: cleanup-${{ github.head_ref || github.ref || github.run_id }}
   ## Always cancel duplicate jobs
   cancel-in-progress: true
 

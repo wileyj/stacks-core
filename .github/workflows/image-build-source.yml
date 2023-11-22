@@ -6,10 +6,6 @@ on:
   workflow_dispatch:
   workflow_call:
 
-defaults:
-  run:
-    shell: bash
-
 ## Define which docker arch to build for
 env:
   docker_platforms: linux/amd64
