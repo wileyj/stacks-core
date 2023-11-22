@@ -1,0 +1,22 @@
+# https://cli.github.com/manual/gh_pr_create
+on:
+  push:
+    branches:
+      - master
+      - develop
+
+# permissions:
+#   pull-requests: write
+
+  ## github.ref_name 
+  ##     branch name
+
+jobs:
+  ## commit-author:
+  ##  USER=$(git log -1 '--pretty=%aN')
+  create-pr:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Open Downstream PR (${{ github.ref_name }})
+        id: create-pr
+        uses: wileyj/actions/stacks-core/downstream-pr@main
