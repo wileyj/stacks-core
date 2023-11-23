@@ -8,9 +8,9 @@ on:
 permissions:
   pull-requests: write
 
-
 jobs:
   create-pr:
+    name: Create Downstream PR
     runs-on: ubuntu-latest
     steps:
       - name: Open Downstream PR (${{ github.ref_name }})
