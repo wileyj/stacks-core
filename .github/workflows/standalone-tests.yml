@@ -46,7 +46,7 @@ jobs:
         inputs.workflow == 'CI Tests' ||
         inputs.workflow == 'Stacks-Core Tests'
       )
-    name: Stacks Blockchain Tests
+    name: Stacks Core Tests
     needs:
       - create-cache
     uses: ./.github/workflows/stacks-core-tests.yml
