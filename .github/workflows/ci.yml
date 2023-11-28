@@ -162,7 +162,7 @@ jobs:
   ##   either or of the following:
   ##     - tag is not provided
   ##     - PR is approved
-  stacks-blockchain-tests:
+  stacks-core-tests:
     if: |
       inputs.tag != '' || (
         inputs.tag == '' || (
@@ -175,7 +175,7 @@ jobs:
     needs:
       - rustfmt
       - create-cache
-    uses: ./.github/workflows/stacks-blockchain-tests.yml
+    uses: ./.github/workflows/stacks-core-tests.yml
 
   bitcoin-tests:
     if: |
