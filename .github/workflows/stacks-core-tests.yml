@@ -1,6 +1,6 @@
 ## Github workflow to run full genesis and unit tests
 
-name: Tests::Stacks Blockchain
+name: Tests::Stacks Core
 
 on:
   workflow_call:
