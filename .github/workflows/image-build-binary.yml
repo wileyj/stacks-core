@@ -1,5 +1,3 @@
-## Github workflow to build a multiarch docker image from pre-built binaries
-
 name: Docker Image (Binary)
 
 on:
@@ -14,6 +12,10 @@ on:
         type: string
         description: "Docker repo org for uploading images (defaults to github org)"
         default: "${GITHUB_REPOSITORY_OWNER}"
+
+defaults:
+  run:
+    shell: bash
 
 ## Define which docker arch to build for
 env:
@@ -48,10 +50,11 @@ jobs:
     steps:
       ## Setup Docker for the builds
       - name: Docker setup
-        uses: stacks-network/actions/docker@main
+        uses: wileyj/actions/docker@main
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_PASSWORD }}
+          
 
       ## Set docker metatdata
       ## - depending on the matrix.dist, different tags will be enabled
@@ -81,8 +84,7 @@ jobs:
           tags: ${{ steps.docker_metadata.outputs.tags }}
           labels: ${{ steps.docker_metadata.outputs.labels }}
           build-args: |
-            TAG=${{ inputs.tag }}
-            REPO=${{ github.repository_owner }}/${{ github.event.repository.name }}
+            TAG=${{ inputs.tag}}
             STACKS_NODE_VERSION=${{ inputs.tag || env.GITHUB_SHA_SHORT }}
             GIT_BRANCH=${{ env.GITHUB_REF_SHORT }}
             GIT_COMMIT=${{ env.GITHUB_SHA_SHORT }}

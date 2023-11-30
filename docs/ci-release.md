@@ -93,47 +93,6 @@ Files:
 - [Epoch Tests](../.github/workflows/epoch-tests.yml)
 - [Slow Tests](../.github/workflows/slow-tests.yml)
 
-### Adding/changing tests
-
-With the exception of `unit-tests` in [Stacks Blockchain Tests](../.github/workflows/stacks-blockchain-tests.yml), adding/removing a test requires a change to the workflow matrix. Example from [Atlas Tests](../.github/workflows/atlas-tests.yml):
-
-```yaml
-atlas-tests:
-  name: Atlas Test
-  runs-on: ubuntu-latest
-  strategy:
-    ## Continue with the test matrix even if we've had a failure
-    fail-fast: false
-    ## Run a maximum of 2 concurrent tests from the test matrix
-    max-parallel: 2
-    matrix:
-      test-name:
-        - tests::neon_integrations::atlas_integration_test
-        - tests::neon_integrations::atlas_stress_integration_test
-```
-
-Example of adding a new test `tests::neon_integrations::atlas_new_test`:
-
-```yaml
-    ...
-    matrix:
-      test-name:
-        - tests::neon_integrations::atlas_integration_test
-        - tests::neon_integrations::atlas_stress_integration_test
-        - tests::neon_integrations::atlas_new_test
-```
-
-The separation of tests (outside of [Slow Tests](../.github/workflows/slow-tests.yml)) is performed by creating a separate workflow for each _type_ of test that is being run. Using the example above, to add/remove any tests from being run - the `matrix` will need to be adjusted.
-
-ex:
-
-- `Atlas Tests`: Tests related to Atlas
-- `Bitcoin Tests`: Tests relating to burnchain operations
-- `Epoch Tests`: Tests related to epoch changes
-- `Slow Tests`: These tests have been identified as taking longer than others. The threshold used is if a test takes longer than `10 minutes` to complete successfully (or times out semi-regularly), it should be added here.
-- `Stacks Blockchain Tests`:
-  - `full-genesis`: Tests related to full genesis
-
 ## Triggering a workflow
 
 ### PR a branch to develop

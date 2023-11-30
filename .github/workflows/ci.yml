@@ -1,4 +1,3 @@
-## The main Github Actions workflow
 name: CI
 
 on:
@@ -6,7 +5,6 @@ on:
     branches:
       - master
       - develop
-      - next
     paths-ignore:
       - "**.md"
       - "**.yml"
@@ -31,8 +29,12 @@ on:
     types:
       - submitted
 
+defaults:
+  run:
+    shell: bash
+
 concurrency:
-  group: ci-${{ github.head_ref || github.ref || github.run_id }}
+  group: ci-${{ github.head_ref || github.ref }}
   ## Always cancel duplicate jobs
   cancel-in-progress: true
 
@@ -128,7 +130,7 @@ jobs:
   ##         - PR is approved (any approval will trigger)
   ##         - this workflow is called manually
   ##         - PR is opened
-  ##         - commit to either (master|develop|next) branch
+  ##         - commit to either (development, master) branch
   create-cache:
     if: |
       inputs.tag != '' || (
@@ -142,9 +144,8 @@ jobs:
           github.event_name == 'pull_request_target' ||
           (
             contains('
+              refs/heads/develoment
               refs/heads/master
-              refs/heads/develop
-              refs/heads/next
             ', github.event.pull_request.head.ref) &&
             github.event_name == 'push'
           )
@@ -162,7 +163,7 @@ jobs:
   ##   either or of the following:
   ##     - tag is not provided
   ##     - PR is approved
-  stacks-core-tests:
+  stacks-blockchain-tests:
     if: |
       inputs.tag != '' || (
         inputs.tag == '' || (
@@ -171,11 +172,11 @@ jobs:
           github.event.review.state == 'approved'
         )
       )
-    name: Stacks Core Tests
+    name: Stacks Blockchain Tests
     needs:
       - rustfmt
       - create-cache
-    uses: ./.github/workflows/stacks-core-tests.yml
+    uses: ./.github/workflows/stacks-blockchain-tests.yml
 
   bitcoin-tests:
     if: |
