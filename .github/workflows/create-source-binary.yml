@@ -1,4 +1,4 @@
-## Github workflow to create multi-arch binaries from source
+## Github workflow to create multiarch binaries from source
 
 name: Create Binaries
 
@@ -15,10 +15,6 @@ on:
         type: string
         default: >-
           ["linux-glibc-x64", "linux-musl-x64", "linux-glibc-arm64", "linux-glibc-armv7", "linux-musl-arm64", "linux-musl-armv7", "macos-x64", "macos-arm64", "windows-x64"]
-
-defaults:
-  run:
-    shell: bash
 
 ## change the display name to the tag being built
 run-name: ${{ inputs.tag }}
@@ -46,8 +42,8 @@ jobs:
     steps:
       ## Setup Docker for the builds
       - name: Docker setup
-        uses: wileyj/actions/docker@main
-          
+        uses: stacks-network/actions/docker@main
+
       ## Build the binaries using defined dockerfiles
       - name: Build Binary (${{ matrix.platform }})
         id: build_binaries

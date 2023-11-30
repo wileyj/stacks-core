@@ -1,3 +1,5 @@
+## Github workflow to create a github release and upload binary artifacts
+
 name: Github Release
 
 on:
@@ -12,7 +14,7 @@ on:
         required: true
 
 concurrency:
-  group: github-release-${{ github.head_ref || github.ref }}
+  group: github-release-${{ github.head_ref || github.ref || github.run_id }}
   ## Always cancel duplicate jobs
   cancel-in-progress: true
 
@@ -32,7 +34,6 @@ jobs:
     uses: ./.github/workflows/create-source-binary.yml
     with:
       tag: ${{ inputs.tag }}
-      # arch: ${{ inputs.arch }}
     secrets: inherit
 
   ## Runs when the following is true:

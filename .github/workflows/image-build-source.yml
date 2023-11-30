@@ -1,12 +1,10 @@
+## Github workflow to build a docker image from source
+
 name: Docker Image (Source)
 
 on:
   workflow_dispatch:
   workflow_call:
-
-defaults:
-  run:
-    shell: bash
 
 ## Define which docker arch to build for
 env:
@@ -33,11 +31,11 @@ jobs:
     steps:
       ## Setup Docker for the builds
       - name: Docker setup
-        uses: wileyj/actions/docker@main
+        uses: stacks-network/actions/docker@main
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_PASSWORD }}
-          
+
       ## Set docker metatdata
       - name: Docker Metadata ( ${{matrix.dist}} )
         id: docker_metadata
@@ -60,6 +58,7 @@ jobs:
           tags: ${{ steps.docker_metadata.outputs.tags }}
           labels: ${{ steps.docker_metadata.outputs.labels }}
           build-args: |
+            REPO=${{ github.repository_owner }}/${{ github.event.repository.name }}
             STACKS_NODE_VERSION=${{ env.GITHUB_SHA_SHORT }}
             GIT_BRANCH=${{ env.GITHUB_REF_SHORT }}
             GIT_COMMIT=${{ env.GITHUB_SHA_SHORT }}
