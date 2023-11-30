@@ -31,6 +31,10 @@ on:
     types:
       - submitted
 
+defaults:
+  run:
+    shell: bash
+
 concurrency:
   group: ci-${{ github.head_ref || github.ref || github.run_id }}
   ## Always cancel duplicate jobs
@@ -128,7 +132,7 @@ jobs:
   ##         - PR is approved (any approval will trigger)
   ##         - this workflow is called manually
   ##         - PR is opened
-  ##         - commit to either (master|develop|next) branch
+  ##         - commit to either (development, master) branch
   create-cache:
     if: |
       inputs.tag != '' || (

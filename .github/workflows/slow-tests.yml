@@ -21,8 +21,7 @@ jobs:
   # Slow integration tests with code coverage
   slow-tests:
     name: Slow Tests
-    # runs-on: ubuntu-latest
-    runs-on: buildjet-4vcpu-ubuntu-2204
+    runs-on: ubuntu-latest
     strategy:
       ## Continue with the test matrix even if we've had a failure
       fail-fast: false
@@ -43,7 +42,7 @@ jobs:
       ##   - Test will timeout after env.TEST_TIMEOUT minutes
       - name: Run Tests
         id: run_tests
-        # timeout-minutes: ${{ fromJSON(env.TEST_TIMEOUT) }}
+        timeout-minutes: ${{ fromJSON(env.TEST_TIMEOUT) }}
         uses: stacks-network/actions/stacks-core/run-tests@main
         with:
           test-name: ${{ matrix.test-name }}
