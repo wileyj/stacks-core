@@ -125,7 +125,7 @@ jobs:
         inputs.workflow == 'Release Tests' ||
         inputs.workflow == 'SBTC Tests'
       )
-    name: Slow Tests
+    name: SBTC Tests
     needs:
       - create-cache
     uses: ./.github/workflows/sbtc-tests.yml
