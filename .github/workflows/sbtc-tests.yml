@@ -47,7 +47,8 @@ jobs:
         uses: stacks-network/actions/stacks-core/run-tests@main
         with:
           test-name: ${{ matrix.test-name }}
-          threads: 1
+          retries: 0
+          # threads: 1
 
       ## Create and upload code coverage file
       - name: Code Coverage
