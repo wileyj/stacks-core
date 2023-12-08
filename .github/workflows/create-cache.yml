@@ -10,7 +10,7 @@ on:
 env:
   RUSTFLAGS: "-Cinstrument-coverage -Awarnings"
   LLVM_PROFILE_FILE: "stacks-core-%p-%m.profraw"
-  BTC_VERSION: "0.20.0"
+  # BTC_VERSION: "0.20.0"
 
 ##
 ## Cache will exist longer than workflow execution so other runners have access
@@ -44,6 +44,7 @@ jobs:
         uses: stacks-network/actions/stacks-core/cache/bitcoin@main
         with:
           action: save
+          btc-version: 25.0
 
   ## Cache nextest archives for tests
   nextest-archive:
