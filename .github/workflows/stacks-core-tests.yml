@@ -34,7 +34,7 @@ jobs:
       ## Setup test environment
       - name: Setup Test Environment
         id: setup_tests
-        uses: wileyj/actions/stacks-core/testenv@main
+        uses: stacks-network/actions/stacks-core/testenv@main
         with:
           genesis: true
           btc-version: "25.0"
@@ -44,7 +44,7 @@ jobs:
       - name: Run Tests
         id: run_tests
         timeout-minutes: ${{ fromJSON(env.TEST_TIMEOUT) }}
-        uses: wileyj/actions/stacks-core/run-tests@main
+        uses: stacks-network/actions/stacks-core/run-tests@main
         with:
           test-name: ${{ matrix.test-name }}
           threads: 1
@@ -84,7 +84,7 @@ jobs:
       ## Setup test environment
       - name: Setup Test Environment
         id: setup_tests
-        uses: wileyj/actions/stacks-core/testenv@main
+        uses: stacks-network/actions/stacks-core/testenv@main
         with:
           btc-version: "25.0"
 
@@ -93,7 +93,7 @@ jobs:
       - name: Run Tests
         id: run_tests
         timeout-minutes: ${{ fromJSON(env.TEST_TIMEOUT) }}
-        uses: wileyj/actions/stacks-core/run-tests/partition@main
+        uses: stacks-network/actions/stacks-core/run-tests/partition@main
         with:
           partition: ${{ matrix.partition }}
           total-partitions: 8
@@ -163,12 +163,6 @@ jobs:
           test-name: ${{ matrix.test-name }}
           upload-only: true
           filename: ./lcov.info
-      # - name: Export code coverage
-      #   id: clarinet_codecov
-      #   uses: codecov/codecov-action@v3
-      #   with:
-      #     files: ./lcov.info
-      #     verbose: true
 
   # Core contract tests on Clarinet v1
   # Check for false positives/negatives
@@ -185,29 +179,3 @@ jobs:
         uses: docker://hirosystems/clarinet:1.7.1
         with:
           args: test --manifest-path=./contrib/core-contract-tests/Clarinet.toml contrib/core-contract-tests/tests/bns/name_register_test.ts
-
-  # # Core contract tests
-  # core-contracts-clarinet-test:
-  #   name: Core Contracts Test
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     ## Checkout the code
-  #     - name: Checkout the latest code
-  #       id: git_checkout
-  #       uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
-
-  #     ## Use Clarinet to run contract unit-tests and create code coverage file
-  #     - name: Execute core contract unit tests in Clarinet
-  #       id: clarinet_unit_test
-  #       uses: docker://hirosystems/clarinet:1.1.0
-  #       with:
-  #         args: test --coverage --manifest-path=./contrib/core-contract-tests/Clarinet.toml
-
-  #     ## Upload code coverage file
-  #     - name: Code Coverage
-  #       id: codecov
-  #       uses: stacks-network/actions/codecov@main
-  #       with:
-  #         test-name: ${{ matrix.test-name }}
-  #         upload-only: true
-  #         filename: ./coverage.lcov

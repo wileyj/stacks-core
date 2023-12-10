@@ -36,7 +36,7 @@ jobs:
       ## Setup test environment
       - name: Setup Test Environment
         id: setup_tests
-        uses: wileyj/actions/stacks-core/testenv@main
+        uses: stacks-network/actions/stacks-core/testenv@main
         with:
           btc-version: "25.0"
 
@@ -45,7 +45,7 @@ jobs:
       - name: Run Tests
         id: run_tests
         timeout-minutes: ${{ fromJSON(env.TEST_TIMEOUT) }}
-        uses: wileyj/actions/stacks-core/run-tests@main
+        uses: stacks-network/actions/stacks-core/run-tests@main
         with:
           test-name: ${{ matrix.test-name }}
           threads: 1
