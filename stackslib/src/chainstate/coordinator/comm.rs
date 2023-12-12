@@ -100,7 +100,7 @@ impl SignalBools {
         self.stop || self.new_stacks_block || self.new_burn_block
     }
     fn receive_signal(&mut self) -> u8 {
-        let mut bits = 0;
+        let bits = 0;
         if self.stop {
             bits |= CoordinatorEvents::STOP as u8;
         }
