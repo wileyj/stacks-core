@@ -54,6 +54,7 @@ jobs:
     steps:
       - name: Build Nexttest Cache
         id: nextest-cache
-        uses: stacks-network/actions/stacks-core/cache/build-cache@main
+        uses: stacks-network/actions/stacks-core/cache/build-cache@feat/test-cargo-features
+        # uses: stacks-network/actions/stacks-core/cache/build-cache@main
         with:
           genesis: true
