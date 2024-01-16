@@ -1,7 +1,8 @@
 # Releases
 
-All releases are built via a Github Actions workflow named `CI` ([ci.yml](../.github/workflows/ci.yml)), and is responsible for
+All releases are built via a Github Actions workflow named `CI` ([ci.yml](../.github/workflows/ci.yml)), and is responsible for:
 
+- Verifying code is formatted correctly
 - Building binary archives and checksums
 - Docker images
 - Triggering tests conditionally (different tests run for a release vs a PR)
@@ -16,26 +17,26 @@ All releases are built via a Github Actions workflow named `CI` ([ci.yml](../.gi
 
 - Pushing a feature branch will not trigger a workflow
 - An open/re-opened/synchronized PR will produce a single image built from source on Debian with glibc with 2 tags:
-  - `stacks-blockchain:<branch-name>`
-  - `stacks-blockchain:<pr-number>`
+  - `stacks-core:<branch-name>`
+  - `stacks-core:<pr-number>`
 - A merged PR into `default-branch` from `develop` will produce a single image built from source on Debian with glibc:
-  - `stacks-blockchain:<default-branch-name>`
+  - `stacks-core:<default-branch-name>`
 - An untagged build of any branch will produce a single image built from source on Debian with glibc:
-  - `stacks-blockchain:<branch-name>`
+  - `stacks-core:<branch-name>`
 - A tagged release on a non-default branch will produces:
   - Docker Alpine image for several architectures tagged with:
-    - `stacks-blockchain:<x.x.x.x.x>`
+    - `stacks-core:<x.x.x.x.x>`
   - Docker Debian image for several architectures tagged with:
-    - `stacks-blockchain:<x.x.x.x.x-debian>`
+    - `stacks-core:<x.x.x.x.x-debian>`
 - A tagged release on the default branch will produce:
   - Github Release of the specified tag with:
     - Binary archives for several architectures
   - Docker Alpine image for several architectures tagged with:
-    - `stacks-blockchain:<x.x.x.x.x>`
-    - `stacks-blockchain:<latest>`
+    - `stacks-core:<x.x.x.x.x>`
+    - `stacks-core:<latest>`
   - Docker Debian image for several architectures tagged with:
-    - `stacks-blockchain:<x.x.x.x.x-debian>`
-    - `stacks-blockchain:<latest-debian>`
+    - `stacks-core:<x.x.x.x.x-debian>`
+    - `stacks-core:<latest-debian>`
 
 ## Release workflow
 
@@ -43,19 +44,19 @@ All releases are built via a Github Actions workflow named `CI` ([ci.yml](../.gi
 2. PR `feat/fix-something` to the `develop` branch where the PR is numbered `112`
    1. Docker image tagged with the **branch name** and **PR number**
    - ex:
-     - `stacks-blockchain:feat-fix-something`
-     - `stacks-blockchain:pr-112`
+     - `stacks-core:feat-fix-something`
+     - `stacks-core:pr-112`
    2. CI tests are run
 3. PR `develop` to the default branch where the PR is numbered `112`
    1. Docker image tagged with the **branch name** and **PR number**
    - ex:
-     - `stacks-blockchain:feat-fix-something`
-     - `stacks-blockchain:pr-112`
+     - `stacks-core:feat-fix-something`
+     - `stacks-core:pr-112`
    2. CI tests are run
 4. Merge `develop` branch to the default branch
    1. Docker image is tagged with the **default branch** `master`
    - ex:
-     - `stacks-blockchain:master`
+     - `stacks-core:master`
    2. CI tests are run
 5. CI workflow is manually triggered on **non-default branch** with a version, i.e. `2.1.0.0.0-rc0`
    1. No Docker images/binaries are created
@@ -65,10 +66,10 @@ All releases are built via a Github Actions workflow named `CI` ([ci.yml](../.gi
    2. All release tests are run
    3. Docker image pushed with tags of the **input version** and **latest**
    - ex:
-   - `stacks-blockchain:2.1.0.0.0-debian`
-   - `stacks-blockchain:latest-debian`
-   - `stacks-blockchain:2.1.0.0.0`
-   - `stacks-blockchain:latest`
+   - `stacks-core:2.1.0.0.0-debian`
+   - `stacks-core:latest-debian`
+   - `stacks-core:2.1.0.0.0`
+   - `stacks-core:latest`
 
 ## Tests
 
@@ -146,8 +147,8 @@ ex: Branch is named `feat/fix-something` and the PR is numbered `112`
 - [Bitcoin Tests](../.github/workflows/bitcoin-tests.yml)
 - [Docker image](../.github/workflows/image-build-source.yml) is built from source on a debian distribution and pushed with the branch name and PR number as tags
 - ex:
-  - `stacks-blockchain:feat-fix-something`
-  - `stacks-blockchain:pr-112`
+  - `stacks-core:feat-fix-something`
+  - `stacks-core:pr-112`
 
 ---
 
@@ -167,8 +168,8 @@ ex: Branch is named `develop` and the PR is numbered `113`
 - [Bitcoin Tests](../.github/workflows/bitcoin-tests.yml)
 - [Docker image](../.github/workflows/image-build-source.yml) is built from source on a debian distribution and pushed with the branch name and PR number as tags
 - ex:
-  - `stacks-blockchain:develop`
-  - `stacks-blockchain:pr-113`
+  - `stacks-core:develop`
+  - `stacks-core:pr-113`
 
 ---
 
@@ -180,7 +181,7 @@ ex: Branch is named `develop` and the PR is numbered `113`
 - [Bitcoin Tests](../.github/workflows/bitcoin-tests.yml)
 - [Docker image](../.github/workflows/image-build-source.yml) is built from source on a debian distribution and pushed with the branch name as a tag
 - ex:
-  - `stacks-blockchain:master`
+  - `stacks-core:master`
 
 ---
 
@@ -192,7 +193,7 @@ ex: Branch is named `develop` and the PR is numbered `113`
 - [Bitcoin Tests](../.github/workflows/bitcoin-tests.yml)
 - [Docker image](../.github/workflows/image-build-source.yml) is built from source on a debian distribution and pushed with the branch name as a tag
 - ex:
-  - `stacks-blockchain:<branch name>`
+  - `stacks-core:<branch name>`
 
 ---
 
@@ -222,9 +223,9 @@ ex: Branch is named `develop` and the PR is numbered `113`
 - [Github release](../.github/workflows/github-release.yml) (with artifacts/checksum) is created using the manually input tag
 - [Docker image](../.github/workflows/image-build-binary.yml) built from binaries on debian/alpine distributions and pushed with the provided input tag and `latest`
 - ex:
-  - `stacks-blockchain:2.1.0.0.0-debian`
-  - `stacks-blockchain:latest-debian`
-  - `stacks-blockchain:2.1.0.0.0`
-  - `stacks-blockchain:latest`
+  - `stacks-core:2.1.0.0.0-debian`
+  - `stacks-core:latest-debian`
+  - `stacks-core:2.1.0.0.0`
+  - `stacks-core:latest`
 
 ---

@@ -15,12 +15,11 @@ on:
       tag:
         description: "The tag to create (optional)"
         required: false
-  pull_request:
+  pull_request_target:
     types:
       - opened
       - reopened
       - synchronize
-      - ready_for_review
     paths-ignore:
       - "**.md"
       - "**.yml"
@@ -144,7 +143,7 @@ jobs:
             github.event.review.state == 'approved'
           ) ||
           github.event_name == 'workflow_dispatch' ||
-          github.event_name == 'pull_request' ||
+          github.event_name == 'pull_request_target' ||
           (
             contains('
               refs/heads/master
