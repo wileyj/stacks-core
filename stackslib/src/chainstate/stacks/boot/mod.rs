@@ -1937,6 +1937,7 @@ pub mod test {
         addr: PoxAddress,
         lock_period: u128,
         signer_key: StacksPublicKey,
+        signature: Vec<u8>,
     ) -> StacksTransaction {
         let addr_tuple = Value::Tuple(addr.as_clarity_tuple().unwrap());
         let payload = TransactionPayload::new_contract_call(
@@ -1946,6 +1947,7 @@ pub mod test {
             vec![
                 Value::UInt(lock_period),
                 addr_tuple,
+                Value::buff_from(signature).unwrap(),
                 Value::buff_from(signer_key.to_bytes_compressed()).unwrap(),
             ],
         )
@@ -2133,19 +2135,6 @@ pub mod test {
         );
 
         let signature = sign_structured_data(data_tuple, domain_tuple, signer_key).unwrap();
-
-        {
-            // debugging
-            let key_hex = signer_key.to_hex();
-            let sig_hex = to_hex(&signature.to_rsv());
-            println!(
-                "\n\nDebugging signatures: {} {} {} {}\n\n",
-                stacker.to_string(),
-                reward_cycle,
-                sig_hex,
-                key_hex
-            );
-        }
 
         signature.to_rsv()
     }
