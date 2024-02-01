@@ -1,0 +1,327 @@
+name: CI
+
+## Only run when:
+##   - manually triggered
+##   - PR's are (re)opened
+##   - push to master (i.e. merge develop -> master)
+
+on:
+  push:
+    branches:
+      - master
+      - development
+    paths-ignore:
+      - "**.md"
+      - "**.yml"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "The tag to create (optional)"
+        required: false
+  pull_request_target:
+    types:
+      - opened
+      - reopened
+      # - closed ## this will run if a PR is opened, then closed (i.e. by a spammer). best to leave it disabled
+      - synchronize
+    paths-ignore:
+      - "**.md"
+      - "**.yml"
+    # ## might be better to use inclusive v exclusive paths
+    # paths:
+    #   - "**.rs"
+    #   - "**.clar"
+  pull_request_review:
+    types:
+      - submitted
+    paths-ignore:
+      - "**.md"
+      - "**.yml"
+  # pull_request_review_comment:
+  #   branches-ignore:
+  #     - "**"
+  #   # pr review request for change: `submitted`
+  #   # pr review approval:
+
+defaults:
+  run:
+    shell: bash
+
+concurrency:
+  group: ${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  ##
+  ## Execute on every PR, these are generic workflows
+  ##   - rust format
+  ##   - check for any leaked credentials
+  ##   - build debian source image (if no tag is provided)
+
+  ##
+  ## rust format
+  rustfmt:
+    if: |
+      !(
+        github.event_name == 'pull_request_review' && 
+        github.event.action == 'submitted' && 
+        (
+          github.event.review.state == 'commented' ||
+          github.event.review.state == 'changes_requested'
+        )
+      )
+    name: Rust Format
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout the latest code
+        id: git_checkout
+        uses: actions/checkout@v3
+
+      - name: Setup Rust Toolchain
+        id: setup_rust_toolchain
+        uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          # toolchain: ${{ env.RUST_TOOLCHAIN }}
+          components: rustfmt
+          cache: false
+
+      - name: Rustfmt
+        id: rustfmt
+        uses: actions-rust-lang/rustfmt@v1
+
+  ## Checked for leaked credentials
+  leaked-cred-test:
+    if: |
+      !(
+        github.event_name == 'pull_request_review' && 
+        github.event.action == 'submitted' && 
+        (
+          github.event.review.state == 'commented' ||
+          github.event.review.state == 'changes_requested'
+        )
+      )
+    name: Leaked Credential Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Extract branch name
+        run: |
+          event=${{ github.event_name }}
+          case ${event} in
+            pull_request|pull_request_target|pull_request_review)
+              echo "is a PR"
+              echo "  setting branch: ${{ github.event.pull_request.head.ref }}"
+              branch=${{ github.event.pull_request.head.ref }}
+              ;;
+            *)
+              echo "not a PR"
+              echo "  setting branch: ${GITHUB_REF#refs/heads/}"
+              branch=${GITHUB_REF#refs/heads/}
+              ;;
+          esac
+          echo "BRANCH_NAME=$branch" >> $GITHUB_ENV
+          echo "NOT PR: github.ref: ${{ github.ref }}"
+          echo "IS PR: github.event.pull_request.base.ref: ${{ github.event.pull_request.base.ref }}"
+
+      - name: Checkout the latest code
+        id: git_checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: TruffleHog Scan
+        id: trufflehog_check
+        uses: trufflesecurity/trufflehog@main
+        with:
+          path: ./
+          base: ${{ env.BRANCH_NAME }}
+          head: HEAD
+  # #
+  # # clippy job
+  # #
+  # # audit job
+  # #
+  # #
+
+  # ## if:
+  # ##  - (input tag is provided) AND (is master branch and not a PR)
+  # ## then:
+  # ##  - create release
+  # ##
+  # ## This job will run the full suite of tests vi callable workflow
+  # ##  - atlas-tests
+  # ##  - slow-tests
+  # ##  - stacks-blockchain-tests
+  create-release:
+    if: inputs.tag != ''
+    name: Create Release
+    needs:
+      - rustfmt
+      - leaked-cred-test
+    # # uses: wileyj/stacks-blockchain/.github/workflows/github-release.yml@master
+    uses: ./.github/workflows/github-release.yml
+    with:
+      tag: ${{ inputs.tag }}
+      arch: >-
+        ["linux-glibc-x64", "linux-musl-x64", "linux-glibc-arm64", "linux-musl-arm64", "macos-x64", "macos-arm64", "windows-x64"]
+    secrets: inherit
+    # runs-on: ubuntu-latest
+    # steps:
+    #   - name: echo
+    #     run: |
+    #       echo "running  create-release"
+
+  # ##
+  # ## Tests to run regularly
+  # ##
+  # ## if:
+  # ##  - ((input tag is not provided) AND (pr is approved))
+  # ## then:
+  # ##  - run subset of tests
+  # ##    - epoch-tests
+  # ##    - bitcoin tests
+  # ## if input tag *is* provided, these tests will run as part of the `create-release` workflow
+  # ##
+  release-tests:
+    if: inputs.tag != ''
+    name: Release Tests
+    needs:
+      - rustfmt
+      - leaked-cred-test
+    # # uses: wileyj/stacks-blockchain/.github/workflows/github-release.yml@master
+    uses: ./.github/workflows/ci-tests.yml
+    secrets: inherit
+
+  # run if:
+  # input tag is not provided
+  # or
+  # is a an approved PR
+  # == will run when called manually, or if a PR is approved.
+
+  # run if:
+  # input tag is not provided
+  # or
+  # is a an approved PR
+  # == will run when called manually, or if a PR is approved.
+
+  # ## Build and push Debian image built from source
+  # ##  only if this is not a tagged build
+  # ## this will run on all PR updates
+  build-source-image:
+    if: |
+      inputs.tag == '' && 
+      !(
+        github.event_name == 'pull_request_review' && 
+        github.event.action == 'submitted' && 
+        (
+          github.event.review.state == 'commented' ||
+          github.event.review.state == 'changes_requested'
+        )
+      )
+    name: Docker Debian Source Image
+    # uses: wileyj/stacks-blockchain/.github/workflows/image-build-debian-source.yml@master
+    uses: ./.github/workflows/image-build-debian-source.yml
+    needs:
+      - rustfmt
+      - leaked-cred-test
+    secrets: inherit
+    # secrets:
+    #   DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+    #   DOCKERHUB_PASSWORD: ${{ secrets.DOCKERHUB_PASSWORD }}
+    # runs-on: ubuntu-latest
+    # steps:
+    #   - name: echo
+    #     run: |
+    #       echo "running  build-source-image"
+
+  create-cache:
+    if: |
+      inputs.tag == '' && (
+        (
+          github.event_name == 'pull_request_review' && 
+          github.event.action == 'submitted' && 
+          github.event.review.state == 'approved'
+        ) || 
+        github.event_name == 'workflow_dispatch' ||
+        github.event_name == 'pull_request_target' ||
+        (
+          contains('
+            refs/heads/develoment
+            refs/heads/master
+          ', github.event.pull_request.head.ref) &&
+          github.event_name == 'push'
+        )
+      )
+    name: Create Test Cache
+    needs:
+      - rustfmt
+      - leaked-cred-test
+    uses: ./.github/workflows/create-cache.yml
+    # uses: wileyj/stacks-blockchain/.github/workflows/create_cache.yml@master
+
+  bitcoin-tests:
+    if: |
+      inputs.tag == '' || (
+        github.event_name == 'pull_request_review' && 
+        github.event.action == 'submitted' && 
+        github.event.review.state == 'approved'
+      )
+    name: Bitcoin Tests
+    needs:
+      - rustfmt
+      - leaked-cred-test
+      - create-cache
+    # uses: wileyj/stacks-blockchain/.github/workflows/image-build-debian-source.yml@master
+    uses: ./.github/workflows/bitcoin-tests.yml
+    # uses: ./.github/workflows/ci-tests.yml
+    # with:
+    #   test: "Bitcoin Tests"
+
+  # run if:
+  # input tag is not provided
+  # or
+  # is a an approved PR
+  # == will run when called manually, or if a PR is approved.
+
+  epoch-tests:
+    if: |
+      inputs.tag == '' || (
+        github.event_name == 'pull_request_review' &&
+        github.event.action == 'submitted' &&
+        github.event.review.state == 'approved'
+      )
+    name: Epoch Tests
+    needs:
+      - rustfmt
+      - leaked-cred-test
+      - create-cache
+    # uses: wileyj/stacks-blockchain/.github/workflows/build-source-binary.yml@master
+    uses: ./.github/workflows/epoch-tests.yml
+    # uses: ./.github/workflows/ci-tests.yml
+    # with:
+    #   test: "Epoch Tests"
+
+  echo:
+    name: Echo
+    runs-on: ubuntu-latest
+    steps:
+      - name: echo
+        run: |
+          echo "inputs.tag: ${{ inputs.tag }}"
+          echo "github.event_name: ${{ github.event_name }}"
+          echo "github.event.action: ${{ github.event.action }}"
+          echo "github.event.review.state: ${{ github.event.review.state }}"
+          echo "true if (input == '' || pr approval): ${{ inputs.tag == '' || ( github.event_name == 'pull_request_review' && github.event.action == 'submitted' && github.event.review.state == 'approved') }}"
+          echo "true if (input =='' && not (pr submitted && !(pr comment || pr change requested))): ${{ inputs.tag == '' &&  !( github.event_name == 'pull_request_review' &&  github.event.action == 'submitted' &&  ( github.event.review.state == 'commented' || github.event.review.state == 'changes_requested' ) ) }}"
+          echo "Create-cache conditionals:"
+          echo "    true if inputs.tag != '' ||: ${{ inputs.tag != '' }}"
+          echo "    true if inputs.tag == '' ||: ${{ inputs.tag == '' }}"
+          echo "    true if github.event_name == 'pull_request_review: ${{ github.event_name == 'pull_request_review' }}"
+          echo "    true if github.event.action == 'submitted': ${{ github.event.action == 'submitted' }}"
+          echo "    true if github.event.review.state == 'approved': ${{ github.event.review.state == 'approved' }}"
+          echo "    true is PR is approved: ${{ (github.event_name == 'pull_request_review' && github.event.action == 'submitted' && github.event.review.state == 'approved') }}"
+          echo "    true if inputs.tag != '' || (inputs.tag == '' || (github.event_name == 'pull_request_review' && github.event.action == 'submitted' && github.event.review.state == 'approved')): ${{ inputs.tag != '' || (inputs.tag == '' || (github.event_name == 'pull_request_review' && github.event.action == 'submitted' && github.event.review.state == 'approved')) }}"
+          echo "    true if inputs.tag != '' || (inputs.tag == '' && (github.event_name == 'pull_request_review' && github.event.action == 'submitted' && github.event.review.state == 'approved')): ${{ inputs.tag != '' || (inputs.tag == '' && (github.event_name == 'pull_request_review' && github.event.action == 'submitted' && github.event.review.state == 'approved')) }}"
+          echo "    true if ref is master/develpment/next: ${{ contains(' refs/heads/next refs/heads/develoment refs/heads/master', github.event.pull_request.head.ref) }}"
+          echo "    true if merged PR (github.event.pull_request.merged) : ${{ github.event.pull_request.merged }}"
+          echo "    github.event.pull_request.head.ref: ${{ github.event.pull_request.head.ref }}"
+          echo "    github.event.pull_request.merged: ${{ github.event.pull_request.merged }}"

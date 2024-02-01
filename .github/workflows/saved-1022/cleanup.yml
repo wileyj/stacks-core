@@ -1,0 +1,165 @@
+## Github workflow to clean up old caches and workflow runs
+##   TODO: look into using  https://github.com/actions/github-script
+## Runs when:
+##   - Nightly via a scheduler
+
+name: Cleanup
+
+on:
+  workflow_dispatch:
+  ## Runs every day at 00:00:00
+  ## Note that the EPOCH var may mean nothing is deleted; this is normal - it will only delete workflows that match the set boundaries
+  schedule:
+    - cron: "0 0 * * *"
+
+concurrency:
+  group: cleanup-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+## set some basic values for timing
+env:
+  EPOCH_30: 2592000 # seconds in 30 days
+  EPOCH_14: 1209600 # seconds in 14 days
+  EPOCH_10: 864000 # seconds in 10 days
+  EPOCH_7: 44800 # seconds in 7 days
+  EPOCH_6: 518400 # seconds in 6 days
+  EPOCH_5: 432000 # seconds in 5 days
+  EPOCH_4: 345600 # seconds in 4 days
+  EPOCH_3: 259200 # seconds in 3 days
+  EPOCH_2: 172800 # seconds in 2 days
+  EPOCH_1: 86400 # seconds in 1 day
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  ## Use the gh cli and API to delete any action that has been completed (and was successful) for x days
+  ##   - currently set for: 14 days (EPOCH_14)
+  delete-old-actions:
+    name: Delete Completed Actions
+    runs-on: ubuntu-latest
+    steps:
+      - name: Github API Call
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+        run: |
+          ## Set a timestamp in iso-8601 format for x days in the past, defined by a variable
+          TS=$(date --iso-8601=ns -u -d @$((EPOCHSECONDS-${{ env.EPOCH_14 }})))
+          echo "Deleting all actions older than: ${TS}"
+          ## Retrieve a list of all actions
+          gh api \
+            --paginate \
+            -H "Accept: application/vnd.github+json" \
+            repos/${{ github.repository }}/actions/runs |
+          for ID in `
+            ## Pipe the results through jq, setting the TS var (in jq) to the TS variable already defined
+            jq -r --arg TS "$TS" '
+              ## Loop over the items in the workflow_runs array
+              .workflow_runs[]
+              ## Retrieve the keys: id (used for deleting), updated_at (used for comparison), status (used for comparison), conclusion (unused)
+              | { id, updated_at,status,conclusion } 
+              ## Filter out the id based on (updated_at < TS and is completed) 
+              | select((.updated_at < $TS) and .status == "completed")
+              ## If an item matches our conditional, store the id as ID in the for loop
+              | {id}
+              | .[]
+            '
+          `; do
+            ## Use the gh api to delete the action id found previously
+            echo "*** Deleting action: $ID (https://github.com/${{ github.repository }}/actions/runs/${ID})"
+            gh api \
+              -H "Accept: application/vnd.github.v3+json" \
+              -X DELETE \
+              repos/${{ github.repository }}/actions/runs/$ID \
+            | echo;
+          done
+          echo "Done"
+
+  ## Use the gh cli and API to delete any action that has been completed (and was unsuccessful) for x days
+  ##   - currently set for: 1 days (EPOCH_7)
+  delete-failed-actions:
+    name: Delete Failed Workflows
+    runs-on: ubuntu-latest
+    steps:
+      - name: Github API Call
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+        run: |
+          ## Set a timestamp in iso-8601 format for x days in the past, defined by a variable
+          TS=$(date --iso-8601=ns -u -d @$((EPOCHSECONDS-${{ env.EPOCH_7 }})))
+          echo "Deleting all failed/skipped actions older than: ${TS}"
+          ## Retrieve a list of all actions
+          gh api \
+            --paginate \
+            -H "Accept: application/vnd.github+json" \
+            repos/${{ github.repository }}/actions/runs |
+          for ID in `
+            ## Pipe the results through jq, setting the TS var (in jq) to the TS variable already defined
+            jq -r --arg TS "$TS" '
+              ## Loop over the items in the workflow_runs array
+              .workflow_runs[]
+              ## Retrieve the keys: id (used for deleting), updated_at (used for comparison), status (used for comparison), conclusion (used for comparison)
+              | { id, updated_at,status,conclusion } 
+              ## Filter out the id based on (updated_at < TS and (action was unsuccessful and is completed) 
+              | select((.updated_at < $TS) and (.conclusion != "success" and .status == "completed"))
+              ## If an item matches our conditional, store the id as ID in the for loop
+              | {id}
+              | .[]
+            '
+          `; do
+            ## Use the gh api to delete the action id found previously
+            echo "*** Deleting action: $ID (https://github.com/${{ github.repository }}/actions/runs/${ID})"
+            gh api \
+              -H "Accept: application/vnd.github.v3+json" \
+              -X DELETE \
+              repos/${{ github.repository }}/actions/runs/$ID \
+            | echo;
+          done
+          echo "Done"
+
+  ## Use the gh cli and API to delete caches that have existed for at least x days
+  ##   - currently set for: 7 days (EPOCH_1), which is identical to the timeframe to delete failed actions
+  ##   - ignore caches with a key of `stacks-blockchain-bitcoin-binaries`
+  delete-old-caches:
+    # if: ${{ false }}
+    name: Delete Caches
+    runs-on: ubuntu-latest
+    steps:
+      - name: Github API Call
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+        run: |
+          ## Set a timestamp in iso-8601 format for x days in the past, defined by a variable
+          TS=$(date --iso-8601=ns -u -d @$((EPOCHSECONDS-${{ env.EPOCH_7 }})))
+          echo "Deleting all caches older than: ${TS}"
+          ## Install the gh actions-cache extension
+          gh extension install actions/gh-actions-cache
+          ## Retrieve a list of all caches
+          gh api \
+            --paginate \
+            -H "Accept: application/vnd.github+json" \
+            repos/${{ github.repository }}/actions/caches |
+          for ID in `
+           ## Pipe the results through jq, setting the TS var (in jq) to the TS variable already defined
+            jq -r --arg TS "$TS" '
+              ## Loop over the items in the actions_caches array
+              .actions_caches[]
+              ## Retrieve the keys: id (used for deleting), last_accessed_at (used for comparison) and key (used for comparison)
+              | { id, last_accessed_at, key }
+              ## Filter out the id based on (last_accessed_at < TS and key is not stacks-blockchain-bitcoin-binaries
+              | select((.last_accessed_at < $TS) and (.key != "stacks-blockchain-bitcoin-binaries" ))
+              ## If an item matches our conditional, store the id as ID in the for loop
+              | {id}
+              | .[]
+            '
+          `; do
+            ## Use the gh api to delete the cache id found previously
+            echo "*** Deleting cache: $ID"
+            gh api \
+              -H "Accept: application/vnd.github.v3+json" \
+              -X DELETE \
+              repos/${{ github.repository }}/actions/caches/$ID \
+            | echo;
+          done
+          echo "Done"
