@@ -43,7 +43,8 @@ jobs:
       - name: Build Binary
         id: build_binary
         timeout-minutes: 30
-        uses: wileyj/actions/stacks-core/create-source-binary@main
+        # uses: wileyj/actions/stacks-core/create-source-binary@main
+        uses: BowTiedDevOps/actions/stacks-core/create-source-binary@feat/move-binary-build-to-composite
         with:
           arch: ${{ matrix.platform }}
     # steps:
