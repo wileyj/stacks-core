@@ -9,7 +9,6 @@ coverage:
       # removed_code_behavior: fully_covered_patch
   notify:
     after_n_builds: 70 # stacks-core-tests.yml & bitcoin-test.yml as a minimum
-  status:
 github_checks:
   annotations: false
 comment:
