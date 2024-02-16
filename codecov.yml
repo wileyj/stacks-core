@@ -1,15 +1,15 @@
 coverage:
   notify:
-    after_n_builds: 58 # stacks-core-tests.yml & bitcoin-test.yml as a minimum
-  status:
-    patch: off
-    project:
-      default:
-        only_pulls: true
-        removed_code_behavior: fully_covered_patch
+    after_n_builds: 70 # stacks-core-tests.yml & bitcoin-test.yml as a minimum
+  # status:
+  #   patch: off
+  #   project:
+  #     default:
+  #       only_pulls: true
+  #       removed_code_behavior: fully_covered_patch
 github_checks:
   annotations: false
 comment:
   layout: "condensed_header, condensed_files, condensed_footer" # add "condensed_" to "header", "files" and "footer"
   hide_project_coverage: TRUE # set to true
-  require_changes: true
+  # require_changes: true
