@@ -1,12 +1,15 @@
 coverage:
+  range: 30..70 # coverage lower than 30 is red, higher than 70 green, between color code
+  patch: false
+  project:
+    default:
+      target: auto # auto % coverage target
+      threshold: 2% # allow for 2% reduction of coverage without failing
+      # only_pulls: true
+      # removed_code_behavior: fully_covered_patch
   notify:
     after_n_builds: 70 # stacks-core-tests.yml & bitcoin-test.yml as a minimum
-  # status:
-  #   patch: off
-  #   project:
-  #     default:
-  #       only_pulls: true
-  #       removed_code_behavior: fully_covered_patch
+  status:
 github_checks:
   annotations: false
 comment:
