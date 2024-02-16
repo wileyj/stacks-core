@@ -18,7 +18,7 @@ on:
 ## Define which docker arch to build for
 env:
   docker_platforms: "linux/arm64, linux/arm/v7, linux/amd64, linux/amd64/v2, linux/amd64/v3"
-  docker-org: blockstack
+  docker-org: ${{ github.repository_owner }}
 
 concurrency:
   group: docker-image-binary-${{ github.head_ref || github.ref || github.run_id }}
