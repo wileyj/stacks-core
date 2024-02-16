@@ -16,6 +16,8 @@ coverage:
   range: 30..70 # coverage lower than 30 is red, higher than 70 green, between color code
   status:
     patch: off
+  notify:
+    after_n_builds: 200 # stacks-core-tests.yml & bitcoin-test.yml as a minimum
 comment:
   after_n_builds: 200
   layout: "condensed_header, condensed_files, condensed_footer" # add "condensed_" to "header", "files" and "footer"
