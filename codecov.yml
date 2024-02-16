@@ -5,14 +5,15 @@ coverage:
     default:
       target: auto # auto % coverage target
       threshold: 2% # allow for 2% reduction of coverage without failing
+      base: auto
       # only_pulls: true
       # removed_code_behavior: fully_covered_patch
-  notify:
-    after_n_builds: 70 # stacks-core-tests.yml & bitcoin-test.yml as a minimum
+  # notify:
+  #   after_n_builds: 70 # stacks-core-tests.yml & bitcoin-test.yml as a minimum
 github_checks:
   annotations: false
 comment:
-  after_n_builds: 70
+  after_n_builds: 200
   layout: "condensed_header, condensed_files, condensed_footer" # add "condensed_" to "header", "files" and "footer"
   hide_project_coverage: TRUE # set to true
   # require_changes: true
