@@ -1,7 +1,7 @@
- coverage:
+coverage:
+  range: 30..70 # coverage lower than 30 is red, higher than 70 green, between color code
   status:
     patch: off
-
-github_checks:
-  annotations: false
+  notify:
+    after_n_builds: 10000 # stacks-core-tests.yml & bitcoin-test.yml as a minimum
 comment: false
