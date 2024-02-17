@@ -1,6 +1,8 @@
 coverage:
   status:
     patch: off
-
+  notify:
+    after_n_builds: 10000
+comment: false
 github_checks:
   annotations: false
