@@ -1,6 +1,7 @@
-coverage:
+ coverage:
   status:
     patch: off
 
 github_checks:
   annotations: false
+comment: false
