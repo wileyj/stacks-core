@@ -14,5 +14,5 @@ coverage:
     project: no
 
 comment:
-  after_n_builds: 10000
+  after_n_builds: 10
 # comment: false
