@@ -6,11 +6,13 @@ codecov:
 coverage:
   round: up
   precision: 2
-  range: '30...100'
+  range: "30...100"
 
   status:
     changes: no
     patch: yes #off
     project: no
 
-comment: false
+comment:
+  after_n_builds: 10000
+# comment: false
