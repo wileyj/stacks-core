@@ -1,8 +1,18 @@
 coverage:
-  status:
-    patch: off
+  require_ci_to_pass: yes
+  range: "80...100"
   notify:
-    after_n_builds: 10000
+    after_n_builds: 10
+  status:
+    project:
+      default:
+        target: 80%
+        threshold: 2%
+    patch:
+      default:
+        target: auto
+        threshold: 0%
+        base: auto
 comment:
   after_n_builds: 10
 github_checks:
