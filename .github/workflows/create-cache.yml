@@ -31,7 +31,6 @@ jobs:
       - name: Cargo Cache
         id: cargo-cache
         uses: wileyj/actions/stacks-core/cache/cargo@main
-        # uses: stacks-network/actions/stacks-core/cache/cargo@main
         with:
           action: save
 
@@ -43,7 +42,6 @@ jobs:
       - name: Bitcoin Cache
         id: bitcoin-cache
         uses: wileyj/actions/stacks-core/cache/bitcoin@main
-        # uses: stacks-network/actions/stacks-core/cache/bitcoin@main
         with:
           action: save
           btc-version: "25.0"
@@ -58,6 +56,5 @@ jobs:
       - name: Build Nexttest Cache
         id: nextest-cache
         uses: wileyj/actions/stacks-core/cache/build-cache@main
-        # uses: stacks-network/actions/stacks-core/cache/build-cache@main
         with:
           genesis: true
