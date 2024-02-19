@@ -34,7 +34,8 @@ jobs:
       ## Setup test environment
       - name: Setup Test Environment
         id: setup_tests
-        uses: stacks-network/actions/stacks-core/testenv@main
+        uses: wileyj/actions/stacks-core/testenv@main
+        # uses: stacks-network/actions/stacks-core/testenv@main
         with:
           genesis: true
           btc-version: "25.0"
