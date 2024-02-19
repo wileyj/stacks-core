@@ -2,7 +2,7 @@ coverage:
   require_ci_to_pass: yes
   range: "80...100"
   notify:
-    after_n_builds: 10
+    after_n_builds: 100
   status:
     project:
       default:
@@ -10,7 +10,7 @@ coverage:
         threshold: 2%
     patch: off
 comment:
-  after_n_builds: 10
+  after_n_builds: 100
 github_checks:
   annotations: false
 # codecov:
