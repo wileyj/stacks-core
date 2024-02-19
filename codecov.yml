@@ -8,7 +8,7 @@ coverage:
       default:
         target: 80%
         threshold: 2%
-    patch: yes
+    patch: off
 comment:
   after_n_builds: 10
 github_checks:
