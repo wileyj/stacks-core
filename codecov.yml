@@ -3,6 +3,7 @@ coverage:
     patch: off
   notify:
     after_n_builds: 10000
-comment: false
+comment:
+  after_n_builds: 10
 github_checks:
   annotations: false
