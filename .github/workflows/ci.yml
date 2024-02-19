@@ -106,22 +106,22 @@ jobs:
   ##     and any of:
   ##       - PR review comment
   ##       - PR change is requested
-  docker-image:
-    if: |
-      inputs.tag == '' &&
-      !(
-        github.event_name == 'pull_request_review' &&
-        github.event.action == 'submitted' &&
-        (
-          github.event.review.state == 'commented' ||
-          github.event.review.state == 'changes_requested'
-        )
-      )
-    name: Docker Image (Source)
-    uses: ./.github/workflows/image-build-source.yml
-    needs:
-      - rustfmt
-    secrets: inherit
+  # docker-image:
+  #   if: |
+  #     inputs.tag == '' &&
+  #     !(
+  #       github.event_name == 'pull_request_review' &&
+  #       github.event.action == 'submitted' &&
+  #       (
+  #         github.event.review.state == 'commented' ||
+  #         github.event.review.state == 'changes_requested'
+  #       )
+  #     )
+  #   name: Docker Image (Source)
+  #   uses: ./.github/workflows/image-build-source.yml
+  #   needs:
+  #     - rustfmt
+  #   secrets: inherit
 
   ## Create a reusable cache for tests
   ##
