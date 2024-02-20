@@ -1,5 +1,5 @@
 codecov:
-  require_ci_to_pass: true
+  require_ci_to_pass: false
   notify:
     after_n_builds: 55 # total number of uploads for stacks-core-tests.yml && bitcoin-tests.yml
     wait_for_ci: true
