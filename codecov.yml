@@ -1,8 +1,23 @@
 codecov:
-  require_ci_to_pass: true
+  require_ci_to_pass: false
   notify:
-    # after_n_builds: 250
-    wait_for_ci: true
-comment: false
+    after_n_builds: 58 # how many uploaded reports Codecov should wait to receive before sending statuses
+    wait_for_ci: true # wait for all CI statuses to complete before reporting status
+coverage:
+  range: 60..80
+  round: down
+  precision: 2
+  status:
+    changes: false
+    patch: false
+    project:
+      default:
+        target: 80% # the required coverage value
+        threshold: 1% # the leniency in hitting the target
+# comment: false
+comment:
+  layout: "condensed_header, condensed_files, condensed_footer" # add "condensed_" to "header", "files" and "footer"
+  hide_project_coverage: true # set to true
+  after_n_builds: 58 # how many uploaded reports Codecov should wait to receive before sending statuses
 github_checks:
   annotations: false
