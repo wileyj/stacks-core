@@ -1,22 +1,8 @@
-coverage:
-  range: "80...100"
+codecov:
+  require_ci_to_pass: true
   notify:
-    require_ci_to_pass: yes
-    after_n_builds: 250
-  status:
-    project:
-      default:
-        target: 80%
-        threshold: 2%
-    patch: off
+    # after_n_builds: 250
+    wait_for_ci: true
 comment: false
 github_checks:
   annotations: false
-# coverage:
-#   status:
-#     patch: off
-#   notify:
-#     after_n_builds: 10000
-# comment: false
-# github_checks:
-#   annotations: false
