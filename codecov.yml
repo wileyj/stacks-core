@@ -1,7 +1,7 @@
 codecov:
-  require_ci_to_pass: true
+  require_ci_to_pass: false
   notify:
-    after_n_builds: 48 # total number of uploads for stacks-core-tests.yml && bitcoin-tests.yml
+    after_n_builds: 50 # total number of uploads for stacks-core-tests.yml && bitcoin-tests.yml
     wait_for_ci: true
 coverage:
   range: 60..80
@@ -18,6 +18,6 @@ coverage:
 comment:
   layout: "condensed_header, condensed_files, condensed_footer" # add "condensed_" to "header", "files" and "footer"
   hide_project_coverage: TRUE # set to true
-  after_n_builds: 48 # total number of uploads for stacks-core-tests.yml && bitcoin-tests.yml
+  after_n_builds: 50 # total number of uploads for stacks-core-tests.yml && bitcoin-tests.yml
 github_checks:
   annotations: false
