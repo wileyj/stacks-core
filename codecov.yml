@@ -19,7 +19,7 @@ comment:
   # layout: "condensed_header, condensed_files, condensed_footer" # add "condensed_" to "header", "files" and "footer"
   layout: "condensed_header, diff, files, footer" # remove "new" from "header" and "footer"
   hide_project_coverage: false # set to true
-  after_n_builds: 35 # total number of uploads
+  after_n_builds: 58 # total number of uploads
 github_checks:
   annotations: false # don't annotate on github PR
 
