@@ -16,8 +16,19 @@ coverage:
         threshold: 1% # the leniency in hitting the target
 # comment: false
 comment:
-  layout: "condensed_header, condensed_files, condensed_footer" # add "condensed_" to "header", "files" and "footer"
+  # layout: "condensed_header, condensed_files, condensed_footer" # add "condensed_" to "header", "files" and "footer"
+  layout: "condensed_header, diff, files, reach, footer" # remove "new" from "header" and "footer"
   hide_project_coverage: false # set to true
   after_n_builds: 35 # total number of uploads for stacks-core-tests.yml && bitcoin-tests.yml
 github_checks:
   annotations: false # don't annotate on github PR
+
+# uncondensed comment for files
+
+# genesis vm can be shutdown
+#
+
+# mine on mainnnet ( have to win several blocks that are confirmed)
+
+# rlease epoch 2.5 on 4/1 but not hard date for cutover
+# sparse test can not catch a 1-off bug
