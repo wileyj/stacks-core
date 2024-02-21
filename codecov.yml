@@ -1,18 +1,17 @@
 codecov:
-  require_ci_to_pass: false
+  require_ci_to_pass: false # don't require ci to succeed to pass
   notify:
-    # after_n_builds: 37 # total number of uploads for stacks-core-tests.yml && bitcoin-tests.yml
-    wait_for_ci: true
+    wait_for_ci: true # wait for all ci jobs to finish before reporting status
 coverage:
-  range: 60..80
-  round: down
+  range: 60..79 # < 60=red, 60<>80 = yellow, > 80 = green
+  round: down # round range down
   precision: 2
   status:
     changes: false
     patch: false
     project:
       default:
-        target: 70% # the required coverage value
+        target: 80% # the required coverage value
         threshold: 1% # the leniency in hitting the target
 # comment: false
 comment:
@@ -20,4 +19,4 @@ comment:
   hide_project_coverage: false # set to true
   after_n_builds: 35 # total number of uploads for stacks-core-tests.yml && bitcoin-tests.yml
 github_checks:
-  annotations: false
+  annotations: false # don't annotate on github PR
