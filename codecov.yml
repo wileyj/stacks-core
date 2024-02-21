@@ -17,6 +17,6 @@ coverage:
 comment:
   layout: "condensed_header, diff, files, footer"
   hide_project_coverage: false
-  after_n_builds: 35
+  after_n_builds: 58
 github_checks:
   annotations: false
