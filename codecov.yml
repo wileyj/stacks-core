@@ -1,3 +1,4 @@
+# https://docs.codecov.com/docs/codecovyml-reference
 codecov:
   require_ci_to_pass: false # don't require ci to succeed to pass
   notify:
@@ -9,7 +10,7 @@ coverage:
   status:
     changes: false
     patch: false
-    project:
+    project: # this is required if we want to require codecov as a status check
       default:
         target: 80% # the required coverage value
         threshold: 1% # the leniency in hitting the target
