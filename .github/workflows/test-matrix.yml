@@ -39,6 +39,10 @@ jobs:
             cpu: armv7
           - arch: macos # excludes macos-armv7
             cpu: armv7
+          - arch: macos # excludes macos-armv7
+            cpu: x86-64-v3
+
+
     steps:
       ## Build the binaries using defined dockerfiles
       - name: Build Binary (${{ matrix.arch }}_${{ matrix.cpu }})
