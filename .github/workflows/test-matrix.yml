@@ -19,7 +19,7 @@ jobs:
       ## Run a maximum of 10 builds concurrently, using the matrix defined in inputs.arch
       max-parallel: 10
       matrix:
-        platform:
+        arch:
           - linux-musl
           - linux-glibc
           - macos 
@@ -41,15 +41,15 @@ jobs:
             cpu: armv7
     steps:
       ## Build the binaries using defined dockerfiles
-      - name: Build Binary (${{ matrix.platform }}_${{ matrix.cpu }})
+      - name: Build Binary (${{ matrix.arch }}_${{ matrix.cpu }})
         id: build_binaries
         run: |
           echo "build binaries"
-          echo "Buildfile: Dockerfile.${{ matrix.platform }}-${{ matrix.cpu }}"
+          echo "Buildfile: Dockerfile.${{ matrix.arch }}-${{ matrix.cpu }}"
           echo "build args:"
           echo "
             STACKS_NODE_VERSION=${{ inputs.tag || env.GITHUB_SHA_SHORT }}
-            OS_ARCH=${{ matrix.platform }}
+            OS_ARCH=${{ matrix.arch }}
             TARGET_CPU=${{ matrix.cpu }}
             GIT_BRANCH=${{ env.GITHUB_REF_SHORT }}
             GIT_COMMIT=${{ env.GITHUB_SHA_SHORT }}
