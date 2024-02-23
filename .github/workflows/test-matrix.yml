@@ -51,7 +51,7 @@ jobs:
 
       - name: set env
         run: |
-          case ${cpu} in
+          case ${{ matrix.cpu }} in
               x86-64)
                   DOCKERFILE_CPU="x64"
                   ARCHIVE_NAME="x64"
