@@ -66,7 +66,7 @@ jobs:
                   ;;
           esac
           echo "DOCKERFILE=Dockerfile.${{ matrix.arch }}-${DOCKERFILE_CPU}" >> "$GITHUB_ENV"
-          echo "ARCHIVEFILE=${{ matrix.arch }}_${ARCHIVE_NAME}" >> "$GITHUB_ENV"
+          echo "ZIPFILE=${{ matrix.arch }}_${ARCHIVE_NAME}" >> "$GITHUB_ENV"
 
       ## Build the binaries using defined dockerfiles
       - name: Build Binary (${{ matrix.arch }}_${{ matrix.cpu }})
@@ -75,7 +75,7 @@ jobs:
           echo "build binaries"
           echo "Buildfile: Dockerfile.${{ matrix.arch }}-${{ matrix.cpu }}"
           echo "dockerfile var: ${{ env.DOCKERFILE }}"
-          echo "archivefile var: ${{ env.ARCHIVEFILE }}"
+          echo "archivefile var: ${{ env.ZIPFILE }}"
           echo "build args:"
           echo "
             STACKS_NODE_VERSION=${{ inputs.tag || env.GITHUB_SHA_SHORT }}
@@ -89,10 +89,10 @@ jobs:
       - name: Compress artifact
         id: compress_artifact
         run: |
-          echo "zip --junk-paths ${{ env.ARCHIVE_NAME }} ./release/${{ matrix.arch }}/*"
+          echo "zip --junk-paths ${{ env.ZIPFILE }} ./release/${{ matrix.arch }}/*"
 
       ## Upload the binary artifact to the github action (used in `github-release.yml` to create a release)
       - name: Upload artifact
         id: upload_artifact
         run: |
-          echo "path: ${{ env.ARCHIVE_NAME }}.zip"
+          echo "path: ${{ env.ZIPFILE }}.zip"
