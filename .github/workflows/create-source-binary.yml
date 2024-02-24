@@ -3,7 +3,6 @@
 name: Create Binaries
 
 on:
-  workflow_dispatch:
   workflow_call:
     inputs:
       tag:
@@ -24,9 +23,9 @@ jobs:
   ##  - tag is provided
   ##  - workflow is building default branch (master)
   artifact:
-    # if: |
-    #   inputs.tag != '' && 
-    #   github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+    if: |
+      inputs.tag != '' && 
+      github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
     name: Build Binaries
     runs-on: ubuntu-latest
     strategy:
@@ -54,30 +53,36 @@ jobs:
     steps:
       ## Setup Docker for the builds
       - name: Docker setup
+        id: docker_setup
         uses: stacks-network/actions/docker@main
 
-      - name: set env
+      ## Set env vars based on the type of arch build
+      - name: Set local env vars
+        id: set_env
         run: |
           case ${{ matrix.cpu }} in
-              x86-64)
-                  TARGET_CPU="${{ matrix.cpu }}"
-                  DOCKERFILE_CPU="x64"
-                  ARCHIVE_NAME="x64"
-                  ;;
-              x86-64-v3)
-                  TARGET_CPU="${{ matrix.cpu }}"
-                  DOCKERFILE_CPU="x64"
-                  ARCHIVE_NAME="x64-v3"
-                  ;;
-              *)
-                  TARGET_CPU=""
-                  DOCKERFILE_CPU="${{ matrix.cpu }}"
-                  ARCHIVE_NAME="${{ matrix.cpu }}"
-                  ;;
+            x86-64)
+              TARGET_CPU="${{ matrix.cpu }}"
+              DOCKERFILE_CPU="x64"
+              ARCHIVE_NAME="x64"
+              ;;
+            x86-64-v3)
+              TARGET_CPU="${{ matrix.cpu }}"
+              DOCKERFILE_CPU="x64"
+              ARCHIVE_NAME="x64-v3"
+              ;;
+            *)
+              TARGET_CPU=""
+              DOCKERFILE_CPU="${{ matrix.cpu }}"
+              ARCHIVE_NAME="${{ matrix.cpu }}"
+              ;;
           esac
           echo "DOCKERFILE=Dockerfile.${{ matrix.arch }}-${DOCKERFILE_CPU}" >> "$GITHUB_ENV"
           echo "ZIPFILE=${{ matrix.arch }}_${ARCHIVE_NAME}" >> "$GITHUB_ENV"
           echo "TARGET_CPU=${TARGET_CPU}" >> "$GITHUB_ENV"
+          echo "Setting DOCKERFILE to: ${{ env.DOCKERFILE }}"
+          echo "Setting ZIPFILE to: ${{ env.ZIPFILE }}"
+          echo "Setting TARGET_CPU to: ${{ env.TARGET_CPU }}"
 
       ## Build the binaries using defined dockerfiles
       - name: Build Binary (${{ matrix.arch }}_${{ matrix.cpu }})
