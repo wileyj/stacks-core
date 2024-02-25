@@ -59,36 +59,33 @@ jobs:
     steps:
       ## Setup Docker for the builds
       - name: Docker setup
-        id: docker_setup
         uses: stacks-network/actions/docker@main
 
-      ## Set env vars based on the type of arch build
-      - name: Set local env vars
-        id: set_env
+      - name: set env
         run: |
           case ${{ matrix.cpu }} in
-            x86-64)
-              TARGET_CPU="${{ matrix.cpu }}"
-              DOCKERFILE_CPU="x64"
-              ARCHIVE_NAME="x64"
-              ;;
-            x86-64-v3)
-              TARGET_CPU="${{ matrix.cpu }}"
-              DOCKERFILE_CPU="x64"
-              ARCHIVE_NAME="x64-v3"
-              ;;
-            *)
-              TARGET_CPU=""
-              DOCKERFILE_CPU="${{ matrix.cpu }}"
-              ARCHIVE_NAME="${{ matrix.cpu }}"
-              ;;
+              x86-64)
+                  TARGET_CPU="${{ matrix.cpu }}"
+                  DOCKERFILE_CPU="x64"
+                  ARCHIVE_NAME="x64"
+                  ;;
+              x86-64-v3)
+                  TARGET_CPU="${{ matrix.cpu }}"
+                  DOCKERFILE_CPU="x64"
+                  ARCHIVE_NAME="x64-v3"
+                  ;;
+              *)
+                  TARGET_CPU=""
+                  DOCKERFILE_CPU="${{ matrix.cpu }}"
+                  ARCHIVE_NAME="${{ matrix.cpu }}"
+                  ;;
           esac
           echo "DOCKERFILE=Dockerfile.${{ matrix.arch }}-${DOCKERFILE_CPU}" >> "$GITHUB_ENV"
           echo "ZIPFILE=${{ matrix.arch }}_${ARCHIVE_NAME}" >> "$GITHUB_ENV"
           echo "TARGET_CPU=${TARGET_CPU}" >> "$GITHUB_ENV"
-          echo "Setting DOCKERFILE to: ${DOCKERFILE}"
-          echo "Setting ZIPFILE to: ${ZIPFILE}"
-          echo "Setting TARGET_CPU to: ${TARGET_CPU}"
+          echo "DOCKERFILE: ${DOCKERFILE}"
+          echo "ZIPFILE: ${ZIPFILE}"
+          echo "TARGET_CPU: ${TARGET_CPU}"
 
       ## Build the binaries using defined dockerfiles
       - name: Build Binary (${{ matrix.arch }}_${{ matrix.cpu }})
