@@ -5,6 +5,7 @@ ARG GIT_BRANCH='No Branch Info'
 ARG GIT_COMMIT='No Commit Info'
 ARG BUILD_DIR=/build
 ARG TARGET=x86_64-pc-windows-gnu
+ARG TARGET_CPU
 WORKDIR /src
 
 COPY . .
@@ -15,7 +16,8 @@ RUN apt-get update && apt-get install -y git gcc-mingw-w64-x86-64 libclang-dev
 RUN --mount=type=tmpfs,target=${BUILD_DIR} cp -R /src/. ${BUILD_DIR}/ \
     && cd ${BUILD_DIR} \
     && rustup target add ${TARGET} \
-    && CC_x86_64_pc_windows_gnu=x86_64-w64-mingw32-gcc \
+    && ${TARGET_CPU:+RUSTFLAGS="$RUSTFLAGS $TARGET_CPU"} \
+    CC_x86_64_pc_windows_gnu=x86_64-w64-mingw32-gcc \
     CARGO_TARGET_X86_64_PC_WINDOWS_GNU_LINKER=x86_64-w64-mingw32-gcc \
     cargo build --features monitoring_prom,slog_json --release --workspace --target ${TARGET} --bin stacks-node --bin stacks-inspect --bin clarity-cli --bin blockstack-cli \
     && mkdir -p /out \
