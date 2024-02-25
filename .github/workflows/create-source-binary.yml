@@ -80,9 +80,9 @@ jobs:
           echo "DOCKERFILE=Dockerfile.${{ matrix.arch }}-${DOCKERFILE_CPU}" >> "$GITHUB_ENV"
           echo "ZIPFILE=${{ matrix.arch }}_${ARCHIVE_NAME}" >> "$GITHUB_ENV"
           echo "TARGET_CPU=${TARGET_CPU}" >> "$GITHUB_ENV"
-          echo "Setting DOCKERFILE to: ${{ DOCKERFILE }}"
-          echo "Setting ZIPFILE to: ${{ ZIPFILE }}"
-          echo "Setting TARGET_CPU to: ${{ TARGET_CPU }}"
+          echo "Setting DOCKERFILE to: ${DOCKERFILE}"
+          echo "Setting ZIPFILE to: ${ZIPFILE}"
+          echo "Setting TARGET_CPU to: ${TARGET_CPU}"
 
       ## Build the binaries using defined dockerfiles
       - name: Build Binary (${{ matrix.arch }}_${{ matrix.cpu }})
