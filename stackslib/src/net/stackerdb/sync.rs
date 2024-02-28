@@ -42,7 +42,6 @@ const MAX_CHUNKS_IN_FLIGHT: usize = 6;
 const MAX_DB_NEIGHBORS: usize = 32;
 
 impl<NC: NeighborComms> StackerDBSync<NC> {
-    /// TODO: replace `stackerdbs` with a type parameter
     pub fn new(
         smart_contract: QualifiedContractIdentifier,
         config: &StackerDBConfig,
@@ -165,7 +164,7 @@ impl<NC: NeighborComms> StackerDBSync<NC> {
         network: Option<&PeerNetwork>,
         config: &StackerDBConfig,
     ) -> StackerDBSyncResult {
-        debug!("Reset with config {:?}", config);
+        debug!("Reset {} with config {:?}", &self.smart_contract_id, config);
         let mut chunks = vec![];
         let downloaded_chunks = mem::replace(&mut self.downloaded_chunks, HashMap::new());
         for (_, mut data) in downloaded_chunks.into_iter() {

@@ -43,6 +43,7 @@ use rusqlite::ToSql;
 use serde::de::Error as de_Error;
 use serde::ser::Error as ser_Error;
 use serde::{Deserialize, Serialize};
+use stacks_common::bitvec::BitVec;
 use stacks_common::codec::{
     read_next, write_next, Error as codec_error, StacksMessageCodec,
     BURNCHAIN_HEADER_HASH_ENCODED_SIZE,
@@ -61,11 +62,16 @@ use stacks_common::util::secp256k1::{
 use stacks_common::util::{get_epoch_time_secs, log};
 use {rusqlite, serde_json, url};
 
+use self::dns::*;
 use crate::burnchains::affirmation::AffirmationMap;
 use crate::burnchains::{Error as burnchain_error, Txid};
 use crate::chainstate::burn::db::sortdb::SortitionDB;
-use crate::chainstate::burn::ConsensusHash;
+use crate::chainstate::burn::{ConsensusHash, Opcodes};
 use crate::chainstate::coordinator::Error as coordinator_error;
+use crate::chainstate::nakamoto::NakamotoChainState;
+use crate::chainstate::stacks::boot::{
+    BOOT_TEST_POX_4_AGG_KEY_CONTRACT, BOOT_TEST_POX_4_AGG_KEY_FNAME,
+};
 use crate::chainstate::stacks::db::blocks::MemPoolRejection;
 use crate::chainstate::stacks::db::StacksChainState;
 use crate::chainstate::stacks::index::Error as marf_error;
@@ -762,10 +768,13 @@ impl<'a> StacksNodeState<'a> {
                     if let Some(unconfirmed_chain_tip) = unconfirmed_chain_tip_opt {
                         Ok(unconfirmed_chain_tip)
                     } else {
-                        match chainstate.get_stacks_chain_tip(sortdb) {
-                            Ok(Some(tip)) => Ok(StacksBlockHeader::make_index_block_hash(
+                        match NakamotoChainState::get_canonical_block_header(
+                            chainstate.db(),
+                            sortdb,
+                        ) {
+                            Ok(Some(tip)) => Ok(StacksBlockId::new(
                                 &tip.consensus_hash,
-                                &tip.anchored_block_hash,
+                                &tip.anchored_header.block_hash(),
                             )),
                             Ok(None) => {
                                 return Err(StacksHttpResponse::new_error(
@@ -786,26 +795,31 @@ impl<'a> StacksNodeState<'a> {
                     }
                 }
                 TipRequest::SpecificTip(tip) => Ok(tip.clone()),
-                TipRequest::UseLatestAnchoredTip => match chainstate.get_stacks_chain_tip(sortdb) {
-                    Ok(Some(tip)) => Ok(StacksBlockHeader::make_index_block_hash(
-                        &tip.consensus_hash,
-                        &tip.anchored_block_hash,
-                    )),
-                    Ok(None) => {
-                        return Err(StacksHttpResponse::new_error(
-                            preamble,
-                            &HttpNotFound::new(
-                                "No stacks chain tip exists at this point in time.".to_string(),
-                            ),
-                        ));
+                TipRequest::UseLatestAnchoredTip => {
+                    match NakamotoChainState::get_canonical_block_header(chainstate.db(), sortdb) {
+                        Ok(Some(tip)) => Ok(StacksBlockId::new(
+                            &tip.consensus_hash,
+                            &tip.anchored_header.block_hash(),
+                        )),
+                        Ok(None) => {
+                            return Err(StacksHttpResponse::new_error(
+                                preamble,
+                                &HttpNotFound::new(
+                                    "No stacks chain tip exists at this point in time.".to_string(),
+                                ),
+                            ));
+                        }
+                        Err(e) => {
+                            return Err(StacksHttpResponse::new_error(
+                                preamble,
+                                &HttpServerError::new(format!(
+                                    "Failed to load chain tip: {:?}",
+                                    &e
+                                )),
+                            ));
+                        }
                     }
-                    Err(e) => {
-                        return Err(StacksHttpResponse::new_error(
-                            preamble,
-                            &HttpServerError::new(format!("Failed to load chain tip: {:?}", &e)),
-                        ));
-                    }
-                },
+                }
             }
         })
     }
@@ -830,19 +844,49 @@ pub struct Preamble {
 
 /// Request for a block inventory or a list of blocks.
 /// Aligned to a PoX reward cycle.
+/// This struct is used only in Stacks 2.x for Stacks 2.x inventories
 #[derive(Debug, Clone, PartialEq)]
 pub struct GetBlocksInv {
-    pub consensus_hash: ConsensusHash, // consensus hash at the start of the reward cycle
-    pub num_blocks: u16,               // number of blocks to ask for
+    /// Consensus hash at thestart of the reward cycle
+    pub consensus_hash: ConsensusHash,
+    /// Number of sortitions to ask for. Can be up to the reward cycle length.
+    pub num_blocks: u16,
 }
 
 /// A bit vector that describes which block and microblock data node has data for in a given burn
-/// chain block range.  Sent in reply to a GetBlocksInv.
+/// chain block range.  Sent in reply to a GetBlocksInv for Stacks 2.x block data.
 #[derive(Debug, Clone, PartialEq)]
 pub struct BlocksInvData {
-    pub bitlen: u16, // number of bits represented in bitvec (not to exceed PoX reward cycle length).  Bits correspond to sortitions on the canonical burn chain fork.
-    pub block_bitvec: Vec<u8>, // bitmap of which blocks the peer has, in sortition order.  block_bitvec[i] & (1 << j) != 0 means that this peer has the block for sortition 8*i + j
-    pub microblocks_bitvec: Vec<u8>, // bitmap of which confirmed micrblocks the peer has, in sortition order.  microblocks_bitvec[i] & (1 << j) != 0 means that this peer has the microblocks produced by sortition 8*i + j
+    /// Number of bits in the block bit vector (not to exceed the reward cycle length)
+    pub bitlen: u16,
+    /// The block bitvector. block_bitvec[i] & (1 << j) != 0 means that this peer has the block for
+    /// sortition 8*i + j.
+    pub block_bitvec: Vec<u8>,
+    /// The microblock bitvector. microblocks_bitvec[i] & (1 << j) != 0 means that this peer has
+    /// the microblocks for sortition 8*i + j
+    pub microblocks_bitvec: Vec<u8>,
+}
+
+/// Request for a tenure inventroy.
+/// Aligned to a PoX reward cycle.
+/// This struct is used only in Nakamoto, for Nakamoto inventories
+#[derive(Debug, Clone, PartialEq)]
+pub struct GetNakamotoInvData {
+    /// Consensus hash at the start of the reward cycle
+    pub consensus_hash: ConsensusHash,
+}
+
+/// A bit vector that describes Nakamoto tenure availability.  Sent in reply for GetBlocksInv for
+/// Nakamoto block data.  The ith bit in `tenures` will be set if (1) there is a sortition in the
+/// ith burnchain block in the requested reward cycle (note that 0 <= i < 2100 in production), and
+/// (2) the remote node not only has the tenure blocks, but has processed them.
+#[derive(Debug, Clone, PartialEq)]
+pub struct NakamotoInvData {
+    /// The tenure bitvector.  tenures[i] & (1 << j) != 0 means that this peer has all the blocks
+    /// for the tenure which began in sortition 8*i + j.  There will never be more than 1 reward
+    /// cycle's worth of bits here, and since the largest supported reward cycle is 2100 blocks
+    /// long (i.e. mainnet),
+    pub tenures: BitVec<2100>,
 }
 
 /// Request for a PoX bitvector range.
@@ -1085,6 +1129,9 @@ pub enum StacksMessageType {
     StackerDBGetChunk(StackerDBGetChunkData),
     StackerDBChunk(StackerDBChunkData),
     StackerDBPushChunk(StackerDBPushChunkData),
+    // Nakamoto-specific
+    GetNakamotoInv(GetNakamotoInvData),
+    NakamotoInv(NakamotoInvData),
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -1116,6 +1163,9 @@ pub enum StacksMessageID {
     StackerDBGetChunk = 23,
     StackerDBChunk = 24,
     StackerDBPushChunk = 25,
+    // nakamoto
+    GetNakamotoInv = 26,
+    NakamotoInv = 27,
     // reserved
     Reserved = 255,
 }
@@ -1555,12 +1605,13 @@ pub mod test {
     use std::sync::Mutex;
     use std::{fs, io, thread};
 
+    use clarity::boot_util::boot_code_id;
     use clarity::vm::ast::ASTRules;
     use clarity::vm::costs::ExecutionCost;
     use clarity::vm::database::STXBalance;
     use clarity::vm::types::*;
     use clarity::vm::ClarityVersion;
-    use rand::RngCore;
+    use rand::{Rng, RngCore};
     use stacks_common::address::*;
     use stacks_common::codec::StacksMessageCodec;
     use stacks_common::deps_common::bitcoin::network::serialize::BitcoinHash;
@@ -1571,8 +1622,10 @@ pub mod test {
     use stacks_common::util::secp256k1::*;
     use stacks_common::util::uint::*;
     use stacks_common::util::vrf::*;
+    use wsts::curve::point::Point;
     use {mio, rand};
 
+    use self::nakamoto::test_signers::TestSigners;
     use super::*;
     use crate::burnchains::bitcoin::address::*;
     use crate::burnchains::bitcoin::indexer::BitcoinIndexer;
@@ -1589,18 +1642,20 @@ pub mod test {
     use crate::chainstate::burn::*;
     use crate::chainstate::coordinator::tests::*;
     use crate::chainstate::coordinator::*;
+    use crate::chainstate::nakamoto::tests::node::TestStacker;
     use crate::chainstate::stacks::address::PoxAddress;
     use crate::chainstate::stacks::boot::test::get_parent_tip;
     use crate::chainstate::stacks::boot::*;
     use crate::chainstate::stacks::db::accounts::MinerReward;
     use crate::chainstate::stacks::db::{StacksChainState, *};
-    use crate::chainstate::stacks::events::StacksTransactionReceipt;
+    use crate::chainstate::stacks::events::{StacksBlockEventData, StacksTransactionReceipt};
     use crate::chainstate::stacks::miner::*;
     use crate::chainstate::stacks::tests::chain_histories::mine_smart_contract_block_contract_call_microblock;
     use crate::chainstate::stacks::tests::*;
     use crate::chainstate::stacks::{StacksMicroblockHeader, *};
     use crate::chainstate::*;
-    use crate::core::{StacksEpochExtension, NETWORK_P2P_PORT};
+    use crate::clarity::vm::clarity::TransactionConnection;
+    use crate::core::{StacksEpoch, StacksEpochExtension, NETWORK_P2P_PORT};
     use crate::net::asn::*;
     use crate::net::atlas::*;
     use crate::net::chat::*;
@@ -1620,7 +1675,6 @@ pub mod test {
             match self {
                 BlockstackOperationType::LeaderKeyRegister(ref op) => op.consensus_serialize(fd),
                 BlockstackOperationType::LeaderBlockCommit(ref op) => op.consensus_serialize(fd),
-                BlockstackOperationType::UserBurnSupport(ref op) => op.consensus_serialize(fd),
                 BlockstackOperationType::TransferStx(_)
                 | BlockstackOperationType::DelegateStx(_)
                 | BlockstackOperationType::PreStx(_)
@@ -1810,7 +1864,7 @@ pub mod test {
 
     #[derive(Clone)]
     pub struct TestEventObserverBlock {
-        pub block: StacksBlock,
+        pub block: StacksBlockEventData,
         pub metadata: StacksHeaderInfo,
         pub receipts: Vec<StacksTransactionReceipt>,
         pub parent: StacksBlockId,
@@ -1838,7 +1892,7 @@ pub mod test {
     impl BlockEventDispatcher for TestEventObserver {
         fn announce_block(
             &self,
-            block: &StacksBlock,
+            block: &StacksBlockEventData,
             metadata: &StacksHeaderInfo,
             receipts: &[events::StacksTransactionReceipt],
             parent: &StacksBlockId,
@@ -1870,6 +1924,15 @@ pub mod test {
             _rewards: Vec<(PoxAddress, u64)>,
             _burns: u64,
             _reward_recipients: Vec<PoxAddress>,
+        ) {
+            // pass
+        }
+
+        fn announce_reward_set(
+            &self,
+            _reward_set: &RewardSet,
+            _block_id: &StacksBlockId,
+            _cycle_number: u64,
         ) {
             // pass
         }
@@ -1910,6 +1973,10 @@ pub mod test {
         pub stacker_db_configs: Vec<Option<StackerDBConfig>>,
         /// What services should this peer support?
         pub services: u16,
+        /// aggregate public key to use
+        pub aggregate_public_key: Option<Point>,
+        pub test_stackers: Option<Vec<TestStacker>>,
+        pub test_signers: Option<TestSigners>,
     }
 
     impl TestPeerConfig {
@@ -1921,19 +1988,7 @@ pub mod test {
                 &BurnchainHeaderHash::from_hex(BITCOIN_GENESIS_BLOCK_HASH_REGTEST).unwrap(),
             );
 
-            burnchain.pox_constants = PoxConstants::new(
-                5,
-                3,
-                3,
-                25,
-                5,
-                u64::MAX,
-                u64::MAX,
-                u32::MAX,
-                u32::MAX,
-                u32::MAX,
-            );
-
+            burnchain.pox_constants = PoxConstants::test_20_no_sunset();
             let mut spending_account = TestMinerFactory::new().next_miner(
                 &burnchain,
                 1,
@@ -1971,6 +2026,9 @@ pub mod test {
                 services: (ServiceFlags::RELAY as u16)
                     | (ServiceFlags::RPC as u16)
                     | (ServiceFlags::STACKERDB as u16),
+                aggregate_public_key: None,
+                test_stackers: None,
+                test_signers: None,
             }
         }
 
@@ -2087,7 +2145,7 @@ pub mod test {
             'a,
             TestEventObserver,
             (),
-            OnChainRewardSetProvider,
+            OnChainRewardSetProvider<'a, TestEventObserver>,
             (),
             (),
             BitcoinIndexer,
@@ -2100,9 +2158,11 @@ pub mod test {
         }
 
         pub fn test_path(config: &TestPeerConfig) -> String {
+            let random = thread_rng().gen::<u64>();
+            let random_bytes = to_hex(&random.to_be_bytes());
             format!(
                 "/tmp/stacks-node-tests/units-test-peer/{}-{}",
-                &config.test_name, config.server_port
+                &config.test_name, random_bytes
             )
         }
 
@@ -2123,27 +2183,16 @@ pub mod test {
             test_path
         }
 
-        fn init_stacker_dbs(
+        fn init_stackerdb_syncs(
             root_path: &str,
             peerdb: &PeerDB,
-            stacker_dbs: &[QualifiedContractIdentifier],
-            stacker_db_configs: &[Option<StackerDBConfig>],
+            stacker_dbs: &mut HashMap<QualifiedContractIdentifier, StackerDBConfig>,
         ) -> HashMap<QualifiedContractIdentifier, (StackerDBConfig, StackerDBSync<PeerNetworkComms>)>
         {
             let stackerdb_path = format!("{}/stacker_db.sqlite", root_path);
             let mut stacker_db_syncs = HashMap::new();
             let local_peer = PeerDB::get_local_peer(peerdb.conn()).unwrap();
-            for (i, contract_id) in stacker_dbs.iter().enumerate() {
-                let mut db_config = if let Some(config_opt) = stacker_db_configs.get(i) {
-                    if let Some(db_config) = config_opt.as_ref() {
-                        db_config.clone()
-                    } else {
-                        StackerDBConfig::noop()
-                    }
-                } else {
-                    StackerDBConfig::noop()
-                };
-
+            for (i, (contract_id, db_config)) in stacker_dbs.iter_mut().enumerate() {
                 let initial_peers = PeerDB::find_stacker_db_replicas(
                     peerdb.conn(),
                     local_peer.network_id,
@@ -2178,7 +2227,6 @@ pub mod test {
             let mut miner_factory = TestMinerFactory::new();
             let mut miner =
                 miner_factory.next_miner(&config.burnchain, 1, 1, AddressHashMode::SerializeP2PKH);
-
             // manually set fees
             miner.test_with_tx_fees = false;
 
@@ -2247,9 +2295,22 @@ pub mod test {
             let atlasdb_path = format!("{}/atlas.sqlite", &test_path);
             let atlasdb = AtlasDB::connect(AtlasConfig::new(false), &atlasdb_path, true).unwrap();
 
+            let agg_pub_key_opt = config.aggregate_public_key.clone();
+
             let conf = config.clone();
             let post_flight_callback = move |clarity_tx: &mut ClarityTx| {
                 let mut receipts = vec![];
+
+                if let Some(agg_pub_key) = agg_pub_key_opt {
+                    debug!(
+                        "Setting aggregate public key to {}",
+                        &to_hex(&agg_pub_key.compress().data)
+                    );
+                    NakamotoChainState::aggregate_public_key_bootcode(clarity_tx, &agg_pub_key);
+                } else {
+                    debug!("Not setting aggregate public key");
+                }
+                // add test-specific boot code
                 if conf.setup_code.len() > 0 {
                     let receipt = clarity_tx.connection().as_transaction(|clarity| {
                         let boot_code_addr = boot_code_test_addr();
@@ -2324,7 +2385,7 @@ pub mod test {
                 &config.burnchain,
                 config.network_id,
                 &test_path,
-                OnChainRewardSetProvider(),
+                OnChainRewardSetProvider(observer),
                 observer,
                 indexer,
                 None,
@@ -2388,15 +2449,34 @@ pub mod test {
                     .unwrap()
             };
             let stackerdb_path = format!("{}/stacker_db.sqlite", &test_path);
+            let mut stacker_dbs_conn = StackerDBs::connect(&stackerdb_path, true).unwrap();
             let relayer_stacker_dbs = StackerDBs::connect(&stackerdb_path, true).unwrap();
             let p2p_stacker_dbs = StackerDBs::connect(&stackerdb_path, true).unwrap();
-            let stacker_dbs = Self::init_stacker_dbs(
-                &test_path,
-                &peerdb,
-                &config.stacker_dbs,
-                &config.stacker_db_configs,
-            );
-            let stackerdb_contracts: Vec<_> = stacker_dbs.keys().map(|cid| cid.clone()).collect();
+
+            let mut old_stackerdb_configs = HashMap::new();
+            for (i, contract) in config.stacker_dbs.iter().enumerate() {
+                old_stackerdb_configs.insert(
+                    contract.clone(),
+                    config
+                        .stacker_db_configs
+                        .get(i)
+                        .map(|config| config.clone().unwrap_or(StackerDBConfig::noop()))
+                        .unwrap_or(StackerDBConfig::noop()),
+                );
+            }
+            let mut stackerdb_configs = stacker_dbs_conn
+                .create_or_reconfigure_stackerdbs(
+                    &mut stacks_node.chainstate,
+                    &sortdb,
+                    old_stackerdb_configs,
+                )
+                .expect("Failed to refresh stackerdb configs");
+
+            let stacker_db_syncs =
+                Self::init_stackerdb_syncs(&test_path, &peerdb, &mut stackerdb_configs);
+
+            let stackerdb_contracts: Vec<_> =
+                stacker_db_syncs.keys().map(|cid| cid.clone()).collect();
 
             let mut peer_network = PeerNetwork::new(
                 peerdb,
@@ -2407,7 +2487,7 @@ pub mod test {
                 config.burnchain.clone(),
                 burnchain_view,
                 config.connection_opts.clone(),
-                stacker_dbs,
+                stacker_db_syncs,
                 epochs.clone(),
             );
             peer_network.set_stacker_db_configs(config.get_stacker_db_configs());
@@ -2418,9 +2498,13 @@ pub mod test {
             let indexer = BitcoinIndexer::new_unit_test(&config.burnchain.working_dir);
 
             // extract bound ports (which may be different from what's in the config file, if e.g.
-            // they were 0
+            // they were 0)
             let p2p_port = peer_network.bound_neighbor_key().port;
             let http_port = peer_network.http.as_ref().unwrap().http_server_addr.port();
+
+            debug!("Bound to (p2p={}, http={})", p2p_port, http_port);
+            config.server_port = p2p_port;
+            config.http_port = http_port;
 
             config.data_url =
                 UrlString::try_from(format!("http://127.0.0.1:{}", http_port).as_str()).unwrap();
@@ -2441,12 +2525,13 @@ pub mod test {
                 "{:?}: initial neighbors: {:?}",
                 &local_peer, &config.initial_neighbors
             );
+            peer_network.local_peer = local_peer;
 
             TestPeer {
                 config: config,
                 network: peer_network,
                 sortdb: Some(sortdb),
-                miner: miner,
+                miner,
                 stacks_node: Some(stacks_node),
                 relayer: relayer,
                 mempool: Some(mempool),
@@ -2513,12 +2598,13 @@ pub mod test {
             let burn_tip_height = SortitionDB::get_canonical_burn_chain_tip(sortdb.conn())
                 .unwrap()
                 .block_height;
-            let stacks_tip_height = stacks_node
-                .chainstate
-                .get_stacks_chain_tip(&sortdb)
-                .unwrap()
-                .map(|blkdat| blkdat.height)
-                .unwrap_or(0);
+            let stacks_tip_height = NakamotoChainState::get_canonical_block_header(
+                stacks_node.chainstate.db(),
+                &sortdb,
+            )
+            .unwrap()
+            .map(|hdr| hdr.anchored_header.height())
+            .unwrap_or(0);
             let ibd = TestPeer::infer_initial_burnchain_block_download(
                 &self.config.burnchain,
                 stacks_tip_height,
@@ -2565,12 +2651,13 @@ pub mod test {
             let burn_tip_height = SortitionDB::get_canonical_burn_chain_tip(sortdb.conn())
                 .unwrap()
                 .block_height;
-            let stacks_tip_height = stacks_node
-                .chainstate
-                .get_stacks_chain_tip(&sortdb)
-                .unwrap()
-                .map(|blkdat| blkdat.height)
-                .unwrap_or(0);
+            let stacks_tip_height = NakamotoChainState::get_canonical_block_header(
+                stacks_node.chainstate.db(),
+                &sortdb,
+            )
+            .unwrap()
+            .map(|hdr| hdr.anchored_header.height())
+            .unwrap_or(0);
             let ibd = TestPeer::infer_initial_burnchain_block_download(
                 &self.config.burnchain,
                 stacks_tip_height,
@@ -2658,9 +2745,6 @@ pub mod test {
                     BlockstackOperationType::LeaderKeyRegister(ref mut data) => {
                         data.consensus_hash = (*ch).clone();
                     }
-                    BlockstackOperationType::UserBurnSupport(ref mut data) => {
-                        data.consensus_hash = (*ch).clone();
-                    }
                     _ => {}
                 }
             }
@@ -2675,6 +2759,18 @@ pub mod test {
             }
         }
 
+        /// Generate and commit the next burnchain block with the given block operations.
+        /// * if `set_consensus_hash` is true, then each op's consensus_hash field will be set to
+        /// that of the resulting block snapshot.
+        /// * if `set_burn_hash` is true, then each op's burnchain header hash field will be set to
+        /// that of the resulting block snapshot.
+        ///
+        /// Returns (
+        ///     burnchain tip block height,
+        ///     burnchain tip block hash,
+        ///     burnchain tip consensus hash,
+        ///     Option<missing PoX anchor block hash>
+        /// )
         fn inner_next_burnchain_block(
             &mut self,
             mut blockstack_ops: Vec<BlockstackOperationType>,
@@ -2687,8 +2783,12 @@ pub mod test {
             Option<BlockHeaderHash>,
         ) {
             let sortdb = self.sortdb.take().unwrap();
-            let (block_height, block_hash) = {
+            let (block_height, block_hash, epoch_id) = {
                 let tip = SortitionDB::get_canonical_burn_chain_tip(&sortdb.conn()).unwrap();
+                let epoch_id = SortitionDB::get_stacks_epoch(&sortdb.conn(), tip.block_height + 1)
+                    .unwrap()
+                    .unwrap()
+                    .epoch_id;
 
                 if set_consensus_hash {
                     TestPeer::set_ops_consensus_hash(&mut blockstack_ops, &tip.consensus_hash);
@@ -2753,11 +2853,21 @@ pub mod test {
                 )
                 .unwrap();
 
-                (block_header.block_height, block_header_hash)
+                (block_header.block_height, block_header_hash, epoch_id)
             };
 
-            let missing_pox_anchor_block_hash_opt =
-                self.coord.handle_new_burnchain_block().unwrap();
+            let missing_pox_anchor_block_hash_opt = if epoch_id < StacksEpochId::Epoch30 {
+                self.coord
+                    .handle_new_burnchain_block()
+                    .unwrap()
+                    .into_missing_block_hash()
+            } else {
+                if self.coord.handle_new_nakamoto_burnchain_block().unwrap() {
+                    None
+                } else {
+                    Some(BlockHeaderHash([0x00; 32]))
+                }
+            };
 
             let pox_id = {
                 let ic = sortdb.index_conn();
@@ -2783,6 +2893,8 @@ pub mod test {
             )
         }
 
+        /// Pre-process an epoch 2.x Stacks block.
+        /// Validate it and store it to staging.
         pub fn preprocess_stacks_block(&mut self, block: &StacksBlock) -> Result<bool, String> {
             let sortdb = self.sortdb.take().unwrap();
             let mut node = self.stacks_node.take().unwrap();
@@ -2847,6 +2959,8 @@ pub mod test {
             res
         }
 
+        /// Preprocess epoch 2.x microblocks.
+        /// Validate them and store them to staging.
         pub fn preprocess_stacks_microblocks(
             &mut self,
             microblocks: &Vec<StacksMicroblock>,
@@ -2897,6 +3011,8 @@ pub mod test {
             res
         }
 
+        /// Store the given epoch 2.x Stacks block and microblock to staging, and then try and
+        /// process them.
         pub fn process_stacks_epoch_at_tip(
             &mut self,
             block: &StacksBlock,
@@ -2930,6 +3046,8 @@ pub mod test {
             self.stacks_node = Some(node);
         }
 
+        /// Store the given epoch 2.x Stacks block and microblock to the given node's staging,
+        /// using the given sortition DB as well, and then try and process them.
         fn inner_process_stacks_epoch_at_tip(
             &mut self,
             sortdb: &SortitionDB,
@@ -2960,6 +3078,8 @@ pub mod test {
             Ok(())
         }
 
+        /// Store the given epoch 2.x Stacks block and microblock to the given node's staging,
+        /// and then try and process them.
         pub fn process_stacks_epoch_at_tip_checked(
             &mut self,
             block: &StacksBlock,
@@ -2974,6 +3094,8 @@ pub mod test {
             res
         }
 
+        /// Accept a new Stacks block and microblocks via the relayer, and then try to process
+        /// them.
         pub fn process_stacks_epoch(
             &mut self,
             block: &StacksBlock,
@@ -3134,13 +3256,13 @@ pub mod test {
         }
 
         /// Make a tenure with the given transactions. Creates a coinbase tx with the given nonce, and then increments
-        ///  the provided reference.
+        /// the provided reference.
         pub fn tenure_with_txs(
             &mut self,
             txs: &[StacksTransaction],
             coinbase_nonce: &mut usize,
         ) -> StacksBlockId {
-            let microblock_privkey = StacksPrivateKey::new();
+            let microblock_privkey = self.miner.next_microblock_privkey();
             let microblock_pubkeyhash =
                 Hash160::from_node_public_key(&StacksPublicKey::from_private(&microblock_privkey));
             let tip =
@@ -3197,7 +3319,8 @@ pub mod test {
             tip_id
         }
 
-        // Make a tenure
+        /// Make a tenure, using `tenure_builder` to generate a Stacks block and a list of
+        /// microblocks.
         pub fn make_tenure<F>(
             &mut self,
             mut tenure_builder: F,
@@ -3289,7 +3412,7 @@ pub mod test {
                 &mut stacks_node.chainstate,
                 &mut sortdb,
                 &self.config.burnchain,
-                &OnChainRewardSetProvider(),
+                &OnChainRewardSetProvider::new(),
                 true,
             ) {
                 Ok(recipients) => {
@@ -3344,7 +3467,7 @@ pub mod test {
             )
         }
 
-        // have this peer produce an anchored block and microblock tail using its internal miner.
+        /// Produce a default, non-empty tenure for epoch 2.x
         pub fn make_default_tenure(
             &mut self,
         ) -> (
@@ -3455,6 +3578,68 @@ pub mod test {
             debug!("--- BEGIN ALL PEERS ({}) ---", peers.len());
             debug!("{:#?}", &peers);
             debug!("--- END ALL PEERS ({}) -----", peers.len());
+        }
+
+        pub fn p2p_socketaddr(&self) -> SocketAddr {
+            SocketAddr::new(
+                IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)),
+                self.config.server_port,
+            )
+        }
+
+        pub fn make_client_convo(&self) -> ConversationP2P {
+            ConversationP2P::new(
+                self.config.network_id,
+                self.config.peer_version,
+                &self.config.burnchain,
+                &SocketAddr::new(
+                    IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)),
+                    self.config.server_port,
+                ),
+                &self.config.connection_opts,
+                false,
+                0,
+                self.config
+                    .epochs
+                    .clone()
+                    .unwrap_or(StacksEpoch::unit_test_3_0(0)),
+            )
+        }
+
+        pub fn make_client_local_peer(&self, privk: StacksPrivateKey) -> LocalPeer {
+            LocalPeer::new(
+                self.config.network_id,
+                self.network.local_peer.parent_network_id,
+                PeerAddress::from_socketaddr(&SocketAddr::new(
+                    IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)),
+                    self.config.server_port,
+                )),
+                self.config.server_port,
+                Some(privk),
+                u64::MAX,
+                UrlString::try_from(format!("http://127.0.0.1:{}", self.config.http_port).as_str())
+                    .unwrap(),
+                vec![],
+            )
+        }
+
+        pub fn get_burn_block_height(&self) -> u64 {
+            SortitionDB::get_canonical_burn_chain_tip(
+                &self.sortdb.as_ref().expect("Failed to get sortdb").conn(),
+            )
+            .expect("Failed to get canonical burn chain tip")
+            .block_height
+        }
+
+        pub fn get_reward_cycle(&self) -> u64 {
+            let block_height = self.get_burn_block_height();
+            self.config
+                .burnchain
+                .block_height_to_reward_cycle(block_height)
+                .expect(&format!(
+                    "Failed to get reward cycle for block height {}",
+                    block_height
+                ))
         }
     }
 

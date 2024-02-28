@@ -8,7 +8,7 @@ on:
       tag:
         required: true
         type: string
-        description: "Version tag for alpine images"
+        description: "Version tag for docker images"
 
 ## Define which docker arch to build for
 env:
@@ -60,7 +60,7 @@ jobs:
 
       ## Set docker metatdata
       ## - depending on the matrix.dist, different tags will be enabled
-      ## ex. alpine will have this tag: `type=ref,event=tag,enable=${{ matrix.dist == 'alpine' }}`
+      ## ex. debian will have this tag: `type=ref,event=tag,enable=${{ matrix.dist == 'debian' }}`
       - name: Docker Metadata ( ${{matrix.dist}} )
         id: docker_metadata
         uses: docker/metadata-action@96383f45573cb7f253c731d3b3ab81c87ef81934 #v5.0.0
@@ -69,12 +69,12 @@ jobs:
             ${{env.docker-org}}/${{ github.event.repository.name }}
             ${{env.docker-org}}/stacks-core
           tags: |
-            type=raw,value=latest,enable=${{ inputs.tag != '' && (github.ref == format('refs/heads/{0}', github.event.repository.default_branch) ) && matrix.dist == 'alpine' }}
-            type=raw,value=${{ inputs.tag }}-${{ matrix.dist }},enable=${{ inputs.tag != '' && matrix.dist == 'alpine'}}
-            type=raw,value=${{ inputs.tag }},enable=${{ inputs.tag != '' && matrix.dist == 'alpine' }}
-            type=ref,event=tag,enable=${{ matrix.dist == 'alpine' }}
-            type=raw,value=latest-${{ matrix.dist }},enable=${{ inputs.tag != '' && (github.ref == format('refs/heads/{0}', github.event.repository.default_branch) ) && matrix.dist == 'debian' }}
-            type=raw,value=${{ inputs.tag }}-${{ matrix.dist }},enable=${{ inputs.tag != '' && matrix.dist == 'debian' }}
+            type=raw,value=latest,enable=${{ inputs.tag != '' && (github.ref == format('refs/heads/{0}', github.event.repository.default_branch) ) && matrix.dist == 'debian' }}
+            type=raw,value=${{ inputs.tag }}-${{ matrix.dist }},enable=${{ inputs.tag != '' && matrix.dist == 'debian'}}
+            type=raw,value=${{ inputs.tag }},enable=${{ inputs.tag != '' && matrix.dist == 'debian' }}
+            type=ref,event=tag,enable=${{ matrix.dist == 'debian' }}
+            type=raw,value=latest-${{ matrix.dist }},enable=${{ inputs.tag != '' && (github.ref == format('refs/heads/{0}', github.event.repository.default_branch) ) && matrix.dist == 'alpine' }}
+            type=raw,value=${{ inputs.tag }}-${{ matrix.dist }},enable=${{ inputs.tag != '' && matrix.dist == 'alpine' }}
 
       ## Build docker image for release
       - name: Build and Push ( ${{matrix.dist}} )

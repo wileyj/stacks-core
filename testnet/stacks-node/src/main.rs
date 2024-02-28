@@ -1,13 +1,5 @@
-extern crate libc;
-extern crate rand;
-extern crate serde;
-
-#[macro_use]
-extern crate lazy_static;
 #[macro_use]
 extern crate serde_derive;
-#[macro_use]
-extern crate serde_json;
 #[macro_use]
 extern crate stacks_common;
 
@@ -28,7 +20,10 @@ pub mod chain_data;
 pub mod config;
 pub mod event_dispatcher;
 pub mod genesis_data;
+pub mod globals;
 pub mod keychain;
+pub mod mockamoto;
+pub mod nakamoto_node;
 pub mod neon_node;
 pub mod node;
 pub mod operations;
@@ -46,7 +41,10 @@ use stacks::chainstate::burn::db::sortdb::SortitionDB;
 use stacks::chainstate::burn::operations::leader_block_commit::RewardSetInfo;
 use stacks::chainstate::coordinator::{get_next_recipients, OnChainRewardSetProvider};
 use stacks::chainstate::stacks::address::PoxAddress;
+use stacks::chainstate::stacks::db::blocks::DummyEventDispatcher;
 use stacks::chainstate::stacks::db::StacksChainState;
+#[cfg(not(any(target_os = "macos", target_os = "windows", target_arch = "arm")))]
+use tikv_jemallocator::Jemalloc;
 
 pub use self::burnchains::{
     BitcoinRegtestController, BurnchainController, BurnchainTip, MocknetController,
@@ -58,7 +56,13 @@ pub use self::node::{ChainTip, Node};
 pub use self::run_loop::{helium, neon};
 pub use self::tenure::Tenure;
 use crate::chain_data::MinerStats;
+use crate::mockamoto::MockamotoNode;
 use crate::neon_node::{BlockMinerThread, TipCandidate};
+use crate::run_loop::boot_nakamoto;
+
+#[cfg(not(any(target_os = "macos", target_os = "windows", target_arch = "arm")))]
+#[global_allocator]
+static GLOBAL: Jemalloc = Jemalloc;
 
 /// Implmentation of `pick_best_tip` CLI option
 fn cli_pick_best_tip(config_path: &str, at_stacks_height: Option<u64>) -> TipCandidate {
@@ -80,8 +84,7 @@ fn cli_pick_best_tip(config_path: &str, at_stacks_height: Option<u64>) -> TipCan
         Some(config.node.get_marf_opts()),
     )
     .unwrap();
-    let mut sortdb =
-        SortitionDB::open(&burn_db_path, false, burnchain.pox_constants.clone()).unwrap();
+    let mut sortdb = SortitionDB::open(&burn_db_path, false, burnchain.pox_constants).unwrap();
 
     let max_depth = config.miner.max_reorg_depth;
 
@@ -134,12 +137,13 @@ fn cli_get_miner_spend(
         SortitionDB::get_canonical_burn_chain_tip(sortdb.conn()).unwrap()
     };
 
+    let no_dispatcher: Option<&DummyEventDispatcher> = None;
     let recipients = get_next_recipients(
         &tip,
         &mut chainstate,
         &mut sortdb,
         &burnchain,
-        &OnChainRewardSetProvider(),
+        &OnChainRewardSetProvider(no_dispatcher),
         config.node.always_use_affirmation_maps,
     )
     .unwrap();
@@ -319,6 +323,10 @@ fn main() {
             args.finish();
             ConfigFile::mainnet()
         }
+        "mockamoto" => {
+            args.finish();
+            ConfigFile::mockamoto()
+        }
         "check-config" => {
             let config_path: String = args.value_from_str("--config").unwrap();
             args.finish();
@@ -422,6 +430,7 @@ fn main() {
             process::exit(1);
         }
     };
+
     debug!("node configuration {:?}", &conf.node);
     debug!("burnchain configuration {:?}", &conf.burnchain);
     debug!("connection configuration {:?}", &conf.connection_options);
@@ -441,6 +450,12 @@ fn main() {
     {
         let mut run_loop = neon::RunLoop::new(conf);
         run_loop.start(None, mine_start.unwrap_or(0));
+    } else if conf.burnchain.mode == "mockamoto" {
+        let mut mockamoto = MockamotoNode::new(&conf).unwrap();
+        mockamoto.run();
+    } else if conf.burnchain.mode == "nakamoto-neon" {
+        let mut run_loop = boot_nakamoto::BootRunLoop::new(conf).unwrap();
+        run_loop.start(None, 0);
     } else {
         println!("Burnchain mode '{}' not supported", conf.burnchain.mode);
     }

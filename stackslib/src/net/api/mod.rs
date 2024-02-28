@@ -53,10 +53,12 @@ pub mod getneighbors;
 pub mod getpoxinfo;
 pub mod getstackerdbchunk;
 pub mod getstackerdbmetadata;
+pub mod getstackers;
 pub mod getstxtransfercost;
 pub mod gettransaction_unconfirmed;
 pub mod liststackerdbreplicas;
 pub mod postblock;
+pub mod postblock_proposal;
 pub mod postfeerate;
 pub mod postmempoolquery;
 pub mod postmicroblock;
@@ -104,6 +106,7 @@ impl StacksHttp {
         self.register_rpc_endpoint(
             getstackerdbmetadata::RPCGetStackerDBMetadataRequestHandler::new(),
         );
+        self.register_rpc_endpoint(getstackers::GetStackersRequestHandler::default());
         self.register_rpc_endpoint(
             gettransaction_unconfirmed::RPCGetTransactionUnconfirmedRequestHandler::new(),
         );
@@ -111,11 +114,13 @@ impl StacksHttp {
             liststackerdbreplicas::RPCListStackerDBReplicasRequestHandler::new(),
         );
         self.register_rpc_endpoint(postblock::RPCPostBlockRequestHandler::new());
+        self.register_rpc_endpoint(postblock_proposal::RPCBlockProposalRequestHandler::new());
         self.register_rpc_endpoint(postfeerate::RPCPostFeeRateRequestHandler::new());
         self.register_rpc_endpoint(postmempoolquery::RPCMempoolQueryRequestHandler::new());
         self.register_rpc_endpoint(postmicroblock::RPCPostMicroblockRequestHandler::new());
         self.register_rpc_endpoint(poststackerdbchunk::RPCPostStackerDBChunkRequestHandler::new());
         self.register_rpc_endpoint(posttransaction::RPCPostTransactionRequestHandler::new());
+        self.register_rpc_endpoint(getstackers::GetStackersRequestHandler::default());
     }
 }
 
@@ -124,7 +129,7 @@ impl From<NetError> for Error {
     fn from(e: NetError) -> Error {
         match e {
             NetError::Http(e) => e,
-            x => Error::AppError(format!("{:?}", &x)),
+            x => Error::AppError(format!("{x:?}")),
         }
     }
 }

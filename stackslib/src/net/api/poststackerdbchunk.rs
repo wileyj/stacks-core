@@ -30,6 +30,7 @@ use libstackerdb::{
 };
 use regex::{Captures, Regex};
 use serde::de::Error as de_Error;
+use serde_json::json;
 use stacks_common::codec::{StacksMessageCodec, MAX_MESSAGE_LEN};
 use stacks_common::types::chainstate::StacksBlockId;
 use stacks_common::types::net::PeerHost;
@@ -128,6 +129,7 @@ impl StackerDBErrorCodes {
         }
     }
 
+    #[cfg_attr(test, mutants::skip)]
     pub fn reason(&self) -> &'static str {
         match self {
             Self::DataAlreadyExists => "Data for this slot and version already exist",
@@ -265,6 +267,14 @@ impl RPCRequestHandler for RPCPostStackerDBChunkRequestHandler {
                         &HttpServerError::new(format!("Failed to commit StackerDB tx: {:?}", &e)),
                     ));
                 }
+
+                debug!(
+                    "Wrote {}-byte chunk to {} slot {} version {}",
+                    &stackerdb_chunk.data.len(),
+                    &contract_identifier,
+                    stackerdb_chunk.slot_id,
+                    stackerdb_chunk.slot_version
+                );
 
                 // success!
                 let ack = StackerDBChunkAckData {

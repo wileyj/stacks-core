@@ -34,6 +34,7 @@ use stacks_common::util::{get_epoch_time_ms, get_epoch_time_secs, log};
 use crate::burnchains::{Burnchain, BurnchainView};
 use crate::chainstate::burn::db::sortdb::{BlockHeaderCache, SortitionDB, SortitionDBConn};
 use crate::chainstate::burn::BlockSnapshot;
+use crate::chainstate::nakamoto::NakamotoChainState;
 use crate::chainstate::stacks::db::StacksChainState;
 use crate::chainstate::stacks::{Error as chainstate_error, StacksBlockHeader};
 use crate::core::{
@@ -47,7 +48,7 @@ use crate::net::db::{PeerDB, *};
 use crate::net::dns::*;
 use crate::net::http::HttpRequestContents;
 use crate::net::httpcore::{StacksHttpRequest, StacksHttpResponse};
-use crate::net::inv::InvState;
+use crate::net::inv::inv2x::InvState;
 use crate::net::neighbors::MAX_NEIGHBOR_BLOCK_DELAY;
 use crate::net::p2p::PeerNetwork;
 use crate::net::rpc::*;
@@ -2526,7 +2527,7 @@ pub mod test {
     use crate::chainstate::stacks::tests::*;
     use crate::chainstate::stacks::*;
     use crate::net::codec::*;
-    use crate::net::inv::*;
+    use crate::net::inv::inv2x::*;
     use crate::net::relay::*;
     use crate::net::test::*;
     use crate::net::*;
@@ -3219,18 +3220,20 @@ pub mod test {
                     >| {
                         let tip = SortitionDB::get_canonical_burn_chain_tip(sortdb.conn()).unwrap();
 
-                        let stacks_tip_opt = chainstate.get_stacks_chain_tip(sortdb).unwrap();
+                        let stacks_tip_opt =
+                            NakamotoChainState::get_canonical_block_header(chainstate.db(), sortdb)
+                                .unwrap();
                         let parent_tip = match stacks_tip_opt {
                             None => {
                                 StacksChainState::get_genesis_header_info(chainstate.db()).unwrap()
                             }
-                            Some(staging_block) => {
+                            Some(header) => {
                                 let ic = sortdb.index_conn();
                                 let snapshot =
                                     SortitionDB::get_block_snapshot_for_winning_stacks_block(
                                         &ic,
                                         &tip.sortition_id,
-                                        &staging_block.anchored_block_hash,
+                                        &header.anchored_header.block_hash(),
                                     )
                                     .unwrap()
                                     .unwrap(); // succeeds because we don't fork
@@ -3938,7 +3941,13 @@ pub mod test {
                                             &sortdb.index_conn(),
                                             &mut mempool,
                                             &parent_tip,
-                                            parent_tip.anchored_header.total_work.burn + 1000,
+                                            parent_tip
+                                                .anchored_header
+                                                .as_stacks_epoch2()
+                                                .unwrap()
+                                                .total_work
+                                                .burn
+                                                + 1000,
                                             vrf_proof,
                                             Hash160([i as u8; 20]),
                                             &coinbase_tx,

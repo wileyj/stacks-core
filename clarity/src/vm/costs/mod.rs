@@ -14,10 +14,12 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-use std::collections::{BTreeMap, HashMap};
+use std::collections::BTreeMap;
 use std::convert::{TryFrom, TryInto};
 use std::{cmp, fmt};
 
+use hashbrown::HashMap;
+use lazy_static::lazy_static;
 use rusqlite::types::{FromSql, FromSqlResult, ToSql, ToSqlOutput, ValueRef};
 use serde::{Deserialize, Serialize};
 use stacks_common::types::StacksEpochId;
@@ -773,7 +775,9 @@ impl LimitedCostTracker {
             StacksEpochId::Epoch21
             | StacksEpochId::Epoch22
             | StacksEpochId::Epoch23
-            | StacksEpochId::Epoch24 => COSTS_3_NAME.to_string(),
+            | StacksEpochId::Epoch24
+            | StacksEpochId::Epoch25
+            | StacksEpochId::Epoch30 => COSTS_3_NAME.to_string(),
         };
         Ok(result)
     }
@@ -811,7 +815,7 @@ impl TrackerData {
         let mut cost_contracts = HashMap::new();
         let mut m = HashMap::new();
         for f in ClarityCostFunction::ALL.iter() {
-            let cost_function_ref = cost_function_references.remove(&f).unwrap_or_else(|| {
+            let cost_function_ref = cost_function_references.remove(f).unwrap_or_else(|| {
                 ClarityCostFunctionReference::new(boot_costs_id.clone(), f.get_name())
             });
             if !cost_contracts.contains_key(&cost_function_ref.contract_id) {

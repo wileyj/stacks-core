@@ -15,12 +15,14 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 use std::collections::btree_map::Entry;
-// TypeSignatures
-use std::collections::{BTreeMap, HashMap, HashSet};
+use std::collections::BTreeMap;
 use std::convert::{TryFrom, TryInto};
 use std::hash::{Hash, Hasher};
 use std::{cmp, fmt};
 
+// TypeSignatures
+use hashbrown::HashSet;
+use lazy_static::lazy_static;
 use stacks_common::address::c32;
 use stacks_common::types::StacksEpochId;
 use stacks_common::util::hash;
@@ -553,7 +555,9 @@ impl TypeSignature {
             StacksEpochId::Epoch21
             | StacksEpochId::Epoch22
             | StacksEpochId::Epoch23
-            | StacksEpochId::Epoch24 => self.admits_type_v2_1(other),
+            | StacksEpochId::Epoch24
+            | StacksEpochId::Epoch25
+            | StacksEpochId::Epoch30 => self.admits_type_v2_1(other),
             StacksEpochId::Epoch10 => {
                 return Err(CheckErrors::Expects("epoch 1.0 not supported".into()))
             }
@@ -762,7 +766,11 @@ impl TypeSignature {
             // Epoch-2.2 had a regression in canonicalization, so it must be preserved here.
             | StacksEpochId::Epoch22 => self.clone(),
             // Note for future epochs: Epochs >= 2.3 should use the canonicalize_v2_1() routine
-            StacksEpochId::Epoch21 | StacksEpochId::Epoch23 | StacksEpochId::Epoch24 => self.canonicalize_v2_1(),
+            StacksEpochId::Epoch21
+            | StacksEpochId::Epoch23
+            | StacksEpochId::Epoch24
+            | StacksEpochId::Epoch25
+            | StacksEpochId::Epoch30 => self.canonicalize_v2_1(),
         }
     }
 
@@ -839,13 +847,13 @@ impl TypeSignature {
 
 impl TryFrom<Vec<(ClarityName, TypeSignature)>> for TupleTypeSignature {
     type Error = CheckErrors;
-    fn try_from(mut type_data: Vec<(ClarityName, TypeSignature)>) -> Result<TupleTypeSignature> {
+    fn try_from(type_data: Vec<(ClarityName, TypeSignature)>) -> Result<TupleTypeSignature> {
         if type_data.is_empty() {
             return Err(CheckErrors::EmptyTuplesNotAllowed);
         }
 
         let mut type_map = BTreeMap::new();
-        for (name, type_info) in type_data.drain(..) {
+        for (name, type_info) in type_data.into_iter() {
             if let Entry::Vacant(e) = type_map.entry(name.clone()) {
                 e.insert(type_info);
             } else {
@@ -973,10 +981,12 @@ impl FunctionSignature {
     }
 
     pub fn canonicalize(&self, epoch: &StacksEpochId) -> FunctionSignature {
-        let mut canonicalized_args = vec![];
-        for arg in &self.args {
-            canonicalized_args.push(arg.canonicalize(epoch));
-        }
+        let canonicalized_args = self
+            .args
+            .iter()
+            .map(|arg| arg.canonicalize(epoch))
+            .collect();
+
         FunctionSignature {
             args: canonicalized_args,
             returns: self.returns.canonicalize(epoch),
@@ -1115,7 +1125,9 @@ impl TypeSignature {
             StacksEpochId::Epoch21
             | StacksEpochId::Epoch22
             | StacksEpochId::Epoch23
-            | StacksEpochId::Epoch24 => Self::least_supertype_v2_1(a, b),
+            | StacksEpochId::Epoch24
+            | StacksEpochId::Epoch25
+            | StacksEpochId::Epoch30 => Self::least_supertype_v2_1(a, b),
             StacksEpochId::Epoch10 => {
                 return Err(CheckErrors::Expects("epoch 1.0 not supported".into()))
             }
@@ -1634,8 +1646,8 @@ impl TypeSignature {
             let fn_args_exprs = args[1]
                 .match_list()
                 .ok_or(CheckErrors::DefineTraitBadSignature)?;
-            let mut fn_args = vec![];
-            for arg_type in fn_args_exprs.iter() {
+            let mut fn_args = Vec::with_capacity(fn_args_exprs.len());
+            for arg_type in fn_args_exprs.into_iter() {
                 let arg_t = TypeSignature::parse_type_repr(epoch, arg_type, accounting)?;
                 fn_args.push(arg_t);
             }
@@ -2020,6 +2032,7 @@ mod test {
     use rstest::rstest;
     #[cfg(test)]
     use rstest_reuse::{self, *};
+    use stacks_common::types::StacksEpochId;
 
     use super::CheckErrors::*;
     use super::*;
@@ -2053,8 +2066,9 @@ mod test {
         //   set k = 4033
         let first_tuple = TypeSignature::from_string("(tuple (a0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000 bool))", version, epoch);
 
-        let mut keys = vec![];
-        for i in 0..4033 {
+        let len = 4033;
+        let mut keys = Vec::with_capacity(len);
+        for i in 0..len {
             let key_name = ClarityName::try_from(format!("a{:0127}", i)).unwrap();
             let key_val = first_tuple.clone();
             keys.push((key_name, key_val));
@@ -2128,10 +2142,7 @@ mod test {
         ];
         let list_union2 = ListUnionType(callables2.clone().into());
         let list_union_merged = ListUnionType(HashSet::from_iter(
-            [callables.clone(), callables2.clone()]
-                .concat()
-                .iter()
-                .cloned(),
+            [callables, callables2].concat().iter().cloned(),
         ));
         let callable_principals = [
             CallableSubtype::Principal(QualifiedContractIdentifier::local("foo").unwrap()),
@@ -2504,11 +2515,8 @@ mod test {
                     )
                     .unwrap(),
                 ),
-                TypeSignature::new_response(
-                    TypeSignature::PrincipalType,
-                    list_union_merged.clone(),
-                )
-                .unwrap(),
+                TypeSignature::new_response(TypeSignature::PrincipalType, list_union_merged)
+                    .unwrap(),
             ),
         ];
 
@@ -2578,7 +2586,7 @@ mod test {
             (list_union.clone(), TypeSignature::PrincipalType),
             (
                 TypeSignature::min_string_ascii().unwrap(),
-                list_union_principals.clone(),
+                list_union_principals,
             ),
             (
                 TypeSignature::list_of(
@@ -2608,10 +2616,9 @@ mod test {
                 TypeSignature::new_option(TypeSignature::min_string_utf8().unwrap()).unwrap(),
             ),
             (
-                TypeSignature::new_response(TypeSignature::PrincipalType, list_union.clone())
-                    .unwrap(),
+                TypeSignature::new_response(TypeSignature::PrincipalType, list_union).unwrap(),
                 TypeSignature::new_response(
-                    list_union2.clone(),
+                    list_union2,
                     TypeSignature::CallableType(CallableSubtype::Principal(
                         QualifiedContractIdentifier::transient(),
                     )),
