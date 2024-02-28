@@ -9,11 +9,6 @@ on:
         required: true
         type: string
         description: "Version tag for docker images"
-      docker-org:
-        required: false
-        type: string
-        description: "Docker repo org for uploading images (defaults to github org)"
-        default: "${GITHUB_REPOSITORY_OWNER}"
 
 ## Define which docker arch to build for
 env:
