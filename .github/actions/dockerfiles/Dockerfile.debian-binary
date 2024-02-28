@@ -10,7 +10,7 @@ ARG TARGETVARIANT
 ARG REPO=wileyj/stacks-blockchain
 
 RUN case ${TARGETARCH} in \
-    "amd64")  BIN_ARCH=linux-glibc-x64  ;; \
+    "amd64")  BIN_ARCH=linux-glibc-x64-v3  ;; \
     "arm64")  BIN_ARCH=linux-glibc-arm64  ;; \
     "arm")  BIN_ARCH=linux-glibc-armv7  ;; \
     "*") exit 1 ;; \
