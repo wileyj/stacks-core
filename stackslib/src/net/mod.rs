@@ -1019,6 +1019,7 @@ pub mod NackErrorCodes {
     pub const InvalidMessage: u32 = 5;
     pub const NoSuchDB: u32 = 6;
     pub const StaleVersion: u32 = 7;
+    pub const StaleView: u32 = 8;
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -1041,7 +1042,9 @@ pub struct NatPunchData {
 /// Inform the remote peer of (a page of) the list of stacker DB contracts this node supports
 #[derive(Debug, Clone, PartialEq)]
 pub struct StackerDBHandshakeData {
-    /// current reward cycle ID
+    /// current reward cycle consensus hash (i.e. the consensus hash of the Stacks tip in the
+    /// current reward cycle, which commits to both the Stacks block tip and the underlying PoX
+    /// history).
     pub rc_consensus_hash: ConsensusHash,
     /// list of smart contracts that we index.
     /// there can be as many as 256 entries.
@@ -1053,7 +1056,7 @@ pub struct StackerDBHandshakeData {
 pub struct StackerDBGetChunkInvData {
     /// smart contract being used to determine chunk quantity and order
     pub contract_id: QualifiedContractIdentifier,
-    /// consensus hash of the sortition that started this reward cycle
+    /// consensus hash of the Stacks chain tip in this reward cycle
     pub rc_consensus_hash: ConsensusHash,
 }
 
@@ -1072,7 +1075,7 @@ pub struct StackerDBChunkInvData {
 pub struct StackerDBGetChunkData {
     /// smart contract being used to determine slot quantity and order
     pub contract_id: QualifiedContractIdentifier,
-    /// consensus hash of the sortition that started this reward cycle
+    /// consensus hash of the Stacks chain tip in this reward cycle
     pub rc_consensus_hash: ConsensusHash,
     /// slot ID
     pub slot_id: u32,
@@ -1085,7 +1088,7 @@ pub struct StackerDBGetChunkData {
 pub struct StackerDBPushChunkData {
     /// smart contract being used to determine chunk quantity and order
     pub contract_id: QualifiedContractIdentifier,
-    /// consensus hash of the sortition that started this reward cycle
+    /// consensus hash of the Stacks chain tip in this reward cycle
     pub rc_consensus_hash: ConsensusHash,
     /// the pushed chunk
     pub chunk_data: StackerDBChunkData,

@@ -13,6 +13,10 @@ defaults:
   run:
     shell: bash
 
+defaults:
+  run:
+    shell: bash
+
 env:
   ROBOT_OWNER: kantai-robot
   ROBOT_REPO: docs.blockstack
@@ -29,6 +33,7 @@ on:
 
 jobs:
   dist:
+    if: ${{ false }}
     name: Open Docs PR
     runs-on: ubuntu-latest
     env:

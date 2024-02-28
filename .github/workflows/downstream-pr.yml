@@ -1,0 +1,23 @@
+## Github workflow to create a downstream PR
+
+name: Downstream PR
+
+on:
+  push:
+    branches:
+      - master
+      - develop
+
+permissions:
+  pull-requests: write
+
+jobs:
+  create-pr:
+    name: Create Downstream PR (${{ github.ref_name }})
+    runs-on: ubuntu-latest
+    steps:
+      - name: Open Downstream PR
+        id: create-pr
+        uses: wileyj/actions/stacks-core/downstream-pr@main
+        with:
+          token: ${{ secrets.GH_TOKEN }}

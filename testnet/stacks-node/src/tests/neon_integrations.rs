@@ -6517,6 +6517,7 @@ fn atlas_integration_test() {
     if env::var("BITCOIND_TEST") != Ok("1".into()) {
         return;
     }
+    // panic!("TEST FAILED");
 
     let user_1 = StacksPrivateKey::new();
     let initial_balance_user_1 = InitialBalance {
@@ -7043,6 +7044,7 @@ fn antientropy_integration_test() {
     if env::var("BITCOIND_TEST") != Ok("1".into()) {
         return;
     }
+    // panic!("TEST FAILED");
 
     let user_1 = StacksPrivateKey::new();
     let initial_balance_user_1 = InitialBalance {
