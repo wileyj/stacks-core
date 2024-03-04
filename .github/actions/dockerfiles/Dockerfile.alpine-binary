@@ -9,6 +9,13 @@ ARG TARGETARCH
 ARG TARGETVARIANT
 ARG REPO=wileyj/stacks-blockchain
 
+RUN echo "TAG: $TAG"
+RUN echo "BIN_ARCH: $BIN_ARCH"
+RUN echo "TARGETPLATFORM: $TARGETPLATFORM"
+RUN echo "TARGETARCH: $TARGETARCH"
+RUN echo "TARGETVARIANT: $TARGETVARIANT"
+RUN echo "REPO: $REPO"
+
 RUN case ${TARGETARCH} in \
     "amd64")  BIN_ARCH=linux-musl-x64-v3  ;; \
     "arm64")  BIN_ARCH=linux-musl-arm64  ;; \
