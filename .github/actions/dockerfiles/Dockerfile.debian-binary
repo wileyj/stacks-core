@@ -7,7 +7,8 @@ ARG TARGETPLATFORM
 ARG BUILDPLATFORM
 ARG TARGETARCH
 ARG TARGETVARIANT
-ARG REPO=wileyj/stacks-blockchain
+ARG REPO
+# ARG REPO=wileyj/stacks-blockchain
 
 # RUN case ${TARGETARCH} in \
 #     "amd64")  BIN_ARCH=linux-glibc-x64-v3  ;; \
@@ -24,7 +25,7 @@ RUN case ${TARGETPLATFORM} in \
     && echo "TARGETPLATFORM: $TARGETPLATFORM" \
     && echo "BIN_ARCH: $BIN_ARCH" \
     && echo "wget -q https://github.com/${REPO}/releases/download/${TAG}/${BIN_ARCH}.zip -O /${BIN_ARCH}.zip" \
-    && wget  -q https://github.com/${REPO}/releases/download/${TAG}/${BIN_ARCH}.zip -O /${BIN_ARCH}.zip \
+    && wget -q https://github.com/${REPO}/releases/download/${TAG}/${BIN_ARCH}.zip -O /${BIN_ARCH}.zip \
     && unzip ${BIN_ARCH}.zip -d /out
 
 FROM --platform=${TARGETPLATFORM} debian:bookworm
