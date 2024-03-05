@@ -60,7 +60,7 @@ jobs:
         uses: stacks-network/actions/docker@main
 
       - name: Set Local env vars
-        id: set_envars
+        id: set_env
         run: |
           case ${{ matrix.cpu }} in
               x86-64)
