@@ -41,10 +41,10 @@ jobs:
         cpu:
           - arm64
           - armv7
-          - x86-64 # this will default to x86-64-v3 variant - haswell (2013)
-          # - x86-64-v2 intel nehalem (2008) and newer
-          # - x86-64-v3 intel haswell (2013) and newer
-          - x86-64-v4 ## intel skylake (2017) and newer
+          - x86-64 ## defaults to x86-64-v3 variant - intel haswell (2013) and newer
+          # - x86-64-v2 ## intel nehalem (2008) and newer
+          # - x86-64-v3 ## intel haswell (2013) and newer
+          # - x86-64-v4 ## intel skylake (2017) and newer
         exclude:
           - arch: windows # excludes windows-arm64
             cpu: arm64
