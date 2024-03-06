@@ -24,16 +24,22 @@ on:
       - reopened
       - synchronize
       - ready_for_review
-    paths-ignore:
-      - "**.md"
-      - "**.yml"
-    ## might be better to use inclusive v exclusive paths here, ex:
-    # paths:
-    #   - "**.rs"
-    #   - "**.clar"
-  pull_request_review:
-    types:
-      - submitted
+    paths:
+      - "**.rs"
+      - "**.clar"
+      - ".github/workflows/**" ## only trigger if a workflow has changed
+      - ".github/actions/**" ## only trigger if a workflow dockerfile has changed
+      - "**.rs"
+      - "**.clar"
+      - "**Cargo.lock"
+      - "docs/rpc/openapi.yaml"
+      - "contrib/core-contract-tests/**"
+      - "net-test/**"
+      - "**.sh" ## leave for testing
+      - "!**.yaml" ## ignore any yaml unless previously matched
+      - "!**.yml" ## ignore any yml unless previously matched
+      - "!**.json" ## ignore any json unless previously matched
+      - "!**.md" ## ignore any md
 
 defaults:
   run:
