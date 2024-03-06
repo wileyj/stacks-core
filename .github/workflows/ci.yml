@@ -25,6 +25,9 @@ on:
       - synchronize
       - ready_for_review
     paths:
+      - "!**.yaml" ## ignore any yaml unless previously matched
+      - "!**.yml" ## ignore any yml unless previously matched
+      - "!**.json" ## ignore any json unless previously matched
       - "**.rs"
       - "**.clar"
       - ".github/workflows/**" ## only trigger if a workflow has changed
@@ -36,10 +39,7 @@ on:
       - "contrib/core-contract-tests/**"
       - "net-test/**"
       - "**.sh" ## leave for testing
-      # - "!**.yaml" ## ignore any yaml unless previously matched
-      # - "!**.yml" ## ignore any yml unless previously matched
-      # - "!**.json" ## ignore any json unless previously matched
-      # - "!**.md" ## ignore any md
+      - "!**.md" ## ignore any md
 
 defaults:
   run:
