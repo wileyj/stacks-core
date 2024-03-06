@@ -36,10 +36,10 @@ on:
       - "contrib/core-contract-tests/**"
       - "net-test/**"
       - "**.sh" ## leave for testing
-      - "!**.yaml" ## ignore any yaml unless previously matched
-      - "!**.yml" ## ignore any yml unless previously matched
-      - "!**.json" ## ignore any json unless previously matched
-      - "!**.md" ## ignore any md
+      # - "!**.yaml" ## ignore any yaml unless previously matched
+      # - "!**.yml" ## ignore any yml unless previously matched
+      # - "!**.json" ## ignore any json unless previously matched
+      # - "!**.md" ## ignore any md
 
 defaults:
   run:
