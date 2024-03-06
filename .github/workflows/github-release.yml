@@ -54,40 +54,45 @@ jobs:
     needs:
       - build-binaries
     steps:
-      ## Downloads the artifacts built in `create-source-binary.yml`
-      - name: Download Artifacts
-        id: download_artifacts
-        uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a # v3.0.2
-        with:
-          name: artifact
-          path: release
+      - name: Echo
+        id: echo
+        shell: bash
+        run: |
+          echo "ci test"
+      # ## Downloads the artifacts built in `create-source-binary.yml`
+      # - name: Download Artifacts
+      #   id: download_artifacts
+      #   uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a # v3.0.2
+      #   with:
+      #     name: artifact
+      #     path: release
 
-      ## Generate a checksums file to be added to the release page
-      ##   echo CHECKSUM="$(shasum foo.zip | awk '{ print $1 }')" >> "$GITHUB_ENV"
-      - name: Generate Checksums
-        id: generate_checksum
-        uses: jmgilman/actions-generate-checksum@3ea6dc9bf8eecf28e2ecc982fab683484a1a8561 # v1.0.1
-        with:
-          method: sha512
-          output: CHECKSUMS.txt
-          patterns: |
-            release/*.zip
+      # ## Generate a checksums file to be added to the release page
+      # ##   echo CHECKSUM="$(shasum foo.zip | awk '{ print $1 }')" >> "$GITHUB_ENV"
+      # - name: Generate Checksums
+      #   id: generate_checksum
+      #   uses: jmgilman/actions-generate-checksum@3ea6dc9bf8eecf28e2ecc982fab683484a1a8561 # v1.0.1
+      #   with:
+      #     method: sha512
+      #     output: CHECKSUMS.txt
+      #     patterns: |
+      #       release/*.zip
 
-      ## Upload the release archives with the checksums file
-      - name: Upload Release
-        id: upload_release
-        uses: softprops/action-gh-release@de2c0eb89ae2a093876385947365aca7b0e5f844 #v0.1.15
-        env:
-          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
-        with:
-          name: Release ${{ github.event.inputs.tag || github.ref }}
-          tag_name: ${{ github.event.inputs.tag || github.ref }}
-          draft: false
-          prerelease: true
-          fail_on_unmatched_files: true
-          files: |
-            release/*.zip
-            CHECKSUMS.txt
+      # ## Upload the release archives with the checksums file
+      # - name: Upload Release
+      #   id: upload_release
+      #   uses: softprops/action-gh-release@de2c0eb89ae2a093876385947365aca7b0e5f844 #v0.1.15
+      #   env:
+      #     GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+      #   with:
+      #     name: Release ${{ github.event.inputs.tag || github.ref }}
+      #     tag_name: ${{ github.event.inputs.tag || github.ref }}
+      #     draft: false
+      #     prerelease: true
+      #     fail_on_unmatched_files: true
+      #     files: |
+      #       release/*.zip
+      #       CHECKSUMS.txt
 
   ## Builds arch dependent Docker images from binaries
   ##

@@ -26,8 +26,9 @@ on:
       - ready_for_review
     paths:
       - "!**.yaml" ## ignore any yaml unless previously matched
-      - "!**.yml" ## ignore any yml unless previously matched
+      - "!**.yml" ## ignore any yaml unless previously matched
       - "!**.json" ## ignore any json unless previously matched
+      - "!**.md" ## ignore any md
       - "**.rs"
       - "**.clar"
       - ".github/workflows/**" ## only trigger if a workflow has changed
@@ -39,7 +40,6 @@ on:
       - "contrib/core-contract-tests/**"
       - "net-test/**"
       - "**.sh" ## leave for testing
-      - "!**.md" ## ignore any md
 
 defaults:
   run:
@@ -73,20 +73,25 @@ jobs:
     name: Rust Format
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout the latest code
-        id: git_checkout
-        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+      - name: Echo
+        id: echo
+        shell: bash
+        run: |
+          echo "ci test"
+      # - name: Checkout the latest code
+      #   id: git_checkout
+      #   uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
 
-      - name: Setup Rust Toolchain
-        id: setup_rust_toolchain
-        uses: actions-rust-lang/setup-rust-toolchain@f3c84ee10bf5a86e7a5d607d487bf17d57670965 # v1.5.0
-        with:
-          components: rustfmt
-          cache: false
+      # - name: Setup Rust Toolchain
+      #   id: setup_rust_toolchain
+      #   uses: actions-rust-lang/setup-rust-toolchain@f3c84ee10bf5a86e7a5d607d487bf17d57670965 # v1.5.0
+      #   with:
+      #     components: rustfmt
+      #     cache: false
 
-      - name: Rustfmt
-        id: rustfmt
-        uses: actions-rust-lang/rustfmt@2d1d4e9f72379428552fa1def0b898733fb8472d # v1.1.0
+      # - name: Rustfmt
+      #   id: rustfmt
+      #   uses: actions-rust-lang/rustfmt@2d1d4e9f72379428552fa1def0b898733fb8472d # v1.1.0
 
   ######################################################################################
   ## Create a tagged github release

@@ -27,24 +27,34 @@ jobs:
     name: Cargo
     runs-on: ubuntu-latest
     steps:
-      ## Perform a lookup to check if the cache already exists
-      - name: Cargo Cache
-        id: cargo-cache
-        uses: stacks-network/actions/stacks-core/cache/cargo@main
-        with:
-          action: save
+      - name: Echo
+        id: echo
+        shell: bash
+        run: |
+          echo "ci test"
+      # ## Perform a lookup to check if the cache already exists
+      # - name: Cargo Cache
+      #   id: cargo-cache
+      #   uses: stacks-network/actions/stacks-core/cache/cargo@main
+      #   with:
+      #     action: save
 
   ## Cache the bitcoin binary
   bitcoin-binary:
     name: Bitcoin Binary
     runs-on: ubuntu-latest
     steps:
-      - name: Bitcoin Cache
-        id: bitcoin-cache
-        uses: stacks-network/actions/stacks-core/cache/bitcoin@main
-        with:
-          action: save
-          btc-version: "25.0"
+      - name: Echo
+        id: echo
+        shell: bash
+        run: |
+          echo "ci test"
+      # - name: Bitcoin Cache
+      #   id: bitcoin-cache
+      #   uses: stacks-network/actions/stacks-core/cache/bitcoin@main
+      #   with:
+      #     action: save
+      #     btc-version: "25.0"
 
   ## Cache nextest archives for tests
   nextest-archive:
@@ -53,8 +63,13 @@ jobs:
     needs:
       - cargo
     steps:
-      - name: Build Nexttest Cache
-        id: nextest-cache
-        uses: stacks-network/actions/stacks-core/cache/build-cache@feat/test-cargo-features
-        with:
-          genesis: true
+      - name: Echo
+        id: echo
+        shell: bash
+        run: |
+          echo "ci test"
+      # - name: Build Nexttest Cache
+      #   id: nextest-cache
+      #   uses: stacks-network/actions/stacks-core/cache/build-cache@feat/test-cargo-features
+      #   with:
+      #     genesis: true

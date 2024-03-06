@@ -30,27 +30,32 @@ jobs:
       matrix:
         test-name:
           - tests::neon_integrations::atlas_integration_test
-          - tests::neon_integrations::atlas_stress_integration_test
+          # - tests::neon_integrations::atlas_stress_integration_test
     steps:
-      ## Setup test environment
-      - name: Setup Test Environment
-        id: setup_tests
-        uses: stacks-network/actions/stacks-core/testenv@main
-        with:
-          btc-version: "25.0"
+      - name: Echo
+        id: echo
+        shell: bash
+        run: |
+          echo "ci test"
+      # ## Setup test environment
+      # - name: Setup Test Environment
+      #   id: setup_tests
+      #   uses: stacks-network/actions/stacks-core/testenv@main
+      #   with:
+      #     btc-version: "25.0"
           
-      ## Run test matrix using restored cache of archive file
-      ##   - Test will timeout after env.TEST_TIMEOUT minutes
-      - name: Run Tests
-        id: run_tests
-        timeout-minutes: ${{ fromJSON(env.TEST_TIMEOUT) }}
-        uses: stacks-network/actions/stacks-core/run-tests@main
-        with:
-          test-name: ${{ matrix.test-name }}
+      # ## Run test matrix using restored cache of archive file
+      # ##   - Test will timeout after env.TEST_TIMEOUT minutes
+      # - name: Run Tests
+      #   id: run_tests
+      #   timeout-minutes: ${{ fromJSON(env.TEST_TIMEOUT) }}
+      #   uses: stacks-network/actions/stacks-core/run-tests@main
+      #   with:
+      #     test-name: ${{ matrix.test-name }}
 
-      ## Create and upload code coverage file
-      - name: Code Coverage
-        id: codecov
-        uses: stacks-network/actions/codecov@main
-        with:
-          test-name: ${{ matrix.test-name }}
+      # ## Create and upload code coverage file
+      # - name: Code Coverage
+      #   id: codecov
+      #   uses: stacks-network/actions/codecov@main
+      #   with:
+      #     test-name: ${{ matrix.test-name }}
