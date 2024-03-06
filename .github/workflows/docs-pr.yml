@@ -13,10 +13,6 @@ defaults:
   run:
     shell: bash
 
-defaults:
-  run:
-    shell: bash
-
 env:
   ROBOT_OWNER: kantai-robot
   ROBOT_REPO: docs.blockstack
