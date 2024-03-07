@@ -25,10 +25,10 @@ on:
       - synchronize
       - ready_for_review
     paths:
-      - "!**.yaml" ## ignore any yaml unless previously matched
-      - "!**.yml" ## ignore any yaml unless previously matched
-      - "!**.json" ## ignore any json unless previously matched
-      - "!**.md" ## ignore any md
+      # - "!**.yaml" ## ignore any yaml unless previously matched
+      # - "!**.yml" ## ignore any yaml unless previously matched
+      # - "!**.json" ## ignore any json unless previously matched
+      # - "!**.md" ## ignore any md
       - "**.rs"
       - "**.clar"
       - ".github/workflows/**" ## only trigger if a workflow has changed
