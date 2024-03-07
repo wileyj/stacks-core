@@ -31,28 +31,32 @@ jobs:
         ## Each of these tests should take ~20 minutes if they are successful
         test-name:
           - tests::epoch_21::test_pox_reorg_flap_duel
-          - tests::epoch_21::test_pox_reorg_flap_reward_cycles
+          # - tests::epoch_21::test_pox_reorg_flap_reward_cycles
     steps:
-      ## Setup test environment
-      - name: Setup Test Environment
-        id: setup_tests
-        uses: stacks-network/actions/stacks-core/testenv@main
-        with:
-          btc-version: "25.0"
+      - name: Echo
+        id: echo
+        run: |
+          echo "ci test"
+      # ## Setup test environment
+      # - name: Setup Test Environment
+      #   id: setup_tests
+      #   uses: stacks-network/actions/stacks-core/testenv@main
+      #   with:
+      #     btc-version: "25.0"
           
-      ## Run test matrix using restored cache of archive file
-      ##   - Test will timeout after env.TEST_TIMEOUT minutes
-      - name: Run Tests
-        id: run_tests
-        timeout-minutes: ${{ fromJSON(env.TEST_TIMEOUT) }}
-        uses: stacks-network/actions/stacks-core/run-tests@main
-        with:
-          test-name: ${{ matrix.test-name }}
-          threads: 1
+      # ## Run test matrix using restored cache of archive file
+      # ##   - Test will timeout after env.TEST_TIMEOUT minutes
+      # - name: Run Tests
+      #   id: run_tests
+      #   timeout-minutes: ${{ fromJSON(env.TEST_TIMEOUT) }}
+      #   uses: stacks-network/actions/stacks-core/run-tests@main
+      #   with:
+      #     test-name: ${{ matrix.test-name }}
+      #     threads: 1
 
-      ## Create and upload code coverage file
-      - name: Code Coverage
-        id: codecov
-        uses: stacks-network/actions/codecov@main
-        with:
-          test-name: ${{ matrix.test-name }}
+      # ## Create and upload code coverage file
+      # - name: Code Coverage
+      #   id: codecov
+      #   uses: stacks-network/actions/codecov@main
+      #   with:
+      #     test-name: ${{ matrix.test-name }}

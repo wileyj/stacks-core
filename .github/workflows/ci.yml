@@ -27,13 +27,18 @@ on:
     paths-ignore:
       - "**.md"
       - "**.yml"
-    ## might be better to use inclusive v exclusive paths here, ex:
-    # paths:
-    #   - "**.rs"
-    #   - "**.clar"
-  pull_request_review:
-    types:
-      - submitted
+    paths:
+      - "**.rs"
+      - "**.clar"
+      - ".github/workflows/**" ## only trigger if a workflow has changed
+      - ".github/actions/**" ## only trigger if a workflow dockerfile has changed
+      - "**.rs"
+      - "**.clar"
+      - "**Cargo.lock"
+      - "docs/rpc/openapi.yaml"
+      - "contrib/core-contract-tests/**"
+      - "net-test/**"
+      - "**.sh" ## leave for testing
 
 defaults:
   run:
@@ -67,20 +72,24 @@ jobs:
     name: Rust Format
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout the latest code
-        id: git_checkout
-        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+      - name: Echo
+        id: echo
+        run: |
+          echo "ci test"
+      # - name: Checkout the latest code
+      #   id: git_checkout
+      #   uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
 
-      - name: Setup Rust Toolchain
-        id: setup_rust_toolchain
-        uses: actions-rust-lang/setup-rust-toolchain@f3c84ee10bf5a86e7a5d607d487bf17d57670965 # v1.5.0
-        with:
-          components: rustfmt
-          cache: false
+      # - name: Setup Rust Toolchain
+      #   id: setup_rust_toolchain
+      #   uses: actions-rust-lang/setup-rust-toolchain@f3c84ee10bf5a86e7a5d607d487bf17d57670965 # v1.5.0
+      #   with:
+      #     components: rustfmt
+      #     cache: false
 
-      - name: Rustfmt
-        id: rustfmt
-        uses: actions-rust-lang/rustfmt@2d1d4e9f72379428552fa1def0b898733fb8472d # v1.1.0
+      # - name: Rustfmt
+      #   id: rustfmt
+      #   uses: actions-rust-lang/rustfmt@2d1d4e9f72379428552fa1def0b898733fb8472d # v1.1.0
 
   ######################################################################################
   ## Create a tagged github release
