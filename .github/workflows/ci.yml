@@ -24,9 +24,6 @@ on:
       - reopened
       - synchronize
       - ready_for_review
-    # paths-ignore:
-    #   - "**.md"
-    #   - "**.yml"
     paths:
       - "**.rs"
       - "**.clar"
@@ -76,6 +73,10 @@ jobs:
         id: echo
         run: |
           echo "ci test"
+          echo "github.event_name: ${{ github.event_name }}"
+          echo "github.event.action: ${{ github.event.action }}"
+          echo "github.event: ${{ github.event }}"
+
       # - name: Checkout the latest code
       #   id: git_checkout
       #   uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
