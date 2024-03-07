@@ -24,9 +24,9 @@ on:
       - reopened
       - synchronize
       - ready_for_review
-    paths-ignore:
-      - "**.md"
-      - "**.yml"
+    # paths-ignore:
+    #   - "**.md"
+    #   - "**.yml"
     paths:
       - "**.rs"
       - "**.clar"
