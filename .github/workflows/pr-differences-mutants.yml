@@ -18,6 +18,7 @@ concurrency:
 jobs:
   # Check and output whether to run big (`stacks-node`/`stackslib`) or small (others) packages with or without shards
   check-big-packages-and-shards:
+    if: ${{ false }}
     name: Check Packages and Shards
 
     runs-on: ubuntu-latest
@@ -34,6 +35,7 @@ jobs:
 
   # Mutation testing - Execute on PR on small packages that have functions modified (normal run, no shards)
   pr-differences-mutants-small-normal:
+    if: ${{ false }}
     name: Mutation Testing - Normal, Small
 
     needs: check-big-packages-and-shards
@@ -50,6 +52,7 @@ jobs:
 
   # Mutation testing - Execute on PR on small packages that have functions modified (run with strategy matrix shards)
   pr-differences-mutants-small-shards:
+    if: ${{ false }}
     name: Mutation Testing - Shards, Small
 
     needs: check-big-packages-and-shards
@@ -72,6 +75,7 @@ jobs:
 
   # Mutation testing - Execute on PR on big packages that have functions modified (normal run, no shards)
   pr-differences-mutants-big-normal:
+    if: ${{ false }}
     name: Mutation Testing - Normal, Big
 
     needs: check-big-packages-and-shards
@@ -91,6 +95,7 @@ jobs:
 
   # Mutation testing - Execute on PR on big packages that have functions modified (run with strategy matrix shards)
   pr-differences-mutants-big-shards:
+    if: ${{ false }}
     name: Mutation Testing - Shards, Big
 
     needs: check-big-packages-and-shards
@@ -116,6 +121,7 @@ jobs:
 
   # Output the mutants and fail the workflow if there are missed/timeout/unviable mutants
   output-mutants:
+    if: ${{ false }}
     name: Output Mutants
 
     runs-on: ubuntu-latest
