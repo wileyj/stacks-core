@@ -25,6 +25,8 @@ on:
       - synchronize
       - ready_for_review
     paths:
+      - "!**.yml"
+      - "!**.md"
       - "**.rs"
       - "**.clar"
       - ".github/workflows/**" ## only trigger if a workflow has changed
