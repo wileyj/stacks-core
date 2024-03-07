@@ -13,6 +13,7 @@ permissions:
 
 jobs:
   create-pr:
+    if: ${{ false }}
     name: Create Downstream PR (${{ github.ref_name }})
     runs-on: ubuntu-latest
     steps:
