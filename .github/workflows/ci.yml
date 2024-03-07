@@ -30,15 +30,20 @@ on:
       - reopened
       - synchronize
       - ready_for_review
-    paths-ignore:
-      - "**.md"
-      - "**.yml"
-      - "**.yaml"
-      - "**.txt"
-      - "**.toml"
-      - "!.github/workflows/**.yml"
-      - "!docs/rpc/openapi.yaml"
-      - "!contrib/core-contract-tests/**"
+    paths:
+      - "**.rs"
+      - "**.clar"
+      - "**.sh"
+      - ".github/**"
+    # paths-ignore:
+    #   - "**.md"
+    #   - "**.yml"
+    #   - "**.yaml"
+    #   - "**.txt"
+    #   - "**.toml"
+    #   - "!.github/workflows/**.yml"
+    #   - "!docs/rpc/openapi.yaml"
+    #   - "!contrib/core-contract-tests/**"
     # paths:
     #   - "!**.yml"
     #   - "!**.md"
