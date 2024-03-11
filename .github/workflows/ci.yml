@@ -98,7 +98,6 @@ jobs:
                 - '.cargo/**'
                 - 'contrib/core-contract-tests/**'
                 - 'net-test/**'
-                # - '.github/workflows/**'
                 - '.github/actions/**'
                 - '**.sh' ## for testing
               paths_ignore:
@@ -107,6 +106,7 @@ jobs:
                 - '**.txt'
                 - '**.toml'
                 - '**.in'
+# - '.github/workflows/**'
 
   ##
   ## Jobs to execute everytime workflow runs
@@ -116,20 +116,25 @@ jobs:
   ##     - PR review comment
   ##     - PR change is requested
   rustfmt:
+    if: needs.pre_job.outputs.should_skip != 'true' || fromJSON(needs.pre_job.outputs.paths_result).rustfmt.should_skip != 'true'
     # if: needs.pre_job.outputs.should_skip == 'true' || fromJSON(needs.pre_job.outputs.paths_result).rustfmt.should_skip == 'true'
-    if: |
-      (
-        needs.pre_job.outputs.should_skip == 'true' || 
-        fromJSON(needs.pre_job.outputs.paths_result).rustfmt.should_skip 
-      ) ||
-      !(
-        github.event_name == 'pull_request_review' && 
-        github.event.action == 'submitted' && 
-        (
-          github.event.review.state == 'commented' ||
-          github.event.review.state == 'changes_requested'
-        )
-      )
+    # if: |
+    #   (
+    #     needs.pre_job.outputs.should_skip != 'true' || 
+    #     fromJSON(needs.pre_job.outputs.paths_result).rustfmt.should_skip 
+    #   )
+  # (
+  #   needs.pre_job.outputs.should_skip == 'true' || 
+  #   fromJSON(needs.pre_job.outputs.paths_result).rustfmt.should_skip 
+  # ) ||
+  # !(
+  #   github.event_name == 'pull_request_review' && 
+  #   github.event.action == 'submitted' && 
+  #   (
+  #     github.event.review.state == 'commented' ||
+  #     github.event.review.state == 'changes_requested'
+  #   )
+  # )
     name: Rust Format
     needs: pre_job
     runs-on: ubuntu-latest
@@ -140,9 +145,10 @@ jobs:
           echo "ci test"
           echo "github.event_name: ${{ github.event_name }}"
           echo "github.event.action: ${{ github.event.action }}"
-          echo "github.event: ${{ github.event }}"
-          echo "needs.pre.outputs.should_skip: ${{ needs.pre_job.outputs.should_skip }}"
-          echo "needs.pre.outputs.paths_result: ${{ needs.pre_job.outputs.paths_result }}"
+          echo "github.event.review.state: ${{ github.event.review.state }}"
+          echo "GLOBAL: needs.pre.outputs.should_skip: ${{ needs.pre_job.outputs.should_skip }}"
+          echo "PATHS_FILTER: needs.pre.outputs.paths_result: ${{ needs.pre_job.outputs.paths_result }}"
+          echo "PATHS_FILTER: fromJSON(needs.pre_job.outputs.paths_result).rustfmt.should_skip: ${{ fromJSON(needs.pre_job.outputs.paths_result).rustfmt.should_skip }}
 
 #################################################################
 ## double commented below
