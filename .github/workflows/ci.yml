@@ -116,7 +116,7 @@ jobs:
   ##     - PR review comment
   ##     - PR change is requested
   rustfmt:
-    if: needs.pre_job.outputs.should_skip != 'true' || !fromJSON(needs.pre_job.outputs.paths_result).rustfmt.should_skip
+    if: needs.pre_job.outputs.should_skip != 'true' || fromJSON(needs.pre_job.outputs.paths_result).rustfmt.should_skip != 'true'
     # if: |
     #   (
     #     needs.pre.outputs.should_skip != 'true' || 
