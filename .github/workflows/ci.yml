@@ -68,7 +68,7 @@ concurrency:
 run-name: ${{ inputs.tag }}
 
 jobs:
-  pre_job:
+  pre:
     name: Workflow Check
     # continue-on-error: true # Uncomment once integration is finished
     runs-on: ubuntu-latest
@@ -88,7 +88,7 @@ jobs:
           # paths_ignore: '["**.md", "**.yml", "**.txt", "**.toml", "**.in"]'
           # paths: '["**.rs", "**.clar", "**Cargo.lock", "**Cargo.toml", ".cargo/**", "contrib/core-contract-tests/**", "net-test/**"]'
           paths_filter: |
-            stacks-core:
+            rustfmt:
               backtracking: ${{  github.event.pull_request.commits }}
               paths:
                 - '**.rs'
@@ -118,8 +118,8 @@ jobs:
   rustfmt:
     if: |
       (
-        needs.pre_job.outputs.should_skip != 'true' || 
-        !fromJSON(needs.pre_job.outputs.paths_result).stacks-core.should_skip 
+        needs.pre.outputs.should_skip != 'true' || 
+        !fromJSON(needs.pre.outputs.paths_result).rustfmt.should_skip 
       ) ||
       !(
         github.event_name == 'pull_request_review' && 
@@ -130,7 +130,7 @@ jobs:
         )
       )
     name: Rust Format
-    needs: pre_job
+    needs: pre
     runs-on: ubuntu-latest
     steps:
       - name: Echo
@@ -140,6 +140,9 @@ jobs:
           echo "github.event_name: ${{ github.event_name }}"
           echo "github.event.action: ${{ github.event.action }}"
           echo "github.event: ${{ github.event }}"
+          echo "needs.pre.outputs.should_skip: ${{ needs.pre_job.outputs.should_skip }}"
+          echo "needs.pre.outputs.paths_result: ${{ needs.pre_job.outputs.paths_result }}"
+
 #################################################################
 ## double commented below
 
