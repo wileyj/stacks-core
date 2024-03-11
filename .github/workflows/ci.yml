@@ -116,19 +116,20 @@ jobs:
   ##     - PR review comment
   ##     - PR change is requested
   rustfmt:
-    if: |
-      (
-        needs.pre.outputs.should_skip != 'true' || 
-        !fromJSON(needs.pre.outputs.paths_result).rustfmt.should_skip 
-      ) ||
-      !(
-        github.event_name == 'pull_request_review' && 
-        github.event.action == 'submitted' && 
-        (
-          github.event.review.state == 'commented' ||
-          github.event.review.state == 'changes_requested'
-        )
-      )
+    if: needs.pre.outputs.should_skip != 'true' || !fromJSON(needs.pre.outputs.paths_result).rustfmt.should_skip
+    # if: |
+    #   (
+    #     needs.pre.outputs.should_skip != 'true' || 
+    #     !fromJSON(needs.pre.outputs.paths_result).rustfmt.should_skip 
+    #   ) ||
+    #   !(
+    #     github.event_name == 'pull_request_review' && 
+    #     github.event.action == 'submitted' && 
+    #     (
+    #       github.event.review.state == 'commented' ||
+    #       github.event.review.state == 'changes_requested'
+    #     )
+    #   )
     name: Rust Format
     needs: pre
     runs-on: ubuntu-latest
