@@ -120,8 +120,8 @@ jobs:
     if: |
       (
         needs.pre.outputs.should_skip == 'true' || 
-        fromJSON(needs.pre.outputs.paths_result).rustfmt.should_skip 
-      ) ||
+        fromJSON(needs.pre.outputs.paths_result).rustfmt.should_skip == 'true'
+      ) &&
       !(
         github.event_name == 'pull_request_review' && 
         github.event.action == 'submitted' && 
