@@ -88,7 +88,7 @@ jobs:
           # paths_ignore: '["**.md", "**.yml", "**.txt", "**.toml", "**.in"]'
           # paths: '["**.rs", "**.clar", "**Cargo.lock", "**Cargo.toml", ".cargo/**", "contrib/core-contract-tests/**", "net-test/**"]'
           paths_filter: |
-            stacks-core:
+            rustfmt:
               backtracking: ${{  github.event.pull_request.commits }}
               paths:
                 - '**.rs'
