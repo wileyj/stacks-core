@@ -119,9 +119,9 @@ jobs:
     # if: needs.pre_job.outputs.should_skip == 'true' || fromJSON(needs.pre_job.outputs.paths_result).rustfmt.should_skip == 'true'
     if: |
       (
-        needs.pre.outputs.should_skip == 'true' || 
-        fromJSON(needs.pre.outputs.paths_result).rustfmt.should_skip == 'true'
-      ) &&
+        needs.pre_job.outputs.should_skip == 'true' || 
+        fromJSON(needs.pre_job.outputs.paths_result).rustfmt.should_skip 
+      ) ||
       !(
         github.event_name == 'pull_request_review' && 
         github.event.action == 'submitted' && 
