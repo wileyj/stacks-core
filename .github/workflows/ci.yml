@@ -31,9 +31,9 @@ on:
     # paths:
     #   - "**.rs"
     #   - "**.clar"
-  pull_request_review:
-    types:
-      - submitted
+  # pull_request_review:
+  #   types:
+  #     - submitted
 
 defaults:
   run:
