@@ -186,12 +186,30 @@ jobs:
   ##
   ## Runs when:
   ##   - tag is provided
-  ##   either or of the following:
-  ##     - tag is not provided
-  ##     - PR is approved
+  ##   or:
+  ##     - no tag provided
+  ##       and any of:
+  ##         - PR is approved (any approval will trigger)
+  ##         - this workflow is called manually
+  ##         - PR is opened
+  ##         - commit to either (development, master) branch
   stacks-core-tests:
     if: |
-      inputs.tag != ''
+      inputs.tag != '' || (
+        inputs.tag == '' && (
+          github.event_name == 'workflow_dispatch' ||
+          github.event_name == 'pull_request' ||
+          github.event_name == 'merge_group' ||
+          (
+            contains('
+              refs/heads/master
+              refs/heads/develop
+              refs/heads/next
+            ', github.event.pull_request.head.ref) &&
+            github.event_name == 'push'
+          )
+        )
+      )
     # if: |
     #   inputs.tag != '' || (
     #     inputs.tag == '' || (
@@ -208,7 +226,21 @@ jobs:
 
   bitcoin-tests:
     if: |
-      inputs.tag != ''
+      inputs.tag != '' || (
+        inputs.tag == '' && (
+          github.event_name == 'workflow_dispatch' ||
+          github.event_name == 'pull_request' ||
+          github.event_name == 'merge_group' ||
+          (
+            contains('
+              refs/heads/master
+              refs/heads/develop
+              refs/heads/next
+            ', github.event.pull_request.head.ref) &&
+            github.event_name == 'push'
+          )
+        )
+      )
     # if: |
     #   inputs.tag != '' || (
     #     inputs.tag == '' || (
