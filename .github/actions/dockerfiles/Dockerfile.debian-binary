@@ -8,13 +8,7 @@ ARG BUILDPLATFORM
 ARG TARGETARCH
 ARG TARGETVARIANT
 ARG REPO
-# ARG REPO=wileyj/stacks-blockchain
 
-# RUN case ${TARGETARCH} in \
-#     "amd64")  BIN_ARCH=linux-glibc-x64-v3  ;; \
-#     "arm64")  BIN_ARCH=linux-glibc-arm64  ;; \
-#     "arm")  BIN_ARCH=linux-glibc-armv7  ;; \
-#     "*") exit 1 ;; \
 RUN case ${TARGETPLATFORM} in \
     linux/amd64/v2) BIN_ARCH=linux-glibc-x64-v2 ;; \
     linux/amd64*) BIN_ARCH=linux-glibc-x64 ;; \
@@ -29,5 +23,5 @@ RUN case ${TARGETPLATFORM} in \
     && unzip ${BIN_ARCH}.zip -d /out
 
 FROM --platform=${TARGETPLATFORM} debian:bookworm
-COPY --from=builder /out/stacks-node /bin/
+COPY --from=builder /out/stacks-node /out/stacks-signer /bin/
 CMD ["stacks-node", "mainnet"]

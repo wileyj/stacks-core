@@ -232,7 +232,6 @@
 ///
 use std::cmp;
 use std::collections::{BTreeMap, HashMap, HashSet, VecDeque};
-use std::convert::{TryFrom, TryInto};
 use std::fmt;
 use std::fmt::Write;
 use std::sync::mpsc::SyncSender;
@@ -789,7 +788,14 @@ fn inner_find_heaviest_block_commit_ptr(
             }
 
             if let Some(last_vtxindex) = last_vtxindex.as_mut() {
-                assert!(*last_vtxindex < opdata.vtxindex);
+                assert!(
+                    *last_vtxindex < opdata.vtxindex,
+                    "{} !< {} at block {} (op {:?})",
+                    *last_vtxindex,
+                    opdata.vtxindex,
+                    opdata.block_height,
+                    &opdata
+                );
                 *last_vtxindex = opdata.vtxindex;
             } else {
                 last_vtxindex = Some(opdata.vtxindex);

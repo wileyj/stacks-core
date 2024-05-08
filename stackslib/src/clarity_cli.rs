@@ -14,10 +14,8 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-use std::convert::{TryFrom, TryInto};
 use std::ffi::OsStr;
 use std::io::{Read, Write};
-use std::iter::Iterator;
 use std::path::PathBuf;
 use std::str::FromStr;
 use std::{env, fs, io, process};
@@ -146,7 +144,7 @@ fn friendly_expect_opt<A>(input: Option<A>, msg: &str) -> A {
     })
 }
 
-pub const DEFAULT_CLI_EPOCH: StacksEpochId = StacksEpochId::Epoch21;
+pub const DEFAULT_CLI_EPOCH: StacksEpochId = StacksEpochId::Epoch25;
 
 struct EvalInput {
     marf_kv: MarfedKV,
@@ -223,6 +221,8 @@ fn run_analysis_free<C: ClarityStorage>(
         LimitedCostTracker::new_free(),
         DEFAULT_CLI_EPOCH,
         clarity_version,
+        // no type map data is used in the clarity_cli
+        false,
     )
 }
 
@@ -255,6 +255,8 @@ fn run_analysis<C: ClarityStorage>(
         cost_track,
         DEFAULT_CLI_EPOCH,
         clarity_version,
+        // no type map data is used in the clarity_cli
+        false,
     )
 }
 

@@ -17,7 +17,9 @@ use std::net::SocketAddr;
 
 use blockstack_lib::burnchains::Txid;
 use blockstack_lib::chainstate::nakamoto::NakamotoBlock;
-use blockstack_lib::chainstate::stacks::boot::{RewardSet, SIGNERS_NAME, SIGNERS_VOTING_NAME};
+use blockstack_lib::chainstate::stacks::boot::{
+    NakamotoSignerEntry, SIGNERS_VOTING_FUNCTION_NAME, SIGNERS_VOTING_NAME,
+};
 use blockstack_lib::chainstate::stacks::{
     StacksTransaction, StacksTransactionSigner, TransactionAnchorMode, TransactionAuth,
     TransactionContractCall, TransactionPayload, TransactionPostConditionMode,
@@ -32,23 +34,19 @@ use blockstack_lib::net::api::postblock_proposal::NakamotoBlockProposal;
 use blockstack_lib::util_lib::boot::{boot_code_addr, boot_code_id};
 use clarity::vm::types::{PrincipalData, QualifiedContractIdentifier};
 use clarity::vm::{ClarityName, ContractName, Value as ClarityValue};
-use hashbrown::{HashMap, HashSet};
+use reqwest::header::AUTHORIZATION;
 use serde_json::json;
-use slog::{slog_debug, slog_warn};
+use slog::slog_debug;
 use stacks_common::codec::StacksMessageCodec;
 use stacks_common::consts::{CHAIN_ID_MAINNET, CHAIN_ID_TESTNET};
+use stacks_common::debug;
 use stacks_common::types::chainstate::{StacksAddress, StacksPrivateKey, StacksPublicKey};
 use stacks_common::types::StacksEpochId;
-use stacks_common::{debug, warn};
-use wsts::curve::ecdsa;
 use wsts::curve::point::{Compressed, Point};
-use wsts::state_machine::PublicKeys;
 
 use crate::client::{retry_with_exponential_backoff, ClientError};
-use crate::config::{GlobalConfig, RegisteredSignersInfo};
-
-/// The name of the function for casting a DKG result to signer vote contract
-pub const VOTE_FUNCTION_NAME: &str = "vote-for-aggregate-public-key";
+use crate::config::GlobalConfig;
+use crate::runloop::RewardCycleInfo;
 
 /// The Stacks signer client used to communicate with the stacks node
 #[derive(Clone, Debug)]
@@ -67,6 +65,8 @@ pub struct StacksClient {
     mainnet: bool,
     /// The Client used to make HTTP connects
     stacks_node_client: reqwest::blocking::Client,
+    /// the auth password for the stacks node
+    auth_password: String,
 }
 
 impl From<&GlobalConfig> for StacksClient {
@@ -79,13 +79,19 @@ impl From<&GlobalConfig> for StacksClient {
             chain_id: config.network.to_chain_id(),
             stacks_node_client: reqwest::blocking::Client::new(),
             mainnet: config.network.is_mainnet(),
+            auth_password: config.auth_password.clone(),
         }
     }
 }
 
 impl StacksClient {
-    /// Create a new signer StacksClient with the provided private key, stacks node host endpoint, and version
-    pub fn new(stacks_private_key: StacksPrivateKey, node_host: SocketAddr, mainnet: bool) -> Self {
+    /// Create a new signer StacksClient with the provided private key, stacks node host endpoint, version, and auth password
+    pub fn new(
+        stacks_private_key: StacksPrivateKey,
+        node_host: SocketAddr,
+        auth_password: String,
+        mainnet: bool,
+    ) -> Self {
         let pubkey = StacksPublicKey::from_private(&stacks_private_key);
         let tx_version = if mainnet {
             TransactionVersion::Mainnet
@@ -106,11 +112,12 @@ impl StacksClient {
             chain_id,
             stacks_node_client: reqwest::blocking::Client::new(),
             mainnet,
+            auth_password,
         }
     }
 
     /// Get our signer address
-    pub fn get_signer_address(&self) -> &StacksAddress {
+    pub const fn get_signer_address(&self) -> &StacksAddress {
         &self.stacks_address
     }
 
@@ -138,7 +145,7 @@ impl StacksClient {
         value: ClarityValue,
     ) -> Result<Vec<(StacksAddress, u128)>, ClientError> {
         debug!("Parsing signer slots...");
-        let value = value.clone().expect_result_ok()?;
+        let value = value.expect_result_ok()?;
         let values = value.expect_list()?;
         let mut signer_slots = Vec::with_capacity(values.len());
         for value in values {
@@ -175,12 +182,23 @@ impl StacksClient {
             &function_name,
             function_args,
         )?;
-        self.parse_aggregate_public_key(value)
+        // Return value is of type:
+        // ```clarity
+        // (option { aggregate-public-key: (buff 33), signer-weight: uint })
+        // ```
+        let inner_data = value.expect_optional()?;
+        if let Some(inner_data) = inner_data {
+            let tuple = inner_data.expect_tuple()?;
+            let key_value = tuple.get_owned("aggregate-public-key")?;
+            self.parse_aggregate_public_key(key_value)
+        } else {
+            Ok(None)
+        }
     }
 
     /// Determine the stacks node current epoch
     pub fn get_node_epoch(&self) -> Result<StacksEpochId, ClientError> {
-        let pox_info = self.get_pox_data()?;
+        let pox_info = self.get_pox_data_with_retry()?;
         let burn_block_height = self.get_burn_block_height()?;
 
         let epoch_25 = pox_info
@@ -209,7 +227,10 @@ impl StacksClient {
     }
 
     /// Submit the block proposal to the stacks node. The block will be validated and returned via the HTTP endpoint for Block events.
-    pub fn submit_block_for_validation(&self, block: NakamotoBlock) -> Result<(), ClientError> {
+    pub fn submit_block_for_validation_with_retry(
+        &self,
+        block: NakamotoBlock,
+    ) -> Result<(), ClientError> {
         let block_proposal = NakamotoBlockProposal {
             block,
             chain_id: self.chain_id,
@@ -218,6 +239,7 @@ impl StacksClient {
             self.stacks_node_client
                 .post(self.block_proposal_path())
                 .header("Content-Type", "application/json")
+                .header(AUTHORIZATION, self.auth_password.clone())
                 .json(&block_proposal)
                 .send()
                 .map_err(backoff::Error::transient)
@@ -236,6 +258,51 @@ impl StacksClient {
         reward_cycle: u64,
     ) -> Result<Option<Point>, ClientError> {
         let function_name = ClarityName::from("get-approved-aggregate-key");
+        let voting_contract_id = boot_code_id(SIGNERS_VOTING_NAME, self.mainnet);
+        let function_args = &[ClarityValue::UInt(reward_cycle as u128)];
+        let value = self.read_only_contract_call(
+            &voting_contract_id.issuer.into(),
+            &voting_contract_id.name,
+            &function_name,
+            function_args,
+        )?;
+        let inner_data = value.expect_optional()?;
+        inner_data.map_or_else(
+            || Ok(None),
+            |key_value| self.parse_aggregate_public_key(key_value),
+        )
+    }
+
+    /// Retrieve the current consumed weight for the given reward cycle and DKG round
+    pub fn get_round_vote_weight(
+        &self,
+        reward_cycle: u64,
+        round_id: u64,
+    ) -> Result<Option<u128>, ClientError> {
+        let function_name = ClarityName::from("get-round-info");
+        let pox_contract_id = boot_code_id(SIGNERS_VOTING_NAME, self.mainnet);
+        let function_args = &[
+            ClarityValue::UInt(reward_cycle as u128),
+            ClarityValue::UInt(round_id as u128),
+        ];
+        let value = self.read_only_contract_call(
+            &pox_contract_id.issuer.into(),
+            &pox_contract_id.name,
+            &function_name,
+            function_args,
+        )?;
+        let inner_data = value.expect_optional()?;
+        let Some(inner_data) = inner_data else {
+            return Ok(None);
+        };
+        let round_info = inner_data.expect_tuple()?;
+        let votes_weight = round_info.get("votes-weight")?.to_owned().expect_u128()?;
+        Ok(Some(votes_weight))
+    }
+
+    /// Retrieve the weight threshold required to approve a DKG vote
+    pub fn get_vote_threshold_weight(&self, reward_cycle: u64) -> Result<u128, ClientError> {
+        let function_name = ClarityName::from("get-threshold-weight");
         let pox_contract_id = boot_code_id(SIGNERS_VOTING_NAME, self.mainnet);
         let function_args = &[ClarityValue::UInt(reward_cycle as u128)];
         let value = self.read_only_contract_call(
@@ -244,17 +311,17 @@ impl StacksClient {
             &function_name,
             function_args,
         )?;
-        self.parse_aggregate_public_key(value)
+        Ok(value.expect_u128()?)
     }
 
     /// Retrieve the current account nonce for the provided address
     pub fn get_account_nonce(&self, address: &StacksAddress) -> Result<u64, ClientError> {
-        let account_entry = self.get_account_entry(address)?;
+        let account_entry = self.get_account_entry_with_retry(address)?;
         Ok(account_entry.nonce)
     }
 
     /// Get the current peer info data from the stacks node
-    pub fn get_peer_info(&self) -> Result<RPCPeerInfoData, ClientError> {
+    pub fn get_peer_info_with_retry(&self) -> Result<RPCPeerInfoData, ClientError> {
         debug!("Getting stacks node info...");
         let send_request = || {
             self.stacks_node_client
@@ -297,8 +364,11 @@ impl StacksClient {
         Ok(round)
     }
 
-    /// Get the reward set from the stacks node for the given reward cycle
-    pub fn get_reward_set(&self, reward_cycle: u64) -> Result<RewardSet, ClientError> {
+    /// Get the reward set signers from the stacks node for the given reward cycle
+    pub fn get_reward_set_signers_with_retry(
+        &self,
+        reward_cycle: u64,
+    ) -> Result<Option<Vec<NakamotoSignerEntry>>, ClientError> {
         debug!("Getting reward set for reward cycle {reward_cycle}...");
         let send_request = || {
             self.stacks_node_client
@@ -311,108 +381,11 @@ impl StacksClient {
             return Err(ClientError::RequestFailure(response.status()));
         }
         let stackers_response = response.json::<GetStackersResponse>()?;
-        Ok(stackers_response.stacker_set)
-    }
-
-    /// Get the registered signers for a specific reward cycle
-    /// Returns None if no signers are registered or its not Nakamoto cycle
-    pub fn get_registered_signers_info(
-        &self,
-        reward_cycle: u64,
-    ) -> Result<Option<RegisteredSignersInfo>, ClientError> {
-        debug!("Getting registered signers for reward cycle {reward_cycle}...");
-        let reward_set = self.get_reward_set(reward_cycle)?;
-        let Some(reward_set_signers) = reward_set.signers else {
-            warn!("No reward set signers found for reward cycle {reward_cycle}.");
-            return Ok(None);
-        };
-        if reward_set_signers.is_empty() {
-            warn!("No registered signers found for reward cycle {reward_cycle}.");
-            return Ok(None);
-        }
-        // signer uses a Vec<u32> for its key_ids, but coordinator uses a HashSet for each signer since it needs to do lots of lookups
-        let mut weight_end = 1;
-        let mut coordinator_key_ids = HashMap::with_capacity(4000);
-        let mut signer_key_ids = HashMap::with_capacity(reward_set_signers.len());
-        let mut signer_ids = HashMap::with_capacity(reward_set_signers.len());
-        let mut public_keys = PublicKeys {
-            signers: HashMap::with_capacity(reward_set_signers.len()),
-            key_ids: HashMap::with_capacity(4000),
-        };
-        let mut signer_public_keys = HashMap::with_capacity(reward_set_signers.len());
-        for (i, entry) in reward_set_signers.iter().enumerate() {
-            let signer_id = u32::try_from(i).expect("FATAL: number of signers exceeds u32::MAX");
-            let ecdsa_public_key = ecdsa::PublicKey::try_from(entry.signing_key.as_slice()).map_err(|e| {
-                ClientError::CorruptedRewardSet(format!(
-                        "Reward cycle {reward_cycle} failed to convert signing key to ecdsa::PublicKey: {e}"
-                    ))
-                })?;
-            let signer_public_key = Point::try_from(&Compressed::from(ecdsa_public_key.to_bytes()))
-                .map_err(|e| {
-                    ClientError::CorruptedRewardSet(format!(
-                        "Reward cycle {reward_cycle} failed to convert signing key to Point: {e}"
-                    ))
-                })?;
-            let stacks_public_key = StacksPublicKey::from_slice(entry.signing_key.as_slice()).map_err(|e| {
-                    ClientError::CorruptedRewardSet(format!(
-                        "Reward cycle {reward_cycle} failed to convert signing key to StacksPublicKey: {e}"
-                    ))
-                })?;
-
-            let stacks_address = StacksAddress::p2pkh(self.mainnet, &stacks_public_key);
-
-            signer_ids.insert(stacks_address, signer_id);
-            signer_public_keys.insert(signer_id, signer_public_key);
-            let weight_start = weight_end;
-            weight_end = weight_start + entry.weight;
-            for key_id in weight_start..weight_end {
-                public_keys.key_ids.insert(key_id, ecdsa_public_key);
-                public_keys.signers.insert(signer_id, ecdsa_public_key);
-                coordinator_key_ids
-                    .entry(signer_id)
-                    .or_insert(HashSet::with_capacity(entry.weight as usize))
-                    .insert(key_id);
-                signer_key_ids
-                    .entry(signer_id)
-                    .or_insert(Vec::with_capacity(entry.weight as usize))
-                    .push(key_id);
-            }
-        }
-
-        let signer_set =
-            u32::try_from(reward_cycle % 2).expect("FATAL: reward_cycle % 2 exceeds u32::MAX");
-        let signer_stackerdb_contract_id = boot_code_id(SIGNERS_NAME, self.mainnet);
-        // Get the signer writers from the stacker-db to find the signer slot id
-        let signer_slots_weights = self
-            .get_stackerdb_signer_slots(&signer_stackerdb_contract_id, signer_set)
-            .unwrap();
-        let mut signer_slot_ids = HashMap::with_capacity(signer_slots_weights.len());
-        for (index, (address, _)) in signer_slots_weights.into_iter().enumerate() {
-            signer_slot_ids.insert(
-                address,
-                u32::try_from(index).expect("FATAL: number of signers exceeds u32::MAX"),
-            );
-        }
-
-        for address in signer_ids.keys() {
-            if !signer_slot_ids.contains_key(address) {
-                debug!("Signer {address} does not have a slot id in the stackerdb");
-                return Ok(None);
-            }
-        }
-
-        Ok(Some(RegisteredSignersInfo {
-            public_keys,
-            signer_key_ids,
-            signer_ids,
-            signer_slot_ids,
-            signer_public_keys,
-            coordinator_key_ids,
-        }))
+        Ok(stackers_response.stacker_set.signers)
     }
 
     /// Retreive the current pox data from the stacks node
-    pub fn get_pox_data(&self) -> Result<RPCPoxInfoData, ClientError> {
+    pub fn get_pox_data_with_retry(&self) -> Result<RPCPoxInfoData, ClientError> {
         debug!("Getting pox data...");
         let send_request = || {
             self.stacks_node_client
@@ -430,24 +403,31 @@ impl StacksClient {
 
     /// Helper function to retrieve the burn tip height from the stacks node
     fn get_burn_block_height(&self) -> Result<u64, ClientError> {
-        let peer_info = self.get_peer_info()?;
+        let peer_info = self.get_peer_info_with_retry()?;
         Ok(peer_info.burn_block_height)
     }
 
-    /// Get the current reward cycle from the stacks node
-    pub fn get_current_reward_cycle(&self) -> Result<u64, ClientError> {
-        let pox_data = self.get_pox_data()?;
+    /// Get the current reward cycle info from the stacks node
+    pub fn get_current_reward_cycle_info(&self) -> Result<RewardCycleInfo, ClientError> {
+        let pox_data = self.get_pox_data_with_retry()?;
         let blocks_mined = pox_data
             .current_burnchain_block_height
             .saturating_sub(pox_data.first_burnchain_block_height);
-        let reward_cycle_length = pox_data
+        let reward_phase_block_length = pox_data
             .reward_phase_block_length
             .saturating_add(pox_data.prepare_phase_block_length);
-        Ok(blocks_mined / reward_cycle_length)
+        let reward_cycle = blocks_mined / reward_phase_block_length;
+        Ok(RewardCycleInfo {
+            reward_cycle,
+            reward_phase_block_length,
+            prepare_phase_block_length: pox_data.prepare_phase_block_length,
+            first_burnchain_block_height: pox_data.first_burnchain_block_height,
+            last_burnchain_block_height: pox_data.current_burnchain_block_height,
+        })
     }
 
     /// Helper function to retrieve the account info from the stacks node for a specific address
-    fn get_account_entry(
+    fn get_account_entry_with_retry(
         &self,
         address: &StacksAddress,
     ) -> Result<AccountEntryResponse, ClientError> {
@@ -472,11 +452,7 @@ impl StacksClient {
         value: ClarityValue,
     ) -> Result<Option<Point>, ClientError> {
         debug!("Parsing aggregate public key...");
-        let opt = value.clone().expect_optional()?;
-        let Some(inner_data) = opt else {
-            return Ok(None);
-        };
-        let data = inner_data.expect_buff(33)?;
+        let data = value.expect_buff(33)?;
         // It is possible that the point was invalid though when voted upon and this cannot be prevented by pox 4 definitions...
         // Pass up this error if the conversions fail.
         let compressed_data = Compressed::try_from(data.as_slice()).map_err(|e| {
@@ -484,12 +460,12 @@ impl StacksClient {
                 "Failed to convert aggregate public key to compressed data: {e}"
             ))
         })?;
-        let point = Point::try_from(&compressed_data).map_err(|e| {
+        let dkg_public_key = Point::try_from(&compressed_data).map_err(|e| {
             ClientError::MalformedClarityValue(format!(
                 "Failed to convert aggregate public key to a point: {e}"
             ))
         })?;
-        Ok(Some(point))
+        Ok(Some(dkg_public_key))
     }
 
     /// Helper function to create a stacks transaction for a modifying contract call
@@ -497,18 +473,18 @@ impl StacksClient {
         &self,
         signer_index: u32,
         round: u64,
-        point: Point,
+        dkg_public_key: Point,
         reward_cycle: u64,
         tx_fee: Option<u64>,
         nonce: u64,
     ) -> Result<StacksTransaction, ClientError> {
-        debug!("Building {VOTE_FUNCTION_NAME} transaction...");
+        debug!("Building {SIGNERS_VOTING_FUNCTION_NAME} transaction...");
         let contract_address = boot_code_addr(self.mainnet);
         let contract_name = ContractName::from(SIGNERS_VOTING_NAME);
-        let function_name = ClarityName::from(VOTE_FUNCTION_NAME);
+        let function_name = ClarityName::from(SIGNERS_VOTING_FUNCTION_NAME);
         let function_args = vec![
             ClarityValue::UInt(signer_index as u128),
-            ClarityValue::buff_from(point.compress().data.to_vec())?,
+            ClarityValue::buff_from(dkg_public_key.compress().data.to_vec())?,
             ClarityValue::UInt(round as u128),
             ClarityValue::UInt(reward_cycle as u128),
         ];
@@ -528,7 +504,10 @@ impl StacksClient {
     }
 
     /// Helper function to submit a transaction to the Stacks mempool
-    pub fn submit_transaction(&self, tx: &StacksTransaction) -> Result<Txid, ClientError> {
+    pub fn submit_transaction_with_retry(
+        &self,
+        tx: &StacksTransaction,
+    ) -> Result<Txid, ClientError> {
         let txid = tx.txid();
         let tx = tx.serialize_to_vec();
         let send_request = || {
@@ -573,9 +552,9 @@ impl StacksClient {
         let path = self.read_only_path(contract_addr, contract_name, function_name);
         let response = self
             .stacks_node_client
-            .post(path.clone())
+            .post(path)
             .header("Content-Type", "application/json")
-            .body(body.clone())
+            .body(body)
             .send()?;
         if !response.status().is_success() {
             return Err(ClientError::RequestFailure(response.status()));
@@ -586,7 +565,7 @@ impl StacksClient {
                 "{function_name}: {}",
                 call_read_only_response
                     .cause
-                    .unwrap_or("unknown".to_string())
+                    .unwrap_or_else(|| "unknown".to_string())
             )));
         }
         let hex = call_read_only_response.result.unwrap_or_default();
@@ -688,11 +667,12 @@ mod tests {
 
     use blockstack_lib::chainstate::nakamoto::NakamotoBlockHeader;
     use blockstack_lib::chainstate::stacks::address::PoxAddress;
-    use blockstack_lib::chainstate::stacks::boot::{NakamotoSignerEntry, PoxStartCycleInfo};
+    use blockstack_lib::chainstate::stacks::boot::{
+        NakamotoSignerEntry, PoxStartCycleInfo, RewardSet,
+    };
     use blockstack_lib::chainstate::stacks::ThresholdSignature;
     use rand::thread_rng;
     use rand_core::RngCore;
-    use serial_test::serial;
     use stacks_common::bitvec::BitVec;
     use stacks_common::consts::{CHAIN_ID_TESTNET, SIGNER_SLOTS_PER_USER};
     use stacks_common::types::chainstate::{ConsensusHash, StacksBlockId, TrieHash};
@@ -704,7 +684,9 @@ mod tests {
     use crate::client::tests::{
         build_account_nonce_response, build_get_approved_aggregate_key_response,
         build_get_last_round_response, build_get_peer_info_response, build_get_pox_data_response,
-        build_read_only_response, write_response, MockServerClient,
+        build_get_round_info_response, build_get_vote_for_aggregate_key_response,
+        build_get_weight_threshold_response, build_read_only_response, write_response,
+        MockServerClient,
     };
 
     #[test]
@@ -808,9 +790,9 @@ mod tests {
     fn valid_reward_cycle_should_succeed() {
         let mock = MockServerClient::new();
         let (pox_data_response, pox_data) = build_get_pox_data_response(None, None, None, None);
-        let h = spawn(move || mock.client.get_current_reward_cycle());
+        let h = spawn(move || mock.client.get_current_reward_cycle_info());
         write_response(mock.server, pox_data_response.as_bytes());
-        let current_cycle_id = h.join().unwrap().unwrap();
+        let current_cycle_info = h.join().unwrap().unwrap();
         let blocks_mined = pox_data
             .current_burnchain_block_height
             .saturating_sub(pox_data.first_burnchain_block_height);
@@ -818,13 +800,13 @@ mod tests {
             .reward_phase_block_length
             .saturating_add(pox_data.prepare_phase_block_length);
         let id = blocks_mined / reward_cycle_length;
-        assert_eq!(current_cycle_id, id);
+        assert_eq!(current_cycle_info.reward_cycle, id);
     }
 
     #[test]
     fn invalid_reward_cycle_should_fail() {
         let mock = MockServerClient::new();
-        let h = spawn(move || mock.client.get_current_reward_cycle());
+        let h = spawn(move || mock.client.get_current_reward_cycle_info());
         write_response(
             mock.server,
             b"HTTP/1.1 200 Ok\n\n{\"current_cycle\":{\"id\":\"fake id\", \"is_pox_active\":false}}",
@@ -855,20 +837,13 @@ mod tests {
     fn parse_valid_aggregate_public_key_should_succeed() {
         let mock = MockServerClient::new();
         let orig_point = Point::from(Scalar::random(&mut rand::thread_rng()));
-        let clarity_value = ClarityValue::some(
-            ClarityValue::buff_from(orig_point.compress().as_bytes().to_vec())
-                .expect("BUG: Failed to create clarity value from point"),
-        )
-        .expect("BUG: Failed to create clarity value from point");
+        let clarity_value = ClarityValue::buff_from(orig_point.compress().as_bytes().to_vec())
+            .expect("BUG: Failed to create clarity value from point");
         let result = mock
             .client
             .parse_aggregate_public_key(clarity_value)
             .unwrap();
         assert_eq!(result, Some(orig_point));
-
-        let value = ClarityValue::none();
-        let result = mock.client.parse_aggregate_public_key(value).unwrap();
-        assert!(result.is_none());
     }
 
     #[test]
@@ -914,7 +889,7 @@ mod tests {
             + 1;
 
         let tx_clone = tx.clone();
-        let h = spawn(move || mock.client.submit_transaction(&tx_clone));
+        let h = spawn(move || mock.client.submit_transaction_with_retry(&tx_clone));
 
         let request_bytes = write_response(
             mock.server,
@@ -933,7 +908,6 @@ mod tests {
 
     #[ignore]
     #[test]
-    #[serial]
     fn build_vote_for_aggregate_public_key_should_succeed() {
         let mock = MockServerClient::new();
         let point = Point::from(Scalar::random(&mut rand::thread_rng()));
@@ -957,7 +931,6 @@ mod tests {
 
     #[ignore]
     #[test]
-    #[serial]
     fn broadcast_vote_for_aggregate_public_key_should_succeed() {
         let mock = MockServerClient::new();
         let point = Point::from(Scalar::random(&mut rand::thread_rng()));
@@ -979,7 +952,7 @@ mod tests {
                     nonce,
                 )
                 .unwrap();
-            mock.client.submit_transaction(&tx)
+            mock.client.submit_transaction_with_retry(&tx)
         });
         let mock = MockServerClient::from_config(mock.config);
         write_response(
@@ -1037,13 +1010,13 @@ mod tests {
     fn parse_valid_signer_slots_should_succeed() {
         let mock = MockServerClient::new();
         let clarity_value_hex =
-            "0x070b000000050c00000002096e756d2d736c6f7473010000000000000000000000000000000c067369676e6572051a8195196a9a7cf9c37cb13e1ed69a7bc047a84e050c00000002096e756d2d736c6f7473010000000000000000000000000000000c067369676e6572051a6505471146dcf722f0580911183f28bef30a8a890c00000002096e756d2d736c6f7473010000000000000000000000000000000c067369676e6572051a1d7f8e3936e5da5f32982cc47f31d7df9fb1b38a0c00000002096e756d2d736c6f7473010000000000000000000000000000000c067369676e6572051a126d1a814313c952e34c7840acec9211e1727fb80c00000002096e756d2d736c6f7473010000000000000000000000000000000c067369676e6572051a7374ea6bb39f2e8d3d334d62b9f302a977de339a";
+            "0x070b000000050c00000002096e756d2d736c6f7473010000000000000000000000000000000d067369676e6572051a8195196a9a7cf9c37cb13e1ed69a7bc047a84e050c00000002096e756d2d736c6f7473010000000000000000000000000000000d067369676e6572051a6505471146dcf722f0580911183f28bef30a8a890c00000002096e756d2d736c6f7473010000000000000000000000000000000d067369676e6572051a1d7f8e3936e5da5f32982cc47f31d7df9fb1b38a0c00000002096e756d2d736c6f7473010000000000000000000000000000000d067369676e6572051a126d1a814313c952e34c7840acec9211e1727fb80c00000002096e756d2d736c6f7473010000000000000000000000000000000d067369676e6572051a7374ea6bb39f2e8d3d334d62b9f302a977de339a";
         let value = ClarityValue::try_deserialize_hex_untyped(clarity_value_hex).unwrap();
         let signer_slots = mock.client.parse_signer_slots(value).unwrap();
         assert_eq!(signer_slots.len(), 5);
         signer_slots
             .into_iter()
-            .for_each(|(_address, slots)| assert!(slots == SIGNER_SLOTS_PER_USER as u128));
+            .for_each(|(_address, slots)| assert_eq!(slots, SIGNER_SLOTS_PER_USER as u128));
     }
 
     #[test]
@@ -1160,7 +1133,7 @@ mod tests {
             header,
             txs: vec![],
         };
-        let h = spawn(move || mock.client.submit_block_for_validation(block));
+        let h = spawn(move || mock.client.submit_block_for_validation_with_retry(block));
         write_response(mock.server, b"HTTP/1.1 200 OK\n\n");
         assert!(h.join().unwrap().is_ok());
     }
@@ -1184,7 +1157,7 @@ mod tests {
             header,
             txs: vec![],
         };
-        let h = spawn(move || mock.client.submit_block_for_validation(block));
+        let h = spawn(move || mock.client.submit_block_for_validation_with_retry(block));
         write_response(mock.server, b"HTTP/1.1 404 Not Found\n\n");
         assert!(h.join().unwrap().is_err());
     }
@@ -1193,7 +1166,7 @@ mod tests {
     fn get_peer_info_should_succeed() {
         let mock = MockServerClient::new();
         let (response, peer_info) = build_get_peer_info_response(None, None);
-        let h = spawn(move || mock.client.get_peer_info());
+        let h = spawn(move || mock.client.get_peer_info_with_retry());
         write_response(mock.server, response.as_bytes());
         assert_eq!(h.join().unwrap().unwrap(), peer_info);
     }
@@ -1225,6 +1198,7 @@ mod tests {
                 stacked_amt: rand::thread_rng().next_u64() as u128,
                 weight: 1,
             }]),
+            pox_ustx_threshold: None,
         };
         let stackers_response = GetStackersResponse {
             stacker_set: stacker_set.clone(),
@@ -1233,9 +1207,9 @@ mod tests {
         let stackers_response_json = serde_json::to_string(&stackers_response)
             .expect("Failed to serialize get stacker response");
         let response = format!("HTTP/1.1 200 OK\n\n{stackers_response_json}");
-        let h = spawn(move || mock.client.get_reward_set(0));
+        let h = spawn(move || mock.client.get_reward_set_signers_with_retry(0));
         write_response(mock.server, response.as_bytes());
-        assert_eq!(h.join().unwrap().unwrap(), stacker_set);
+        assert_eq!(h.join().unwrap().unwrap(), stacker_set.signers);
     }
 
     #[test]
@@ -1243,7 +1217,7 @@ mod tests {
         let mock = MockServerClient::new();
         let point = Point::from(Scalar::random(&mut rand::thread_rng()));
         let stacks_address = mock.client.stacks_address;
-        let key_response = build_get_approved_aggregate_key_response(Some(point));
+        let key_response = build_get_vote_for_aggregate_key_response(Some(point));
         let h = spawn(move || {
             mock.client
                 .get_vote_for_aggregate_public_key(0, 0, stacks_address)
@@ -1253,12 +1227,39 @@ mod tests {
 
         let mock = MockServerClient::new();
         let stacks_address = mock.client.stacks_address;
-        let key_response = build_get_approved_aggregate_key_response(None);
+        let key_response = build_get_vote_for_aggregate_key_response(None);
         let h = spawn(move || {
             mock.client
                 .get_vote_for_aggregate_public_key(0, 0, stacks_address)
         });
         write_response(mock.server, key_response.as_bytes());
         assert_eq!(h.join().unwrap().unwrap(), None);
+    }
+
+    #[test]
+    fn get_round_vote_weight_should_succeed() {
+        let mock = MockServerClient::new();
+        let vote_count = rand::thread_rng().next_u64();
+        let weight = rand::thread_rng().next_u64();
+        let round_response = build_get_round_info_response(Some((vote_count, weight)));
+        let h = spawn(move || mock.client.get_round_vote_weight(0, 0));
+        write_response(mock.server, round_response.as_bytes());
+        assert_eq!(h.join().unwrap().unwrap(), Some(weight as u128));
+
+        let mock = MockServerClient::new();
+        let round_response = build_get_round_info_response(None);
+        let h = spawn(move || mock.client.get_round_vote_weight(0, 0));
+        write_response(mock.server, round_response.as_bytes());
+        assert_eq!(h.join().unwrap().unwrap(), None);
+    }
+
+    #[test]
+    fn get_vote_threshold_weight_should_succeed() {
+        let mock = MockServerClient::new();
+        let weight = rand::thread_rng().next_u64();
+        let round_response = build_get_weight_threshold_response(weight);
+        let h = spawn(move || mock.client.get_vote_threshold_weight(0));
+        write_response(mock.server, round_response.as_bytes());
+        assert_eq!(h.join().unwrap().unwrap(), weight as u128);
     }
 }

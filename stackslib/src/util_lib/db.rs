@@ -14,7 +14,6 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-use std::convert::TryInto;
 use std::io::Error as IOError;
 use std::ops::{Deref, DerefMut};
 use std::path::{Path, PathBuf};
@@ -136,15 +135,24 @@ impl error::Error for Error {
     }
 }
 
+impl From<serde_error> for Error {
+    #[cfg_attr(test, mutants::skip)]
+    fn from(e: serde_error) -> Self {
+        Self::SerializationError(e)
+    }
+}
+
 impl From<sqlite_error> for Error {
-    fn from(e: sqlite_error) -> Error {
-        Error::SqliteError(e)
+    #[cfg_attr(test, mutants::skip)]
+    fn from(e: sqlite_error) -> Self {
+        Self::SqliteError(e)
     }
 }
 
 impl From<MARFError> for Error {
-    fn from(e: MARFError) -> Error {
-        Error::IndexError(e)
+    #[cfg_attr(test, mutants::skip)]
+    fn from(e: MARFError) -> Self {
+        Self::IndexError(e)
     }
 }
 

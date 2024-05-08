@@ -14,7 +14,6 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 use std::collections::HashMap;
-use std::convert::TryInto;
 use std::sync::atomic::AtomicU64;
 use std::sync::Arc;
 
@@ -58,9 +57,10 @@ mod epoch_21;
 mod epoch_22;
 mod epoch_23;
 mod epoch_24;
+mod epoch_25;
 mod integrations;
 mod mempool;
-mod nakamoto_integrations;
+pub mod nakamoto_integrations;
 pub mod neon_integrations;
 mod signer;
 mod stackerdb;

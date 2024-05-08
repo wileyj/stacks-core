@@ -16,7 +16,6 @@
 
 use std::cmp;
 use std::collections::{BTreeMap, HashMap, HashSet};
-use std::convert::TryFrom;
 use std::io::{Read, Write};
 use std::net::SocketAddr;
 
@@ -51,7 +50,7 @@ use crate::util_lib::db::{DBConn, Error as db_error};
 #[cfg(not(test))]
 pub const INV_SYNC_INTERVAL: u64 = 150;
 #[cfg(test)]
-pub const INV_SYNC_INTERVAL: u64 = 0;
+pub const INV_SYNC_INTERVAL: u64 = 3;
 
 #[cfg(not(test))]
 pub const INV_REWARD_CYCLES: u64 = 2;

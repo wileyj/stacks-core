@@ -15,8 +15,6 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 use std::collections::{HashMap, HashSet};
-use std::convert::TryFrom;
-use std::marker::Send;
 use std::path::PathBuf;
 use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::sync::mpsc::sync_channel;
@@ -55,10 +53,11 @@ use crate::chainstate::burn::distribution::BurnSamplePoint;
 use crate::chainstate::burn::operations::leader_block_commit::MissedBlockCommit;
 use crate::chainstate::burn::operations::{
     BlockstackOperationType, DelegateStxOp, LeaderBlockCommitOp, LeaderKeyRegisterOp, PreStxOp,
-    StackStxOp, TransferStxOp,
+    StackStxOp, TransferStxOp, VoteForAggregateKeyOp,
 };
 use crate::chainstate::burn::{BlockSnapshot, Opcodes};
 use crate::chainstate::coordinator::comm::CoordinatorChannels;
+use crate::chainstate::coordinator::SortitionDBMigrator;
 use crate::chainstate::stacks::address::{PoxAddress, StacksAddressExtensions};
 use crate::chainstate::stacks::boot::{POX_2_MAINNET_CODE, POX_2_TESTNET_CODE};
 use crate::chainstate::stacks::StacksPublicKey;
@@ -134,6 +133,9 @@ impl BurnchainStateTransition {
                     // the burn distribution, so just account for them for now.
                     all_block_commits.insert(op.txid.clone(), op.clone());
                     block_commits.push(op.clone());
+                }
+                BlockstackOperationType::VoteForAggregateKey(_) => {
+                    accepted_ops.push(block_ops[i].clone());
                 }
             };
         }
@@ -633,6 +635,8 @@ impl Burnchain {
     }
 
     /// Connect to the burnchain databases.  They may or may not already exist.
+    /// NOTE: this will _not_ perform a chainstate migration!  Use
+    /// coordinator::migrate_chainstate_dbs() for that.
     pub fn connect_db(
         &self,
         readwrite: bool,
@@ -652,6 +656,7 @@ impl Burnchain {
             first_block_header_timestamp,
             &epochs,
             self.pox_constants.clone(),
+            None,
             readwrite,
         )?;
         let burnchaindb = BurnchainDB::connect(&burnchain_db_path, self, readwrite)?;
@@ -847,6 +852,35 @@ impl Burnchain {
                 } else {
                     warn!(
                         "Failed to find corresponding input to DelegateStxOp";
+                        "txid" => %burn_tx.txid().to_string(),
+                        "pre_stx_txid" => %pre_stx_txid.to_string()
+                    );
+                    None
+                }
+            }
+            x if x == Opcodes::VoteForAggregateKey as u8 => {
+                let pre_stx_txid = VoteForAggregateKeyOp::get_sender_txid(burn_tx).ok()?;
+                let pre_stx_tx = match pre_stx_op_map.get(&pre_stx_txid) {
+                    Some(tx_ref) => Some(BlockstackOperationType::PreStx(tx_ref.clone())),
+                    None => burnchain_db.find_burnchain_op(indexer, pre_stx_txid),
+                };
+                if let Some(BlockstackOperationType::PreStx(pre_stx)) = pre_stx_tx {
+                    let sender = &pre_stx.output;
+                    match VoteForAggregateKeyOp::from_tx(block_header, burn_tx, sender) {
+                        Ok(op) => Some(BlockstackOperationType::VoteForAggregateKey(op)),
+                        Err(e) => {
+                            warn!(
+                                "Failed to parse vote-for-aggregate-key tx";
+                                "txid" => %burn_tx.txid(),
+                                "data" => %to_hex(&burn_tx.data()),
+                                "error" => ?e,
+                            );
+                            None
+                        }
+                    }
+                } else {
+                    warn!(
+                        "Failed to find corresponding input to VoteForAggregateKeyOp";
                         "txid" => %burn_tx.txid().to_string(),
                         "pre_stx_txid" => %pre_stx_txid.to_string()
                     );

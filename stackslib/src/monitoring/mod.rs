@@ -14,7 +14,6 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-use std::convert::TryInto;
 use std::error::Error;
 use std::path::PathBuf;
 use std::sync::atomic::{AtomicUsize, Ordering};
@@ -30,6 +29,7 @@ use stacks_common::util::uint::{Uint256, Uint512};
 use crate::burnchains::{BurnchainSigner, Txid};
 use crate::core::MemPoolDB;
 use crate::net::httpcore::{StacksHttpRequest, StacksHttpResponse};
+use crate::net::rpc::ConversationHttp;
 use crate::net::Error as net_error;
 use crate::util_lib::db::{sqlite_open, tx_busy_handler, DBConn, Error as DatabaseError};
 
@@ -47,19 +47,20 @@ pub fn increment_rpc_calls_counter() {
 }
 
 pub fn instrument_http_request_handler<F, R>(
-    req: StacksHttpRequest,
+    conv_http: &mut ConversationHttp,
+    mut req: StacksHttpRequest,
     handler: F,
 ) -> Result<R, net_error>
 where
-    F: FnOnce(StacksHttpRequest) -> Result<R, net_error>,
+    F: FnOnce(&mut ConversationHttp, StacksHttpRequest) -> Result<R, net_error>,
 {
     #[cfg(feature = "monitoring_prom")]
     increment_rpc_calls_counter();
 
     #[cfg(feature = "monitoring_prom")]
-    let timer = prometheus::new_rpc_call_timer(req.request_path());
+    let timer = prometheus::new_rpc_call_timer(conv_http.metrics_identifier(&mut req));
 
-    let res = handler(req);
+    let res = handler(conv_http, req);
 
     #[cfg(feature = "monitoring_prom")]
     timer.stop_and_record();

@@ -14,8 +14,6 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-use std::borrow::Borrow;
-use std::convert::{TryFrom, TryInto};
 use std::io::{Read, Write};
 use std::{cmp, error, fmt, str};
 
@@ -561,7 +559,7 @@ impl Value {
                 }
             };
 
-            if expect_size as u64 > bytes_read {
+            if bytes_read > expect_size as u64 {
                 // this can happen due to sanitization, so its no longer indicative of a *problem* with the node.
                 debug!(
                     "Deserialized more bytes than expected size during deserialization. Expected size = {}, bytes read = {}, type = {}",

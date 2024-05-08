@@ -34,7 +34,6 @@ use tikv_jemallocator::Jemalloc;
 static GLOBAL: Jemalloc = Jemalloc;
 
 use std::collections::{HashMap, HashSet};
-use std::convert::TryFrom;
 use std::fs::{File, OpenOptions};
 use std::io::prelude::*;
 use std::io::BufReader;
@@ -578,6 +577,7 @@ simulating a miner.
         }
 
         let start = get_epoch_time_ms();
+        let burnchain_path = format!("{}/mainnet/burnchain", &argv[2]);
         let sort_db_path = format!("{}/mainnet/burnchain/sortition", &argv[2]);
         let chain_state_path = format!("{}/mainnet/chainstate/", &argv[2]);
 
@@ -646,6 +646,7 @@ simulating a miner.
             &coinbase_tx,
             settings,
             None,
+            &Burnchain::new(&burnchain_path, "bitcoin", "main").unwrap(),
         );
 
         let stop = get_epoch_time_ms();
@@ -1337,6 +1338,7 @@ simulating a miner.
         process::exit(1);
     }
 
+    let burnchain_path = format!("{}/mainnet/burnchain", &argv[2]);
     let sort_db_path = format!("{}/mainnet/burnchain/sortition", &argv[2]);
     let chain_state_path = format!("{}/mainnet/chainstate/", &argv[2]);
 
@@ -1519,6 +1521,7 @@ simulating a miner.
         &coinbase_tx,
         settings,
         None,
+        &Burnchain::new(&burnchain_path, "bitcoin", "main").unwrap(),
     );
 
     let stop = get_epoch_time_ms();
@@ -1574,6 +1577,7 @@ fn replay_block(stacks_path: &str, index_block_hash_hex: &str) {
         BITCOIN_MAINNET_FIRST_BLOCK_TIMESTAMP.into(),
         STACKS_EPOCHS_MAINNET.as_ref(),
         PoxConstants::mainnet_default(),
+        None,
         true,
     )
     .unwrap();
@@ -1718,7 +1722,7 @@ fn replay_block(stacks_path: &str, index_block_hash_hex: &str) {
         block_am.weight(),
         true,
     ) {
-        Ok((_receipt, _)) => {
+        Ok((_receipt, _, _)) => {
             info!("Block processed successfully! block = {index_block_hash}");
         }
         Err(e) => {

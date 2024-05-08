@@ -30,32 +30,27 @@ jobs:
       matrix:
         test-name:
           - tests::neon_integrations::test_submit_and_observe_sbtc_ops
-          # - tests::signer::test_stackerdb_dkg
-          # - tests::stackerdb::test_stackerdb_event_observer
-          # - tests::stackerdb::test_stackerdb_load_store
+          - tests::signer::test_stackerdb_dkg
+          - tests::stackerdb::test_stackerdb_event_observer
+          - tests::stackerdb::test_stackerdb_load_store
     steps:
-      - name: Echo
-        id: echo
-        run: |
-          echo "ci test"
-      # ## Setup test environment
-      # - name: Setup Test Environment
-      #   id: setup_tests
-      #   uses: stacks-network/actions/stacks-core/testenv@main
+      ## Setup test environment
+      - name: Setup Test Environment
+        id: setup_tests
+        uses: stacks-network/actions/stacks-core/testenv@main
 
-      # ## Run test matrix using restored cache of archive file
-      # ##   - Test will timeout after env.TEST_TIMEOUT minutes
-      # - name: Run Tests
-      #   id: run_tests
-      #   timeout-minutes: ${{ fromJSON(env.TEST_TIMEOUT) }}
-      #   uses: stacks-network/actions/stacks-core/run-tests@main
-      #   with:
-      #     test-name: ${{ matrix.test-name }}
+      ## Run test matrix using restored cache of archive file
+      ##   - Test will timeout after env.TEST_TIMEOUT minutes
+      - name: Run Tests
+        id: run_tests
+        timeout-minutes: ${{ fromJSON(env.TEST_TIMEOUT) }}
+        uses: stacks-network/actions/stacks-core/run-tests@main
+        with:
+          test-name: ${{ matrix.test-name }}
 
-      # ## Create and upload code coverage file
-      # - name: Code Coverage
-      #   id: codecov
-      #   uses: stacks-network/actions/codecov@main
-      #   with:
-      #     test-name: ${{ matrix.test-name }}
-
+      ## Create and upload code coverage file
+      - name: Code Coverage
+        id: codecov
+        uses: stacks-network/actions/codecov@main
+        with:
+          test-name: ${{ matrix.test-name }}

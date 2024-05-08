@@ -14,8 +14,6 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-use std::convert::From;
-
 use clarity::vm::costs::ExecutionCost;
 use stacks_common::codec::read_next;
 use stacks_common::types::chainstate::{BlockHeaderHash, StacksBlockId};
@@ -38,6 +36,7 @@ pub mod getaccount;
 pub mod getattachment;
 pub mod getattachmentsinv;
 pub mod getblock;
+pub mod getblock_v3;
 pub mod getconstantval;
 pub mod getcontractabi;
 pub mod getcontractsrc;
@@ -55,6 +54,8 @@ pub mod getstackerdbchunk;
 pub mod getstackerdbmetadata;
 pub mod getstackers;
 pub mod getstxtransfercost;
+pub mod gettenure;
+pub mod gettenureinfo;
 pub mod gettransaction_unconfirmed;
 pub mod liststackerdbreplicas;
 pub mod postblock;
@@ -80,6 +81,7 @@ impl StacksHttp {
         self.register_rpc_endpoint(getattachment::RPCGetAttachmentRequestHandler::new());
         self.register_rpc_endpoint(getattachmentsinv::RPCGetAttachmentsInvRequestHandler::new());
         self.register_rpc_endpoint(getblock::RPCBlocksRequestHandler::new());
+        self.register_rpc_endpoint(getblock_v3::RPCNakamotoBlockRequestHandler::new());
         self.register_rpc_endpoint(getconstantval::RPCGetConstantValRequestHandler::new());
         self.register_rpc_endpoint(getcontractabi::RPCGetContractAbiRequestHandler::new());
         self.register_rpc_endpoint(getcontractsrc::RPCGetContractSrcRequestHandler::new());
@@ -107,6 +109,8 @@ impl StacksHttp {
             getstackerdbmetadata::RPCGetStackerDBMetadataRequestHandler::new(),
         );
         self.register_rpc_endpoint(getstackers::GetStackersRequestHandler::default());
+        self.register_rpc_endpoint(gettenure::RPCNakamotoTenureRequestHandler::new());
+        self.register_rpc_endpoint(gettenureinfo::RPCNakamotoTenureInfoRequestHandler::new());
         self.register_rpc_endpoint(
             gettransaction_unconfirmed::RPCGetTransactionUnconfirmedRequestHandler::new(),
         );
@@ -114,7 +118,9 @@ impl StacksHttp {
             liststackerdbreplicas::RPCListStackerDBReplicasRequestHandler::new(),
         );
         self.register_rpc_endpoint(postblock::RPCPostBlockRequestHandler::new());
-        self.register_rpc_endpoint(postblock_proposal::RPCBlockProposalRequestHandler::new());
+        self.register_rpc_endpoint(postblock_proposal::RPCBlockProposalRequestHandler::new(
+            self.block_proposal_token.clone(),
+        ));
         self.register_rpc_endpoint(postfeerate::RPCPostFeeRateRequestHandler::new());
         self.register_rpc_endpoint(postmempoolquery::RPCMempoolQueryRequestHandler::new());
         self.register_rpc_endpoint(postmicroblock::RPCPostMicroblockRequestHandler::new());

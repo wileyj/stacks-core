@@ -14,7 +14,6 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-use std::convert::{From, TryFrom};
 use std::io::prelude::*;
 use std::io::{Read, Write};
 use std::ops::{Deref, DerefMut};
@@ -691,6 +690,12 @@ impl FromSql for ThresholdSignature {
         let ts = ThresholdSignature::consensus_deserialize(&mut &bytes[..])
             .map_err(|_| FromSqlError::InvalidType)?;
         Ok(ts)
+    }
+}
+
+impl fmt::Display for ThresholdSignature {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        to_hex(&self.serialize_to_vec()).fmt(f)
     }
 }
 

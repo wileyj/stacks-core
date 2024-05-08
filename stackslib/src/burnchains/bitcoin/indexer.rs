@@ -14,7 +14,6 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-use std::convert::TryFrom;
 use std::net::Shutdown;
 use std::ops::{Deref, DerefMut};
 use std::path::PathBuf;
@@ -846,7 +845,11 @@ impl BitcoinIndexer {
                 }
             } else {
                 // ignore the reorg
-                test_debug!("Reorg chain does not overtake original Bitcoin chain");
+                test_debug!(
+                    "Reorg chain does not overtake original Bitcoin chain ({} >= {})",
+                    orig_total_work,
+                    reorg_total_work
+                );
                 new_tip = orig_spv_client.get_headers_height()?;
             }
         }

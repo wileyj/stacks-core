@@ -3,12 +3,6 @@
 name: Create Binaries
 
 on:
-  workflow_dispatch:
-    inputs:
-      tag:
-        description: "Tag name of this release (x.y.z)"
-        required: true
-        type: string
   workflow_call:
     inputs:
       tag:
@@ -27,11 +21,9 @@ concurrency:
 jobs:
   ## Runs when the following is true:
   ##  - tag is provided
-  ##  - workflow is building default branch (master)
   artifact:
     if: |
-      inputs.tag != '' &&
-      github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+      inputs.tag != ''
     name: Build Binaries
     runs-on: ubuntu-latest
     strategy:
@@ -59,15 +51,10 @@ jobs:
             cpu: armv7
 
     steps:
-      - name: Echo
-        id: echo
-        run: |
-          echo "ci test"
-      # - name: Build Binary (${{ matrix.arch }}_${{ matrix.cpu }})
-      #   id: build_binary
-      #   uses: wileyj/actions/stacks-core/create-source-binary@main
-      #   with:
-      #     arch: ${{ matrix.arch }}
-      #     cpu: ${{ matrix.cpu }}
-      #     tag: ${{ inputs.tag }}
-  
+      - name: Build Binary (${{ matrix.arch }}_${{ matrix.cpu }})
+        id: build_binary
+        uses: stacks-network/actions/stacks-core/create-source-binary@main
+        with:
+          arch: ${{ matrix.arch }}
+          cpu: ${{ matrix.cpu }}
+          tag: ${{ inputs.tag }}
