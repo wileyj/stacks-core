@@ -157,6 +157,6 @@ jobs:
     steps:
       - name: Open Downstream PR
         id: create-pr
-        uses: wileyj/actions/stacks-core/downstream-pr@main
+        uses: wileyj/actions/stacks-core/release/downstream-pr@main
         with:
           token: ${{ secrets.GH_TOKEN }}
