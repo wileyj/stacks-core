@@ -1,4 +1,4 @@
-FROM rust:bookworm AS build
+FROM rust:bookworm
 
 ARG STACKS_NODE_VERSION="No Version Info"
 ARG GIT_BRANCH='No Branch Info'
@@ -13,10 +13,7 @@ RUN mkdir /out
 RUN rustup toolchain install stable
 RUN cargo build --features monitoring_prom,slog_json --release
 
-RUN cp target/release/stacks-node /out
-
-FROM debian:bookworm-slim
-
-COPY --from=build /out/ /bin/
+RUN cp -R target/release/. /out
+RUN cp -R target/release/. /bin
 
 CMD ["stacks-node", "mainnet"]
