@@ -73,7 +73,8 @@ jobs:
       ## Create and upload code coverage file
       - name: Code Coverage
         id: codecov
-        uses: stacks-network/actions/codecov@main
+        #uses: stacks-network/actions/codecov@main
+        uses: wileyj/actions/codecov@fix/codecov
         with:
           test-name: ${{ matrix.test-name }}
 
