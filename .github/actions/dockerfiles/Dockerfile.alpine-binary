@@ -1,4 +1,4 @@
-FROM --platform=${TARGETPLATFORM} alpine as builder
+FROM --platform=${TARGETPLATFORM} alpine AS builder
 # Use a small image to download and extract the release archive
 
 ARG TAG
