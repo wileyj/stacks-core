@@ -63,7 +63,6 @@ jobs:
           - windows
         cpu:
           - arm64
-          - armv7
           - x86-64 ## defaults to x86-64-v3 variant - intel haswell (2013) and newer
           # - x86-64-v2 ## intel nehalem (2008) and newer
           # - x86-64-v3 ## intel haswell (2013) and newer
