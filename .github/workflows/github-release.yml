@@ -108,7 +108,7 @@ jobs:
           - debian
     steps:
       - name: Create Docker Image
-        uses: stacks-network/actions/stacks-core/release/docker-images@main
+        uses: wileyj/actions/stacks-core/release/docker-images@chore/remove_armv7
         with:
           node_tag: ${{ inputs.node_tag }}
           node_docker_tag: ${{ inputs.node_docker_tag }}
@@ -134,7 +134,7 @@ jobs:
     steps:
       ## Creates releases
       - name: Create Release
-        uses: stacks-network/actions/stacks-core/release/create-releases@main
+        uses: wileyj/actions/stacks-core/release/docker-images@chore/remove_armv7
         with:
           node_tag: ${{ inputs.node_tag }}
           node_docker_tag: ${{ inputs.node_docker_tag }}
