@@ -12,7 +12,6 @@ ARG REPO
 RUN case ${TARGETPLATFORM} in \
     linux/amd64*) BIN_ARCH=linux-musl-x64 ;; \
     linux/arm64*) BIN_ARCH=linux-musl-arm64 ;; \
-    linux/arm/v7) BIN_ARCH=linux-musl-armv7 ;; \
     *) exit 1 ;; \
     esac \
     && echo "TARGETPLATFORM: $TARGETPLATFORM" \
