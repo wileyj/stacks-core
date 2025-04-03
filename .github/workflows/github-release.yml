@@ -49,7 +49,7 @@ jobs:
       - name: Check Approval
         id: check
         run: |
-          return true
+          exit 0
   ## Build arch dependent binaries from source
   ##
   ## Runs when the following is true:
