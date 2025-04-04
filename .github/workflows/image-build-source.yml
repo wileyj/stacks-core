@@ -23,6 +23,11 @@ jobs:
     runs-on: ubuntu-latest
     ## Requires the repo environment "Push to Docker", which will trigger a secondary approval step before running this workflow.
     environment: "Push to Docker"
+    permissions:
+      id-token: write
+      contents: read
+      attestations: write
+      packages: write
     steps:
       ## Setup Docker for the builds
       - name: Docker setup
@@ -57,11 +62,6 @@ jobs:
       - name: Build and Push ( ${{matrix.dist}} )
         id: docker_build
         uses: docker/build-push-action@ca877d9245402d1537745e0e356eab47c3520991 # v6.13.0
-        permissions:
-          id-token: write
-          contents: read
-          attestations: write
-          packages: write
         with:
           file: ./Dockerfile
           platforms: ${{ env.docker_platforms }}
