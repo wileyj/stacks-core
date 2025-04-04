@@ -78,8 +78,8 @@ jobs:
       - name: Generate artifact attestation
         uses: actions/attest-build-provenance@c074443f1aee8d4aeeae555aebba3282517141b2 # v2.2.3
         with:
-          subject-name: |
-            ${{ steps.docker_metadata.outputs.tags }}
+          subject-name: ${{env.docker-org}}/${{ github.event.repository.name }}
+            # ${{ steps.docker_metadata.outputs.tags }}
           subject-digest: ${{ steps.docker_build.outputs.digest }}
           push-to-registry: ${{ env.DOCKER_PUSH }}
 
