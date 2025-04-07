@@ -149,7 +149,7 @@ jobs:
           - debian
     steps:
       - name: Create Docker Image
-        uses: stacks-network/actions/stacks-core/release/docker-images@main
+        uses: wileyj/actions/stacks-core/release/docker-images@chore/attestation
         with:
           node_tag: ${{ inputs.node_tag }}
           node_docker_tag: ${{ inputs.node_docker_tag }}
