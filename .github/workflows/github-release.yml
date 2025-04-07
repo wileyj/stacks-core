@@ -110,7 +110,10 @@ jobs:
       - andon-cord
       - build-binaries
     permissions:
-      contents: write
+      id-token: write
+      contents: read
+      attestations: write
+      packages: write
     steps:
       ## Creates releases
       - name: Create Release
