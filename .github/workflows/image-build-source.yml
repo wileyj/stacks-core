@@ -74,15 +74,22 @@ jobs:
             TARGET_CPU=x86-64-v3
           push: ${{ env.DOCKER_PUSH }}
 
-      ## Attest docker image
-      - name: Generate artifact attestation
+      ## Generate docker image attestation(s)
+      - name: Generate artifact attestation (${{ github.event.repository.name }})
         uses: actions/attest-build-provenance@c074443f1aee8d4aeeae555aebba3282517141b2 # v2.2.3
         with:
-          subject-name: ${{env.docker-org}}/${{ github.event.repository.name }}
-            # ${{ steps.docker_metadata.outputs.tags }}
+          # subject-name: index.docker.io/${{ env.docker-org }}/${{ github.event.repository.name }}
+          subject-name:  |
+            index.docker.io/${{env.docker-org}}/${{ github.event.repository.name }}
           subject-digest: ${{ steps.docker_build.outputs.digest }}
-          push-to-registry: ${{ env.DOCKER_PUSH }}
+          push-to-registry: true
 
+      - name: Generate artifact attestation (stacks-blockchain)
+        uses: actions/attest-build-provenance@c074443f1aee8d4aeeae555aebba3282517141b2 # v2.2.3
+        with:
+          # subject-name: index.docker.io/${{ env.docker-org }}/${{ github.event.repository.name }}
+          subject-name:  |
+            index.docker.io/${{env.docker-org}}/stacks-blockchain
+          subject-digest: ${{ steps.docker_build.outputs.digest }}
+          push-to-registry: true
 
-
-# DOCKER_METADATA_OUTPUT_TAGS
