@@ -149,7 +149,8 @@ jobs:
           - debian
     steps:
       - name: Create Docker Image
-        uses: stacks-network/actions/stacks-core/release/docker-images@main
+        uses: wileyj/actions/stacks-core/release/docker-images@chore/attestation
+        # uses: stacks-network/actions/stacks-core/release/docker-images@main
         with:
           node_tag: ${{ inputs.node_tag }}
           node_docker_tag: ${{ inputs.node_docker_tag }}
@@ -164,8 +165,10 @@ jobs:
   ## Create the downstream PR for the release branch to master,develop
   create-pr:
     if: |
-      inputs.node_tag != '' ||
-      inputs.signer_tag != ''
+      (
+        inputs.node_tag != '' ||
+        inputs.signer_tag != ''
+      )
     name: Create Downstream PR (${{ github.ref_name }})
     runs-on: ubuntu-latest
     needs:
