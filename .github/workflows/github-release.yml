@@ -111,9 +111,8 @@ jobs:
       - build-binaries
     permissions:
       id-token: write
-      contents: read
+      contents: write
       attestations: write
-      packages: write
     steps:
       ## Creates releases
       - name: Create Release
