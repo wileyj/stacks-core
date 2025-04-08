@@ -25,7 +25,6 @@ jobs:
     environment: "Push to Docker"
     permissions:
       id-token: write
-      contents: read
       attestations: write
     steps:
       ## Setup Docker for the builds
@@ -75,6 +74,7 @@ jobs:
 
       ## Generate docker image attestation(s)
       - name: Generate artifact attestation (${{ github.event.repository.name }})
+        id: attest_primary
         uses: actions/attest-build-provenance@c074443f1aee8d4aeeae555aebba3282517141b2 # v2.2.3
         with:
           # subject-name: index.docker.io/${{ env.docker-org }}/${{ github.event.repository.name }}
@@ -84,6 +84,7 @@ jobs:
           push-to-registry: true
 
       - name: Generate artifact attestation (stacks-blockchain)
+        id: attest_secondary
         uses: actions/attest-build-provenance@c074443f1aee8d4aeeae555aebba3282517141b2 # v2.2.3
         with:
           # subject-name: index.docker.io/${{ env.docker-org }}/${{ github.event.repository.name }}
