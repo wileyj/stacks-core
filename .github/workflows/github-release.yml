@@ -65,6 +65,9 @@ jobs:
     runs-on: ubuntu-latest
     needs:
       - andon-cord
+    permissions:
+      id-token: write
+      attestations: write
     strategy:
       ## Run a maximum of 10 builds concurrently, using the matrix defined in inputs.arch
       max-parallel: 10
@@ -89,7 +92,7 @@ jobs:
             cpu: armv7
     steps:
       - name: Build Binary (${{ matrix.arch }}_${{ matrix.cpu }})
-        uses: stacks-network/actions/stacks-core/release/create-source-binary@main
+        uses: wileyj/actions/stacks-core/release/create-source-binary@chore/attestation
         with:
           arch: ${{ matrix.arch }}
           cpu: ${{ matrix.cpu }}
@@ -110,9 +113,7 @@ jobs:
       - andon-cord
       - build-binaries
     permissions:
-      id-token: write
       contents: write
-      attestations: write
     steps:
       ## Creates releases
       - name: Create Release
@@ -141,6 +142,9 @@ jobs:
       - andon-cord
       - build-binaries
       - create-release
+    permissions:
+      id-token: write
+      attestations: write
     strategy:
       fail-fast: false
       ## Build a maximum of 2 images concurrently based on matrix.dist
