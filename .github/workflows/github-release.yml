@@ -154,7 +154,7 @@ jobs:
     with:
       tag: ${{ inputs.node_tag }}
       docker_tag: ${{ inputs.node_docker_tag }}
-      # dist: ${{ matrix.dist }}
+      name: stacks-node
     # with:
     #   node_tag: ${{ inputs.node_tag }}
     #   node_docker_tag: ${{ inputs.node_docker_tag }}
@@ -188,29 +188,28 @@ jobs:
     with:
       tag: ${{ inputs.signer_tag }}
       docker_tag: ${{ inputs.signer_docker_tag }}
-      # dist: ${{ matrix.dist }}
+      name: signer
 
-  ## Create the downstream PR for the release branch to master,develop
-  create-pr:
-    if: |
-      (
-        inputs.node_tag != '' ||
-        inputs.signer_tag != ''
-      ) && 
-      ${{ !failure() }}
-    name: Create Downstream PR (${{ github.ref_name }})
-    runs-on: ubuntu-latest
-    needs:
-      - andon-cord
-      - build-binaries
-      - create-release
-      - node-docker-image
-      - signer-docker-image
-    permissions:
-      pull-requests: write
-    steps:
-      - name: Open Downstream PR
-        id: create-pr
-        uses: wileyj/actions/stacks-core/release/downstream-pr@chore/update_ci
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+  # ## Create the downstream PR for the release branch to master,develop
+  # create-pr:
+  #   if: |
+  #     (
+  #       inputs.node_tag != '' ||
+  #       inputs.signer_tag != ''
+  #     )
+  #   name: Create Downstream PR (${{ github.ref_name }})
+  #   runs-on: ubuntu-latest
+  #   needs:
+  #     - andon-cord
+  #     - build-binaries
+  #     - create-release
+  #     - node-docker-image
+  #     - signer-docker-image
+  #   permissions:
+  #     pull-requests: write
+  #   steps:
+  #     - name: Open Downstream PR
+  #       id: create-pr
+  #       uses: wileyj/actions/stacks-core/release/downstream-pr@chore/update_ci
+  #       with:
+  #         token: ${{ secrets.GITHUB_TOKEN }}
