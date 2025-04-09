@@ -146,7 +146,8 @@ jobs:
             STACKS_NODE_VERSION=${{ inputs.tag || env.GITHUB_SHA_SHORT }}
             GIT_BRANCH=${{ env.GITHUB_REF_SHORT }}
             GIT_COMMIT=${{ env.GITHUB_SHA_SHORT }}
-          push: ${{ env.DOCKER_PUSH }}
+          # push: ${{ env.DOCKER_PUSH }}
+          push: true
 
       ## Generate docker image attestation(s)
       ##   Attest image for stacks-core:<tag>
@@ -187,7 +188,8 @@ jobs:
             STACKS_NODE_VERSION=${{ inputs.tag || env.GITHUB_SHA_SHORT }}
             GIT_BRANCH=${{ env.GITHUB_REF_SHORT }}
             GIT_COMMIT=${{ env.GITHUB_SHA_SHORT }}
-          push: ${{ env.DOCKER_PUSH }}
+          # push: ${{ env.DOCKER_PUSH }}
+          push: true
 
       ## Generate docker image attestation(s)
       ##   Attest image for stacks-signer:<tag>
