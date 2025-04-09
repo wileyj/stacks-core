@@ -190,7 +190,7 @@ jobs:
       ##   Attest image for stacks-signer:<tag>
       - name: Attest Image ( signer - ${{ github.event.repository.name }} )
         if: ${{ env.is-signer-release == 'true' }}
-        id: attest_node_primary
+        id: attest_signer_primary
         uses: actions/attest-build-provenance@c074443f1aee8d4aeeae555aebba3282517141b2 # v2.2.3
         with:
           subject-name: |
