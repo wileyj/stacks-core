@@ -33,9 +33,8 @@ env:
   docker-org: blockstack
 
 concurrency:
-  group: docker-image-source-${{ github.head_ref || github.ref || github.run_id }}
-  ## Always cancel duplicate jobs
-  cancel-in-progress: true
+  group: docker-image-binary-${{ github.head_ref || github.ref || github.run_id }}-${{inputs.name}}}
+  cancel-in-progress: false
 
 jobs:
   ## Runs when called by ci.yml on a release branch
@@ -149,28 +148,28 @@ jobs:
             GIT_COMMIT=${{ env.GITHUB_SHA_SHORT }}
           push: ${{ env.DOCKER_PUSH }}
 
-      ## Generate docker image attestation(s)
-      ##   Attest image for stacks-core:<tag>
-      - name: Attest Image ( stacks-node - ${{ github.event.repository.name }} )
-        if: ${{ env.is-signer-release == 'false' }}
-        id: attest_node_primary
-        uses: actions/attest-build-provenance@c074443f1aee8d4aeeae555aebba3282517141b2 # v2.2.3
-        with:
-          subject-name: |
-            index.docker.io/${{env.docker-org}}/${{ github.event.repository.name }}
-          subject-digest: ${{ steps.docker_build_node.outputs.digest }}
-          push-to-registry: true
+      # ## Generate docker image attestation(s)
+      # ##   Attest image for stacks-core:<tag>
+      # - name: Attest Image ( stacks-node - ${{ github.event.repository.name }} )
+      #   if: ${{ env.is-signer-release == 'false' }}
+      #   id: attest_node_primary
+      #   uses: actions/attest-build-provenance@c074443f1aee8d4aeeae555aebba3282517141b2 # v2.2.3
+      #   with:
+      #     subject-name: |
+      #       index.docker.io/${{env.docker-org}}/${{ github.event.repository.name }}
+      #     subject-digest: ${{ steps.docker_build_node.outputs.digest }}
+      #     push-to-registry: true
 
-      ##   Attest image for stacks-blockchain:<tag>
-      - name: Attest Image (stacks-node - stacks-blockchain )
-        if: ${{ env.is-signer-release == 'false' }}
-        id: attest_node_secondary
-        uses: actions/attest-build-provenance@c074443f1aee8d4aeeae555aebba3282517141b2 # v2.2.3
-        with:
-          subject-name: |
-            index.docker.io/${{env.docker-org}}/stacks-blockchain
-          subject-digest: ${{ steps.docker_build_node.outputs.digest }}
-          push-to-registry: true
+      # ##   Attest image for stacks-blockchain:<tag>
+      # - name: Attest Image (stacks-node - stacks-blockchain )
+      #   if: ${{ env.is-signer-release == 'false' }}
+      #   id: attest_node_secondary
+      #   uses: actions/attest-build-provenance@c074443f1aee8d4aeeae555aebba3282517141b2 # v2.2.3
+      #   with:
+      #     subject-name: |
+      #       index.docker.io/${{env.docker-org}}/stacks-blockchain
+      #     subject-digest: ${{ steps.docker_build_node.outputs.digest }}
+      #     push-to-registry: true
 
       ## Build and attest docker image for signer release
       - name: Build and Push ( signer - ${{matrix.dist}} )
@@ -190,14 +189,14 @@ jobs:
             GIT_COMMIT=${{ env.GITHUB_SHA_SHORT }}
           push: ${{ env.DOCKER_PUSH }}
 
-      ## Generate docker image attestation(s)
-      ##   Attest image for stacks-signer:<tag>
-      - name: Attest Image ( signer - ${{ github.event.repository.name }} )
-        if: ${{ env.is-signer-release == 'true' }}
-        id: attest_signer_primary
-        uses: actions/attest-build-provenance@c074443f1aee8d4aeeae555aebba3282517141b2 # v2.2.3
-        with:
-          subject-name: |
-            index.docker.io/${{env.docker-org}}/${{ github.event.repository.name }}
-          subject-digest: ${{ steps.docker_build_node.outputs.digest }}
-          push-to-registry: true
+      # ## Generate docker image attestation(s)
+      # ##   Attest image for stacks-signer:<tag>
+      # - name: Attest Image ( signer - ${{ github.event.repository.name }} )
+      #   if: ${{ env.is-signer-release == 'true' }}
+      #   id: attest_signer_primary
+      #   uses: actions/attest-build-provenance@c074443f1aee8d4aeeae555aebba3282517141b2 # v2.2.3
+      #   with:
+      #     subject-name: |
+      #       index.docker.io/${{env.docker-org}}/${{ github.event.repository.name }}
+      #     subject-digest: ${{ steps.docker_build_node.outputs.digest }}
+      #     push-to-registry: true
