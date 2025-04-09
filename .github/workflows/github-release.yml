@@ -47,8 +47,11 @@ jobs:
       inputs.signer_tag != ''
     name: Andon Cord
     runs-on: ubuntu-latest
-    # environment: "Build Release"
+    ## Requires the repo environment "Push to Docker", which will trigger a secondary approval step before running this workflow.
     environment: "Push to Docker"
+    permissions:
+      id-token: write
+      attestations: write
     steps:
       - name: Check Approval
         id: check
