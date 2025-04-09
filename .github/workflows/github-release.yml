@@ -55,6 +55,13 @@ jobs:
         run: |
           exit 0
 
+      ## echo
+      - name: echo
+        id: echo
+        shell: bash
+        run: |
+          echo "DOCKERHUB_USERNAME: ${{secrets.DOCKERHUB_USERNAME}}"
+
       ## Login to dockerhub
       - name: Login to DockerHub
         id: docker_login
