@@ -48,7 +48,7 @@ jobs:
     name: Andon Cord
     runs-on: ubuntu-latest
     # environment: "Build Release"
-    # environment: "Push to Docker"
+    environment: "Push to Docker"
     steps:
       - name: Check Approval
         id: check
