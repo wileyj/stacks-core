@@ -63,6 +63,14 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_PASSWORD }}
 
+      ## Login to dockerhub
+      - name: Login to DockerHub
+        id: docker_login
+        uses: docker/login-action@9780b0c442fbb1117ed29e0efdff1e18412f7567 # v3.3.0
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_PASSWORD }}
+
       ## if the repo owner is not `stacks-network`, default to a docker-org of the repo owner (i.e. github user id)
       ## this allows forks to run the docker push workflows without having to hardcode a dockerhub org (but it does require docker hub user to match github username)
       - name: Set Local env vars
