@@ -95,6 +95,7 @@ jobs:
       - rustfmt
       - check-release
     uses: ./.github/workflows/github-release.yml
+    secrets: inherit
     with:
       node_tag: ${{ needs.check-release.outputs.node_tag }}
       node_docker_tag: ${{ needs.check-release.outputs.node_docker_tag }}

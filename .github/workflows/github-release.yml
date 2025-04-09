@@ -53,11 +53,6 @@ jobs:
       id-token: write
       attestations: write
     steps:
-      - name: Check Approval
-        id: check
-        run: |
-          exit 0
-
       ## echo
       - name: echo
         id: echo
