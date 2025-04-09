@@ -18,6 +18,10 @@ on:
         required: false
         type: string
         default: "linux/arm64, linux/amd64, linux/amd64/v3"
+      name:
+        required: true
+        type: string
+        description: "Name of image"
     # dist:
     #   description: "Linux Distribution to build for"
     #   type: string
@@ -36,10 +40,10 @@ concurrency:
 jobs:
   ## Runs when called by ci.yml on a release branch
   image:
-    name: Build Image
+    name: Build Image ( ${{inputs.name}} - ${{matrix.dist}} )
     runs-on: ubuntu-latest
     ## Requires the repo environment "Push to Docker", which will trigger a secondary approval step before running this workflow.
-    environment: "Push to Docker"
+    # environment: "Push to Docker"
     permissions:
       id-token: write
       attestations: write
