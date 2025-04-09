@@ -1,0 +1,199 @@
+## Github workflow to build a docker image from binary
+
+name: Docker Image (Binary)
+
+on:
+  workflow_call:
+    inputs:
+      tag:
+        required: true
+        type: string
+        description: "Version tag of release"
+      docker_tag:
+        required: true
+        type: string
+        description: "Version tag for docker images"
+      platforms:
+        description: "Docker platforms to build for"
+        required: false
+        type: string
+        default: "linux/arm64, linux/amd64, linux/amd64/v3"
+    # dist:
+    #   description: "Linux Distribution to build for"
+    #   type: string
+    #   required: true
+
+## Define which docker arch to build for
+env:
+  # docker_platforms: "linux/arm64, linux/amd64, linux/amd64/v3"
+  docker-org: blockstack
+
+concurrency:
+  group: docker-image-source-${{ github.head_ref || github.ref || github.run_id }}
+  ## Always cancel duplicate jobs
+  cancel-in-progress: true
+
+jobs:
+  ## Runs when called by ci.yml on a release branch
+  image:
+    name: Build Image
+    runs-on: ubuntu-latest
+    ## Requires the repo environment "Push to Docker", which will trigger a secondary approval step before running this workflow.
+    # environment: "Push to Docker"
+    permissions:
+      id-token: write
+      attestations: write
+    strategy:
+      fail-fast: false
+      ## Build a maximum of 2 images concurrently based on matrix.dist
+      max-parallel: 2
+      matrix:
+        dist:
+          - alpine
+          - debian
+    steps:
+      ## Setup Docker for the builds
+      - name: Docker setup
+        id: docker_setup
+        uses: stacks-network/actions/docker@main
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_PASSWORD }}
+
+      ## if the repo owner is not `stacks-network`, default to a docker-org of the repo owner (i.e. github user id)
+      ## this allows forks to run the docker push workflows without having to hardcode a dockerhub org (but it does require docker hub user to match github username)
+      - name: Set Local env vars
+        id: set_env
+        if: |
+          github.repository_owner != 'stacks-network'
+        run: |
+          echo "docker-org=${{ github.repository_owner }}" >> "$GITHUB_ENV"
+
+      - name: Check Signer Release
+        id: check_signer_release
+        shell: bash
+        run: |
+          case "${{ inputs.tag }}" in
+            signer-*)
+              echo "is-signer-release=true" >> $GITHUB_ENV
+              ;;
+            *)
+              echo "is-signer-release=false" >> $GITHUB_ENV
+              ;;
+          esac
+
+      - name: Set Docker Tag RC Flag
+        id: docker_tag_rc_flag
+        shell: bash
+        run: |
+          if [[ "${{ inputs.docker_tag }}" =~ -rc[0-9]*$ ]]; then
+            echo "docker_tag_rc=true" >> $GITHUB_ENV
+          else
+            echo "docker_tag_rc=false" >> $GITHUB_ENV
+          fi
+
+      ## Set docker metadata for stacks-node image
+      ## - depending on the matrix.dist, different tags will be enabled
+      ## ex. debian will have this tag: `type=ref,event=tag,enable=${{ matrix.dist == 'debian' }}`
+      - name: Docker Metadata ( stacks-node - ${{matrix.dist}} )
+        if: ${{ env.is-signer-release == 'false' }}
+        id: docker_metadata_node
+        uses: docker/metadata-action@369eb591f429131d6889c46b94e711f089e6ca96 #v5.6.1
+        with:
+          ## tag images with current repo name `stacks-core` as well as legacy `stacks-blockchain`
+          images: |
+            ${{env.docker-org}}/${{ github.event.repository.name }}
+            ${{env.docker-org}}/stacks-blockchain
+          tags: |
+            type=raw,value=latest,enable=${{ inputs.docker_tag != '' && env.docker_tag_rc != 'true' && matrix.dist == 'debian' }}
+            type=raw,value=${{ inputs.docker_tag }}-${{ matrix.dist }},enable=${{ inputs.docker_tag != '' && matrix.dist == 'debian'}}
+            type=raw,value=${{ inputs.docker_tag }},enable=${{ inputs.docker_tag != '' && matrix.dist == 'debian' }}
+            type=ref,event=tag,enable=${{ matrix.dist == 'debian' }}
+            type=raw,value=latest-${{ matrix.dist }},enable=${{ inputs.docker_tag != '' && env.docker_tag_rc != 'true' && matrix.dist == 'alpine' }}
+            type=raw,value=${{ inputs.docker_tag }}-${{ matrix.dist }},enable=${{ inputs.docker_tag != '' && matrix.dist == 'alpine' }}
+
+      - name: Docker Metadata ( signer - ${{matrix.dist}} )
+        if: ${{ env.is-signer-release == 'true' }}
+        id: docker_metadata_signer
+        uses: docker/metadata-action@369eb591f429131d6889c46b94e711f089e6ca96 #v5.6.1
+        with:
+          images: |
+            ${{env.docker-org}}/stacks-signer
+          tags: |
+            type=raw,value=latest,enable=${{ inputs.docker_tag != '' && env.docker_tag_rc != 'true' && matrix.dist == 'debian' }}
+            type=raw,value=${{ inputs.docker_tag }}-${{ matrix.dist }},enable=${{ inputs.docker_tag != '' && matrix.dist == 'debian'}}
+            type=raw,value=${{ inputs.docker_tag }},enable=${{ inputs.docker_tag != '' && matrix.dist == 'debian' }}
+            type=ref,event=tag,enable=${{ matrix.dist == 'debian' }}
+            type=raw,value=latest-${{ matrix.dist }},enable=${{ inputs.docker_tag != '' && env.docker_tag_rc != 'true' && matrix.dist == 'alpine' }}
+            type=raw,value=${{ inputs.docker_tag }}-${{ matrix.dist }},enable=${{ inputs.docker_tag != '' && matrix.dist == 'alpine' }}
+
+      ## Build and attest docker image for node release
+      - name: Build and Push ( stacks-node - ${{matrix.dist}} )
+        if: ${{ env.is-signer-release == 'false' }}
+        id: docker_build_node
+        uses: docker/build-push-action@ca877d9245402d1537745e0e356eab47c3520991 # v6.13.0
+        with:
+          file: ./.github/actions/dockerfiles/Dockerfile.${{ matrix.dist }}-binary
+          platforms: ${{ inputs.platforms }}
+          tags: ${{ steps.docker_metadata_node.outputs.tags }}
+          labels: ${{ steps.docker_metadata_node.outputs.labels }}
+          build-args: |
+            TAG=${{ inputs.tag }}
+            REPO=${{ github.repository_owner }}/${{ github.event.repository.name }}
+            STACKS_NODE_VERSION=${{ inputs.tag || env.GITHUB_SHA_SHORT }}
+            GIT_BRANCH=${{ env.GITHUB_REF_SHORT }}
+            GIT_COMMIT=${{ env.GITHUB_SHA_SHORT }}
+          push: ${{ env.DOCKER_PUSH }}
+
+      ## Generate docker image attestation(s)
+      ##   Attest image for stacks-core:<tag>
+      - name: Attest Image ( stacks-node - ${{ github.event.repository.name }} )
+        if: ${{ env.is-signer-release == 'false' }}
+        id: attest_node_primary
+        uses: actions/attest-build-provenance@c074443f1aee8d4aeeae555aebba3282517141b2 # v2.2.3
+        with:
+          subject-name: |
+            index.docker.io/${{env.docker-org}}/${{ github.event.repository.name }}
+          subject-digest: ${{ steps.docker_build_node.outputs.digest }}
+          push-to-registry: true
+
+      ##   Attest image for stacks-blockchain:<tag>
+      - name: Attest Image (stacks-node - stacks-blockchain )
+        if: ${{ env.is-signer-release == 'false' }}
+        id: attest_node_secondary
+        uses: actions/attest-build-provenance@c074443f1aee8d4aeeae555aebba3282517141b2 # v2.2.3
+        with:
+          subject-name: |
+            index.docker.io/${{env.docker-org}}/stacks-blockchain
+          subject-digest: ${{ steps.docker_build_node.outputs.digest }}
+          push-to-registry: true
+
+      ## Build and attest docker image for signer release
+      - name: Build and Push ( signer - ${{matrix.dist}} )
+        if: ${{ env.is-signer-release == 'true' }}
+        id: docker_build_signer
+        uses: docker/build-push-action@ca877d9245402d1537745e0e356eab47c3520991 # v6.13.0
+        with:
+          file: ./.github/actions/dockerfiles/Dockerfile.${{ matrix.dist }}-binary
+          platforms: ${{ inputs.platforms }}
+          tags: ${{ steps.docker_metadata_signer.outputs.tags }}
+          labels: ${{ steps.docker_metadata_signer.outputs.labels }}
+          build-args: |
+            TAG=${{ inputs.tag }}
+            REPO=${{ github.repository_owner }}/${{ github.event.repository.name }}
+            STACKS_NODE_VERSION=${{ inputs.tag || env.GITHUB_SHA_SHORT }}
+            GIT_BRANCH=${{ env.GITHUB_REF_SHORT }}
+            GIT_COMMIT=${{ env.GITHUB_SHA_SHORT }}
+          push: ${{ env.DOCKER_PUSH }}
+
+      ## Generate docker image attestation(s)
+      ##   Attest image for stacks-signer:<tag>
+      - name: Attest Image ( signer - ${{ github.event.repository.name }} )
+        if: ${{ env.is-signer-release == 'true' }}
+        id: attest_node_primary
+        uses: actions/attest-build-provenance@c074443f1aee8d4aeeae555aebba3282517141b2 # v2.2.3
+        with:
+          subject-name: |
+            index.docker.io/${{env.docker-org}}/${{ github.event.repository.name }}
+          subject-digest: ${{ steps.docker_build_node.outputs.digest }}
+          push-to-registry: true
