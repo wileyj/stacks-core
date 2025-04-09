@@ -136,6 +136,9 @@ jobs:
     name: Docker Image (Binary)
     runs-on: ubuntu-latest
     environment: "Push to Docker"
+    permissions:
+      id-token: write
+      attestations: write
     needs:
       - andon-cord
       # - build-binaries
