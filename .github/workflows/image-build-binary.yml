@@ -22,10 +22,16 @@ on:
         required: true
         type: string
         description: "Name of image"
-    # dist:
-    #   description: "Linux Distribution to build for"
-    #   type: string
-    #   required: true
+      # dist:
+      #   description: "Linux Distribution to build for"
+      #   type: string
+      #   required: false
+      #   default: debian
+    secrets:
+      DOCKERHUB_USERNAME:
+        required: true
+      DOCKERHUB_PASSWORD:
+        required: true
 
 ## Define which docker arch to build for
 env:

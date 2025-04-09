@@ -150,12 +150,15 @@ jobs:
     #     dist:
     #       - alpine
     #       - debian
-    secrets: inherit
+    # secrets: inherit
     uses: ./.github/workflows/image-build-binary.yml
     with:
       tag: ${{ inputs.node_tag }}
       docker_tag: ${{ inputs.node_docker_tag }}
       name: stacks-node
+    secrets:
+      DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+      DOCKERHUB_PASSWORD: ${{ secrets.DOCKERHUB_PASSWORD }}
       # dist: ${{ matrix.dist }}
     # with:
     #   node_tag: ${{ inputs.node_tag }}
@@ -185,12 +188,14 @@ jobs:
     #     dist:
     #       - alpine
     #       - debian
-    secrets: inherit
     uses: ./.github/workflows/image-build-binary.yml
     with:
       tag: ${{ inputs.signer_tag }}
       docker_tag: ${{ inputs.signer_docker_tag }}
       name: signer
+    secrets:
+      DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+      DOCKERHUB_PASSWORD: ${{ secrets.DOCKERHUB_PASSWORD }}
       # dist: ${{ matrix.dist }}
 
   # ## Create the downstream PR for the release branch to master,develop
