@@ -47,7 +47,8 @@ jobs:
       inputs.signer_tag != ''
     name: Andon Cord
     runs-on: ubuntu-latest
-    environment: "Build Release"
+    # environment: "Build Release"
+    environment: "Push to Docker"
     steps:
       - name: Check Approval
         id: check
