@@ -197,8 +197,7 @@ jobs:
       (
         inputs.node_tag != '' ||
         inputs.signer_tag != ''
-      ) && 
-      ${{ !failure() }}
+      )
     name: Create Downstream PR (${{ github.ref_name }})
     runs-on: ubuntu-latest
     needs:
