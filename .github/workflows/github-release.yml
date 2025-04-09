@@ -135,6 +135,7 @@ jobs:
       inputs.signer_tag != ''
     name: Docker Image (Binary)
     runs-on: ubuntu-latest
+    environment: "Push to Docker"
     needs:
       - andon-cord
       # - build-binaries
