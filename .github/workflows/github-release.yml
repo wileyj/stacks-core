@@ -138,7 +138,7 @@ jobs:
       inputs.signer_tag != ''
     name: Docker Image (Binary)
     runs-on: ubuntu-latest
-    #environment: "Push to Docker"
+    environment: "Push to Docker"
     permissions:
       id-token: write
       attestations: write
