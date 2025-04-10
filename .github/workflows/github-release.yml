@@ -156,7 +156,7 @@ jobs:
           - debian
     steps:
       - name: Create Docker Image
-        uses: stacks-network/actions/stacks-core/release/docker-images@main
+        uses: wileyj/actions/stacks-core/release/docker-images@chore/attestation
         with:
           node_tag: ${{ inputs.node_tag }}
           node_docker_tag: ${{ inputs.node_docker_tag }}
@@ -187,6 +187,6 @@ jobs:
     steps:
       - name: Open Downstream PR
         id: create-pr
-        uses: stacks-network/actions/stacks-core/release/downstream-pr@main
+        uses: wileyj/actions/stacks-core/release/downstream-pr@chore/attestation
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
