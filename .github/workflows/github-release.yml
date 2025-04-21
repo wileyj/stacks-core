@@ -51,15 +51,8 @@ jobs:
       )
     name: Create Downstream PR (${{ github.ref_name }})
     runs-on: ubuntu-latest
-    # permissions:
-    #   pull-requests: write
-    #   contents: write
-    #   checks: write
-    #   statuses: read
     permissions:
-      contents: write
       pull-requests: write
-      repository-projects: read
     steps:
       - name: Generate token
         id: generate-token
@@ -67,19 +60,28 @@ jobs:
         with:
           app-id: 1224905
           private-key: ${{ secrets.DOWNSTREAM_PR_PRIVATE_KEY }}
-      - name: Get GitHub App User ID
-        id: get-user-id
-        run: echo "user-id=$(gh api "/users/${{ steps.generate-token.outputs.app-slug }}[bot]" --jq .id)" >> "$GITHUB_OUTPUT"
+      # - name: Get GitHub App User ID
+      #   id: get-user-id
+      #   run: echo "user-id=$(gh api "/users/${{ steps.generate-token.outputs.app-slug }}[bot]" --jq .id)" >> "$GITHUB_OUTPUT"
+      #   env:
+      #     GH_TOKEN: ${{ steps.generate-token.outputs.token }}
+      # # - run: |
+      # #     git config --global user.name '${{ steps.generate-token.outputs.app-slug }}[bot]'
+      # #     git config --global user.email '${{ steps.get-user-id.outputs.user-id }}+${{ steps.generate-token.outputs.app-slug }}[bot]@users.noreply.github.com'
+      - name: Create PR
         env:
-          GH_TOKEN: ${{ steps.generate-token.outputs.token }}
-      # - run: |
-      #     git config --global user.name '${{ steps.generate-token.outputs.app-slug }}[bot]'
-      #     git config --global user.email '${{ steps.get-user-id.outputs.user-id }}+${{ steps.generate-token.outputs.app-slug }}[bot]@users.noreply.github.com'
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          gh pr create \
+            --head "${{ github.ref_name }}" \
+            --base "develop" \
+            --title "Test PR" \
+            --body "Test PR"
       - name: Open Downstream PR
         id: create-pr
         uses: wileyj/actions/stacks-core/release/downstream-pr@chore/run_pr_workflow
         with:
-          # token: ${{ secrets.GITHUB_TOKEN }}
-          token: ${{ steps.generate-token.outputs.token }}
-          user-name: "${{ steps.generate-token.outputs.app-slug }}[bot]"
-          user-email: "${{ steps.get-user-id.outputs.user-id }}+${{ steps.generate-token.outputs.app-slug }}[bot]@users.noreply.github.com"
+          token: ${{ secrets.GITHUB_TOKEN }}
+          # app_token: ${{ steps.generate-token.outputs.token }}
+          # user-name: "${{ steps.generate-token.outputs.app-slug }}[bot]"
+          # user-email: "${{ steps.get-user-id.outputs.user-id }}+${{ steps.generate-token.outputs.app-slug }}[bot]@users.noreply.github.com"
