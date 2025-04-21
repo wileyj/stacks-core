@@ -49,6 +49,8 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       pull-requests: write
+      checks: write
+      contents: read
     steps:
       - name: Open Downstream PR
         id: create-pr
