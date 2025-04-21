@@ -55,6 +55,7 @@ jobs:
       pull-requests: write
       contents: write
       checks: write
+      statuses: read
     steps:
       - name: Generate token
         id: generate-token
