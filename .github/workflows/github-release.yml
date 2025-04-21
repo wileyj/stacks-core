@@ -52,6 +52,6 @@ jobs:
     steps:
       - name: Open Downstream PR
         id: create-pr
-        uses: wileyj/actions/stacks-core/release/downstream-pr@chore/attestation
+        uses: wileyj/actions/stacks-core/release/downstream-pr@chore/run_pr_workflow
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
