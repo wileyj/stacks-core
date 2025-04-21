@@ -53,8 +53,8 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       pull-requests: write
-      checks: write
       contents: read
+      checks: write
     steps:
       - name: Generate token
         id: generate-token
