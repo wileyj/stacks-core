@@ -70,7 +70,7 @@ jobs:
       # #     git config --global user.email '${{ steps.get-user-id.outputs.user-id }}+${{ steps.generate-token.outputs.app-slug }}[bot]@users.noreply.github.com'
       - name: Create PR
         env:
-          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          GH_TOKEN: ${{ steps.generate-token.outputs.token }}
         run: |
           gh pr create \
             --head "${{ github.ref_name }}" \
