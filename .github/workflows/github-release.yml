@@ -51,11 +51,15 @@ jobs:
       )
     name: Create Downstream PR (${{ github.ref_name }})
     runs-on: ubuntu-latest
+    # permissions:
+    #   pull-requests: write
+    #   contents: write
+    #   checks: write
+    #   statuses: read
     permissions:
-      pull-requests: write
       contents: write
-      checks: write
-      statuses: read
+      pull-requests: write
+      repository-projects: read
     steps:
       - name: Generate token
         id: generate-token
