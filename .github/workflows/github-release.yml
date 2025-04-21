@@ -60,7 +60,7 @@ jobs:
         id: generate-token
         uses: actions/create-github-app-token@v1
         with:
-          app-id: ${{ vars.DOWNSTREAM_PR_APP_ID }}
+          app-id: 1224905
           private-key: ${{ secrets.DOWNSTREAM_PR_PRIVATE_KEY }}
       - name: Get GitHub App User ID
         id: get-user-id
