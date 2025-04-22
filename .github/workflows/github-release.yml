@@ -30,6 +30,10 @@ on:
         required: true
         type: string
 
+## Define which docker arch to build for
+env:
+  DOWNSTREAM_PR_APP_ID: "1224905"
+
 concurrency:
   group: github-release-${{ github.head_ref || github.ref }}
   ## Always cancel duplicate jobs
@@ -38,149 +42,64 @@ concurrency:
 run-name: ${{ inputs.node_tag || inputs.signer_tag }}
 
 jobs:
-  ## This job's sole purpose is trigger a secondary approval outside of the matrix jobs below. 
-  ##   - If this job isn't approved to run, then the subsequent jobs will also not run - for this reason, we always exit 0
-  ##   - `andon-cord` requires the repo environment "Build Release", which will trigger a secondary approval step before running this workflow.  
-  andon-cord:
-    if: |
-      inputs.node_tag != '' ||
-      inputs.signer_tag != ''
-    name: Andon Cord
-    runs-on: ubuntu-latest
-    environment: "Build Release"
-    steps:
-      - name: Check Approval
-        id: check
-        run: |
-          exit 0
-  ## Build arch dependent binaries from source
-  ##
-  ## Runs when the following is true:
-  ##  - either node or signer tag is provided
-  build-binaries:
-    if: |
-      inputs.node_tag != '' ||
-      inputs.signer_tag != ''
-    name: Build Binaries
-    runs-on: ubuntu-latest
-    needs:
-      - andon-cord
-    strategy:
-      ## Run a maximum of 10 builds concurrently, using the matrix defined in inputs.arch
-      max-parallel: 10
-      matrix:
-        arch:
-          - linux-musl
-          - linux-glibc
-          - macos
-          - windows
-        cpu:
-          - arm64
-          - x86-64 ## defaults to x86-64-v3 variant - intel haswell (2013) and newer
-          # - x86-64-v2 ## intel nehalem (2008) and newer
-          # - x86-64-v3 ## intel haswell (2013) and newer
-          # - x86-64-v4 ## intel skylake (2017) and newer
-        exclude:
-          - arch: windows # excludes windows-arm64
-            cpu: arm64
-          - arch: windows # excludes windows-armv7
-            cpu: armv7
-          - arch: macos # excludes macos-armv7
-            cpu: armv7
-    steps:
-      - name: Build Binary (${{ matrix.arch }}_${{ matrix.cpu }})
-        uses: stacks-network/actions/stacks-core/release/create-source-binary@main
-        with:
-          arch: ${{ matrix.arch }}
-          cpu: ${{ matrix.cpu }}
-          node_tag: ${{ inputs.node_tag }}
-          signer_tag: ${{ inputs.signer_tag }}
-          signer_docker_tag: ${{ inputs.signer_docker_tag }}
-          is_node_release: ${{ inputs.is_node_release }}
-
-  ## Runs when the following is true:
-  ##  - either node or signer tag is provided
-  create-release:
-    if: |
-      inputs.node_tag != '' ||
-      inputs.signer_tag != ''
-    name: Create Release
-    runs-on: ubuntu-latest
-    needs:
-      - andon-cord
-      - build-binaries
-    permissions:
-      contents: write
-    steps:
-      ## Creates releases
-      - name: Create Release
-        uses: stacks-network/actions/stacks-core/release/create-releases@main
-        with:
-          node_tag: ${{ inputs.node_tag }}
-          node_docker_tag: ${{ inputs.node_docker_tag }}
-          signer_tag: ${{ inputs.signer_tag }}
-          signer_docker_tag: ${{ inputs.signer_docker_tag }}
-          is_node_release: ${{ inputs.is_node_release }}
-          is_signer_release: ${{ inputs.is_signer_release }}
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-  ## Builds arch dependent Docker images from binaries
-  ##
-  ## Note: this step requires the binaries in the create-release step to be uploaded
-  ## Runs when the following is true:
-  ##  - either node or signer tag is provided
-  docker-image:
-    if: |
-      inputs.node_tag != '' ||
-      inputs.signer_tag != ''
-    name: Docker Image (Binary)
-    runs-on: ubuntu-latest
-    needs:
-      - andon-cord
-      - build-binaries
-      - create-release
-    strategy:
-      fail-fast: false
-      ## Build a maximum of 2 images concurrently based on matrix.dist
-      max-parallel: 2
-      matrix:
-        dist:
-          - alpine
-          - debian
-    steps:
-      - name: Create Docker Image
-        uses: stacks-network/actions/stacks-core/release/docker-images@main
-        with:
-          node_tag: ${{ inputs.node_tag }}
-          node_docker_tag: ${{ inputs.node_docker_tag }}
-          signer_tag: ${{ inputs.signer_tag }}
-          signer_docker_tag: ${{ inputs.signer_docker_tag }}
-          is_node_release: ${{ inputs.is_node_release }}
-          is_signer_release: ${{ inputs.is_signer_release }}
-          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
-          DOCKERHUB_PASSWORD: ${{ secrets.DOCKERHUB_PASSWORD }}
-          dist: ${{ matrix.dist }}
-
   ## Create the downstream PR for the release branch to master,develop
   create-pr:
     if: |
-      !contains(github.ref, '-rc') &&
       (
         inputs.node_tag != '' ||
         inputs.signer_tag != ''
       )
     name: Create Downstream PR (${{ github.ref_name }})
     runs-on: ubuntu-latest
-    needs:
-      - andon-cord
-      - build-binaries
-      - create-release
-      - docker-image
     permissions:
       pull-requests: write
     steps:
-      - name: Open Downstream PR
-        id: create-pr
-        uses: stacks-network/actions/stacks-core/release/downstream-pr@main
+      - name: Checkout the latest code
+        id: git_checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+          ref: ${{ github.ref_name }}
+      - name: Generate token
+        id: generate-token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: 1224905
+          private-key: ${{ secrets.DOWNSTREAM_PR_PRIVATE_KEY }}
+      # - name: Get GitHub App User ID
+      #   id: get-user-id
+      #   run: echo "user-id=$(gh api "/users/${{ steps.generate-token.outputs.app-slug }}[bot]" --jq .id)" >> "$GITHUB_OUTPUT"
+      #   env:
+      #     GH_TOKEN: ${{ steps.generate-token.outputs.token }}
+      # # - run: |
+      # #     git config --global user.name '${{ steps.generate-token.outputs.app-slug }}[bot]'
+      # #     git config --global user.email '${{ steps.get-user-id.outputs.user-id }}+${{ steps.generate-token.outputs.app-slug }}[bot]@users.noreply.github.com'
+      # - name: Create PR
+      #   env:
+      #     GH_TOKEN: ${{ steps.generate-token.outputs.token }}
+      #   run: |
+      #     gh pr create \
+      #       --head "${{ github.ref_name }}" \
+      #       --base "develop" \
+      #       --title "Test PR" \
+      #       --body "Test PR"
+      - name: Approve PR
+        env:
+          GH_TOKEN: ${{ steps.generate-token.outputs.token }}
+        run: |
+          gh pr review 220 -a
+      - name: Merge PR
+        env:
+          GH_TOKEN: ${{ steps.generate-token.outputs.token }}
+        run: |
+          gh pr merge 220 -m
+
+      # - name: Open Downstream PR
+      #   id: create-pr
+      #   uses: wileyj/actions/stacks-core/release/downstream-pr@chore/run_pr_workflow
+      #   with:
+      #     token: ${{ steps.generate-token.outputs.token }}
+      #     # token: ${{ secrets.GITHUB_TOKEN }}
+      #     # app_token: ${{ steps.generate-token.outputs.token }}
+      #     # user-name: "${{ steps.generate-token.outputs.app-slug }}[bot]"
+      #     # user-email: "${{ steps.get-user-id.outputs.user-id }}+${{ steps.generate-token.outputs.app-slug }}[bot]@users.noreply.github.com"
