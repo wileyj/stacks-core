@@ -92,7 +92,7 @@ jobs:
         env:
           GH_TOKEN: ${{ steps.generate-token.outputs.token }}
         run: |
-          gh pr merge 221 -m
+          gh pr merge 221 -m --admin
 
       # - name: Open Downstream PR
       #   id: create-pr
