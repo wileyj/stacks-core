@@ -4,8 +4,7 @@ name: Core build tests
 #   - PRs are (re)opened against develop branch
 on:
   workflow_call:
-  workflow_dispatch:
-  
+
 jobs:
   check-consts:
     name: Check the constants from stacks-inspect
