@@ -27,7 +27,7 @@ jobs:
     steps:
       - name: Rustfmt
         id: rustfmt
-        uses: stacks-network/actions/rustfmt@main
+        uses: wileyj/actions/rustfmt@chore/6107
         with:
           alias: "fmt-stacks"
 
