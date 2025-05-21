@@ -30,7 +30,6 @@ jobs:
         uses: wileyj/actions/rustfmt@chore/6107
         with:
           alias: "fmt-stacks"
-          rust-toolchain: "nightly"
 
   # check-cache:
   #   name: Check Cache
