@@ -1,0 +1,78 @@
+## Github workflow to create reusable caches
+
+name: TEST workflow
+
+on:
+  workflow_dispatch:
+  workflow_call:
+
+## env vars are transferred to composite action steps
+env:
+  BTC_VERSION: "27.2"
+
+##
+## Cache will exist longer than workflow execution so other runners have access
+##   ex: a failed job should have access to the cache for however long `cleanup.yml` is set to delete old caches
+##       however, this is only relevant if the commit sha does not change between runs
+concurrency:
+  group: test-${{ github.head_ref || github.ref || github.run_id}}
+  ## Only cancel in progress if this is for a PR
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+
+jobs:
+  rustfmt:
+    name: Rust Format
+    runs-on: ubuntu-latest
+    steps:
+      - name: Rustfmt
+        id: rustfmt
+        uses: stacks-network/actions/rustfmt@main
+        with:
+          alias: "fmt-stacks"
+
+  # check-cache:
+  #   name: Check Cache
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Cleanup Runner
+  #       id: runner_cleanup
+  #       uses: stacks-network/actions/cleanup/disk@main
+
+  #     ## Checkout the code
+  #     - name: Checkout the latest code
+  #       id: git_checkout
+  #       uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+  #     ## Install rust toolchain (llvm-tools-preview)
+  #     - name: Setup Rust Toolchain
+  #       id: setup_rust_toolchain
+  #       uses: actions-rust-lang/setup-rust-toolchain@11df97af8e8102fd60b60a77dfbf58d40cd843b8 # v1.10.1
+  #       with:
+  #         toolchain: stable
+  #         components: llvm-tools-preview
+  #         cache: false
+
+  #     ## Restore cargo cache data
+  #     - name: Restore Cargo Cache
+  #       id: restore_cargo_cache
+  #       uses: stacks-network/actions/stacks-core/cache/cargo@chore/6107
+  #       with:
+  #         action: restore
+
+  #     ## Restore bitcoin cache data
+  #     - name: Restore Bitcoin Binary Cache
+  #       id: restore_bitcoin_cache
+  #       uses: stacks-network/actions/stacks-core/cache/bitcoin@chore/6107
+  #       with:
+  #         action: restore
+  #         btc-version: ${{ inputs.btc-version }}
+
+  #     ## Symlink bitoind to $PATH
+  #     - name: Link Bitcoin Binary
+  #       id: bitcoin_binary
+  #       shell: bash
+  #       run: |
+  #         ls -al /tmp
+  #         sudo ln -s /tmp/bitcoin/bin/bitcoind /bin/
+  #         ls -al /bin/bitcoind

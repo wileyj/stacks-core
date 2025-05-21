@@ -35,6 +35,7 @@ jobs:
         with:
           toolchain: ${{ env.RUST_TOOLCHAIN }}
           components: clippy
+          cache: false
       - name: Clippy
         id: clippy
         run: cargo clippy-stacks
