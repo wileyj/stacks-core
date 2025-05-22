@@ -25,11 +25,17 @@ jobs:
     name: Rust Format
     runs-on: ubuntu-latest
     steps:
-      - name: Rustfmt
+      - name: Rust Toolchain
         id: rustfmt
-        uses: wileyj/actions/rustfmt@chore/6107
-        with:
-          alias: "fmt-stacks"
+        uses: wileyj/actions/rust-toolchain@chore/6107
+        # with:
+        #   component: "rustfmt"
+
+      # - name: Rustfmt
+      #   id: rustfmt
+      #   uses: wileyj/actions/rustfmt@chore/6107
+      #   with:
+      #     alias: "fmt-stacks"
 
   # check-cache:
   #   name: Check Cache
