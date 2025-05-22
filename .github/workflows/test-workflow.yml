@@ -25,6 +25,19 @@ jobs:
     name: Rust Format
     runs-on: ubuntu-latest
     steps:
+      - name: echo
+        id: echo
+        shell: bash
+        run: |
+          echo "github.event.number: ${{ github.event.number }}"
+          echo "github.event.pull_request.number: ${{ github.event.pull_request.number }}"
+          echo "github.event.issue.number: ${{ github.event.issue.number }}"
+          echo "GITHUB_REF: $GITHUB_REF"
+          echo "$GITHUB_REF" | awk -F / '{print $3}'
+
+#     default: ${{ github.event.repository.name }}-${{ github.event.pull_request.head.sha || github.sha }}-cargo
+
+
       - name: Rust Toolchain
         id: toolchain
         uses: wileyj/actions/rust-toolchain@chore/6107
