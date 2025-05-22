@@ -26,7 +26,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Rust Toolchain
-        id: rustfmt
+        id: toolchain
         uses: wileyj/actions/rust-toolchain@chore/6107
         with:
           # rust-toolchain: nightly
