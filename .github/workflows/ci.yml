@@ -10,6 +10,7 @@ on:
       - master
       - develop
       - next
+      - chore/6107
     paths-ignore:
       - "**.md"
       - "**.yml"
