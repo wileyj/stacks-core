@@ -36,27 +36,50 @@ jobs:
           echo "$GITHUB_REF" | awk -F / '{print $3}'
           echo "************************"
           echo "github.ref_name: ${{ github.ref_name }}"
-          echo "${{ github.ref_name }} | sed 's|/|_|g'"
+          echo ${{ github.ref_name }} | sed 's|/|_|g'
           echo "************************"
           echo "github.event: ${{github.event}}"
-
+      - name: Dump GitHub context
+        env:
+          GITHUB_CONTEXT: ${{ toJson(github) }}
+        run: echo "$GITHUB_CONTEXT"
+      - name: Dump job context
+        env:
+          JOB_CONTEXT: ${{ toJson(job) }}
+        run: echo "$JOB_CONTEXT"
+      - name: Dump steps context
+        env:
+          STEPS_CONTEXT: ${{ toJson(steps) }}
+        run: echo "$STEPS_CONTEXT"
+      - name: Dump runner context
+        env:
+          RUNNER_CONTEXT: ${{ toJson(runner) }}
+        run: echo "$RUNNER_CONTEXT"
+      - name: Dump strategy context
+        env:
+          STRATEGY_CONTEXT: ${{ toJson(strategy) }}
+        run: echo "$STRATEGY_CONTEXT"
+      - name: Dump matrix context
+        env:
+          MATRIX_CONTEXT: ${{ toJson(matrix) }}
+        run: echo "$MATRIX_CONTEXT"
 #     default: ${{ github.event.repository.name }}-${{ github.event.pull_request.head.sha || github.sha }}-cargo
 
+####################################################################
+      # - name: Rust Toolchain
+      #   id: toolchain
+      #   uses: wileyj/actions/rust-toolchain@chore/6107
+      #   with:
+      #     # rust-toolchain: nightly
+      #     components: "rustfmt"
+      #     cache: true
 
-      - name: Rust Toolchain
-        id: toolchain
-        uses: wileyj/actions/rust-toolchain@chore/6107
-        with:
-          # rust-toolchain: nightly
-          components: "rustfmt"
-          cache: true
-
-      - name: Rustfmt
-        id: rustfmt
-        uses: wileyj/actions/rustfmt@chore/6107
-        with:
-          alias: "fmt-stacks"
-
+      # - name: Rustfmt
+      #   id: rustfmt
+      #   uses: wileyj/actions/rustfmt@chore/6107
+      #   with:
+      #     alias: "fmt-stacks"
+####################################################################
   # create-cache:
   #   name: Create Test Cache
   #   needs:
