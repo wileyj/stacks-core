@@ -31,12 +31,19 @@ jobs:
         with:
           # rust-toolchain: nightly
           component: "rustfmt"
+          cache: true
 
       - name: Rustfmt
         id: rustfmt
         uses: wileyj/actions/rustfmt@chore/6107
         with:
           alias: "fmt-stacks"
+
+  # create-cache:
+  #   name: Create Test Cache
+  #   needs:
+  #     - rustfmt
+  #   uses: ./.github/workflows/create-cache.yml
 
   # check-cache:
   #   name: Check Cache
