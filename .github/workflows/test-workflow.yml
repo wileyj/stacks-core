@@ -29,14 +29,14 @@ jobs:
         id: rustfmt
         uses: wileyj/actions/rust-toolchain@chore/6107
         with:
-          rust-toolchain: nightly
-        #   component: "rustfmt"
+          # rust-toolchain: nightly
+          component: "rustfmt"
 
-      # - name: Rustfmt
-      #   id: rustfmt
-      #   uses: wileyj/actions/rustfmt@chore/6107
-      #   with:
-      #     alias: "fmt-stacks"
+      - name: Rustfmt
+        id: rustfmt
+        uses: wileyj/actions/rustfmt@chore/6107
+        with:
+          alias: "fmt-stacks"
 
   # check-cache:
   #   name: Check Cache
