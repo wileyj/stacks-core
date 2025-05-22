@@ -34,6 +34,11 @@ jobs:
           echo "github.event.issue.number: ${{ github.event.issue.number }}"
           echo "GITHUB_REF: $GITHUB_REF"
           echo "$GITHUB_REF" | awk -F / '{print $3}'
+          echo "************************"
+          echo "github.ref_name: ${{ github.ref_name }}"
+          echo "${{ github.ref_name }} | sed 's|/|_|g'"
+          echo "************************"
+          echo "github.event: ${{github.event}}"
 
 #     default: ${{ github.event.repository.name }}-${{ github.event.pull_request.head.sha || github.sha }}-cargo
 
