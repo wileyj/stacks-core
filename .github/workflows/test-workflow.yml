@@ -28,8 +28,8 @@ jobs:
       - name: Rust Toolchain
         id: rustfmt
         uses: wileyj/actions/rust-toolchain@chore/6107
-        # with:
-        #   rust-toolchain: nightly
+        with:
+          rust-toolchain: nightly
         #   component: "rustfmt"
 
       # - name: Rustfmt
