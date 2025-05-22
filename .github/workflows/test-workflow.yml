@@ -43,7 +43,7 @@ jobs:
         uses: wileyj/actions/rust-toolchain@chore/6107
         with:
           # rust-toolchain: nightly
-          component: "rustfmt"
+          components: "rustfmt"
           cache: true
 
       - name: Rustfmt
