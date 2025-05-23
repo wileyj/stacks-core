@@ -77,6 +77,21 @@ jobs:
         run: echo "$MATRIX_CONTEXT"
 #     default: ${{ github.event.repository.name }}-${{ github.event.pull_request.head.sha || github.sha }}-cargo
 
+  ## Cache the bitcoin binary
+  bitcoin-binary:
+    name: Bitcoin Binary
+    runs-on: ubuntu-latest
+    steps:
+      - name: Bitcoin Cache
+        id: bitcoin-cache
+        uses: wileyj/actions/stacks-core/cache/bitcoin@chore/6107
+        # uses: stacks-network/actions/stacks-core/cache/bitcoin@main
+        with:
+          action: save
+          btc-version: "27.2"
+          cache-key: "${{ github.event.repository.name }}-${{ github.event.pull_request.head.sha || github.sha }}-${{ github.ref_name }}-bitcoin-binaries"
+
+          
 ####################################################################
       # - name: Rust Toolchain
       #   id: toolchain
