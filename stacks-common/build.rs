@@ -100,4 +100,3 @@ fn main() {
     println!("cargo:rerun-if-changed={toml_file}");
 }
 //comment
-// comment 2
