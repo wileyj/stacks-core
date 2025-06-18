@@ -37,7 +37,8 @@ jobs:
       ## Setup test environment
       - name: Setup Test Environment
         id: setup_tests
-        uses: stacks-network/actions/stacks-core/testenv@main
+        uses: wileyj/actions/stacks-core/testenv@chore/cache_fix
+        # uses: stacks-network/actions/stacks-core/testenv@main
 
       ## Run test matrix using restored cache of archive file
       ##   - Test will timeout after env.TEST_TIMEOUT minutes
@@ -54,4 +55,3 @@ jobs:
         uses: stacks-network/actions/codecov@main
         with:
           test-name: ${{ matrix.test-name }}
-
