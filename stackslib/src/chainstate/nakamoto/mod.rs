@@ -16,11 +16,12 @@
 
 use std::collections::{HashMap, HashSet};
 use std::ops::{Deref, DerefMut, Range};
+use std::sync::LazyLock;
 
 use clarity::util::secp256k1::Secp256k1PublicKey;
 use clarity::vm::ast::ASTRules;
 use clarity::vm::costs::ExecutionCost;
-use clarity::vm::events::StacksTransactionEvent;
+use clarity::vm::events::{STXEventType, STXMintEventData, StacksTransactionEvent};
 use clarity::vm::types::PrincipalData;
 use clarity::vm::{ClarityVersion, Value};
 use lazy_static::lazy_static;
@@ -32,7 +33,9 @@ use stacks_common::codec::{
     read_next, write_next, Error as CodecError, StacksMessageCodec, MAX_MESSAGE_LEN,
     MAX_PAYLOAD_LEN,
 };
-use stacks_common::consts::{FIRST_BURNCHAIN_CONSENSUS_HASH, FIRST_STACKS_BLOCK_HASH};
+use stacks_common::consts::{
+    FIRST_BURNCHAIN_CONSENSUS_HASH, FIRST_STACKS_BLOCK_HASH, MICROSTACKS_PER_STACKS,
+};
 use stacks_common::types::chainstate::{
     BlockHeaderHash, BurnchainHeaderHash, ConsensusHash, SortitionId, StacksAddress, StacksBlockId,
     StacksPrivateKey, StacksPublicKey, TrieHash, VRFSeed,
@@ -74,6 +77,7 @@ use crate::chainstate::nakamoto::tenure::{
     NakamotoTenureEventId, NAKAMOTO_TENURES_SCHEMA_1, NAKAMOTO_TENURES_SCHEMA_2,
     NAKAMOTO_TENURES_SCHEMA_3,
 };
+use crate::chainstate::stacks::boot::SIP_031_NAME;
 use crate::chainstate::stacks::db::blocks::DummyEventDispatcher;
 use crate::chainstate::stacks::db::{
     DBConfig as ChainstateConfig, StacksChainState, StacksDBConn, StacksDBTx,
@@ -570,6 +574,181 @@ impl MaturedMinerRewards {
     /// Get the list of miner rewards this struct represents
     pub fn consolidate(&self) -> Vec<MinerReward> {
         vec![self.recipient.clone(), self.parent_reward.clone()]
+    }
+}
+
+/// Struct describing the intervals in which SIP-031 emission are applied.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct SIP031EmissionInterval {
+    /// amount of uSTX to emit
+    pub amount: u128,
+    /// height of the burn chain in which the interval starts
+    pub start_height: u64,
+}
+
+// From SIP-031:
+//
+// | Bitcoin Height | STX Emission |
+// |----------------|------------  |
+// |   907,740      |     475      |
+// |   960,300      |   1,140      |
+// | 1,012,860      |   1,705      |
+// | 1,065,420      |   1,305      |
+// | 1,117,980      |   1,155      |
+// | 1,170,540      |       0      |
+
+/// Mainnet sip-031 emission intervals
+pub static SIP031_EMISSION_INTERVALS_MAINNET: LazyLock<[SIP031EmissionInterval; 6]> =
+    LazyLock::new(|| {
+        let emissions_schedule = [
+            SIP031EmissionInterval {
+                amount: 0,
+                start_height: 1_170_540,
+            },
+            SIP031EmissionInterval {
+                amount: 1_155 * u128::from(MICROSTACKS_PER_STACKS),
+                start_height: 1_117_980,
+            },
+            SIP031EmissionInterval {
+                amount: 1_305 * u128::from(MICROSTACKS_PER_STACKS),
+                start_height: 1_065_420,
+            },
+            SIP031EmissionInterval {
+                amount: 1_705 * u128::from(MICROSTACKS_PER_STACKS),
+                start_height: 1_012_860,
+            },
+            SIP031EmissionInterval {
+                amount: 1_140 * u128::from(MICROSTACKS_PER_STACKS),
+                start_height: 960_300,
+            },
+            SIP031EmissionInterval {
+                amount: 475 * u128::from(MICROSTACKS_PER_STACKS),
+                start_height: 907_740,
+            },
+        ];
+        assert!(SIP031EmissionInterval::check_inversed_order(
+            &emissions_schedule
+        ));
+        emissions_schedule
+    });
+
+/// Testnet sip-031 emission intervals (starting from 2100, basically dummy values)
+pub static SIP031_EMISSION_INTERVALS_TESTNET: LazyLock<[SIP031EmissionInterval; 6]> =
+    LazyLock::new(|| {
+        let emissions_schedule = [
+            SIP031EmissionInterval {
+                amount: 0,
+                start_height: 2_600,
+            },
+            SIP031EmissionInterval {
+                amount: 5_000,
+                start_height: 2_500,
+            },
+            SIP031EmissionInterval {
+                amount: 4_000,
+                start_height: 2_400,
+            },
+            SIP031EmissionInterval {
+                amount: 3_000,
+                start_height: 2_300,
+            },
+            SIP031EmissionInterval {
+                amount: 2_000,
+                start_height: 2_200,
+            },
+            SIP031EmissionInterval {
+                amount: 1_000,
+                start_height: 2_100,
+            },
+        ];
+        assert!(SIP031EmissionInterval::check_inversed_order(
+            &emissions_schedule
+        ));
+        emissions_schedule
+    });
+
+/// Used for testing to substitute a sip-031 emission schedule
+#[cfg(any(test, feature = "testing"))]
+pub static SIP031_EMISSION_INTERVALS_TEST: std::sync::Mutex<Option<Vec<SIP031EmissionInterval>>> =
+    std::sync::Mutex::new(None);
+
+#[cfg(any(test, feature = "testing"))]
+pub fn set_test_sip_031_emission_schedule(emission_schedule: Option<Vec<SIP031EmissionInterval>>) {
+    if let Some(emission_schedule_vec) = &emission_schedule {
+        assert!(SIP031EmissionInterval::check_inversed_order(
+            &emission_schedule_vec
+        ));
+    }
+    match SIP031_EMISSION_INTERVALS_TEST.lock() {
+        Ok(mut schedule_guard) => {
+            *schedule_guard = emission_schedule;
+        }
+        Err(_e) => {
+            panic!("SIP031_EMISSION_INTERVALS_TEST mutex poisoned");
+        }
+    }
+}
+
+#[cfg(any(test, feature = "testing"))]
+fn get_sip_031_emission_schedule(_mainnet: bool) -> Vec<SIP031EmissionInterval> {
+    match SIP031_EMISSION_INTERVALS_TEST.lock() {
+        Ok(schedule_opt) => {
+            if let Some(schedule) = (*schedule_opt).as_ref() {
+                info!("Use overridden SIP-031 emission schedule {:?}", &schedule);
+                return schedule.clone();
+            } else {
+                return vec![];
+            }
+        }
+        Err(_e) => {
+            panic!("COINBASE_INTERVALS_TEST mutex poisoned");
+        }
+    }
+}
+
+#[cfg(not(any(test, feature = "testing")))]
+fn get_sip_031_emission_schedule(mainnet: bool) -> Vec<SIP031EmissionInterval> {
+    if mainnet {
+        SIP031_EMISSION_INTERVALS_MAINNET.to_vec()
+    } else {
+        SIP031_EMISSION_INTERVALS_TESTNET.to_vec()
+    }
+}
+
+impl SIP031EmissionInterval {
+    /// Look up the amount of STX to emit at the start of the tenure at the specified height.
+    /// Precondition: `intervals` must be sorted in descending order by `start_height`
+    pub fn get_sip_031_emission_at_height(burn_height: u64, mainnet: bool) -> u128 {
+        let intervals = get_sip_031_emission_schedule(mainnet);
+
+        if intervals.is_empty() {
+            return 0;
+        }
+
+        for interval in intervals {
+            if burn_height >= interval.start_height {
+                return interval.amount;
+            }
+        }
+
+        // default emission (out of SIP-031 ranges)
+        return 0;
+    }
+
+    /// Verify that a list of intervals is sorted in descending order by `start_height`
+    pub fn check_inversed_order(intervals: &[SIP031EmissionInterval]) -> bool {
+        let Some(mut ht) = intervals.first().map(|x| x.start_height) else {
+            // if the interval list is empty, its sorted
+            return true;
+        };
+
+        for interval in intervals.iter().skip(1) {
+            if interval.start_height > ht {
+                return false;
+            }
+            ht = interval.start_height;
+        }
+        true
     }
 }
 
@@ -4650,6 +4829,24 @@ impl NakamotoChainState {
             }
         }
 
+        if new_tenure {
+            if let Some(event) = Self::sip_031_mint_and_transfer_on_new_tenure(
+                &mut clarity_tx,
+                chain_tip_burn_header_height,
+            ) {
+                // for sip-031 we are safe in assuming coinbase is at index 1
+                if let Some(receipt) = tx_receipts.get_mut(1) {
+                    if receipt.is_coinbase_tx() {
+                        receipt.events.push(event);
+                    } else {
+                        error!("Unable to attach SIP-031 mint events, block's second transaction is not a coinbase transaction")
+                    }
+                } else {
+                    error!("Unable to attach SIP-031 mint events, block's second transaction not available")
+                }
+            }
+        }
+
         // verify that the resulting chainstate matches the block's state root
         let root_hash = clarity_tx.seal();
         if root_hash != block.header.state_index_root {
@@ -4827,6 +5024,54 @@ impl NakamotoChainState {
             reward_set_data,
             lockup_events,
         ))
+    }
+
+    pub fn sip_031_mint_and_transfer_on_new_tenure(
+        clarity_tx: &mut ClarityTx,
+        chain_tip_burn_header_height: u32,
+    ) -> Option<StacksTransactionEvent> {
+        let evaluated_epoch = clarity_tx.get_epoch();
+        if evaluated_epoch.includes_sip_031() {
+            let mainnet = clarity_tx.config.mainnet;
+
+            let sip_031_mint_and_transfer_amount =
+                SIP031EmissionInterval::get_sip_031_emission_at_height(
+                    chain_tip_burn_header_height.into(),
+                    mainnet,
+                );
+
+            if sip_031_mint_and_transfer_amount > 0 {
+                let recipient = PrincipalData::Contract(boot_code_id(SIP_031_NAME, mainnet));
+
+                info!(
+                    "SIP-031 minting {} uSTX and transferring to {} for burn_block_height {}",
+                    sip_031_mint_and_transfer_amount, recipient, chain_tip_burn_header_height
+                );
+
+                clarity_tx.connection().as_transaction(|tx_conn| {
+                    tx_conn
+                        .with_clarity_db(|db| {
+                            db.increment_ustx_liquid_supply(sip_031_mint_and_transfer_amount)
+                                .map_err(|e| e.into())
+                        })
+                        .expect("FATAL: `SIP-031 mint` overflowed");
+                    StacksChainState::account_credit(
+                        tx_conn,
+                        &recipient,
+                        u64::try_from(sip_031_mint_and_transfer_amount)
+                            .expect("FATAL: transferred more STX than exist"),
+                    );
+                });
+
+                return Some(StacksTransactionEvent::STXEvent(
+                    STXEventType::STXMintEvent(STXMintEventData {
+                        recipient,
+                        amount: sip_031_mint_and_transfer_amount,
+                    }),
+                ));
+            }
+        }
+        None
     }
 
     /// Create a StackerDB config for the .miners contract.
