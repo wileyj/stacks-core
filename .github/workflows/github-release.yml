@@ -94,7 +94,7 @@ jobs:
             cpu: x86_64
     steps:
       - name: Build Binary (${{ matrix.arch }}_${{ matrix.cpu }})
-        uses: stacks-network/actions/stacks-core/release/create-source-binary@main
+        uses: wileyj/actions/stacks-core/release/create-source-binary@chore/remove_deprecated_binaries
         with:
           arch: ${{ matrix.arch }}
           cpu: ${{ matrix.cpu }}
