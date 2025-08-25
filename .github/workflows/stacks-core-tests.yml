@@ -78,7 +78,9 @@ jobs:
     steps:
       - name: Generate Node Configuration Documentation
         id: node_config_docsgen
-        uses: stacks-network/actions/stacks-core/node-config-docsgen@main
+        #uses: stacks-network/actions/stacks-core/node-config-docsgen@main
+        uses: stacks-network/actions/wileyj/node-config-docsgen@fix/6390
+
 
   ## Disabled
   ##   - this test can take several hours to run
