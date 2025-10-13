@@ -23,7 +23,7 @@ jobs:
   ##  - either node or signer tag is provided
   build-binaries:
     name: Build Binaries
-    runs-on: ubuntu-latest
+    # runs-on: ubuntu-latest
     strategy:
       ## Run a maximum of 10 builds concurrently, using the matrix defined in inputs.arch
       max-parallel: 10
@@ -44,7 +44,6 @@ jobs:
             - macos-latest-large
         exclude:
         ############################################
-        # exclude linux on macos
         # exclude linux-musl on macos
           - arch: linux-musl
             os: macos-latest-large
@@ -61,24 +60,113 @@ jobs:
         # excludes windows-arm64
           - arch: windows
             cpu: arm64
-        # excludes windows-armv7
-          - arch: windows
-            cpu: armv7
-        # excludes macos-armv7
-          - arch: macos
-            cpu: armv7
         # excludes macos-x64
           - arch: macos
             cpu: x86-64
+    runs-on: ${{ matrix.os }}
     steps:
+      ## Set env vars based on the type of arch build
+      - name: Set local env vars
+        id: set_env
+        shell: bash
+        run: |
+          case ${{ matrix.arch }} in
+            "linux-musl")
+              case ${{ matrix.cpu }} in
+                "arm64")
+                  sudo apt-get install -y gcc-aarch64-linux-gnu musl-dev
+                  TARGET="aarch64-unknown-linux-musl"
+                "x86-64")
+                  sudo apt-get install musl-tools
+                  TARGET="x86_64-unknown-linux-musl"
+                  # RUSTFLAGS="x86_64-v3:+${RUSTFLAGS} -Ctarget-cpu=x86_64-v3"
+                  ;;
+                "*")
+                  break
+                  ;;
+              esac
+            "linux-glibc")
+              case ${{ matrix.cpu }} in
+                "arm64")
+                  sudo apt-get install -y git gcc-aarch64-linux-gnu libclang-dev llvm
+                  TARGET="aarch64-unknown-linux-gnu"
+                "x86-64")
+                  sudo apt-get install -y git libclang-dev llvm
+                  TARGET="x86_64-unknown-linux-gnu"
+                  ;;
+                "*")
+                  break
+                  ;;
+              esac
+            "macos")
+              TARGET="aarch64-apple-darwin"
+              ;;
+            "windows")
+              sudo apt-get install -y git gcc-mingw-w64-x86-64
+              TARGET="x86_64-pc-windows-gnu"
+              # RUSTFLAGS="x86_64-v3:+${RUSTFLAGS} -Ctarget-cpu=x86_64-v3"
+              ;;
+            "*")
+              break
+              ;;
+          esac
+          if [[ -z "$TARGET" ]]; then
+            echo "TARGET Variable is empty";
+            exit 1
+          fi
+          echo "setting Target:${TARGET}"
+          echo "TARGET=${TARGET}" >> "$GITHUB_ENV"
+
+      # set target for the toolchain step
+      # musl-x64=x86_64-v3
+      # musl-aarch64=aarch64-unknown-linux-musl
+      # glibc-x64=x86_64-v3
+      # glibc-aarch64=aarch64-unknown-linux-gnu
+      # windows-x64=x86_64-pc-windows-gnu
+      # macos-aarch64=aarch64-apple-darwin
+
+        # echo "DOCKERFILE=Dockerfile.${{ inputs.arch }}-${DOCKERFILE_CPU}" >> "$GITHUB_ENV"
+        # echo "ZIPFILE=${{ inputs.arch }}-${ARCHIVE_NAME}" >> "$GITHUB_ENV"
+        # echo "TARGET_CPU=${TARGET_CPU}" >> "$GITHUB_ENV"
+
+      ## cleanup runner
+      - name: Cleanup Runner
+        id: runner_cleanup
+        uses: stacks-network/actions/cleanup/disk@main
+
+      ## Checkout the code
+      - name: Checkout the latest code
+        id: git_checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      ## Install rust toolchain (llvm-tools-preview)
+      - name: Setup Rust Toolchain
+        id: setup_rust_toolchain
+        uses: actions-rust-lang/setup-rust-toolchain@11df97af8e8102fd60b60a77dfbf58d40cd843b8 # v1.10.1
+        with:
+          toolchain: stable
+          cache: false
+          target: ${{ env.TARGET }}
+
       ## echo what we're doing
-      - name: Set Vars
-        id: set_vars
+      - name: Build release
+        id: build_release
         shell: bash
         run: |
           echo "arch: ${{ matrix.arch }}"
           echo "cpu: ${{ matrix.cpu }}"
           echo "os: ${{ matrix.os }}"
+          echo "Target: ${{env.TARGET}}"
+
+          # https://github.com/actions/partner-runner-images?tab=readme-ov-file#available-images
+          # glibc-aarch64
+          # glibc-x64
+          # musl-aarch64
+          # musl-x64
+          # windows-x64
+          # macos-aarch64
+          echo "cargo build --features monitoring_prom,slog_json --profile release-lite --workspace --target $TARGET"
+
           exit 0
 
       # - name: Build Binary (${{ matrix.arch }}_${{ matrix.cpu }})
