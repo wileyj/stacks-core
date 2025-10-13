@@ -55,6 +55,9 @@ jobs:
         # excludes macos on ubuntu
           - arch: macos
             os: ubuntu-latest
+        # excludes windows on macos
+          - arch: window
+            os: macos-latest-large
         # excludes windows-arm64
           - arch: windows
             cpu: arm64
