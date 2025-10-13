@@ -76,6 +76,7 @@ jobs:
                 "arm64")
                   sudo apt-get install -y gcc-aarch64-linux-gnu musl-dev
                   TARGET="aarch64-unknown-linux-musl"
+                  ;;
                 "x86-64")
                   sudo apt-get install musl-tools
                   TARGET="x86_64-unknown-linux-musl"
@@ -90,6 +91,7 @@ jobs:
                 "arm64")
                   sudo apt-get install -y git gcc-aarch64-linux-gnu libclang-dev llvm
                   TARGET="aarch64-unknown-linux-gnu"
+                  ;;
                 "x86-64")
                   sudo apt-get install -y git libclang-dev llvm
                   TARGET="x86_64-unknown-linux-gnu"
