@@ -45,11 +45,14 @@ jobs:
         # exclude linux on macos
         # exclude linux-musl on macos
           - arch: linux-musl
-          - os: macos-latest-large
+            os: macos-latest-large
         # exclude linux-glibc on macos
           - arch: linux-glibc
-          - os: macos-latest-large
+            os: macos-latest-large
         ############################################
+        # excludes macos on ubuntu
+          - arch: macos
+            os: ubuntu-latest
         # excludes windows-arm64
           - arch: windows
             cpu: arm64
