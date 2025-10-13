@@ -5,7 +5,7 @@ name: TEST Release workflow
 on:
   push:
     branches:
-      - fix/release-workflow
+      - fix/release_workflow
   workflow_dispatch:
   pull_request:
 
