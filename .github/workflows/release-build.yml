@@ -23,7 +23,6 @@ jobs:
   ##  - either node or signer tag is provided
   build-binaries:
     name: Build Binaries
-    # runs-on: ubuntu-latest
     strategy:
       ## Run a maximum of 10 builds concurrently, using the matrix defined in inputs.arch
       max-parallel: 10
@@ -41,7 +40,7 @@ jobs:
           # - x86-64-v4 ## intel skylake (2017) and newer
         os:
             - ubuntu-latest
-            - macos-latest-large
+            - macos-latest-large # this is a paid runner apparently
         exclude:
         ############################################
         # exclude linux-musl on macos
@@ -63,7 +62,8 @@ jobs:
         # excludes macos-x64
           - arch: macos
             cpu: x86-64
-    runs-on: ${{ matrix.os }}
+    # runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-latest
     steps:
       ## Set env vars based on the type of arch build
       - name: Set local env vars
