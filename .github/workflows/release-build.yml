@@ -3,8 +3,10 @@
 name: TEST Release workflow
 
 on:
+  push:
+    branches:
+      - fix/release-workflow
   workflow_dispatch:
-  workflow_call:
   pull_request:
 
 concurrency:
