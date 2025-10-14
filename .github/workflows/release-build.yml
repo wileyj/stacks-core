@@ -199,7 +199,6 @@ jobs:
           case "$TARGET" in
               "aarch64-unknown-linux-musl") # linux-musl-arm64
                   sudo apt-get install -y gcc-aarch64-linux-gnu musl-dev
-                  wget https://musl.cc/aarch64-linux-musl-cross.tgz
                   curl -LSf -# https://musl.cc/aarch64-linux-musl-cross.tgz | tar zxf - -C /tmp
                   CC=/tmp/aarch64-linux-musl-cross/bin/aarch64-linux-musl-gcc
                   ;;
