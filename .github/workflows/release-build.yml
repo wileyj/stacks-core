@@ -65,22 +65,21 @@ jobs:
     # runs-on: ${{ matrix.os }}
     runs-on: ubuntu-latest
     steps:
-      ## Set env vars based on the type of arch build
-      - name: Set local env vars
-        id: set_env
+      ## Set target env var based on the type of arch build
+      - name: Set Target Platform
+        id: set_target_platform
         shell: bash
         run: |
           case ${{ matrix.arch }} in
             "linux-musl")
               case ${{ matrix.cpu }} in
                 "arm64")
-                  sudo apt-get install -y gcc-aarch64-linux-gnu musl-dev
+                  # sudo apt-get install -y gcc-aarch64-linux-gnu musl-dev
                   TARGET="aarch64-unknown-linux-musl"
                   ;;
                 "x86-64")
-                  sudo apt-get install musl-tools
+                  # sudo apt-get install musl-tools
                   TARGET="x86_64-unknown-linux-musl"
-                  # RUSTFLAGS="x86_64-v3:+${RUSTFLAGS} -Ctarget-cpu=x86_64-v3"
                   ;;
                 "*")
                   break
@@ -90,11 +89,11 @@ jobs:
             "linux-glibc")
               case ${{ matrix.cpu }} in
                 "arm64")
-                  sudo apt-get install -y git gcc-aarch64-linux-gnu libclang-dev llvm
+                  # sudo apt-get install -y git gcc-aarch64-linux-gnu libclang-dev llvm
                   TARGET="aarch64-unknown-linux-gnu"
                   ;;
                 "x86-64")
-                  sudo apt-get install -y git libclang-dev llvm
+                  # sudo apt-get install -y git libclang-dev llvm
                   TARGET="x86_64-unknown-linux-gnu"
                   ;;
                 "*")
@@ -106,9 +105,8 @@ jobs:
               TARGET="aarch64-apple-darwin"
               ;;
             "windows")
-              sudo apt-get install -y git gcc-mingw-w64-x86-64
+              # sudo apt-get install -y git gcc-mingw-w64-x86-64
               TARGET="x86_64-pc-windows-gnu"
-              # RUSTFLAGS="x86_64-v3:+${RUSTFLAGS} -Ctarget-cpu=x86_64-v3"
               ;;
             "*")
               break
@@ -133,10 +131,10 @@ jobs:
         # echo "ZIPFILE=${{ inputs.arch }}-${ARCHIVE_NAME}" >> "$GITHUB_ENV"
         # echo "TARGET_CPU=${TARGET_CPU}" >> "$GITHUB_ENV"
 
-      ## cleanup runner
-      - name: Cleanup Runner
-        id: runner_cleanup
-        uses: stacks-network/actions/cleanup/disk@main
+      # ## cleanup runner
+      # - name: Cleanup Runner
+      #   id: runner_cleanup
+      #   uses: stacks-network/actions/cleanup/disk@main
 
       ## Checkout the code
       - name: Checkout the latest code
@@ -164,11 +162,80 @@ jobs:
 
           # https://github.com/actions/partner-runner-images?tab=readme-ov-file#available-images
           # glibc-aarch64
+            # CC=aarch64-linux-gnu-gcc
+            # CC_aarch64_unknown_linux_gnu=aarch64-linux-gnu-gcc \
+            # CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER=aarch64-linux-gnu-gcc
           # glibc-x64
+            # no compile flags
           # musl-aarch64
+            # wget https://musl.cc/aarch64-linux-musl-cross.tgz
+            # tar -xvzf aarch64-linux-musl-cross.tgz -C /tmp
+            # /tmp/aarch64-linux-musl-cross/bin/aarch64-linux-musl-gcc --version
+            # CC=/tmp/aarch64-linux-musl-cross/bin/aarch64-linux-musl-gcc
           # musl-x64
+            # RUSTFLAGS="${TARGET_CPU:+${RUSTFLAGS} -Ctarget-cpu=${TARGET_CPU}}"
           # windows-x64
+            # CC_x86_64_pc_windows_gnu=x86_64-w64-mingw32-gcc
+            # CARGO_TARGET_X86_64_PC_WINDOWS_GNU_LINKER=x86_64-w64-mingw32-gcc
+            # RUSTFLAGS="${TARGET_CPU:+${RUSTFLAGS} -Ctarget-cpu=${TARGET_CPU}}"
           # macos-aarch64
+            # if using macos runner, no compile flags (disable for testing)
+            #
+
+          # case "${{ matrix.arch }}-${{ matrix.cpu }}" in
+          #     "linux-glibc-arm64") # aarch64-unknown-linux-gnu
+          #         ;;
+          #     "linux-glibc-x86_64") # x86_64-unknown-linux-gnu
+          #         ;;
+          #     "linux-musl-arm64") # aarch64-unknown-linux-musl
+          #         ;;
+          #     "linux-musl-x86_64") # x86_64-unknown-linux-musl
+          #         ;;
+          #     "windows-x86_64") # x86_64-pc-windows-gnu
+          #         ;;
+          #     "macos-arm64") # aarch64-apple-darwin
+          #         ;;
+          # esac
+          case "$TARGET" in
+              "aarch64-unknown-linux-musl") # linux-musl-arm64
+                  sudo apt-get install -y gcc-aarch64-linux-gnu musl-dev
+                  wget https://musl.cc/aarch64-linux-musl-cross.tgz
+                  tar -xvzf aarch64-linux-musl-cross.tgz -C /tmp
+                  CC=/tmp/aarch64-linux-musl-cross/bin/aarch64-linux-musl-gcc
+                  ;;
+              "x86_64-unknown-linux-musl") # linux-musl-x86_64
+                  sudo apt-get install musl-tools
+                  # RUSTFLAGS="${TARGET_CPU:+${RUSTFLAGS} -Ctarget-cpu=${TARGET_CPU}}"
+                  ;;
+              "x86_64-unknown-linux-gnu") # linux-glibc-x86_64
+                  sudo apt-get install -y git libclang-dev llvm
+                ;;
+              "aarch64-unknown-linux-gnu") # linux-glibc-arm64
+                  sudo apt-get install -y git gcc-aarch64-linux-gnu libclang-dev llvm
+                  CC=aarch64-linux-gnu-gcc
+                  CC_aarch64_unknown_linux_gnu=aarch64-linux-gnu-gcc
+                  CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER=aarch64-linux-gnu-gcc
+                  ;;
+              "x86_64-pc-windows-gnu") # windows-x86_64
+                  sudo apt-get install -y git gcc-mingw-w64-x86-64
+                  CC_x86_64_pc_windows_gnu=x86_64-w64-mingw32-gcc
+                  CARGO_TARGET_X86_64_PC_WINDOWS_GNU_LINKER=x86_64-w64-mingw32-gcc
+                  # RUSTFLAGS="${TARGET_CPU:+${RUSTFLAGS} -Ctarget-cpu=${TARGET_CPU}}"
+                  ;;
+              "aarch64-apple-darwin") # macos-arm64
+                  break
+                  ;;
+              "*")
+                  echo "Target: $TARGET"
+                  echo "no match for build target. exiting"
+                  exit 1
+                  ;;
+          esac
+          echo "CC: $CC"
+          echo "CC_aarch64_unknown_linux_gnu: $CC_aarch64_unknown_linux_gnu"
+          echo "CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER: $CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER"
+          echo "CC_x86_64_pc_windows_gnu: $CC_x86_64_pc_windows_gnu"
+          echo "CARGO_TARGET_X86_64_PC_WINDOWS_GNU_LINKER: $CARGO_TARGET_X86_64_PC_WINDOWS_GNU_LINKER"
           echo "cargo build --features monitoring_prom,slog_json --profile release-lite --workspace --target $TARGET"
 
           exit 0
