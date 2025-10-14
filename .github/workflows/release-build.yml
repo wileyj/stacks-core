@@ -150,6 +150,13 @@ jobs:
           cache: false
           target: ${{ env.TARGET }}
 
+      - name: Setup Musl Cross
+        if: |
+          env.TARGET == 'aarch64-unknown-linux-musl'
+        id: musl_cross
+        shell: bash
+        run: |
+          curl -LSf -# https://musl.cc/aarch64-linux-musl-cross.tgz | tar zxf - -C /tmp
       ## echo what we're doing
       - name: Build release
         id: build_release
@@ -160,46 +167,10 @@ jobs:
           echo "os: ${{ matrix.os }}"
           echo "Target: ${{env.TARGET}}"
 
-          # https://github.com/actions/partner-runner-images?tab=readme-ov-file#available-images
-          # glibc-aarch64
-            # CC=aarch64-linux-gnu-gcc
-            # CC_aarch64_unknown_linux_gnu=aarch64-linux-gnu-gcc \
-            # CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER=aarch64-linux-gnu-gcc
-          # glibc-x64
-            # no compile flags
-          # musl-aarch64
-            # wget https://musl.cc/aarch64-linux-musl-cross.tgz
-            # tar -xvzf aarch64-linux-musl-cross.tgz -C /tmp
-            # /tmp/aarch64-linux-musl-cross/bin/aarch64-linux-musl-gcc --version
-            # CC=/tmp/aarch64-linux-musl-cross/bin/aarch64-linux-musl-gcc
-          # musl-x64
-            # RUSTFLAGS="${TARGET_CPU:+${RUSTFLAGS} -Ctarget-cpu=${TARGET_CPU}}"
-          # windows-x64
-            # CC_x86_64_pc_windows_gnu=x86_64-w64-mingw32-gcc
-            # CARGO_TARGET_X86_64_PC_WINDOWS_GNU_LINKER=x86_64-w64-mingw32-gcc
-            # RUSTFLAGS="${TARGET_CPU:+${RUSTFLAGS} -Ctarget-cpu=${TARGET_CPU}}"
-          # macos-aarch64
-            # if using macos runner, no compile flags (disable for testing)
-            #
-
-          # case "${{ matrix.arch }}-${{ matrix.cpu }}" in
-          #     "linux-glibc-arm64") # aarch64-unknown-linux-gnu
-          #         ;;
-          #     "linux-glibc-x86_64") # x86_64-unknown-linux-gnu
-          #         ;;
-          #     "linux-musl-arm64") # aarch64-unknown-linux-musl
-          #         ;;
-          #     "linux-musl-x86_64") # x86_64-unknown-linux-musl
-          #         ;;
-          #     "windows-x86_64") # x86_64-pc-windows-gnu
-          #         ;;
-          #     "macos-arm64") # aarch64-apple-darwin
-          #         ;;
-          # esac
           case "$TARGET" in
               "aarch64-unknown-linux-musl") # linux-musl-arm64
                   sudo apt-get install -y gcc-aarch64-linux-gnu musl-dev
-                  curl -LSf -# https://musl.cc/aarch64-linux-musl-cross.tgz | tar zxf - -C /tmp
+                  # curl -LSf -# https://musl.cc/aarch64-linux-musl-cross.tgz | tar zxf - -C /tmp
                   CC=/tmp/aarch64-linux-musl-cross/bin/aarch64-linux-musl-gcc
                   ;;
               "x86_64-unknown-linux-musl") # linux-musl-x86_64
