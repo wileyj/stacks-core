@@ -156,7 +156,8 @@ jobs:
         id: musl_cross
         shell: bash
         run: |
-          curl -LSf -# https://musl.cc/aarch64-linux-musl-cross.tgz | tar zxf - -C /tmp
+          #curl -LSf -# https://musl.cc/aarch64-linux-musl-cross.tgz | tar zxf - -C /tmp
+          curl -LSf -# https://github.com/musl-cc/musl.cc/releases/download/v0.0.1/aarch64-linux-musl-cross.tgz | tar zxf - -C /tmp
       ## echo what we're doing
       - name: Build release
         id: build_release
