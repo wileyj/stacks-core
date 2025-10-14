@@ -86,6 +86,7 @@ jobs:
                   break
                   ;;
               esac
+              ;;
             "linux-glibc")
               case ${{ matrix.cpu }} in
                 "arm64")
@@ -100,6 +101,7 @@ jobs:
                   break
                   ;;
               esac
+              ;;
             "macos")
               TARGET="aarch64-apple-darwin"
               ;;
