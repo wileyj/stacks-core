@@ -62,6 +62,10 @@ jobs:
         # excludes macos-x64
           - arch: macos
             cpu: x86-64
+        ##  added for testing
+        # excludes macos-arm64
+          - arch: macos
+            cpu: arm64
     # runs-on: ${{ matrix.os }}
     runs-on: ubuntu-latest
     steps:
