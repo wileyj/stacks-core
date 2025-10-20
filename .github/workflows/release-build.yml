@@ -276,7 +276,7 @@ jobs:
               sudo apt-get install -y git gcc-mingw-w64-x86-64
               echo "CC_x86_64_pc_windows_gnu=x86_64-w64-mingw32-gcc" >> $GITHUB_ENV
               echo "CARGO_TARGET_X86_64_PC_WINDOWS_GNU_LINKER=x86_64-w64-mingw32-gcc" >> $GITHUB_ENV
-              echo "RUSTFLAGS="${TARGET_CPU:+${RUSTFLAGS} -Ctarget-cpu=${TARGET_CPU}}" >> $GITHUB_ENV
+              echo "RUSTFLAGS=\"${TARGET_CPU:+${RUSTFLAGS} -Ctarget-cpu=${TARGET_CPU}}\"" >> $GITHUB_ENV
               ;;
             "aarch64-apple-darwin") # macos-arm64
               ;;
@@ -286,14 +286,6 @@ jobs:
               exit 1
               ;;
           esac
-          # echo "CC: $CC"
-          # echo "RUSTFLAGS: $RUSTFLAGS"
-          # echo "CC_aarch64_unknown_linux_gnu: $CC_aarch64_unknown_linux_gnu"
-          # echo "CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER: $CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER"
-          # echo "CC_x86_64_pc_windows_gnu: $CC_x86_64_pc_windows_gnu"
-          # echo "CARGO_TARGET_X86_64_PC_WINDOWS_GNU_LINKER: $CARGO_TARGET_X86_64_PC_WINDOWS_GNU_LINKER"
-          # echo "cargo build --features monitoring_prom,slog_json --profile release-lite --workspace --target $TARGET"
-
           exit 0
 
       ## echo what we're doing
