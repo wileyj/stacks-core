@@ -77,7 +77,6 @@ jobs:
           case ${{ matrix.cpu }} in
             "x86-64")
               TARGET_CPU="${{ matrix.cpu }}-v3"
-              # RUSTFLAGS="${TARGET_CPU:+${RUSTFLAGS} -Ctarget-cpu=${TARGET_CPU}}"
               case ${{ matrix.arch }} in
                 "linux-musl")
                   TARGET="x86_64-unknown-linux-musl"
@@ -264,11 +263,11 @@ jobs:
               ;;
             "x86_64-unknown-linux-musl") # linux-musl-x86_64
               sudo apt-get install musl-tools
-              echo "RUSTFLAGS=\"${TARGET_CPU:+${RUSTFLAGS} -Ctarget-cpu=${TARGET_CPU}}\"" >> $GITHUB_ENV
+              echo "RUSTFLAGS="${TARGET_CPU:+${RUSTFLAGS} -Ctarget-cpu=${TARGET_CPU}}"" >> $GITHUB_ENV
               ;;
             "x86_64-unknown-linux-gnu") # linux-glibc-x86_64
               sudo apt-get install -y git libclang-dev llvm
-              echo "RUSTFLAGS=\"${TARGET_CPU:+${RUSTFLAGS} -Ctarget-cpu=${TARGET_CPU}}\"" >> $GITHUB_ENV
+              echo "RUSTFLAGS="${TARGET_CPU:+${RUSTFLAGS} -Ctarget-cpu=${TARGET_CPU}}"" >> $GITHUB_ENV
               ;;
             "aarch64-unknown-linux-gnu") # linux-glibc-arm64
               sudo apt-get install -y git gcc-aarch64-linux-gnu libclang-dev llvm
@@ -280,7 +279,7 @@ jobs:
               sudo apt-get install -y git gcc-mingw-w64-x86-64
               echo "CC_x86_64_pc_windows_gnu=x86_64-w64-mingw32-gcc" >> $GITHUB_ENV
               echo "CARGO_TARGET_X86_64_PC_WINDOWS_GNU_LINKER=x86_64-w64-mingw32-gcc" >> $GITHUB_ENV
-              echo "RUSTFLAGS=\"${TARGET_CPU:+${RUSTFLAGS} -Ctarget-cpu=${TARGET_CPU}}\"" >> $GITHUB_ENV
+              echo "RUSTFLAGS="${TARGET_CPU:+${RUSTFLAGS} -Ctarget-cpu=${TARGET_CPU}}"" >> $GITHUB_ENV
               ;;
             "aarch64-apple-darwin") # macos-arm64
               ;;
@@ -310,6 +309,7 @@ jobs:
         id: build_release
         shell: bash
         run: |
+          printenv
           echo "CC: $CC"
           echo "RUSTFLAGS: $RUSTFLAGS"
           echo "CC_aarch64_unknown_linux_gnu: $CC_aarch64_unknown_linux_gnu"
