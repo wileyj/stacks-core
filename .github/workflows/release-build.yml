@@ -70,46 +70,40 @@ jobs:
         id: set_target_platform
         shell: bash
         run: |
-          case ${{ matrix.arch }} in
-            "linux-musl")
-              case ${{ matrix.cpu }} in
-                "arm64")
-                  # sudo apt-get install -y gcc-aarch64-linux-gnu musl-dev
-                  TARGET="aarch64-unknown-linux-musl"
-                  ;;
-                "x86-64")
-                  # sudo apt-get install musl-tools
+          case ${{ matrix.cpu }} in
+            "x86-64")
+              TARGET_CPU="${{ matrix.cpu }}-v3"
+              # RUSTFLAGS="${TARGET_CPU:+${RUSTFLAGS} -Ctarget-cpu=${TARGET_CPU}}"
+              case ${{ matrix.arch }} in
+                "linux-musl")
                   TARGET="x86_64-unknown-linux-musl"
                   ;;
-                "*")
-                  break
-                  ;;
-              esac
-              ;;
-            "linux-glibc")
-              case ${{ matrix.cpu }} in
-                "arm64")
-                  # sudo apt-get install -y git gcc-aarch64-linux-gnu libclang-dev llvm
-                  TARGET="aarch64-unknown-linux-gnu"
-                  ;;
-                "x86-64")
-                  # sudo apt-get install -y git libclang-dev llvm
+                "linux-glibc")
                   TARGET="x86_64-unknown-linux-gnu"
                   ;;
+                "windows")
+                  TARGET="x86_64-pc-windows-gnu"
+                  ;;
                 "*")
-                  break
                   ;;
               esac
               ;;
-            "macos")
-              TARGET="aarch64-apple-darwin"
-              ;;
-            "windows")
-              # sudo apt-get install -y git gcc-mingw-w64-x86-64
-              TARGET="x86_64-pc-windows-gnu"
+            "arm64")
+              case ${{ matrix.arch }} in
+                "linux-musl")
+                  TARGET="aarch64-unknown-linux-musl"
+                  ;;
+                "linux-glibc")
+                  TARGET="aarch64-unknown-linux-gnu"
+                  ;;
+                "macos")
+                  TARGET="aarch64-apple-darwin"
+                  ;;
+                "*")
+                  ;;
+              esac
               ;;
             "*")
-              break
               ;;
           esac
           if [[ -z "$TARGET" ]]; then
@@ -117,7 +111,56 @@ jobs:
             exit 1
           fi
           echo "setting Target:${TARGET}"
+          echo "setting Rustflags: ${RUSTFLAGS}"
           echo "TARGET=${TARGET}" >> "$GITHUB_ENV"
+          echo "TARGET_CPU=${TARGET_CPU}" >> "$GITHUB_ENV"
+
+        # run: |
+        #   case ${{ matrix.arch }} in
+        #     "linux-musl")
+        #       case ${{ matrix.cpu }} in
+        #         "arm64")
+        #           # sudo apt-get install -y gcc-aarch64-linux-gnu musl-dev
+        #           TARGET="aarch64-unknown-linux-musl"
+        #           ;;
+        #         "x86-64")
+        #           # sudo apt-get install musl-tools
+        #           TARGET="x86_64-unknown-linux-musl"
+        #           ;;
+        #         "*")
+        #           ;;
+        #       esac
+        #       ;;
+        #     "linux-glibc")
+        #       case ${{ matrix.cpu }} in
+        #         "arm64")
+        #           # sudo apt-get install -y git gcc-aarch64-linux-gnu libclang-dev llvm
+        #           TARGET="aarch64-unknown-linux-gnu"
+        #           ;;
+        #         "x86-64")
+        #           # sudo apt-get install -y git libclang-dev llvm
+        #           TARGET="x86_64-unknown-linux-gnu"
+        #           ;;
+        #         "*")
+        #           ;;
+        #       esac
+        #       ;;
+        #     "macos")
+        #       TARGET="aarch64-apple-darwin"
+        #       ;;
+        #     "windows")
+        #       # sudo apt-get install -y git gcc-mingw-w64-x86-64
+        #       TARGET="x86_64-pc-windows-gnu"
+        #       ;;
+        #     "*")
+        #       ;;
+        #   esac
+        #   if [[ -z "$TARGET" ]]; then
+        #     echo "TARGET Variable is empty";
+        #     exit 1
+        #   fi
+        #   echo "setting Target:${TARGET}"
+        #   echo "TARGET=${TARGET}" >> "$GITHUB_ENV"
 
       # set target for the toolchain step
       # musl-x64=x86_64-v3
@@ -156,11 +199,52 @@ jobs:
         id: musl_cross
         shell: bash
         run: |
-          #curl -LSf -# https://musl.cc/aarch64-linux-musl-cross.tgz | tar zxf - -C /tmp
           curl -LSf -# https://github.com/musl-cc/musl.cc/releases/download/v0.0.1/aarch64-linux-musl-cross.tgz | tar zxf - -C /tmp
+
+      # ## Set env vars based on the type of arch build
+      # - name: Set local env vars
+      #   id: set_env
+      #   shell: bash
+      #   run: |
+      #     case ${{ matrix.cpu }} in
+      #       x86-64)
+      #         ## default x64 builds to use v3 variant. TARGET_CPU is required to build for v3 via RUSTFLAGS
+      #         TARGET_CPU="${{ inputs.cpu }}-v3"
+      #         DOCKERFILE_CPU="x64"
+      #         ARCHIVE_NAME="x64"
+      #         ;;
+      #       x86-64-v2)
+      #         ## intel nehalem (2008) and newer
+      #         TARGET_CPU="${{ inputs.cpu }}"
+      #         DOCKERFILE_CPU="x64"
+      #         ARCHIVE_NAME="x64-v2"
+      #         ;;
+      #       x86-64-v3)
+      #         ## intel haswell (2013) and newer
+      #         TARGET_CPU="${{ inputs.cpu }}"
+      #         DOCKERFILE_CPU="x64"
+      #         ARCHIVE_NAME="x64-v3"
+      #         ;;
+      #       x86-64-v4)
+      #         ## intel skylake (2017) and newer
+      #         TARGET_CPU="${{ inputs.cpu }}"
+      #         DOCKERFILE_CPU="x64"
+      #         ARCHIVE_NAME="x64-v4"
+      #         ;;
+      #       *)
+      #         TARGET_CPU=""
+      #         DOCKERFILE_CPU="${{ inputs.cpu }}"
+      #         ARCHIVE_NAME="${{ inputs.cpu }}"
+      #         ;;
+      #     esac
+      #     echo "DOCKERFILE=Dockerfile.${{ inputs.arch }}-${DOCKERFILE_CPU}" >> "$GITHUB_ENV"
+      #     echo "ZIPFILE=${{ inputs.arch }}-${ARCHIVE_NAME}" >> "$GITHUB_ENV"
+      #     echo "TARGET_CPU=${TARGET_CPU}" >> "$GITHUB_ENV"
+
+
       ## echo what we're doing
-      - name: Build release
-        id: build_release
+      - name: Configure Build Environment
+        id: configure_build_env
         shell: bash
         run: |
           echo "arch: ${{ matrix.arch }}"
@@ -171,15 +255,16 @@ jobs:
           case "$TARGET" in
               "aarch64-unknown-linux-musl") # linux-musl-arm64
                   sudo apt-get install -y gcc-aarch64-linux-gnu musl-dev
-                  # curl -LSf -# https://musl.cc/aarch64-linux-musl-cross.tgz | tar zxf - -C /tmp
+                  #curl -LSf -# https://github.com/musl-cc/musl.cc/releases/download/v0.0.1/aarch64-linux-musl-cross.tgz | tar zxf - -C /tmp
                   CC=/tmp/aarch64-linux-musl-cross/bin/aarch64-linux-musl-gcc
                   ;;
               "x86_64-unknown-linux-musl") # linux-musl-x86_64
                   sudo apt-get install musl-tools
-                  # RUSTFLAGS="${TARGET_CPU:+${RUSTFLAGS} -Ctarget-cpu=${TARGET_CPU}}"
+                  RUSTFLAGS="${TARGET_CPU:+${RUSTFLAGS} -Ctarget-cpu=${TARGET_CPU}}"
                   ;;
               "x86_64-unknown-linux-gnu") # linux-glibc-x86_64
                   sudo apt-get install -y git libclang-dev llvm
+                  RUSTFLAGS="${TARGET_CPU:+${RUSTFLAGS} -Ctarget-cpu=${TARGET_CPU}}"
                 ;;
               "aarch64-unknown-linux-gnu") # linux-glibc-arm64
                   sudo apt-get install -y git gcc-aarch64-linux-gnu libclang-dev llvm
@@ -191,10 +276,9 @@ jobs:
                   sudo apt-get install -y git gcc-mingw-w64-x86-64
                   CC_x86_64_pc_windows_gnu=x86_64-w64-mingw32-gcc
                   CARGO_TARGET_X86_64_PC_WINDOWS_GNU_LINKER=x86_64-w64-mingw32-gcc
-                  # RUSTFLAGS="${TARGET_CPU:+${RUSTFLAGS} -Ctarget-cpu=${TARGET_CPU}}"
+                  RUSTFLAGS="${TARGET_CPU:+${RUSTFLAGS} -Ctarget-cpu=${TARGET_CPU}}"
                   ;;
               "aarch64-apple-darwin") # macos-arm64
-                  break
                   ;;
               "*")
                   echo "Target: $TARGET"
@@ -207,6 +291,7 @@ jobs:
           echo "CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER: $CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER"
           echo "CC_x86_64_pc_windows_gnu: $CC_x86_64_pc_windows_gnu"
           echo "CARGO_TARGET_X86_64_PC_WINDOWS_GNU_LINKER: $CARGO_TARGET_X86_64_PC_WINDOWS_GNU_LINKER"
+          echo "RUSTFLAGS: $RUSTFLAGS"
           echo "cargo build --features monitoring_prom,slog_json --profile release-lite --workspace --target $TARGET"
 
           exit 0
