@@ -301,6 +301,19 @@ jobs:
           echo "CARGO_TARGET_X86_64_PC_WINDOWS_GNU_LINKER: $CARGO_TARGET_X86_64_PC_WINDOWS_GNU_LINKER"
           echo "cargo build --features monitoring_prom,slog_json --profile release-lite --workspace --target $TARGET"
 
+      ## echo what we're doing
+      - name: Build Release
+        id: build_release
+        shell: bash
+        run: |
+          echo "CC: $CC"
+          echo "RUSTFLAGS: $RUSTFLAGS"
+          echo "CC_aarch64_unknown_linux_gnu: $CC_aarch64_unknown_linux_gnu"
+          echo "CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER: $CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER"
+          echo "CC_x86_64_pc_windows_gnu: $CC_x86_64_pc_windows_gnu"
+          echo "CARGO_TARGET_X86_64_PC_WINDOWS_GNU_LINKER: $CARGO_TARGET_X86_64_PC_WINDOWS_GNU_LINKER"
+          cargo build --features monitoring_prom,slog_json --profile release-lite --workspace --target $TARGET
+
       # - name: Build Binary (${{ matrix.arch }}_${{ matrix.cpu }})
       #   uses: stacks-network/actions/stacks-core/release/create-source-binary@main
       #   with:
