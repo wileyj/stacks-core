@@ -317,6 +317,25 @@ jobs:
           echo "CC_x86_64_pc_windows_gnu: $CC_x86_64_pc_windows_gnu"
           echo "CARGO_TARGET_X86_64_PC_WINDOWS_GNU_LINKER: $CARGO_TARGET_X86_64_PC_WINDOWS_GNU_LINKER"
           cargo build --features monitoring_prom,slog_json --profile release-lite --workspace --target $TARGET
+          ls -al
+          ls -al ./release
+          ls -al ./release/*
+
+      # ## Compress the binary artifact
+      # - name: Compress artifact
+      #   id: compress_artifact
+      #   shell: bash
+      #   run: |
+      #     zip --junk-paths ${{ env.ZIPFILE }} ./release/${{ inputs.arch }}/*
+
+      # ## Upload the binary artifact to the github action (used in `github-release.yml` to create a release)
+      # - name: Upload artifact
+      #   id: upload_artifact
+      #   uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08 # v4.6.0
+      #   with:
+      #     name: ${{ inputs.node_tag || inputs.signer_docker_tag }}-binary-build-${{ env.ZIPFILE }}
+      #     path: ${{ env.ZIPFILE }}.zip
+
 
       # - name: Build Binary (${{ matrix.arch }}_${{ matrix.cpu }})
       #   uses: stacks-network/actions/stacks-core/release/create-source-binary@main
