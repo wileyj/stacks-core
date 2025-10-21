@@ -161,7 +161,6 @@ jobs:
           echo "os: ${{ matrix.os }}"
           echo "TARGET: ${{env.TARGET}}"
           echo "TARGET_CPU: ${{env.TARGET_CPU}}"
-          echo "LINKER: ${{env.LINKER}}"
           echo "CMD: ${{env.CMD}}"
 
           case "${{env.TARGET}}" in
@@ -170,12 +169,14 @@ jobs:
               sudo apt-get install -y git gcc-aarch64-linux-gnu libclang-dev llvm
               LINKER=aarch64-linux-gnu-gcc
               # cargo build --features monitoring_prom,slog_json --profile release-lite --workspace --target $TARGET --config "target.${TARGET}.linker=\"${LINKER}\""
+              echo "$CMD --target $TARGET --config \"target.${TARGET}.linker=\\\"${LINKER}\\\"\" "
               ${{env.CMD}} --target $TARGET --config "target.${{env.TARGET}}.linker=\"${LINKER}\""
               ;;
             # linux glibc x64
             "x86_64-unknown-linux-gnu") # linux-glibc-x86_64
               sudo apt-get install -y git libclang-dev llvm
               # cargo build --features monitoring_prom,slog_json --profile release-lite --workspace --target $TARGET --config build.rustflags="\"-C target-cpu=${TARGET_CPU}\""
+              echo "$CMD --target $TARGET --config \"target.${TARGET}.linker=\\\"${LINKER}\\\"\" "
               ${{env.CMD}} --target $TARGET --config build.rustflags="\"-C target-cpu=${TARGET_CPU}\""
               ;;
             # windows glibc x64
@@ -183,12 +184,14 @@ jobs:
               sudo apt-get install -y git gcc-mingw-w64-x86-64
               LINKER=x86_64-w64-mingw32-gcc
               # cargo build --features monitoring_prom,slog_json --profile release-lite --workspace --target $TARGET --config "target.${TARGET}.linker=\"${LINKER}\"" --config build.rustflags="\"-C target-cpu=${TARGET_CPU}\""
+              echo "$CMD --target $TARGET --config \"target.${TARGET}.linker=\\\"${LINKER}\\\"\"  --config build.rustflags="\"-C target-cpu=${TARGET_CPU}\"" "
               ${{env.CMD}} --target $TARGET --config "target.${{env.TARGET}}.linker=\"${LINKER}\"" --config build.rustflags="\"-C target-cpu=${TARGET_CPU}\""
               ;;
             # linux musl x64
             "x86_64-unknown-linux-musl") # linux-musl-x86_64
               sudo apt-get install musl-tools
               # cargo build --features monitoring_prom,slog_json --profile release-lite --workspace --target $TARGET --config build.rustflags="\"-C target-cpu=${TARGET_CPU}\""
+              echo "$CMD --target $TARGET --config build.rustflags=\"\\\"-C target-cpu=${TARGET_CPU}\\\"\" "
               ${{env.CMD}} --target $TARGET --config build.rustflags="\"-C target-cpu=${TARGET_CPU}\""
               ;;
             # linux musl aarch64
@@ -196,11 +199,13 @@ jobs:
               sudo apt-get install -y gcc-aarch64-linux-gnu musl-dev
               LINKER=/tmp/aarch64-linux-musl-cross/bin/aarch64-linux-musl-gcc
               # cargo build --features monitoring_prom,slog_json --profile release-lite --workspace --target $TARGET --config "target.${TARGET}.linker=\"${LINKER}\""
+              echo "$CMD --target $TARGET --config \"target.${TARGET}.linker=\\\"${LINKER}\\\"\" "
               ${{env.CMD}} --target $TARGET --config "target.${{env.TARGET}}.linker=\"${LINKER}\""
               ;;
             # macos aarch64
             "aarch64-apple-darwin") # macos-arm64
-              ${{env.CMD}} --config build.rustflags="\"-C target-cpu=native\""
+              echo "$CMD --target $TARGET --config build.rustflags=\"\\\"-C target-cpu=native\\\"\" "
+              ${{env.CMD}} --target $TARGET --config build.rustflags="\"-C target-cpu=native\""
               ;;
             # catchall - run default command
             "*")
@@ -218,10 +223,10 @@ jobs:
         run: |
           printenv
           ls -al
-          ls -al ./release
-          ls -al ./release/*
-          ls -al ./release/${{env.TARGET}}
-          ls -al ./release/${{env.TARGET}}/release-list
+          ls -al ./target
+          ls -al ./target/*
+          ls -al ./target/${{env.TARGET}}
+          ls -al ./target/${{env.TARGET}}/release-lite
 
       # ## Compress the binary artifact
       # - name: Compress artifact
