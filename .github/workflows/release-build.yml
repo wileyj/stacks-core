@@ -16,6 +16,12 @@ concurrency:
 
 run-name: test release build matrix
 
+env:
+    TARGET_CPU: ""
+    LINKER: ""
+    # set a default command to build
+    CMD: "cargo build --features monitoring_prom,slog_json --profile release-lite --workspace"
+
 jobs:
   ## Build arch dependent binaries from source
   ##
@@ -118,65 +124,6 @@ jobs:
           echo "TARGET=${TARGET}" >> "$GITHUB_ENV"
           echo "TARGET_CPU=${TARGET_CPU}" >> "$GITHUB_ENV"
 
-        # run: |
-        #   case ${{ matrix.arch }} in
-        #     "linux-musl")
-        #       case ${{ matrix.cpu }} in
-        #         "arm64")
-        #           # sudo apt-get install -y gcc-aarch64-linux-gnu musl-dev
-        #           TARGET="aarch64-unknown-linux-musl"
-        #           ;;
-        #         "x86-64")
-        #           # sudo apt-get install musl-tools
-        #           TARGET="x86_64-unknown-linux-musl"
-        #           ;;
-        #         "*")
-        #           ;;
-        #       esac
-        #       ;;
-        #     "linux-glibc")
-        #       case ${{ matrix.cpu }} in
-        #         "arm64")
-        #           # sudo apt-get install -y git gcc-aarch64-linux-gnu libclang-dev llvm
-        #           TARGET="aarch64-unknown-linux-gnu"
-        #           ;;
-        #         "x86-64")
-        #           # sudo apt-get install -y git libclang-dev llvm
-        #           TARGET="x86_64-unknown-linux-gnu"
-        #           ;;
-        #         "*")
-        #           ;;
-        #       esac
-        #       ;;
-        #     "macos")
-        #       TARGET="aarch64-apple-darwin"
-        #       ;;
-        #     "windows")
-        #       # sudo apt-get install -y git gcc-mingw-w64-x86-64
-        #       TARGET="x86_64-pc-windows-gnu"
-        #       ;;
-        #     "*")
-        #       ;;
-        #   esac
-        #   if [[ -z "$TARGET" ]]; then
-        #     echo "TARGET Variable is empty";
-        #     exit 1
-        #   fi
-        #   echo "setting Target:${TARGET}"
-        #   echo "TARGET=${TARGET}" >> "$GITHUB_ENV"
-
-      # set target for the toolchain step
-      # musl-x64=x86_64-v3
-      # musl-aarch64=aarch64-unknown-linux-musl
-      # glibc-x64=x86_64-v3
-      # glibc-aarch64=aarch64-unknown-linux-gnu
-      # windows-x64=x86_64-pc-windows-gnu
-      # macos-aarch64=aarch64-apple-darwin
-
-        # echo "DOCKERFILE=Dockerfile.${{ inputs.arch }}-${DOCKERFILE_CPU}" >> "$GITHUB_ENV"
-        # echo "ZIPFILE=${{ inputs.arch }}-${ARCHIVE_NAME}" >> "$GITHUB_ENV"
-        # echo "TARGET_CPU=${TARGET_CPU}" >> "$GITHUB_ENV"
-
       # ## cleanup runner
       # - name: Cleanup Runner
       #   id: runner_cleanup
@@ -204,122 +151,77 @@ jobs:
         run: |
           curl -LSf -# https://github.com/musl-cc/musl.cc/releases/download/v0.0.1/aarch64-linux-musl-cross.tgz | tar zxf - -C /tmp
 
-      # ## Set env vars based on the type of arch build
-      # - name: Set local env vars
-      #   id: set_env
-      #   shell: bash
-      #   run: |
-      #     case ${{ matrix.cpu }} in
-      #       x86-64)
-      #         ## default x64 builds to use v3 variant. TARGET_CPU is required to build for v3 via RUSTFLAGS
-      #         TARGET_CPU="${{ inputs.cpu }}-v3"
-      #         DOCKERFILE_CPU="x64"
-      #         ARCHIVE_NAME="x64"
-      #         ;;
-      #       x86-64-v2)
-      #         ## intel nehalem (2008) and newer
-      #         TARGET_CPU="${{ inputs.cpu }}"
-      #         DOCKERFILE_CPU="x64"
-      #         ARCHIVE_NAME="x64-v2"
-      #         ;;
-      #       x86-64-v3)
-      #         ## intel haswell (2013) and newer
-      #         TARGET_CPU="${{ inputs.cpu }}"
-      #         DOCKERFILE_CPU="x64"
-      #         ARCHIVE_NAME="x64-v3"
-      #         ;;
-      #       x86-64-v4)
-      #         ## intel skylake (2017) and newer
-      #         TARGET_CPU="${{ inputs.cpu }}"
-      #         DOCKERFILE_CPU="x64"
-      #         ARCHIVE_NAME="x64-v4"
-      #         ;;
-      #       *)
-      #         TARGET_CPU=""
-      #         DOCKERFILE_CPU="${{ inputs.cpu }}"
-      #         ARCHIVE_NAME="${{ inputs.cpu }}"
-      #         ;;
-      #     esac
-      #     echo "DOCKERFILE=Dockerfile.${{ inputs.arch }}-${DOCKERFILE_CPU}" >> "$GITHUB_ENV"
-      #     echo "ZIPFILE=${{ inputs.arch }}-${ARCHIVE_NAME}" >> "$GITHUB_ENV"
-      #     echo "TARGET_CPU=${TARGET_CPU}" >> "$GITHUB_ENV"
-
-
       ## echo what we're doing
-      - name: Configure Build Environment
-        id: configure_build_env
+      - name: Build Release ${{env.TARGET}}
+        id: build_release
         shell: bash
         run: |
           echo "arch: ${{ matrix.arch }}"
           echo "cpu: ${{ matrix.cpu }}"
           echo "os: ${{ matrix.os }}"
-          echo "Target: ${{env.TARGET}}"
+          echo "TARGET: ${{env.TARGET}}"
+          echo "TARGET_CPU: ${{env.TARGET_CPU}}"
+          echo "LINKER: ${{env.LINKER}}"
+          echo "CMD: ${{env.CMD}}"
 
-          case "$TARGET" in
-            "aarch64-unknown-linux-musl") # linux-musl-arm64
-              sudo apt-get install -y gcc-aarch64-linux-gnu musl-dev
-              #curl -LSf -# https://github.com/musl-cc/musl.cc/releases/download/v0.0.1/aarch64-linux-musl-cross.tgz | tar zxf - -C /tmp
-              echo "CC=/tmp/aarch64-linux-musl-cross/bin/aarch64-linux-musl-gcc" >> $GITHUB_ENV
-              ;;
-            "x86_64-unknown-linux-musl") # linux-musl-x86_64
-              sudo apt-get install musl-tools
-              echo "RUSTFLAGS="${TARGET_CPU:+${RUSTFLAGS} -Ctarget-cpu=${TARGET_CPU}}"" >> $GITHUB_ENV
-              ;;
-            "x86_64-unknown-linux-gnu") # linux-glibc-x86_64
-              sudo apt-get install -y git libclang-dev llvm
-              echo "RUSTFLAGS="${TARGET_CPU:+${RUSTFLAGS} -Ctarget-cpu=${TARGET_CPU}}"" >> $GITHUB_ENV
-              ;;
+          case "${{env.TARGET}}" in
+            # linux glibc aarch64
             "aarch64-unknown-linux-gnu") # linux-glibc-arm64
               sudo apt-get install -y git gcc-aarch64-linux-gnu libclang-dev llvm
-              echo "CC=aarch64-linux-gnu-gcc" >> $GITHUB_ENV
-              echo "CC_aarch64_unknown_linux_gnu=aarch64-linux-gnu-gcc" >> $GITHUB_ENV
-              echo "CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER=aarch64-linux-gnu-gcc" >> $GITHUB_ENV
+              LINKER=aarch64-linux-gnu-gcc
+              # cargo build --features monitoring_prom,slog_json --profile release-lite --workspace --target $TARGET --config "target.${TARGET}.linker=\"${LINKER}\""
+              ${{env.CMD}} --target $TARGET --config "target.${{env.TARGET}}.linker=\"${LINKER}\""
               ;;
+            # linux glibc x64
+            "x86_64-unknown-linux-gnu") # linux-glibc-x86_64
+              sudo apt-get install -y git libclang-dev llvm
+              # cargo build --features monitoring_prom,slog_json --profile release-lite --workspace --target $TARGET --config build.rustflags="\"-C target-cpu=${TARGET_CPU}\""
+              ${{env.CMD}} --target $TARGET --config build.rustflags="\"-C target-cpu=${TARGET_CPU}\""
+              ;;
+            # windows glibc x64
             "x86_64-pc-windows-gnu") # windows-x86_64
               sudo apt-get install -y git gcc-mingw-w64-x86-64
-              echo "CC_x86_64_pc_windows_gnu=x86_64-w64-mingw32-gcc" >> $GITHUB_ENV
-              echo "CARGO_TARGET_X86_64_PC_WINDOWS_GNU_LINKER=x86_64-w64-mingw32-gcc" >> $GITHUB_ENV
-              echo "RUSTFLAGS="${TARGET_CPU:+${RUSTFLAGS} -Ctarget-cpu=${TARGET_CPU}}"" >> $GITHUB_ENV
+              LINKER=x86_64-w64-mingw32-gcc
+              # cargo build --features monitoring_prom,slog_json --profile release-lite --workspace --target $TARGET --config "target.${TARGET}.linker=\"${LINKER}\"" --config build.rustflags="\"-C target-cpu=${TARGET_CPU}\""
+              ${{env.CMD}} --target $TARGET --config "target.${{env.TARGET}}.linker=\"${LINKER}\"" --config build.rustflags="\"-C target-cpu=${TARGET_CPU}\""
               ;;
+            # linux musl x64
+            "x86_64-unknown-linux-musl") # linux-musl-x86_64
+              sudo apt-get install musl-tools
+              # cargo build --features monitoring_prom,slog_json --profile release-lite --workspace --target $TARGET --config build.rustflags="\"-C target-cpu=${TARGET_CPU}\""
+              ${{env.CMD}} --target $TARGET --config build.rustflags="\"-C target-cpu=${TARGET_CPU}\""
+              ;;
+            # linux musl aarch64
+            "aarch64-unknown-linux-musl") # linux-musl-arm64
+              sudo apt-get install -y gcc-aarch64-linux-gnu musl-dev
+              LINKER=/tmp/aarch64-linux-musl-cross/bin/aarch64-linux-musl-gcc
+              # cargo build --features monitoring_prom,slog_json --profile release-lite --workspace --target $TARGET --config "target.${TARGET}.linker=\"${LINKER}\""
+              ${{env.CMD}} --target $TARGET --config "target.${{env.TARGET}}.linker=\"${LINKER}\""
+              ;;
+            # macos aarch64
             "aarch64-apple-darwin") # macos-arm64
+              ${{env.CMD}} --config build.rustflags="\"-C target-cpu=native\""
               ;;
+            # catchall - run default command
             "*")
               echo "Target: $TARGET"
-              echo "no match for build target. exiting"
-              exit 1
+              echo "no match for build target. using defaults"
+              ${{env.CMD}}
               ;;
           esac
           exit 0
 
       ## echo what we're doing
-      - name: Output Build Environment
-        id: output_build_env
-        shell: bash
-        run: |
-          echo "CC: $CC"
-          echo "RUSTFLAGS: $RUSTFLAGS"
-          echo "CC_aarch64_unknown_linux_gnu: $CC_aarch64_unknown_linux_gnu"
-          echo "CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER: $CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER"
-          echo "CC_x86_64_pc_windows_gnu: $CC_x86_64_pc_windows_gnu"
-          echo "CARGO_TARGET_X86_64_PC_WINDOWS_GNU_LINKER: $CARGO_TARGET_X86_64_PC_WINDOWS_GNU_LINKER"
-          echo "cargo build --features monitoring_prom,slog_json --profile release-lite --workspace --target $TARGET"
-
-      ## echo what we're doing
-      - name: Build Release
-        id: build_release
+      - name: Show Release
+        id: show_release
         shell: bash
         run: |
           printenv
-          echo "CC: $CC"
-          echo "RUSTFLAGS: $RUSTFLAGS"
-          echo "CC_aarch64_unknown_linux_gnu: $CC_aarch64_unknown_linux_gnu"
-          echo "CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER: $CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER"
-          echo "CC_x86_64_pc_windows_gnu: $CC_x86_64_pc_windows_gnu"
-          echo "CARGO_TARGET_X86_64_PC_WINDOWS_GNU_LINKER: $CARGO_TARGET_X86_64_PC_WINDOWS_GNU_LINKER"
-          cargo build --features monitoring_prom,slog_json --profile release-lite --workspace --target $TARGET
           ls -al
           ls -al ./release
           ls -al ./release/*
+          ls -al ./release/${{env.TARGET}}
+          ls -al ./release/${{env.TARGET}}/release-list
 
       # ## Compress the binary artifact
       # - name: Compress artifact
