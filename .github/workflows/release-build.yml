@@ -156,7 +156,7 @@ jobs:
                   echo "setting ZIPFILE: ${{ matrix.arch }}-${ARCHIVE_NAME}"
                   echo "TARGET=${TARGET}" >> "$GITHUB_ENV"
                   echo "TARGET_CPU=${TARGET_CPU}" >> "$GITHUB_ENV"
-                  echo "ZIPFILE=${TARGET}-${ARCHIVE_NAME}" >> "$GITHUB_ENV"
+                  echo "ZIPFILE=${matrix.arch}-${ARCHIVE_NAME}" >> "$GITHUB_ENV"
 
             ## Install rust toolchain (llvm-tools-preview)
             - name: Setup Rust Toolchain
