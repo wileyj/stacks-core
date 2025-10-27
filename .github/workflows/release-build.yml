@@ -304,6 +304,7 @@ jobs:
               run: |
                   echo "checking release dir:"
                   ls -al ./release
+                  unzip -l linux-glibc-x64.zip
               #   ## Creates the node docker image
               # - name: Create Node Docker Image
               #   # if: |
