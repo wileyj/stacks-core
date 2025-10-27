@@ -125,6 +125,7 @@ jobs:
                       esac
                       ;;
                     arm64)
+                      ARCHIVE_NAME=${{matrix.cpu}}
                       case ${{ matrix.arch }} in
                         linux-musl)
                           # install dependencies for linux aarch64 musl and set target
@@ -176,7 +177,7 @@ jobs:
             #     curl -LSf -# https://github.com/musl-cc/musl.cc/releases/download/v0.0.1/aarch64-linux-musl-cross.tgz | tar zxf - -C /tmp || exit 1
 
             ## echo what we're doing
-            - name: Build Release ${{env.TARGET}}
+            - name: Build Release
               id: build_release
               shell: bash
               run: |
