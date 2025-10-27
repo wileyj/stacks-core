@@ -299,7 +299,7 @@ jobs:
               shell: bash
               run: |
                   echo "checking release dir:"
-                  ls -al /release
+                  ls -al ./release
               #   ## Creates the node docker image
               # - name: Create Node Docker Image
               #   # if: |
