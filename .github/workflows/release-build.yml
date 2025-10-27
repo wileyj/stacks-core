@@ -153,10 +153,10 @@ jobs:
                   fi
                   echo "setting TARGET:${TARGET}"
                   echo "setting TARGET_CPU: ${TARGET_CPU}"
-                  echo "setting ZIPFILE: ${{ matrix.arch }}-${ARCHIVE_NAME}"
+                  echo "setting ZIPFILE_NAME: ${{ matrix.arch }}-${ARCHIVE_NAME}"
                   echo "TARGET=${TARGET}" >> "$GITHUB_ENV"
                   echo "TARGET_CPU=${TARGET_CPU}" >> "$GITHUB_ENV"
-                  echo "ZIPFILE=${{matrix.arch}}-${ARCHIVE_NAME}" >> "$GITHUB_ENV"
+                  echo "ZIPFILE_NAME=${{matrix.arch}}-${ARCHIVE_NAME}" >> "$GITHUB_ENV"
 
             ## Install rust toolchain (llvm-tools-preview)
             - name: Setup Rust Toolchain
@@ -186,86 +186,95 @@ jobs:
                   echo "TARGET: ${{env.TARGET}}"
                   echo "TARGET_CPU: ${{env.TARGET_CPU}}"
                   echo "CMD: ${{env.CMD}}"
-                  echo "ZIPFILE: ${{env.ZIPFILE}}"
+                  echo "ZIPFILE_NAME: ${{env.ZIPFILE_NAME}}"
 
-                  # case "${{env.TARGET}}" in
-                  #   # linux glibc aarch64
-                  #   aarch64-unknown-linux-gnu) # linux-glibc-arm64
-                  #     # sudo apt-get install -y git gcc-aarch64-linux-gnu libclang-dev llvm
-                  #     LINKER=aarch64-linux-gnu-gcc
-                  #     echo "$CMD --target $TARGET --config \"target.${TARGET}.linker=\\\"${LINKER}\\\"\" "
-                  #     ${{env.CMD}} --target $TARGET --config "target.${{env.TARGET}}.linker=\"${LINKER}\"" || exit 1
-                  #     ;;
-                  #   # linux glibc x64
-                  #   x86_64-unknown-linux-gnu) # linux-glibc-x86_64
-                  #     # sudo apt-get install -y git libclang-dev llvm
-                  #     echo "$CMD --target $TARGET --config \"target.${TARGET}.linker=\\\"${LINKER}\\\"\" "
-                  #     ${{env.CMD}} --target $TARGET --config build.rustflags="\"-C target-cpu=${TARGET_CPU}\"" || exit 1
-                  #     ;;
-                  #   # windows glibc x64
-                  #   x86_64-pc-windows-gnu) # windows-x86_64
-                  #     # sudo apt-get install -y git gcc-mingw-w64-x86-64
-                  #     LINKER=x86_64-w64-mingw32-gcc
-                  #     echo "$CMD --target $TARGET --config \"target.${TARGET}.linker=\\\"${LINKER}\\\"\"  --config build.rustflags="\"-C target-cpu=${TARGET_CPU}\"" "
-                  #     ${{env.CMD}} --target $TARGET --config "target.${{env.TARGET}}.linker=\"${LINKER}\"" --config build.rustflags="\"-C target-cpu=${TARGET_CPU}\"" || exit 1
-                  #     ;;
-                  #   # linux musl x64
-                  #   x86_64-unknown-linux-musl) # linux-musl-x86_64
-                  #     # sudo apt-get install -y musl-tools
-                  #     echo "$CMD --target $TARGET --config build.rustflags=\"\\\"-C target-cpu=${TARGET_CPU}\\\"\" "
-                  #     ${{env.CMD}} --target $TARGET --config build.rustflags="\"-C target-cpu=${TARGET_CPU}\"" || exit 1
-                  #     ;;
-                  #   # linux musl aarch64
-                  #   aarch64-unknown-linux-musl) # linux-musl-arm64
-                  #     # sudo apt-get install -y gcc-aarch64-linux-gnu musl-dev
-                  #     LINKER=/tmp/aarch64-linux-musl-cross/bin/aarch64-linux-musl-gcc
-                  #     echo "$CMD --target $TARGET --config \"target.${TARGET}.linker=\\\"${LINKER}\\\"\" "
-                  #     ${{env.CMD}} --target $TARGET --config "target.${{env.TARGET}}.linker=\"${LINKER}\"" || exit 1
-                  #     ## testing. remove for pr
-                  #     TARGET_CPU=native
-                  #     TARGET=aarch64-apple-darwin
-                  #     echo "MACOS command: $CMD --target $TARGET --config build.rustflags=\"\\\"-C target-cpu=${TARGET_CPU}\\\"\""
-                  #     ##
-                  #     ;;
-                  #   # macos aarch64
-                  #   aarch64-apple-darwin) # macos-arm64
-                  #     TARGET_CPU=native
-                  #     echo "$CMD --target $TARGET --config build.rustflags=\"\\\"-C target-cpu=${TARGET_CPU}\\\"\" "
-                  #     ${{env.CMD}} --target $TARGET --config build.rustflags="\"-C target-cpu=${TARGET_CPU}\"" || exit 1
-                  #     ;;
-                  #   # catchall - run default command
-                  #   *)
-                  #     echo "Target: $TARGET"
-                  #     echo "no match for build target. using defaults"
-                  #     ${{env.CMD}} || exit 1
-                  #     ;;
-                  # esac
+                  case "${{env.TARGET}}" in
+                    # linux glibc aarch64
+                    aarch64-unknown-linux-gnu) # linux-glibc-arm64
+                      # sudo apt-get install -y git gcc-aarch64-linux-gnu libclang-dev llvm
+                      LINKER=aarch64-linux-gnu-gcc
+                      echo "$CMD --target $TARGET --config \"target.${TARGET}.linker=\\\"${LINKER}\\\"\" "
+                      ${{env.CMD}} --target $TARGET --config "target.${{env.TARGET}}.linker=\"${LINKER}\"" || exit 1
+                      ;;
+                    # linux glibc x64
+                    x86_64-unknown-linux-gnu) # linux-glibc-x86_64
+                      # sudo apt-get install -y git libclang-dev llvm
+                      echo "$CMD --target $TARGET --config \"target.${TARGET}.linker=\\\"${LINKER}\\\"\" "
+                      ${{env.CMD}} --target $TARGET --config build.rustflags="\"-C target-cpu=${TARGET_CPU}\"" || exit 1
+                      ;;
+                    # windows glibc x64
+                    x86_64-pc-windows-gnu) # windows-x86_64
+                      # sudo apt-get install -y git gcc-mingw-w64-x86-64
+                      LINKER=x86_64-w64-mingw32-gcc
+                      echo "$CMD --target $TARGET --config \"target.${TARGET}.linker=\\\"${LINKER}\\\"\"  --config build.rustflags="\"-C target-cpu=${TARGET_CPU}\"" "
+                      ${{env.CMD}} --target $TARGET --config "target.${{env.TARGET}}.linker=\"${LINKER}\"" --config build.rustflags="\"-C target-cpu=${TARGET_CPU}\"" || exit 1
+                      ;;
+                    # linux musl x64
+                    x86_64-unknown-linux-musl) # linux-musl-x86_64
+                      # sudo apt-get install -y musl-tools
+                      echo "$CMD --target $TARGET --config build.rustflags=\"\\\"-C target-cpu=${TARGET_CPU}\\\"\" "
+                      ${{env.CMD}} --target $TARGET --config build.rustflags="\"-C target-cpu=${TARGET_CPU}\"" || exit 1
+                      ;;
+                    # linux musl aarch64
+                    aarch64-unknown-linux-musl) # linux-musl-arm64
+                      # sudo apt-get install -y gcc-aarch64-linux-gnu musl-dev
+                      LINKER=/tmp/aarch64-linux-musl-cross/bin/aarch64-linux-musl-gcc
+                      echo "$CMD --target $TARGET --config \"target.${TARGET}.linker=\\\"${LINKER}\\\"\" "
+                      ${{env.CMD}} --target $TARGET --config "target.${{env.TARGET}}.linker=\"${LINKER}\"" || exit 1
+                      ## testing. remove for pr
+                      TARGET_CPU=native
+                      TARGET=aarch64-apple-darwin
+                      echo "MACOS command: $CMD --target $TARGET --config build.rustflags=\"\\\"-C target-cpu=${TARGET_CPU}\\\"\""
+                      ##
+                      ;;
+                    # macos aarch64
+                    aarch64-apple-darwin) # macos-arm64
+                      TARGET_CPU=native
+                      echo "$CMD --target $TARGET --config build.rustflags=\"\\\"-C target-cpu=${TARGET_CPU}\\\"\" "
+                      ${{env.CMD}} --target $TARGET --config build.rustflags="\"-C target-cpu=${TARGET_CPU}\"" || exit 1
+                      ;;
+                    # catchall - run default command
+                    *)
+                      echo "Target: $TARGET"
+                      echo "no match for build target. using defaults"
+                      ${{env.CMD}} || exit 1
+                      ;;
+                  esac
                   exit 0
 
             # ## echo what we're doing
-            # - name: Show Release
-            #   id: show_release
-            #   shell: bash
-            #   run: |
-            #     ls -al ./target/${{env.TARGET}}/release-lite
+            - name: Show Release
+              id: show_release
+              shell: bash
+              run: |
+                  ls -al ./target/${{env.TARGET}}/release-lite
 
-            # ## Compress the binary artifact
-            # - name: Compress artifact
-            #   id: compress_artifact
-            #   shell: bash
-            #   run: |
-            #     echo "ZIPFILE=${{ inputs.arch }}-${ARCHIVE_NAME}" >> "$GITHUB_ENV"
-            #     echo "ZIPFILE=${{ inputs.arch }}-${{ matrix.cpu }}" >> "$GITHUB_ENV"
-            #     zip --junk-paths ${{ env.ZIPFILE }} ./release/${{ inputs.arch }}/*
-            #     file -0 ./target/${{env.TARGET}}/release-lite/* | sed -nE 's/\x0:\s*(ELF|PE32+|Mach).*//p' | zip --junk-paths /tmp/binaries.zip -@
+            ## Compress the binary artifact
+            - name: Compress artifact
+              id: compress_artifact
+              shell: bash
+              run: |
+                  echo "ZIPFILE_NAME: ${{env.ZIPFILE_NAME}}"
+                  echo "ZIPFILE: ${{env.ZIPFILE_NAME}}.zip"
+                  echo
+                  echo "Archiving files from: ./target/${{env.TARGET}}/release-lite"
+                  echo "ls -al ./target/${{env.TARGET}}/release-lite"
+                  ls -al ./target/${{env.TARGET}}/release-lite
+                  echo
+                  echo "Retrieving all binaries from ./target/${{env.TARGET}}/release-lite"
+                  file -0 ./target/${{env.TARGET}}/release-lite/* | sed -nE 's/\x0:\s*(ELF|PE32+|Mach).*//p'
+                  echo
+                  echo "Archiving binaries"
+                  file -0 ./target/${{env.TARGET}}/release-lite/* | sed -nE 's/\x0:\s*(ELF|PE32+|Mach).*//p' | zip --junk-paths ${{env.ZIPFILE_NAME}}.zip -@
 
-            # ## Upload the binary artifact to the github action (used in `github-release.yml` to create a release)
-            # - name: Upload artifact
-            #   id: upload_artifact
-            #   uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08 # v4.6.0
-            #   with:
-            #     name: ${{ inputs.node_tag || inputs.signer_docker_tag }}-binary-build-${{ env.ZIPFILE }}
-            #     path: ${{ env.ZIPFILE }}.zip
+            ## Upload the binary artifact to the github action (used in `github-release.yml` to create a release)
+            - name: Upload artifact
+              id: upload_artifact
+              uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08 # v4.6.0
+              with:
+                  name: ${{ env.ZIPFILE_NAME }}
+                  # name: ${{ inputs.node_tag || inputs.signer_docker_tag }}-binary-build-${{ env.ZIPFILE }}
+                  path: ${{ env.ZIPFILE_NAME }}.zip
 
             # - name: Build Binary (${{ matrix.arch }}_${{ matrix.cpu }})
             #   uses: stacks-network/actions/stacks-core/release/create-source-binary@main
