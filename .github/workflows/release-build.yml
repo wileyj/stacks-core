@@ -46,8 +46,8 @@ jobs:
         permissions:
             id-token: write
             attestations: write
-        needs:
-            - andon-cord
+        # needs:
+        #     - andon-cord
         strategy:
             ## Run a maximum of 10 builds concurrently, using the matrix defined in inputs.arch
             max-parallel: 10
