@@ -24,22 +24,22 @@ env:
     TARGET_CPU: ""
     LINKER: ""
 jobs:
-    ## Build arch dependent binaries from source
-    ##
-    ## Runs when the following is true:
-    ##  - either node or signer tag is provided
-    andon-cord:
-        # if: |
-        #     inputs.node_tag != '' ||
-        #     inputs.signer_tag != ''
-        name: Andon Cord
-        runs-on: ubuntu-latest
-        environment: "Build Release"
-        steps:
-            - name: Check Approval
-              id: check
-              run: |
-                  exit 0
+    # ## Build arch dependent binaries from source
+    # ##
+    # ## Runs when the following is true:
+    # ##  - either node or signer tag is provided
+    # andon-cord:
+    #     # if: |
+    #     #     inputs.node_tag != '' ||
+    #     #     inputs.signer_tag != ''
+    #     name: Andon Cord
+    #     runs-on: ubuntu-latest
+    #     environment: "Build Release"
+    #     steps:
+    #         - name: Check Approval
+    #           id: check
+    #           run: |
+    #               exit 0
 
     build-binaries:
         name: Build Binaries
@@ -274,12 +274,12 @@ jobs:
         #   inputs.signer_tag != ''
         name: Docker Image (Binary)
         runs-on: ubuntu-latest
-        environment: "Push to Docker"
+        # environment: "Push to Docker"
         permissions:
             id-token: write
             attestations: write
         needs:
-            - andon-cord
+            # - andon-cord
             - build-binaries
         strategy:
             fail-fast: false
