@@ -1,12 +1,13 @@
 ## Github workflow to create reusable caches
 
-name: TEST Release workflow
+name: Build Release Binaries
 
 on:
     push:
         branches:
             - fix/release_workflow
     workflow_dispatch:
+    workflow_call:
     pull_request:
 
 concurrency:
@@ -17,18 +18,36 @@ concurrency:
 run-name: test release build matrix
 
 env:
+    # set a default command to build. we'll define specific build config options later per arch.
+    CMD: "cargo build --features monitoring_prom,slog_json --profile release-lite --workspace"
+    # ensure these env vars have no values since they will be explicitly set later
     TARGET_CPU: ""
     LINKER: ""
-    # set a default command to build. we'll define specific config options later per arch.
-    CMD: "cargo build --features monitoring_prom,slog_json --profile release-lite --workspace"
-
 jobs:
     ## Build arch dependent binaries from source
     ##
     ## Runs when the following is true:
     ##  - either node or signer tag is provided
+    andon-cord:
+        # if: |
+        #     inputs.node_tag != '' ||
+        #     inputs.signer_tag != ''
+        name: Andon Cord
+        runs-on: ubuntu-latest
+        environment: "Build Release"
+        steps:
+            - name: Check Approval
+              id: check
+              run: |
+                  exit 0
+
     build-binaries:
         name: Build Binaries
+        permissions:
+            id-token: write
+            attestations: write
+        needs:
+            - andon-cord
         strategy:
             ## Run a maximum of 10 builds concurrently, using the matrix defined in inputs.arch
             max-parallel: 10
@@ -87,8 +106,8 @@ jobs:
 
             ## Set target env var based on the type of arch build
             # ** we could move all later steps here, but it would be messier and and move verbose per arch.
-            - name: Set Target Platform
-              id: set_target_platform
+            - name: Configure Target Platform
+              id: configure_target_platform
               shell: bash
               run: |
                   case ${{ matrix.cpu }} in
@@ -149,7 +168,7 @@ jobs:
                       ;;
                   esac
                   if [[ -z "$TARGET" ]]; then
-                    echo "TARGET Variable is empty";
+                    echo "[ERROR] TARGET Variable is empty for ${{ matrix.arch }}-${{ matrix.cpu }}";
                     exit 1
                   fi
                   echo "setting TARGET:${TARGET}"
@@ -168,15 +187,7 @@ jobs:
                   cache: false
                   target: ${{ env.TARGET }}
 
-            # - name: Setup Musl Cross
-            #   if: |
-            #     env.TARGET == 'aarch64-unknown-linux-musl'
-            #   id: musl_cross
-            #   shell: bash
-            #   run: |
-            #     curl -LSf -# https://github.com/musl-cc/musl.cc/releases/download/v0.0.1/aarch64-linux-musl-cross.tgz | tar zxf - -C /tmp || exit 1
-
-            ## echo what we're doing
+            ## Build the release binaries
             - name: Build Release
               id: build_release
               shell: bash
@@ -192,41 +203,31 @@ jobs:
                   case "${{env.TARGET}}" in
                     # linux glibc aarch64
                     aarch64-unknown-linux-gnu) # linux-glibc-arm64
-                      # sudo apt-get install -y git gcc-aarch64-linux-gnu libclang-dev llvm
                       LINKER=aarch64-linux-gnu-gcc
                       echo "$CMD --target $TARGET --config \"target.${TARGET}.linker=\\\"${LINKER}\\\"\" "
                       ${{env.CMD}} --target $TARGET --config "target.${{env.TARGET}}.linker=\"${LINKER}\"" || exit 1
                       ;;
                     # linux glibc x64
                     x86_64-unknown-linux-gnu) # linux-glibc-x86_64
-                      # sudo apt-get install -y git libclang-dev llvm
                       echo "$CMD --target $TARGET --config \"target.${TARGET}.linker=\\\"${LINKER}\\\"\" "
                       ${{env.CMD}} --target $TARGET --config build.rustflags="\"-C target-cpu=${TARGET_CPU}\"" || exit 1
                       ;;
                     # windows glibc x64
                     x86_64-pc-windows-gnu) # windows-x86_64
-                      # sudo apt-get install -y git gcc-mingw-w64-x86-64
                       LINKER=x86_64-w64-mingw32-gcc
                       echo "$CMD --target $TARGET --config \"target.${TARGET}.linker=\\\"${LINKER}\\\"\"  --config build.rustflags="\"-C target-cpu=${TARGET_CPU}\"" "
                       ${{env.CMD}} --target $TARGET --config "target.${{env.TARGET}}.linker=\"${LINKER}\"" --config build.rustflags="\"-C target-cpu=${TARGET_CPU}\"" || exit 1
                       ;;
                     # linux musl x64
                     x86_64-unknown-linux-musl) # linux-musl-x86_64
-                      # sudo apt-get install -y musl-tools
                       echo "$CMD --target $TARGET --config build.rustflags=\"\\\"-C target-cpu=${TARGET_CPU}\\\"\" "
                       ${{env.CMD}} --target $TARGET --config build.rustflags="\"-C target-cpu=${TARGET_CPU}\"" || exit 1
                       ;;
                     # linux musl aarch64
                     aarch64-unknown-linux-musl) # linux-musl-arm64
-                      # sudo apt-get install -y gcc-aarch64-linux-gnu musl-dev
                       LINKER=/tmp/aarch64-linux-musl-cross/bin/aarch64-linux-musl-gcc
                       echo "$CMD --target $TARGET --config \"target.${TARGET}.linker=\\\"${LINKER}\\\"\" "
                       ${{env.CMD}} --target $TARGET --config "target.${{env.TARGET}}.linker=\"${LINKER}\"" || exit 1
-                      ## testing. remove for pr
-                      TARGET_CPU=native
-                      TARGET=aarch64-apple-darwin
-                      echo "MACOS command: $CMD --target $TARGET --config build.rustflags=\"\\\"-C target-cpu=${TARGET_CPU}\\\"\""
-                      ##
                       ;;
                     # macos aarch64
                     aarch64-apple-darwin) # macos-arm64
@@ -236,53 +237,126 @@ jobs:
                       ;;
                     # catchall - run default command
                     *)
-                      echo "Target: $TARGET"
-                      echo "no match for build target. using defaults"
+                      echo "No matrix match for build target ($TARGET). using defaults"
                       ${{env.CMD}} || exit 1
                       ;;
                   esac
                   exit 0
 
-            # ## echo what we're doing
-            - name: Show Release
-              id: show_release
-              shell: bash
-              run: |
-                  ls -al ./target/${{env.TARGET}}/release-lite
-
             ## Compress the binary artifact
-            - name: Compress artifact
-              id: compress_artifact
+            - name: Compress binaries
+              id: compress_artifacts
               shell: bash
               run: |
-                  echo "ZIPFILE_NAME: ${{env.ZIPFILE_NAME}}"
-                  echo "ZIPFILE: ${{env.ZIPFILE_NAME}}.zip"
-                  echo
-                  echo "Archiving files from: ./target/${{env.TARGET}}/release-lite"
-                  echo "ls -al ./target/${{env.TARGET}}/release-lite"
-                  ls -al ./target/${{env.TARGET}}/release-lite
-                  echo
-                  echo "Retrieving all binaries from ./target/${{env.TARGET}}/release-lite"
-                  file -0 ./target/${{env.TARGET}}/release-lite/* | sed -nE 's/\x0:\s*(ELF|PE32+|Mach).*//p'
-                  echo
-                  echo "Archiving binaries"
                   file -0 ./target/${{env.TARGET}}/release-lite/* | sed -nE 's/\x0:\s*(ELF|PE32+|Mach).*//p' | zip --junk-paths ${{env.ZIPFILE_NAME}}.zip -@
 
             ## Upload the binary artifact to the github action (used in `github-release.yml` to create a release)
-            - name: Upload artifact
+            - name: Upload Artifact
               id: upload_artifact
               uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08 # v4.6.0
               with:
-                  name: ${{ env.ZIPFILE_NAME }}
-                  # name: ${{ inputs.node_tag || inputs.signer_docker_tag }}-binary-build-${{ env.ZIPFILE }}
+                  name: binaries-${{ env.ZIPFILE_NAME }}
                   path: ${{ env.ZIPFILE_NAME }}.zip
 
-            # - name: Build Binary (${{ matrix.arch }}_${{ matrix.cpu }})
-            #   uses: stacks-network/actions/stacks-core/release/create-source-binary@main
-            #   with:
-            #     arch: ${{ matrix.arch }}
-            #     cpu: ${{ matrix.cpu }}
-            #     node_tag: ${{ inputs.node_tag }}
-            #     signer_tag: ${{ inputs.signer_tag }}
-            #     signer_docker_tag: ${{ inputs.signer_docker_tag }}
-            #     is_node_release: ${{ inputs.is_node_release }}
+            ## Attest the release binaries
+            - name: Attest Release Artifact
+              uses: actions/attest-build-provenance@c074443f1aee8d4aeeae555aebba3282517141b2 #v2.2.3
+              with:
+                  subject-path: ${{ env.ZIPFILE_NAME }}.zip
+
+    docker-image:
+        # if: |
+        #   inputs.node_tag != '' ||
+        #   inputs.signer_tag != ''
+        name: Docker Image (Binary)
+        runs-on: ubuntu-latest
+        environment: "Push to Docker"
+        permissions:
+            id-token: write
+            attestations: write
+        needs:
+            - andon-cord
+            - build-binaries
+        strategy:
+            fail-fast: false
+            ## Build a maximum of 2 images concurrently based on matrix.dist
+            max-parallel: 2
+            matrix:
+                dist:
+                    # - alpine
+                    - debian
+        steps:
+            - name: Download Artifacts
+              id: download_artifacts
+              uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v4.1.8
+              with:
+                  pattern: binaries-*
+                  path: release
+                  merge-multiple: true
+
+            - name: Check Data
+              id: check_data
+              shell: bash
+              run: |
+                  echo "checking release dir:"
+                  ls -al /release
+              #   ## Creates the node docker image
+              # - name: Create Node Docker Image
+              #   # if: |
+              #   #     inputs.is_node_release == 'true'
+              #   id: create_node_release
+              #   uses: stacks-network/actions/stacks-core/release/create-docker-image@main
+              #   with:
+              #       tag: ${{ inputs.node_tag }}
+              #       docker_tag: ${{ inputs.node_docker_tag }}
+              #       DOCKERHUB_USERNAME: ${{ inputs.DOCKERHUB_USERNAME }}
+              #       DOCKERHUB_PASSWORD: ${{ inputs.DOCKERHUB_PASSWORD }}
+              #       dist: ${{ inputs.dist }}
+
+              #   ## Creates the signer docker image
+              # - name: Create Signer Docker Image
+              #   if: |
+              #       inputs.is_signer_release == 'true'
+              #   id: create_signer_release
+              #   uses: stacks-network/actions/stacks-core/release/create-docker-image@main
+              #   with:
+              #       tag: ${{ inputs.signer_tag }}
+              #       docker_tag: ${{ inputs.signer_docker_tag }}
+              #       DOCKERHUB_USERNAME: ${{ inputs.DOCKERHUB_USERNAME }}
+              #       DOCKERHUB_PASSWORD: ${{ inputs.DOCKERHUB_PASSWORD }}
+              #       dist: ${{ inputs.dist }}
+
+    # docker-image:
+    #     # if: |
+    #     #     inputs.node_tag != '' ||
+    #     #     inputs.signer_tag != ''
+    #     name: Docker Image (Binary)
+    #     runs-on: ubuntu-latest
+    #     environment: "Push to Docker"
+    #     permissions:
+    #         id-token: write
+    #         attestations: write
+    #     needs:
+    #         - andon-cord
+    #         - build-binaries
+    #     strategy:
+    #         fail-fast: false
+    #         ## Build a maximum of 2 images concurrently based on matrix.dist
+    #         max-parallel: 2
+    #         matrix:
+    #             dist:
+    #                 - alpine
+    #                 - debian
+    #     steps:
+    #         - name: Create Docker Image
+    #           uses: stacks-network/actions/stacks-core/release/docker-images@main
+    #           with:
+    #               node_tag: ${{ inputs.node_tag }}
+    #               node_docker_tag: ${{ inputs.node_docker_tag }}
+    #               signer_tag: ${{ inputs.signer_tag }}
+    #               signer_docker_tag: ${{ inputs.signer_docker_tag }}
+    #               is_node_release: ${{ inputs.is_node_release }}
+    #               is_signer_release: ${{ inputs.is_signer_release }}
+    #               DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+    #               DOCKERHUB_PASSWORD: ${{ secrets.DOCKERHUB_PASSWORD }}
+    #               dist: ${{ matrix.dist }}
