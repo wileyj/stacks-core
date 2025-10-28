@@ -233,7 +233,7 @@ jobs:
                       ;;
                     # linux glibc x64
                     x86_64-unknown-linux-gnu) # linux-glibc-x86_64
-                      echo "$CMD --target $TARGET --config \"target.${TARGET}.linker=\\\"${LINKER}\\\"\" "
+                       echo "$CMD --target $TARGET --config build.rustflags=\"\\\"-C target-cpu=${TARGET_CPU}\\\"\" "
                       ${{env.CMD}} --target $TARGET --config build.rustflags="\"-C target-cpu=${TARGET_CPU}\"" || exit 1
                       ;;
                     # windows glibc x64
