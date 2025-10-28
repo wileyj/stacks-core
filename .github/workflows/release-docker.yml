@@ -145,7 +145,7 @@ jobs:
             #       echo "docker_tag_rc: ${{ env.docker_tag_rc }}"
             #       echo "docker_org: ${{ env.docker_org }}"
 
-            - name: Docker setup
+            - name: Docker setup # in composite, remove step that cleans up runner. not needed
               id: docker_setup
               uses: stacks-network/actions/docker@main
               with:
@@ -170,7 +170,7 @@ jobs:
 
             ## Build docker image for node release
             - name: Build and Push ( ${{matrix.dist}} )
-              if: ${{ env.is-signer-release == 'false' }}
+              if: ${{ needs.set-vars.outputs.is-signer-release == 'false' }}
               id: docker_build_node
               shell: bash
               run: |
