@@ -51,6 +51,11 @@ jobs:
         steps:
             ## if the repo owner is not `stacks-network`, default to a docker_org of the repo owner (i.e. github user id)
             ## this allows forks to run the docker push workflows without having to hardcode a dockerhub org (but it does require docker hub user to match github username)
+            ## Checkout the code
+            - name: Checkout the latest code
+              id: git_checkout
+              uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
             - name: Set Docker Org
               id: set_docker_org
               shell: bash
