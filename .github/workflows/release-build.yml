@@ -3,12 +3,32 @@
 name: Build Release Binaries
 
 on:
-    push:
-        branches:
-            - fix/release_workflow
-    workflow_dispatch:
     workflow_call:
-    pull_request:
+        inputs:
+            node_tag:
+                description: "Node Release Tag"
+                required: true
+                type: string
+            node_docker_tag:
+                description: "Node Docker Release Tag"
+                required: true
+                type: string
+            signer_tag:
+                description: "Signer Release Tag"
+                required: true
+                type: string
+            signer_docker_tag:
+                description: "Signer Docker Release Tag"
+                required: true
+                type: string
+            is_node_release:
+                description: "True if it is a node release"
+                required: true
+                type: string
+            is_signer_release:
+                description: "True if it is a signer release"
+                required: true
+                type: string
 
 concurrency:
     group: github-release-${{ github.head_ref || github.ref }}
@@ -259,7 +279,8 @@ jobs:
               id: upload_artifact
               uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08 # v4.6.0
               with:
-                  name: binaries-${{ env.ZIPFILE_NAME }}
+                  name: ${{ inputs.node_tag || inputs.signer_docker_tag }}-binary-build-${{ env.ZIPFILE }}
+                  # name: binaries-${{ env.ZIPFILE_NAME }}
                   path: ${{ env.ZIPFILE_NAME }}.zip
 
             ## Attest the release binaries
@@ -269,99 +290,22 @@ jobs:
                   subject-path: ${{ env.ZIPFILE_NAME }}.zip
 
     docker-image:
-        # if: |
-        #   inputs.node_tag != '' ||
-        #   inputs.signer_tag != ''
-        name: Docker Image (Binary)
+        name: Build Docker Images
         runs-on: ubuntu-latest
-        # environment: "Push to Docker"
-        permissions:
-            id-token: write
-            attestations: write
         needs:
             # - andon-cord
             - build-binaries
-        strategy:
-            fail-fast: false
-            ## Build a maximum of 2 images concurrently based on matrix.dist
-            max-parallel: 2
-            matrix:
-                dist:
-                    # - alpine
-                    - debian
         steps:
-            - name: Download Artifacts
-              id: download_artifacts
-              uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v4.1.8
+            ## Creates the node docker image
+            - name: Create Node Docker Image
+              # if: |
+              #     inputs.is_node_release == 'true'
+              id: create_docker_image
+              uses: ./.github/workflows/release-docker.yml
               with:
-                  pattern: binaries-*
-                  path: release
-                  merge-multiple: true
-
-            - name: Check Data
-              id: check_data
-              shell: bash
-              run: |
-                  echo "checking release dir:"
-                  ls -al ./release
-                  unzip -l ./release/linux-glibc-x64.zip
-              #   ## Creates the node docker image
-              # - name: Create Node Docker Image
-              #   # if: |
-              #   #     inputs.is_node_release == 'true'
-              #   id: create_node_release
-              #   uses: stacks-network/actions/stacks-core/release/create-docker-image@main
-              #   with:
-              #       tag: ${{ inputs.node_tag }}
-              #       docker_tag: ${{ inputs.node_docker_tag }}
-              #       DOCKERHUB_USERNAME: ${{ inputs.DOCKERHUB_USERNAME }}
-              #       DOCKERHUB_PASSWORD: ${{ inputs.DOCKERHUB_PASSWORD }}
-              #       dist: ${{ inputs.dist }}
-
-              #   ## Creates the signer docker image
-              # - name: Create Signer Docker Image
-              #   if: |
-              #       inputs.is_signer_release == 'true'
-              #   id: create_signer_release
-              #   uses: stacks-network/actions/stacks-core/release/create-docker-image@main
-              #   with:
-              #       tag: ${{ inputs.signer_tag }}
-              #       docker_tag: ${{ inputs.signer_docker_tag }}
-              #       DOCKERHUB_USERNAME: ${{ inputs.DOCKERHUB_USERNAME }}
-              #       DOCKERHUB_PASSWORD: ${{ inputs.DOCKERHUB_PASSWORD }}
-              #       dist: ${{ inputs.dist }}
-
-    # docker-image:
-    #     # if: |
-    #     #     inputs.node_tag != '' ||
-    #     #     inputs.signer_tag != ''
-    #     name: Docker Image (Binary)
-    #     runs-on: ubuntu-latest
-    #     environment: "Push to Docker"
-    #     permissions:
-    #         id-token: write
-    #         attestations: write
-    #     needs:
-    #         - andon-cord
-    #         - build-binaries
-    #     strategy:
-    #         fail-fast: false
-    #         ## Build a maximum of 2 images concurrently based on matrix.dist
-    #         max-parallel: 2
-    #         matrix:
-    #             dist:
-    #                 - alpine
-    #                 - debian
-    #     steps:
-    #         - name: Create Docker Image
-    #           uses: stacks-network/actions/stacks-core/release/docker-images@main
-    #           with:
-    #               node_tag: ${{ inputs.node_tag }}
-    #               node_docker_tag: ${{ inputs.node_docker_tag }}
-    #               signer_tag: ${{ inputs.signer_tag }}
-    #               signer_docker_tag: ${{ inputs.signer_docker_tag }}
-    #               is_node_release: ${{ inputs.is_node_release }}
-    #               is_signer_release: ${{ inputs.is_signer_release }}
-    #               DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
-    #               DOCKERHUB_PASSWORD: ${{ secrets.DOCKERHUB_PASSWORD }}
-    #               dist: ${{ matrix.dist }}
+                  node_tag: ${{ inputs.node_tag }}
+                  node_docker_tag: ${{ inputs.node_docker_tag }}
+                  signer_tag: ${{ inputs.signer_tag }}
+                  signer_docker_tag: ${{ inputs.signer_docker_tag }}
+                  is_node_release: ${{ inputs.is_node_release }}
+                  is_signer_release: ${{ inputs.is_signer_release }}
