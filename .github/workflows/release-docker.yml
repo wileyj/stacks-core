@@ -191,7 +191,7 @@ jobs:
                   echo "push: ${{ env.DOCKER_PUSH }}"
 
             - name: Build and Push ( ${{matrix.dist}} )
-              if: ${{ envv.is-signer-release == 'false' }}
+              if: ${{ env.is-signer-release == 'false' }}
               id: docker_build_node
               uses: docker/build-push-action@ca877d9245402d1537745e0e356eab47c3520991 # v6.13.0
               with:
