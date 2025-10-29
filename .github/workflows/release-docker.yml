@@ -172,7 +172,7 @@ jobs:
 
             ## Build docker image for node release
             - name: Show vals ( ${{matrix.dist}} )
-              if: ${{ envv.is-signer-release == 'false' }}
+              if: ${{ env.is-signer-release == 'false' }}
               id: show_vals
               shell: bash
               run: |
