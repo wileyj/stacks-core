@@ -106,6 +106,7 @@ jobs:
             docker_org: ${{ needs.set-vars.outputs.docker_org }}
             docker_tag_rc: ${{ needs.set-vars.outputs.docker_tag_rc }}
             docker_tag: ${{ inputs.node_docker_tag }}
+            is-signer-release: ${{ needs.set-vars.outputs.is-signer-release }}
             tag: ${{ inputs.node_tag }}
         environment: "Push to Docker"
         permissions:
@@ -125,25 +126,26 @@ jobs:
               id: git_checkout
               uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
-            # - name: Download Artifacts
-            #   id: download_artifacts
-            #   uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v4.1.8
-            #   with:
-            #       pattern: binaries-*
-            #       path: release
-            #       merge-multiple: true
+            - name: Download Artifacts
+              id: download_artifacts
+              uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v4.1.8
+              with:
+                  # pattern: binaries-*
+                  pattern: ${{ env.tag }}-binary-build-*
+                  path: release
+                  merge-multiple: true
 
-            # - name: Check Data
-            #   id: check_data
-            #   shell: bash
-            #   run: |
-            #       echo "checking release dir:"
-            #       ls -al ./release
-            #       unzip -l ./release/linux-glibc-x64.zip
-            #       echo "tag: ${{ env.tag}}"
-            #       echo "docker_tag: ${{ env.docker_tag }}"
-            #       echo "docker_tag_rc: ${{ env.docker_tag_rc }}"
-            #       echo "docker_org: ${{ env.docker_org }}"
+            - name: Check Data
+              id: check_data
+              shell: bash
+              run: |
+                  echo "checking release dir:"
+                  ls -al ./release
+                  unzip -l ./release/linux-glibc-x64.zip
+                  echo "tag: ${{ env.tag}}"
+                  echo "docker_tag: ${{ env.docker_tag }}"
+                  echo "docker_tag_rc: ${{ env.docker_tag_rc }}"
+                  echo "docker_org: ${{ env.docker_org }}"
 
             - name: Docker setup # in composite, remove step that cleans up runner. not needed
               id: docker_setup
@@ -169,9 +171,9 @@ jobs:
                       type=raw,value=${{ env.docker_tag }}-${{ matrix.dist }},enable=${{ env.docker_tag != '' && matrix.dist == 'alpine' }}
 
             ## Build docker image for node release
-            - name: Build and Push ( ${{matrix.dist}} )
-              if: ${{ needs.set-vars.outputs.is-signer-release == 'false' }}
-              id: docker_build_node
+            - name: Show vals ( ${{matrix.dist}} )
+              if: ${{ envv.is-signer-release == 'false' }}
+              id: show_vals
               shell: bash
               run: |
                   echo "platforms: ${{ env.platforms }}"
@@ -187,19 +189,23 @@ jobs:
                   echo "    GIT_BRANCH=${{ env.GITHUB_REF_SHORT }}"
                   echo "    GIT_COMMIT=${{ env.GITHUB_SHA_SHORT }}"
                   echo "push: ${{ env.DOCKER_PUSH }}"
-              # uses: docker/build-push-action@ca877d9245402d1537745e0e356eab47c3520991 # v6.13.0
-              # with:
-              #     file: ./.github/actions/dockerfiles/Dockerfile.${{ matrix.dist }}-binary
-              #     platforms: ${{ env.platforms }}
-              #     tags: ${{ steps.docker_metadata_node.outputs.tags }}
-              #     labels: ${{ steps.docker_metadata_node.outputs.labels }}
-              #     build-args: |
-              #         TAG=${{ inputs.tag }}
-              #         REPO=${{ github.repository_owner }}/${{ github.event.repository.name }}
-              #         STACKS_NODE_VERSION=${{ inputs.tag || env.GITHUB_SHA_SHORT }}
-              #         GIT_BRANCH=${{ env.GITHUB_REF_SHORT }}
-              #         GIT_COMMIT=${{ env.GITHUB_SHA_SHORT }}
-              #     push: ${{ env.DOCKER_PUSH }}
+
+            - name: Build and Push ( ${{matrix.dist}} )
+              if: ${{ envv.is-signer-release == 'false' }}
+              id: docker_build_node
+              uses: docker/build-push-action@ca877d9245402d1537745e0e356eab47c3520991 # v6.13.0
+              with:
+                  file: ./.github/actions/dockerfiles/Dockerfile.${{ matrix.dist }}-binary
+                  platforms: ${{ env.platforms }}
+                  tags: ${{ steps.docker_metadata_node.outputs.tags }}
+                  labels: ${{ steps.docker_metadata_node.outputs.labels }}
+                  build-args: |
+                      TAG=${{ inputs.tag }}
+                      REPO=${{ github.repository_owner }}/${{ github.event.repository.name }}
+                      STACKS_NODE_VERSION=${{ inputs.tag || env.GITHUB_SHA_SHORT }}
+                      GIT_BRANCH=${{ env.GITHUB_REF_SHORT }}
+                      GIT_COMMIT=${{ env.GITHUB_SHA_SHORT }}
+                  push: ${{ env.DOCKER_PUSH }}
 
     # stacks-signer:
     #     if: |
