@@ -156,7 +156,7 @@ jobs:
                   ls -al /tmp
                   echo "checking release dir:"
                   ls -al /tmp/release
-                  unzip -l ./release/linux-glibc-x64.zip
+                  unzip -l /tmp/release/linux-glibc-x64.zip
                   echo "tag: ${{ env.tag}}"
                   echo "docker_tag: ${{ env.docker_tag }}"
                   echo "docker_tag_rc: ${{ env.docker_tag_rc }}"
@@ -263,6 +263,16 @@ jobs:
     #                 # - alpine
     #                 - debian
     #     steps:
+    #         ## set env var for which artifacts to download
+    #         - name: Set Artifact Arch
+    #           id: set_artifact_arch
+    #           shell: bash
+    #           run: |
+    #               if [[ "${{ matrix.dist }}" == "alpine" ]]; then
+    #                 echo "build_arch=musl" >> "$GITHUB_ENV"
+    #               else
+    #                 echo "build_arch=glibc" >> "$GITHUB_ENV"
+    #               fi
     #         ## Checkout the code
     #         - name: Checkout the latest code
     #           id: git_checkout
@@ -273,17 +283,21 @@ jobs:
     #           uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v4.1.8
     #           with:
     #               # pattern: binaries-*
-    #               pattern: ${{ env.tag }}-binary-build-*
-    #               path: release
+    #               pattern: ${{ env.tag }}-binary-build-linux-${{ env.build_arch }}*
+    #               path: /tmp/release
     #               merge-multiple: true
 
     #         - name: Check Data
     #           id: check_data
     #           shell: bash
     #           run: |
+    #               echo "pwd:"
+    #               pwd
+    #               echo "ls /tmp"
+    #               ls -al /tmp
     #               echo "checking release dir:"
-    #               ls -al ./release
-    #               unzip -l ./release/linux-glibc-x64.zip
+    #               ls -al /tmp/release
+    #               unzip -l /tmp/release/linux-glibc-x64.zip
     #               echo "tag: ${{ env.tag}}"
     #               echo "docker_tag: ${{ env.docker_tag }}"
     #               echo "docker_tag_rc: ${{ env.docker_tag_rc }}"
