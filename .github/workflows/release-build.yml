@@ -9,22 +9,22 @@ on:
                 description: "Node Release Tag"
                 required: true
                 type: string
-            node_docker_tag:
-                description: "Node Docker Release Tag"
-                required: true
-                type: string
+            # node_docker_tag:
+            #     description: "Node Docker Release Tag"
+            #     required: true
+            #     type: string
             signer_tag:
                 description: "Signer Release Tag"
                 required: true
                 type: string
-            signer_docker_tag:
-                description: "Signer Docker Release Tag"
-                required: true
-                type: string
-            is_node_release:
-                description: "True if it is a node release"
-                required: true
-                type: string
+            # signer_docker_tag:
+            #     description: "Signer Docker Release Tag"
+            #     required: true
+            #     type: string
+            # is_node_release:
+            #     description: "True if it is a node release"
+            #     required: true
+            #     type: string
             is_signer_release:
                 description: "True if it is a signer release"
                 required: true
@@ -44,23 +44,7 @@ env:
     TARGET_CPU: ""
     LINKER: ""
 jobs:
-    # ## Build arch dependent binaries from source
-    # ##
-    # ## Runs when the following is true:
-    # ##  - either node or signer tag is provided
-    # andon-cord:
-    #     # if: |
-    #     #     inputs.node_tag != '' ||
-    #     #     inputs.signer_tag != ''
-    #     name: Andon Cord
-    #     runs-on: ubuntu-latest
-    #     environment: "Build Release"
-    #     steps:
-    #         - name: Check Approval
-    #           id: check
-    #           run: |
-    #               exit 0
-
+    ## Build arch dependent binaries from source
     build-binaries:
         name: Build Binaries
         permissions:
@@ -288,7 +272,7 @@ jobs:
               id: upload_artifact
               uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08 # v4.6.0
               with:
-                  name: ${{ inputs.node_tag || inputs.signer_docker_tag }}-binary-build-${{ env.ZIPFILE_NAME }}
+                  name: ${{ inputs.node_tag || inputs.signer_tag }}-binary-build-${{ env.ZIPFILE_NAME }}
                   # name: binaries-${{ env.ZIPFILE_NAME }}
                   path: ${{ env.ZIPFILE_NAME }}.zip
 
@@ -298,17 +282,17 @@ jobs:
               with:
                   subject-path: ${{ env.ZIPFILE_NAME }}.zip
 
-    docker-image:
-        name: Build Docker Images
-        needs:
-            # - andon-cord
-            - build-binaries
-        ## Creates the node docker image
-        uses: ./.github/workflows/release-docker.yml
-        with:
-            node_tag: ${{ inputs.node_tag }}
-            node_docker_tag: ${{ inputs.node_docker_tag }}
-            signer_tag: ${{ inputs.signer_tag }}
-            signer_docker_tag: ${{ inputs.signer_docker_tag }}
-            is_node_release: ${{ inputs.is_node_release }}
-            is_signer_release: ${{ inputs.is_signer_release }}
+    # docker-image:
+    #     name: Build Docker Images
+    #     needs:
+    #         # - andon-cord
+    #         - build-binaries
+    #     ## Creates the node docker image
+    #     uses: ./.github/workflows/release-docker.yml
+    #     with:
+    #         node_tag: ${{ inputs.node_tag }}
+    #         node_docker_tag: ${{ inputs.node_docker_tag }}
+    #         signer_tag: ${{ inputs.signer_tag }}
+    #         signer_docker_tag: ${{ inputs.signer_docker_tag }}
+    #         is_node_release: ${{ inputs.is_node_release }}
+    #         is_signer_release: ${{ inputs.is_signer_release }}
