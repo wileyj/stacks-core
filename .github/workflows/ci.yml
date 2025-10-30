@@ -123,6 +123,7 @@ jobs:
         secrets: inherit
         needs:
             # - andon-cord
+            - check-release
             - build-binaries
         ## Creates the node docker image
         uses: ./.github/workflows/release-docker.yml
@@ -142,6 +143,8 @@ jobs:
         needs:
             - rustfmt
             - check-release
+            - build-binaries
+            - docker-image
             # - testauth
         secrets: inherit
         uses: ./.github/workflows/release-github.yml
