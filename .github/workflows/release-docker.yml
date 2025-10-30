@@ -143,15 +143,19 @@ jobs:
               with:
                   # pattern: binaries-*
                   pattern: ${{ env.tag }}-binary-build-linux-${{ env.build_arch }}*
-                  path: release
+                  path: /tmp/release
                   merge-multiple: true
 
             - name: Check Data
               id: check_data
               shell: bash
               run: |
+                  echo "pwd:"
+                  pwd
+                  echo "ls /tmp"
+                  ls -al /tmp
                   echo "checking release dir:"
-                  ls -al ./release
+                  ls -al /tmp/release
                   unzip -l ./release/linux-glibc-x64.zip
                   echo "tag: ${{ env.tag}}"
                   echo "docker_tag: ${{ env.docker_tag }}"
@@ -159,9 +163,23 @@ jobs:
                   echo "docker_org: ${{ env.docker_org }}"
 
             ## Setup Docker for the builds
-            - name: Docker setup
-              id: docker_setup
-              uses: stacks-network/actions/docker@main
+            ##
+            ## note: we can disable the vm cleanup for this. at a minimum, we can use /mnt for ops
+            ##
+            ## Setup QEMU for multi-arch builds
+            - name: Set up QEMU
+              id: docker_qemu
+              uses: docker/setup-qemu-action@4574d27a4764455b42196d70a065bc6853246a25 # v3.4.0
+
+            ## Setup docker buildx
+            - name: Set up Docker Buildx
+              id: docker_buildx
+              uses: docker/setup-buildx-action@f7ce87c1d6bead3e36075b2ce75da1f6cc28aaca # v3.9.0
+
+            ## Login to dockerhub
+            - name: Login to DockerHub
+              id: docker_login
+              uses: docker/login-action@9780b0c442fbb1117ed29e0efdff1e18412f7567 # v3.3.0
               with:
                   username: ${{ secrets.DOCKERHUB_USERNAME }}
                   password: ${{ secrets.DOCKERHUB_PASSWORD }}
