@@ -85,18 +85,18 @@ jobs:
     ##
     ## Runs when:
     ##  - it is either a node release or a signer release
-    testauth:
-        name: Test AUth
-        needs:
-            - rustfmt
-        environment: "Push to Docker"
-        runs-on: ubuntu-latest
-        steps:
-            - name: Login to DockerHub
-              uses: docker/login-action@v1
-              with:
-                  username: ${{ secrets.DOCKERHUB_USERNAME }}
-                  password: ${{ secrets.DOCKERHUB_PASSWORD }}
+    # testauth:
+    #     name: Test AUth
+    #     needs:
+    #         - rustfmt
+    #     environment: "Push to Docker"
+    #     runs-on: ubuntu-latest
+    #     steps:
+    #         - name: Login to DockerHub
+    #           uses: docker/login-action@v1
+    #           with:
+    #               username: ${{ secrets.DOCKERHUB_USERNAME }}
+    #               password: ${{ secrets.DOCKERHUB_PASSWORD }}
 
     create-release:
         if: |
@@ -106,8 +106,8 @@ jobs:
         needs:
             - rustfmt
             - check-release
-            - testauth
-        # secrets: inherit
+            # - testauth
+        secrets: inherit
         uses: ./.github/workflows/release-github.yml
         with:
             node_tag: ${{ needs.check-release.outputs.node_tag }}
