@@ -62,6 +62,7 @@ jobs:
             inputs.node_tag != '' ||
             inputs.signer_tag != ''
         name: Build Binaries
+        secrets: inherit
         # needs:
         #     - andon-cord
         uses: ./.github/workflows/release-build.yml
@@ -75,6 +76,7 @@ jobs:
 
     docker-image:
         name: Build Docker Images
+        secrets: inherit
         needs:
             # - andon-cord
             - build-binaries

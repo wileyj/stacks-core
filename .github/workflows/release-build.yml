@@ -52,6 +52,7 @@ jobs:
         permissions:
             id-token: write
             attestations: write
+
         # needs:
         #     - andon-cord
         strategy:
@@ -102,7 +103,6 @@ jobs:
                     - arch: macos
                       cpu: arm64
         # runs-on: ${{ matrix.os }}
-
         steps:
             # ## cleanup runner
             # - name: Cleanup Runner
