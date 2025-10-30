@@ -197,13 +197,12 @@ jobs:
               shell: bash
               run: |
                   echo "platforms: ${{ env.platforms }}"
-                  echo "tags: ${{ steps.docker_metadata.outputs.tags }}"
                   echo "labels: ${{ steps.docker_metadata.outputs.labels }}"
                   echo "docker_tag: ${{ env.docker_tag }}"
                   echo "tag: ${{ env.tag }}"
                   echo
                   echo "build args:"
-                  echo "    TAG=${{ env.tag }}"
+                  echo "    TAG=$${{ steps.docker_metadata.outputs.tags }}"
                   echo "    REPO=${{ github.repository_owner }}/${{ github.event.repository.name }}"
                   echo "    STACKS_NODE_VERSION=${{ env.tag || env.GITHUB_SHA_SHORT }}"
                   echo "    GIT_BRANCH=${{ env.GITHUB_REF_SHORT }}"
@@ -220,7 +219,7 @@ jobs:
                   tags: ${{ steps.docker_metadata_node.outputs.tags }}
                   labels: ${{ steps.docker_metadata_node.outputs.labels }}
                   build-args: |
-                      TAG=${{ env.tag }}
+                      TAG=${{ steps.docker_metadata.outputs.tags }}
                       REPO=${{ github.repository_owner }}/${{ github.event.repository.name }}
                       STACKS_NODE_VERSION=${{ env.tag || env.GITHUB_SHA_SHORT }}
                       GIT_BRANCH=${{ env.GITHUB_REF_SHORT }}
