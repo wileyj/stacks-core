@@ -1,24 +1,18 @@
 FROM alpine AS builder
-# Use a small image to download and extract the release archive
 
-ARG TAG
-ARG BIN_ARCH
-ARG BUILDPLATFORM
-ARG TARGETARCH
-ARG TARGETVARIANT
-ARG REPO
+
+ARG TARGETPLATFORM
+ENV ARCHIVE_ROOT="/release"
+
+COPY release/ $ARCHIVE_ROOT
 
 RUN case ${TARGETPLATFORM} in \
-    linux/amd64*) BIN_ARCH=linux-musl-x64 ;; \
-    linux/arm64*) BIN_ARCH=linux-musl-arm64 ;; \
+    linux/amd64*) ARCHIVE=${ARCHIVE_ROOT}/linux-musl-x64.zip ;; \
+    linux/arm64*) ARCHIVE=${ARCHIVE_ROOT}/linux-musl-arm64.zip ;; \
     *) exit 1 ;; \
-    esac
-RUN echo "BIN_ARCH: $BIN_ARCH" \
-    && echo "ARTIFACT: ./release/${BIN_ARCH}.zip"
+    esac \
+    && unzip "$ARCHIVE" "stacks-node" -d /out
 
-COPY ./release/${BIN_ARCH}.zip .
-
-RUN unzip "${BIN_ARCH}.zip" "stacks-node" -d "/out"
 
 FROM alpine
 COPY --from=builder /out/* /bin/
