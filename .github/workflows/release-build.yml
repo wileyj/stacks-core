@@ -66,6 +66,7 @@ jobs:
         permissions:
             id-token: write
             attestations: write
+        environment: "Push to Docker"
         # needs:
         #     - andon-cord
         strategy:
@@ -122,6 +123,14 @@ jobs:
             # - name: Cleanup Runner
             #   id: runner_cleanup
             #   uses: stacks-network/actions/cleanup/disk@main
+
+            ## test
+            - name: Login to Docker Hub
+              uses: docker/login-action@v3
+              with:
+                  username: ${{ secrets.DOCKERHUB_USERNAME }}
+                  password: ${{ secrets.DOCKERHUB_PASSWORD }}
+            ## test
 
             ## Checkout the code
             - name: Checkout the latest code
