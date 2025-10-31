@@ -4,24 +4,21 @@ name: Docker Image (Source)
 
 on:
     workflow_dispatch:
-    workflow_call:
 
 ## Define which docker arch to build for
 env:
     docker_platforms: "linux/amd64,linux/arm64"
     docker_org: blockstack
-
-concurrency:
-    group: docker-image-source-${{ github.head_ref || github.ref || github.run_id }}
-    ## Always cancel duplicate jobs
-    cancel-in-progress: true
-
-env:
     # set a default command to build. we'll define specific build config options later per arch.
     CMD: "cargo build --features monitoring_prom,slog_json --profile release-lite --workspace"
     # ensure these env vars have no values since they will be explicitly set later
     TARGET_CPU: ""
     LINKER: ""
+
+concurrency:
+    group: docker-image-source-${{ github.head_ref || github.ref || github.run_id }}
+    ## Always cancel duplicate jobs
+    cancel-in-progress: true
 
 jobs:
     ## Build arch dependent binaries from source
@@ -166,7 +163,7 @@ jobs:
         ## Requires the repo environment "Push to Docker", which will trigger a secondary approval step before running this workflow.
         environment: "Push to Docker"
         needs:
-          - build-binaries
+            - build-binaries
         permissions:
             id-token: write
             attestations: write
