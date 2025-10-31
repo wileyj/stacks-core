@@ -216,8 +216,8 @@ jobs:
               with:
                   file: ./.github/actions/dockerfiles/Dockerfile.${{ matrix.dist }}-binary
                   platforms: ${{ env.platforms }}
-                  tags: ${{ steps.docker_metadata_node.outputs.tags }}
-                  labels: ${{ steps.docker_metadata_node.outputs.labels }}
+                  tags: ${{ steps.docker_metadata.outputs.tags }}
+                  labels: ${{ steps.docker_metadata.outputs.labels }}
                   build-args: |
                       TAG=${{ steps.docker_metadata.outputs.tags }}
                       REPO=${{ github.repository_owner }}/${{ github.event.repository.name }}

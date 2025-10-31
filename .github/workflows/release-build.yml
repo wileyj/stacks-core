@@ -48,7 +48,6 @@ jobs:
     build-binaries:
         name: Build Binaries
         runs-on: ubuntu-latest
-        environment: "Build Release"
         permissions:
             id-token: write
             attestations: write
