@@ -100,7 +100,7 @@ jobs:
                   echo "node_tag: ${{ inputs.node_tag }}"
     stacks-node:
         if: |
-            needs.set-vars.outputs.is-signer-release == 'false' &&
+            needs.set-vars.outputs.is-node-release == 'true' &&
             inputs.node_docker_tag != ''
         # if: |
         #     inputs.node_tag != ''
@@ -114,7 +114,7 @@ jobs:
             docker_tag: ${{ inputs.node_docker_tag }}
             is-signer-release: ${{ needs.set-vars.outputs.is-signer-release }}
             tag: ${{ inputs.node_tag }}
-        # environment: "Push to Docker" # commented for testing
+        environment: "Push to Docker"
         permissions:
             id-token: write
             attestations: write
@@ -136,6 +136,7 @@ jobs:
                   echo "env.tag: ${{ env.tag }}"
                   echo "env.docker_tag: ${{env.docker_tag}}"
                   echo "env.docker_org: ${{env.docker_org}}"
+                  echo "env.docker_tag_rc: :${{env.docker_tag_rc}}"
                   echo "env.is-signer-release": ${{ env.is-signer-release}}"
                   echo
                   echo "node_tag: ${{inputs.node_tag}}"
@@ -282,7 +283,7 @@ jobs:
             docker_tag: ${{ inputs.node_docker_tag }}
             is-signer-release: ${{ needs.set-vars.outputs.is-signer-release }}
             tag: ${{ inputs.node_tag }}
-        # environment: "Push to Docker" # commented for testing
+        environment: "Push to Docker"
         permissions:
             id-token: write
             attestations: write
@@ -304,6 +305,7 @@ jobs:
                   echo "env.tag: ${{ env.tag }}"
                   echo "env.docker_tag: ${{env.docker_tag}}"
                   echo "env.docker_org: ${{env.docker_org}}"
+                  echo "env.docker_tag_rc: :${{env.docker_tag_rc}}"
                   echo "env.is-signer-release": ${{ env.is-signer-release}}"
                   echo
                   echo "node_tag: ${{inputs.node_tag}}"
