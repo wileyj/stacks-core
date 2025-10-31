@@ -37,9 +37,7 @@ concurrency:
 run-name: TEST docker release images
 
 env:
-    platforms: "linux/amd64"
-    # platforms: "linux/arm64, linux/amd64, linux/amd64/v3"
-    #
+    platforms: "linux/arm64, linux/amd64"
 jobs:
     set-vars:
         name: Set Vars
