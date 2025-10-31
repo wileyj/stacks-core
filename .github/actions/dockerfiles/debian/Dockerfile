@@ -1,0 +1,20 @@
+FROM alpine AS builder
+
+
+ARG TARGETPLATFORM
+ENV ARCHIVE_ROOT="/release"
+
+# upload the relase artifacts downloaded to /tmp/release to /release in the build stage
+COPY ./release/ $ARCHIVE_ROOT
+
+RUN case ${TARGETPLATFORM} in \
+    linux/amd64*) ARCHIVE=${ARCHIVE_ROOT}/linux-glibc-x64.zip ;; \
+    linux/arm64*) ARCHIVE=${ARCHIVE_ROOT}/linux-glibc-arm64.zip ;; \
+    *) exit 1 ;; \
+    esac \
+    && unzip "$ARCHIVE" -d /out
+
+
+FROM debian:bookworm
+COPY --from=builder /out/* /bin/
+CMD ["/bin/stacks-node mainnet"]

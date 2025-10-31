@@ -9,14 +9,12 @@ on:
 ## Define which docker arch to build for
 env:
     docker_platforms: "linux/amd64,linux/arm64"
-    docker-org: blockstack
+    docker_org: blockstack
 
 concurrency:
     group: docker-image-source-${{ github.head_ref || github.ref || github.run_id }}
     ## Always cancel duplicate jobs
     cancel-in-progress: true
-
-jobs:
 
 env:
     # set a default command to build. we'll define specific build config options later per arch.
@@ -24,6 +22,7 @@ env:
     # ensure these env vars have no values since they will be explicitly set later
     TARGET_CPU: ""
     LINKER: ""
+
 jobs:
     ## Build arch dependent binaries from source
     build-binaries:
@@ -44,9 +43,6 @@ jobs:
                 cpu:
                     - x86-64
                     - arm64
-                os:
-                    - ubuntu-latest
-
         steps:
             # ## cleanup runner
             # - name: Cleanup Runner
@@ -118,7 +114,6 @@ jobs:
               run: |
                   echo "arch: ${{ matrix.arch }}"
                   echo "cpu: ${{ matrix.cpu }}"
-                  echo "os: ${{ matrix.os }}"
                   echo "TARGET: ${{env.TARGET}}"
                   echo "TARGET_CPU: ${{env.TARGET_CPU}}"
                   echo "CMD: ${{env.CMD}}"
@@ -193,10 +188,6 @@ jobs:
                   pwd
                   echo "checking release dir:"
                   ls -al /tmp/release
-                  echo "tag: ${{ env.tag}}"
-                  echo "docker_tag: ${{ env.docker_tag }}"
-                  echo "docker_tag_rc: ${{ env.docker_tag_rc }}"
-                  echo "docker_org: ${{ env.docker_org }}"
 
             ## Setup Docker for the builds
             - name: Docker setup
@@ -206,14 +197,14 @@ jobs:
                   username: ${{ secrets.DOCKERHUB_USERNAME }}
                   password: ${{ secrets.DOCKERHUB_PASSWORD }}
 
-            ## if the repo owner is not `stacks-network`, default to a docker-org of the repo owner (i.e. github user id)
+            ## if the repo owner is not `stacks-network`, default to a docker_org of the repo owner (i.e. github user id)
             ## this allows forks to run the docker push workflows without having to hardcode a dockerhub org (but it does require docker hub user to match github username)
             - name: Set Local env vars
               id: set_env
               if: |
                   github.repository_owner != 'stacks-network'
               run: |
-                  echo "docker-org=${{ github.repository_owner }}" >> "$GITHUB_ENV"
+                  echo "docker_org=${{ github.repository_owner }}" >> "$GITHUB_ENV"
 
             ## Set docker metatdata
             - name: Docker Metadata ( ${{matrix.dist}} )
@@ -221,8 +212,8 @@ jobs:
               uses: docker/metadata-action@369eb591f429131d6889c46b94e711f089e6ca96 #v5.6.1
               with:
                   images: |
-                      ${{env.docker-org}}/${{ github.event.repository.name }}
-                      ${{env.docker-org}}/stacks-blockchain
+                      ${{env.docker_org}}/${{ github.event.repository.name }}
+                      ${{env.docker_org}}/stacks-blockchain
                   tags: |
                       type=raw,value=${{ env.BRANCH_NAME }}
                       type=ref,event=pr
@@ -235,31 +226,29 @@ jobs:
               run: |
                   echo "platforms: ${{ env.platforms }}"
                   echo "labels: ${{ steps.docker_metadata.outputs.labels }}"
-                  echo "docker_tag: ${{ env.docker_tag }}"
-                  echo "tag: ${{ env.tag }}"
                   echo
                   echo "build args:"
                   echo "    TAG=$${{ steps.docker_metadata.outputs.tags }}"
-                  echo "    REPO=${{ github.repository_owner }}/${{ github.event.repository.name }}"
-                  echo "    STACKS_NODE_VERSION=${{ env.tag || env.GITHUB_SHA_SHORT }}"
+                  echo "    REPO=${{env.docker_org}}/${{ github.event.repository.name }}"
+                  echo "    STACKS_NODE_VERSION=${{ env.GITHUB_SHA_SHORT }}"
                   echo "    GIT_BRANCH=${{ env.GITHUB_REF_SHORT }}"
                   echo "    GIT_COMMIT=${{ env.GITHUB_SHA_SHORT }}"
                   echo "push: ${{ env.DOCKER_PUSH }}"
 
             - name: Build and Push ( ${{matrix.dist}} )
               if: ${{ env.is-signer-release == 'false' }}
-              id: docker_build_node
+              id: docker_build
               uses: docker/build-push-action@ca877d9245402d1537745e0e356eab47c3520991 # v6.13.0
               with:
                   context: /tmp
-                  file: ./.github/actions/dockerfiles/Dockerfile.${{ matrix.dist }}-binary
+                  file: ./.github/actions/dockerfiles/debian/Dockerfile
                   platforms: ${{ env.platforms }}
                   tags: ${{ steps.docker_metadata.outputs.tags }}
                   labels: ${{ steps.docker_metadata.outputs.labels }}
                   build-args: |
                       TAG=${{ steps.docker_metadata.outputs.tags }}
                       REPO=${{ github.repository_owner }}/${{ github.event.repository.name }}
-                      STACKS_NODE_VERSION=${{ env.tag || env.GITHUB_SHA_SHORT }}
+                      STACKS_NODE_VERSION=${{ env.GITHUB_SHA_SHORT }}
                       GIT_BRANCH=${{ env.GITHUB_REF_SHORT }}
                       GIT_COMMIT=${{ env.GITHUB_SHA_SHORT }}
                   push: ${{ env.DOCKER_PUSH }}
@@ -270,7 +259,7 @@ jobs:
               uses: actions/attest-build-provenance@c074443f1aee8d4aeeae555aebba3282517141b2 # v2.2.3
               with:
                   subject-name: |
-                      index.docker.io/${{env.docker-org}}/${{ github.event.repository.name }}
+                      index.docker.io/${{env.docker_org}}/${{ github.event.repository.name }}
                   subject-digest: ${{ steps.docker_build.outputs.digest }}
                   push-to-registry: true
 
@@ -279,6 +268,6 @@ jobs:
               uses: actions/attest-build-provenance@c074443f1aee8d4aeeae555aebba3282517141b2 # v2.2.3
               with:
                   subject-name: |
-                      index.docker.io/${{env.docker-org}}/stacks-blockchain
+                      index.docker.io/${{env.docker_org}}/stacks-blockchain
                   subject-digest: ${{ steps.docker_build.outputs.digest }}
                   push-to-registry: true
