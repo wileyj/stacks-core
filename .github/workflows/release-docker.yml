@@ -96,8 +96,8 @@ jobs:
               shell: bash
               run: |
                   echo "is-signer-release: ${{ env.is-signer-release }}"
-                  echo"node_docker_tag: ${{ inputs.node_docker_tag }}"
-                  echo"node_tag: ${{ inputs.node_tag }}"
+                  echo "node_docker_tag: ${{ inputs.node_docker_tag }}"
+                  echo "node_tag: ${{ inputs.node_tag }}"
     stacks-node:
         if: |
             needs.set-vars.outputs.is-signer-release == 'false' &&
