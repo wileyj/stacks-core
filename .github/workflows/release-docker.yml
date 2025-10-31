@@ -124,7 +124,7 @@ jobs:
             max-parallel: 2
             matrix:
                 dist:
-                    - alpine
+                    # - alpine
                     - debian
         steps:
             ## set env var for which artifacts to download
