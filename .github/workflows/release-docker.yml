@@ -39,6 +39,7 @@ run-name: TEST docker release images
 env:
     platforms: "linux/arm64, linux/amd64"
 jobs:
+    # move this to build-release or github-release and pass data as inputs here
     set-vars:
         name: Set Vars
         runs-on: ubuntu-latest
@@ -90,6 +91,13 @@ jobs:
                     echo "docker_tag_rc=false" >> $GITHUB_ENV
                   fi
 
+            - name: Output
+              id: output
+              shell: bash
+              run: |
+                  echo "is-signer-release: ${{ env.is-signer-release }}"
+                  echo"node_docker_tag: ${{ inputs.node_docker_tag }}"
+                  echo"node_tag: ${{ inputs.node_tag }}"
     stacks-node:
         if: |
             needs.set-vars.outputs.is-signer-release == 'false' &&
@@ -116,7 +124,7 @@ jobs:
             max-parallel: 2
             matrix:
                 dist:
-                    # - alpine
+                    - alpine
                     - debian
         steps:
             ## set env var for which artifacts to download
