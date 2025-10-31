@@ -1,5 +1,6 @@
 ## Github workflow to create reusable caches
-
+## https://github.com/wileyj/stacks-core/blob/e5385d6484cebcfabe03070f7a6c729a088e841d/.github/workflows/release-docker.yml
+#
 name: Docker Release Images
 
 on:
@@ -136,7 +137,8 @@ jobs:
                   echo "env.tag: ${{ env.tag }}"
                   echo "env.docker_tag: ${{env.docker_tag}}"
                   echo "env.docker_org: ${{env.docker_org}}"
-                  echo "env.is-signer-release": ${{ env.is-signer-release}}"
+                  echo "env.is-signer-release: ${{ env.is-signer-release}}"
+                  echo "docker_tag_rc: ${{ env.docker_tag_rc }}"
                   echo
                   echo "node_tag: ${{inputs.node_tag}}"
                   echo "node_docker_tag: ${{inputs.node_docker_tag}}"
@@ -304,7 +306,8 @@ jobs:
                   echo "env.tag: ${{ env.tag }}"
                   echo "env.docker_tag: ${{env.docker_tag}}"
                   echo "env.docker_org: ${{env.docker_org}}"
-                  echo "env.is-signer-release": ${{ env.is-signer-release}}"
+                  echo "env.is-signer-release: ${{ env.is-signer-release}}"
+                  echo "docker_tag_rc: ${{ env.docker_tag_rc }}"
                   echo
                   echo "node_tag: ${{inputs.node_tag}}"
                   echo "node_docker_tag: ${{inputs.node_docker_tag}}"
