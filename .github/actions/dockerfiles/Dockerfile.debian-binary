@@ -5,7 +5,7 @@ ARG TARGETPLATFORM
 ENV ARCHIVE_ROOT="/release"
 
 # upload the relase artifacts downloaded to /tmp/release to /release in the build stage
-COPY /tmp/release/ $ARCHIVE_ROOT
+COPY ./release/ $ARCHIVE_ROOT
 
 RUN case ${TARGETPLATFORM} in \
     linux/amd64*) ARCHIVE=${ARCHIVE_ROOT}/linux-glibc-x64.zip ;; \
