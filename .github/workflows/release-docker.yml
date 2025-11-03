@@ -125,15 +125,27 @@ jobs:
             max-parallel: 2
             matrix:
                 dist:
-                    # - alpine
+                    - alpine
                     - debian
         steps:
+            ## set env var for which artifacts to download
+            - name: Set Artifact Arch
+              id: set_artifact_arch
+              shell: bash
+              run: |
+                  if [[ "${{ matrix.dist }}" == "alpine" ]]; then
+                    echo "build_arch=musl" >> "$GITHUB_ENV"
+                  else
+                    echo "build_arch=glibc" >> "$GITHUB_ENV"
+                  fi
+
             - name: (node) Check Data
               id: check_data
               shell: bash
               run: |
                   echo "matrix.dist: ${{matrix.dist}}"
                   echo
+                  echo "env.build_arch: ${{ env.build_arch }}"
                   echo "env.tag: ${{ env.tag }}"
                   echo "env.docker_tag: ${{env.docker_tag}}"
                   echo "env.docker_org: ${{env.docker_org}}"
@@ -147,16 +159,7 @@ jobs:
                   echo "is_node_release: ${{inputs.is_node_release}}"
                   echo "is_signer_release: ${{inputs.is_signer_release}}"
                   echo
-              # ## set env var for which artifacts to download
-              # - name: Set Artifact Arch
-              #   id: set_artifact_arch
-              #   shell: bash
-              #   run: |
-              #       if [[ "${{ matrix.dist }}" == "alpine" ]]; then
-              #         echo "build_arch=musl" >> "$GITHUB_ENV"
-              #       else
-              #         echo "build_arch=glibc" >> "$GITHUB_ENV"
-              #       fi
+                  echo "Artifact pattern: ${{ env.tag }}-binary-build-linux-${{ env.build_arch }}*"
 
               # # ## Checkout the code
               # # - name: Checkout the latest code
@@ -297,12 +300,23 @@ jobs:
                     # - alpine
                     - debian
         steps:
+            ## set env var for which artifacts to download
+            - name: Set Artifact Arch
+              id: set_artifact_arch
+              shell: bash
+              run: |
+                  if [[ "${{ matrix.dist }}" == "alpine" ]]; then
+                    echo "build_arch=musl" >> "$GITHUB_ENV"
+                  else
+                    echo "build_arch=glibc" >> "$GITHUB_ENV"
+                  fi
             - name: (signer) Check Data
               id: check_data
               shell: bash
               run: |
                   echo "matrix.dist: ${{matrix.dist}}"
                   echo
+                  echo "env.build_arch: ${{ env.build_arch }}"
                   echo "env.tag: ${{ env.tag }}"
                   echo "env.docker_tag: ${{env.docker_tag}}"
                   echo "env.docker_org: ${{env.docker_org}}"
@@ -316,16 +330,7 @@ jobs:
                   echo "is_node_release: ${{inputs.is_node_release}}"
                   echo "is_signer_release: ${{inputs.is_signer_release}}"
                   echo
-            # ## set env var for which artifacts to download
-            # - name: Set Artifact Arch
-            #   id: set_artifact_arch
-            #   shell: bash
-            #   run: |
-            #       if [[ "${{ matrix.dist }}" == "alpine" ]]; then
-            #         echo "build_arch=musl" >> "$GITHUB_ENV"
-            #       else
-            #         echo "build_arch=glibc" >> "$GITHUB_ENV"
-            #       fi
+                  echo "Artifact pattern: ${{ env.tag }}-binary-build-linux-${{ env.build_arch }}*"
 
             # # ## Checkout the code
             # # - name: Checkout the latest code

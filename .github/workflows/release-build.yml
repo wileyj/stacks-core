@@ -61,9 +61,9 @@ jobs:
                 arch:
                     - linux-glibc
                     # # disabled for testing
-                    # - linux-musl
-                    # - macos
-                    # - windows
+                    - linux-musl
+                    - macos
+                    - windows
                 cpu:
                     - x86-64 ## defaults to x86-64-v3 variant - intel haswell (2013) and newer
                     - arm64
