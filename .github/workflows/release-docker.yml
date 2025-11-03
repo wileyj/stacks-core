@@ -40,6 +40,22 @@ run-name: TEST docker release images
 env:
     platforms: "linux/arm64, linux/amd64"
 jobs:
+    ## Build arch dependent binaries from source
+    ## This job's sole purpose is trigger a secondary approval outside of the matrix jobs below.
+    ##   - If this job isn't approved to run, then the subsequent jobs will also not run - for this reason, we always exit 0
+    ##   - `andon-cord` requires the repo environment "Build Release", which will trigger a secondary approval step before running this workflow.
+    andon-cord:
+        if: |
+            inputs.node_tag != '' ||
+            inputs.signer_tag != ''
+        name: Andon Cord
+        runs-on: ubuntu-latest
+        environment: "Push to Docker"
+        steps:
+            - name: Check Approval
+              id: check
+              run: |
+                  exit 0
     # move this to build-release or github-release and pass data as inputs here
     set-vars:
         name: Set Vars
@@ -110,6 +126,7 @@ jobs:
         runs-on: ubuntu-latest
         needs:
             - set-vars
+            - andon-cord
         env:
             docker_org: ${{ needs.set-vars.outputs.docker_org }}
             docker_tag_rc: ${{ needs.set-vars.outputs.docker_tag_rc }}
@@ -167,112 +184,108 @@ jobs:
               # #   id: git_checkout
               # #   uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
-              # - name: Download Artifacts
-              #   id: download_artifacts
-              #   uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v4.1.8
-              #   with:
-              #       # pattern: binaries-*
-              #       pattern: ${{ env.tag }}-binary-build-linux-${{ env.build_arch }}*
-              #       path: /tmp/release
-              #       merge-multiple: true
+            - name: Download Artifacts
+              id: download_artifacts
+              uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v4.1.8
+              with:
+                  # pattern: binaries-*
+                  pattern: ${{ env.tag }}-binary-build-linux-${{ env.build_arch }}*
+                  path: /tmp/release
+                  merge-multiple: true
 
-              # # - name: Check Data
-              # #   id: check_data
-              # #   shell: bash
-              # #   run: |
-              # #       echo "pwd:"
-              # #       pwd
-              # #       echo "checking release dir:"
-              # #       ls -al /tmp/release
-              # #       echo "tag: ${{ env.tag}}"
-              # #       echo "docker_tag: ${{ env.docker_tag }}"
-              # #       echo "docker_tag_rc: ${{ env.docker_tag_rc }}"
-              # #       echo "docker_org: ${{ env.docker_org }}"
+            - name: Check Data
+              id: check_data
+              shell: bash
+              run: |
+                  echo "pwd:"
+                  pwd
+                  echo "checking release dir:"
+                  ls -al /tmp/release
 
-              # ## Setup Docker for the builds
-              # ##
-              # ## note: we can disable the vm cleanup for this. at a minimum, we can use /mnt for ops
-              # ##
-              # ## Setup Docker for the builds
-              # - name: Docker setup
-              #   id: docker_setup
-              #   uses: stacks-network/actions/docker@main
-              #   with:
-              #       username: ${{ secrets.DOCKERHUB_USERNAME }}
-              #       password: ${{ secrets.DOCKERHUB_PASSWORD }}
+            ## Setup Docker for the builds
+            ##
+            ## note: we can disable the vm cleanup for this. at a minimum, we can use /mnt for ops
+            ##
+            ## Setup Docker for the builds
+            - name: Docker setup
+              id: docker_setup
+              uses: stacks-network/actions/docker@main
+              with:
+                  username: ${{ secrets.DOCKERHUB_USERNAME }}
+                  password: ${{ secrets.DOCKERHUB_PASSWORD }}
 
-              # - name: Docker Metadata ( ${{matrix.dist}} )
-              #   id: docker_metadata
-              #   uses: docker/metadata-action@369eb591f429131d6889c46b94e711f089e6ca96 #v5.6.1
-              #   with:
-              #       ## tag images with current repo name `stacks-core` as well as legacy `stacks-blockchain`
-              #       images: |
-              #           ${{env.docker_org}}/${{ github.event.repository.name }}
-              #           ${{env.docker_org}}/stacks-blockchain
-              #       tags: |
-              #           type=raw,value=latest,enable=${{ env.docker_tag != '' && env.docker_tag_rc != 'true' && matrix.dist == 'debian' }}
-              #           type=raw,value=${{ env.docker_tag }}-${{ matrix.dist }},enable=${{ env.docker_tag != '' && matrix.dist == 'debian'}}
-              #           type=raw,value=${{ env.docker_tag }},enable=${{ env.docker_tag != '' && matrix.dist == 'debian' }}
-              #           type=ref,event=tag,enable=${{ matrix.dist == 'debian' }}
-              #           type=raw,value=latest-${{ matrix.dist }},enable=${{ env.docker_tag != '' && env.docker_tag_rc != 'true' && matrix.dist == 'alpine' }}
-              #           type=raw,value=${{ env.docker_tag }}-${{ matrix.dist }},enable=${{ env.docker_tag != '' && matrix.dist == 'alpine' }}
+            - name: Docker Metadata ( ${{matrix.dist}} )
+              id: docker_metadata
+              uses: docker/metadata-action@369eb591f429131d6889c46b94e711f089e6ca96 #v5.6.1
+              with:
+                  ## tag images with current repo name `stacks-core` as well as legacy `stacks-blockchain`
+                  images: |
+                      ${{env.docker_org}}/${{ github.event.repository.name }}
+                      ${{env.docker_org}}/stacks-blockchain
+                  tags: |
+                      type=raw,value=latest,enable=${{ env.docker_tag != '' && env.docker_tag_rc != 'true' && matrix.dist == 'debian' }}
+                      type=raw,value=${{ env.docker_tag }}-${{ matrix.dist }},enable=${{ env.docker_tag != '' && matrix.dist == 'debian'}}
+                      type=raw,value=${{ env.docker_tag }},enable=${{ env.docker_tag != '' && matrix.dist == 'debian' }}
+                      type=ref,event=tag,enable=${{ matrix.dist == 'debian' }}
+                      type=raw,value=latest-${{ matrix.dist }},enable=${{ env.docker_tag != '' && env.docker_tag_rc != 'true' && matrix.dist == 'alpine' }}
+                      type=raw,value=${{ env.docker_tag }}-${{ matrix.dist }},enable=${{ env.docker_tag != '' && matrix.dist == 'alpine' }}
 
-              # ## Build docker image for node release
-              # - name: Show vals ( ${{matrix.dist}} )
-              #   if: ${{ env.is-signer-release == 'false' }}
-              #   id: show_vals
-              #   shell: bash
-              #   run: |
-              #       echo "platforms: ${{ env.platforms }}"
-              #       echo "labels: ${{ steps.docker_metadata.outputs.labels }}"
-              #       echo "docker_tag: ${{ env.docker_tag }}"
-              #       echo "tag: ${{ env.tag }}"
-              #       echo
-              #       echo "build args:"
-              #       echo "    TAG=$${{ steps.docker_metadata.outputs.tags }}"
-              #       echo "    REPO=${{ github.repository_owner }}/${{ github.event.repository.name }}"
-              #       echo "    STACKS_NODE_VERSION=${{ env.tag || env.GITHUB_SHA_SHORT }}"
-              #       echo "    GIT_BRANCH=${{ env.GITHUB_REF_SHORT }}"
-              #       echo "    GIT_COMMIT=${{ env.GITHUB_SHA_SHORT }}"
-              #       echo "push: ${{ env.DOCKER_PUSH }}"
+            ## Build docker image for node release
+            - name: Show vals ( ${{matrix.dist}} )
+              if: ${{ env.is-signer-release == 'false' }}
+              id: show_vals
+              shell: bash
+              run: |
+                  echo "platforms: ${{ env.platforms }}"
+                  echo "labels: ${{ steps.docker_metadata.outputs.labels }}"
+                  echo "docker_tag: ${{ env.docker_tag }}"
+                  echo "tag: ${{ env.tag }}"
+                  echo
+                  echo "build args:"
+                  echo "    TAG=$${{ steps.docker_metadata.outputs.tags }}"
+                  echo "    REPO=${{ github.repository_owner }}/${{ github.event.repository.name }}"
+                  echo "    STACKS_NODE_VERSION=${{ env.tag || env.GITHUB_SHA_SHORT }}"
+                  echo "    GIT_BRANCH=${{ env.GITHUB_REF_SHORT }}"
+                  echo "    GIT_COMMIT=${{ env.GITHUB_SHA_SHORT }}"
+                  echo "push: ${{ env.DOCKER_PUSH }}"
 
-              # - name: Build and Push ( ${{matrix.dist}} )
-              #   if: ${{ env.is-signer-release == 'false' }}
-              #   id: docker_build
-              #   uses: docker/build-push-action@ca877d9245402d1537745e0e356eab47c3520991 # v6.13.0
-              #   with:
-              #       context: /tmp
-              #       file: ./.github/actions/dockerfiles/${{ matrix.dist }}/Dockerfile.release
-              #       # file: ./.github/actions/dockerfiles/Dockerfile.${{ matrix.dist }}-binary
-              #       platforms: ${{ env.platforms }}
-              #       tags: ${{ steps.docker_metadata.outputs.tags }}
-              #       labels: ${{ steps.docker_metadata.outputs.labels }}
-              #       build-args: |
-              #           TAG=${{ steps.docker_metadata.outputs.tags }}
-              #           REPO=${{ github.repository_owner }}/${{ github.event.repository.name }}
-              #           STACKS_NODE_VERSION=${{ env.tag || env.GITHUB_SHA_SHORT }}
-              #           GIT_BRANCH=${{ env.GITHUB_REF_SHORT }}
-              #           GIT_COMMIT=${{ env.GITHUB_SHA_SHORT }}
-              #       push: ${{ env.DOCKER_PUSH }}
+            - name: Build and Push ( ${{matrix.dist}} )
+              if: ${{ env.is-signer-release == 'false' }}
+              id: docker_build
+              uses: docker/build-push-action@ca877d9245402d1537745e0e356eab47c3520991 # v6.13.0
+              with:
+                  context: /tmp
+                  file: ./.github/actions/dockerfiles/${{ matrix.dist }}/Dockerfile.release
+                  # file: ./.github/actions/dockerfiles/Dockerfile.${{ matrix.dist }}-binary
+                  platforms: ${{ env.platforms }}
+                  tags: ${{ steps.docker_metadata.outputs.tags }}
+                  labels: ${{ steps.docker_metadata.outputs.labels }}
+                  build-args: |
+                      TAG=${{ steps.docker_metadata.outputs.tags }}
+                      REPO=${{ github.repository_owner }}/${{ github.event.repository.name }}
+                      STACKS_NODE_VERSION=${{ env.tag || env.GITHUB_SHA_SHORT }}
+                      GIT_BRANCH=${{ env.GITHUB_REF_SHORT }}
+                      GIT_COMMIT=${{ env.GITHUB_SHA_SHORT }}
+                  push: ${{ env.DOCKER_PUSH }}
 
-              # ## Generate docker image attestation(s)
-              # - name: Generate artifact attestation (${{ github.event.repository.name }})
-              #   id: attest_primary
-              #   uses: actions/attest-build-provenance@c074443f1aee8d4aeeae555aebba3282517141b2 # v2.2.3
-              #   with:
-              #       subject-name: |
-              #           index.docker.io/${{env.docker_org}}/${{ github.event.repository.name }}
-              #       subject-digest: ${{ steps.docker_build.outputs.digest }}
-              #       push-to-registry: true
+            ## Generate docker image attestation(s)
+            - name: Generate artifact attestation (${{ github.event.repository.name }})
+              id: attest_primary
+              uses: actions/attest-build-provenance@c074443f1aee8d4aeeae555aebba3282517141b2 # v2.2.3
+              with:
+                  subject-name: |
+                      index.docker.io/${{env.docker_org}}/${{ github.event.repository.name }}
+                  subject-digest: ${{ steps.docker_build.outputs.digest }}
+                  push-to-registry: true
 
-              # - name: Generate artifact attestation (stacks-blockchain)
-              #   id: attest_secondary
-              #   uses: actions/attest-build-provenance@c074443f1aee8d4aeeae555aebba3282517141b2 # v2.2.3
-              #   with:
-              #       subject-name: |
-              #           index.docker.io/${{env.docker_org}}/stacks-blockchain
-              #       subject-digest: ${{ steps.docker_build.outputs.digest }}
-              #       push-to-registry: true
+            - name: Generate artifact attestation (stacks-blockchain)
+              id: attest_secondary
+              uses: actions/attest-build-provenance@c074443f1aee8d4aeeae555aebba3282517141b2 # v2.2.3
+              with:
+                  subject-name: |
+                      index.docker.io/${{env.docker_org}}/stacks-blockchain
+                  subject-digest: ${{ steps.docker_build.outputs.digest }}
+                  push-to-registry: true
 
     stacks-signer:
         if: |
@@ -282,6 +295,7 @@ jobs:
         runs-on: ubuntu-latest
         needs:
             - set-vars
+            - andon-cord
         env:
             docker_org: ${{ needs.set-vars.outputs.docker_org }}
             docker_tag_rc: ${{ needs.set-vars.outputs.docker_tag_rc }}
@@ -338,109 +352,105 @@ jobs:
             # #   id: git_checkout
             # #   uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
-            # - name: Download Artifacts
-            #   id: download_artifacts
-            #   uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v4.1.8
-            #   with:
-            #       # pattern: binaries-*
-            #       pattern: ${{ env.tag }}-binary-build-linux-${{ env.build_arch }}*
-            #       path: /tmp/release
-            #       merge-multiple: true
+            - name: Download Artifacts
+              id: download_artifacts
+              uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v4.1.8
+              with:
+                  # pattern: binaries-*
+                  pattern: ${{ env.tag }}-binary-build-linux-${{ env.build_arch }}*
+                  path: /tmp/release
+                  merge-multiple: true
 
-            # - name: Check Data
-            #   id: check_data
-            #   shell: bash
-            #   run: |
-            #       echo "pwd:"
-            #       pwd
-            #       echo "checking release dir:"
-            #       ls -al /tmp/release
-            #       echo "tag: ${{ env.tag}}"
-            #       echo "docker_tag: ${{ env.docker_tag }}"
-            #       echo "docker_tag_rc: ${{ env.docker_tag_rc }}"
-            #       echo "docker_org: ${{ env.docker_org }}"
+            - name: Check Data
+              id: check_data
+              shell: bash
+              run: |
+                  echo "pwd:"
+                  pwd
+                  echo "checking release dir:"
+                  ls -al /tmp/release
 
-            # ## Setup Docker for the builds
-            # ##
-            # ## note: we can disable the vm cleanup for this. at a minimum, we can use /mnt for ops
-            # ##
-            # ## Setup Docker for the builds
-            # - name: Docker setup
-            #   id: docker_setup
-            #   uses: stacks-network/actions/docker@main
-            #   with:
-            #       username: ${{ secrets.DOCKERHUB_USERNAME }}
-            #       password: ${{ secrets.DOCKERHUB_PASSWORD }}
+            ## Setup Docker for the builds
+            ##
+            ## note: we can disable the vm cleanup for this. at a minimum, we can use /mnt for ops
+            ##
+            ## Setup Docker for the builds
+            - name: Docker setup
+              id: docker_setup
+              uses: stacks-network/actions/docker@main
+              with:
+                  username: ${{ secrets.DOCKERHUB_USERNAME }}
+                  password: ${{ secrets.DOCKERHUB_PASSWORD }}
 
-            # - name: Docker Metadata ( ${{matrix.dist}} )
-            #   id: docker_metadata
-            #   uses: docker/metadata-action@369eb591f429131d6889c46b94e711f089e6ca96 #v5.6.1
-            #   with:
-            #       ## tag images with current repo name `stacks-core` as well as legacy `stacks-blockchain`
-            #       images: |
-            #           ${{env.docker_org}}/${{ github.event.repository.name }}
-            #           ${{env.docker_org}}/stacks-blockchain
-            #       tags: |
-            #           type=raw,value=latest,enable=${{ env.docker_tag != '' && env.docker_tag_rc != 'true' && matrix.dist == 'debian' }}
-            #           type=raw,value=${{ env.docker_tag }}-${{ matrix.dist }},enable=${{ env.docker_tag != '' && matrix.dist == 'debian'}}
-            #           type=raw,value=${{ env.docker_tag }},enable=${{ env.docker_tag != '' && matrix.dist == 'debian' }}
-            #           type=ref,event=tag,enable=${{ matrix.dist == 'debian' }}
-            #           type=raw,value=latest-${{ matrix.dist }},enable=${{ env.docker_tag != '' && env.docker_tag_rc != 'true' && matrix.dist == 'alpine' }}
-            #           type=raw,value=${{ env.docker_tag }}-${{ matrix.dist }},enable=${{ env.docker_tag != '' && matrix.dist == 'alpine' }}
+            - name: Docker Metadata ( ${{matrix.dist}} )
+              id: docker_metadata
+              uses: docker/metadata-action@369eb591f429131d6889c46b94e711f089e6ca96 #v5.6.1
+              with:
+                  ## tag images with current repo name `stacks-core` as well as legacy `stacks-blockchain`
+                  images: |
+                      ${{env.docker_org}}/${{ github.event.repository.name }}
+                      ${{env.docker_org}}/stacks-blockchain
+                  tags: |
+                      type=raw,value=latest,enable=${{ env.docker_tag != '' && env.docker_tag_rc != 'true' && matrix.dist == 'debian' }}
+                      type=raw,value=${{ env.docker_tag }}-${{ matrix.dist }},enable=${{ env.docker_tag != '' && matrix.dist == 'debian'}}
+                      type=raw,value=${{ env.docker_tag }},enable=${{ env.docker_tag != '' && matrix.dist == 'debian' }}
+                      type=ref,event=tag,enable=${{ matrix.dist == 'debian' }}
+                      type=raw,value=latest-${{ matrix.dist }},enable=${{ env.docker_tag != '' && env.docker_tag_rc != 'true' && matrix.dist == 'alpine' }}
+                      type=raw,value=${{ env.docker_tag }}-${{ matrix.dist }},enable=${{ env.docker_tag != '' && matrix.dist == 'alpine' }}
 
-            # ## Build docker image for node release
-            # - name: Show vals ( ${{matrix.dist}} )
-            #   if: ${{ env.is-signer-release == 'false' }}
-            #   id: show_vals
-            #   shell: bash
-            #   run: |
-            #       echo "platforms: ${{ env.platforms }}"
-            #       echo "labels: ${{ steps.docker_metadata.outputs.labels }}"
-            #       echo "docker_tag: ${{ env.docker_tag }}"
-            #       echo "tag: ${{ env.tag }}"
-            #       echo
-            #       echo "build args:"
-            #       echo "    TAG=$${{ steps.docker_metadata.outputs.tags }}"
-            #       echo "    REPO=${{ github.repository_owner }}/${{ github.event.repository.name }}"
-            #       echo "    STACKS_NODE_VERSION=${{ env.tag || env.GITHUB_SHA_SHORT }}"
-            #       echo "    GIT_BRANCH=${{ env.GITHUB_REF_SHORT }}"
-            #       echo "    GIT_COMMIT=${{ env.GITHUB_SHA_SHORT }}"
-            #       echo "push: ${{ env.DOCKER_PUSH }}"
+            ## Build docker image for node release
+            - name: Show vals ( ${{matrix.dist}} )
+              if: ${{ env.is-signer-release == 'false' }}
+              id: show_vals
+              shell: bash
+              run: |
+                  echo "platforms: ${{ env.platforms }}"
+                  echo "labels: ${{ steps.docker_metadata.outputs.labels }}"
+                  echo "docker_tag: ${{ env.docker_tag }}"
+                  echo "tag: ${{ env.tag }}"
+                  echo
+                  echo "build args:"
+                  echo "    TAG=$${{ steps.docker_metadata.outputs.tags }}"
+                  echo "    REPO=${{ github.repository_owner }}/${{ github.event.repository.name }}"
+                  echo "    STACKS_NODE_VERSION=${{ env.tag || env.GITHUB_SHA_SHORT }}"
+                  echo "    GIT_BRANCH=${{ env.GITHUB_REF_SHORT }}"
+                  echo "    GIT_COMMIT=${{ env.GITHUB_SHA_SHORT }}"
+                  echo "push: ${{ env.DOCKER_PUSH }}"
 
-            # - name: Build and Push ( ${{matrix.dist}} )
-            #   if: ${{ env.is-signer-release == 'false' }}
-            #   id: docker_build
-            #   uses: docker/build-push-action@ca877d9245402d1537745e0e356eab47c3520991 # v6.13.0
-            #   with:
-            #       context: /tmp
-            #       file: ./.github/actions/dockerfiles/${{ matrix.dist }}/Dockerfile.release.signer
-            #       # file: ./.github/actions/dockerfiles/Dockerfile.${{ matrix.dist }}-binary
-            #       platforms: ${{ env.platforms }}
-            #       tags: ${{ steps.docker_metadata.outputs.tags }}
-            #       labels: ${{ steps.docker_metadata.outputs.labels }}
-            #       build-args: |
-            #           TAG=${{ steps.docker_metadata.outputs.tags }}
-            #           REPO=${{ github.repository_owner }}/${{ github.event.repository.name }}
-            #           STACKS_NODE_VERSION=${{ env.tag || env.GITHUB_SHA_SHORT }}
-            #           GIT_BRANCH=${{ env.GITHUB_REF_SHORT }}
-            #           GIT_COMMIT=${{ env.GITHUB_SHA_SHORT }}
-            #       push: ${{ env.DOCKER_PUSH }}
+            - name: Build and Push ( ${{matrix.dist}} )
+              if: ${{ env.is-signer-release == 'false' }}
+              id: docker_build
+              uses: docker/build-push-action@ca877d9245402d1537745e0e356eab47c3520991 # v6.13.0
+              with:
+                  context: /tmp
+                  file: ./.github/actions/dockerfiles/${{ matrix.dist }}/Dockerfile.release.signer
+                  # file: ./.github/actions/dockerfiles/Dockerfile.${{ matrix.dist }}-binary
+                  platforms: ${{ env.platforms }}
+                  tags: ${{ steps.docker_metadata.outputs.tags }}
+                  labels: ${{ steps.docker_metadata.outputs.labels }}
+                  build-args: |
+                      TAG=${{ steps.docker_metadata.outputs.tags }}
+                      REPO=${{ github.repository_owner }}/${{ github.event.repository.name }}
+                      STACKS_NODE_VERSION=${{ env.tag || env.GITHUB_SHA_SHORT }}
+                      GIT_BRANCH=${{ env.GITHUB_REF_SHORT }}
+                      GIT_COMMIT=${{ env.GITHUB_SHA_SHORT }}
+                  push: ${{ env.DOCKER_PUSH }}
 
-            # ## Generate docker image attestation(s)
-            # - name: Generate artifact attestation (${{ github.event.repository.name }})
-            #   id: attest_primary
-            #   uses: actions/attest-build-provenance@c074443f1aee8d4aeeae555aebba3282517141b2 # v2.2.3
-            #   with:
-            #       subject-name: |
-            #           index.docker.io/${{env.docker_org}}/${{ github.event.repository.name }}
-            #       subject-digest: ${{ steps.docker_build.outputs.digest }}
-            #       push-to-registry: true
+            ## Generate docker image attestation(s)
+            - name: Generate artifact attestation (${{ github.event.repository.name }})
+              id: attest_primary
+              uses: actions/attest-build-provenance@c074443f1aee8d4aeeae555aebba3282517141b2 # v2.2.3
+              with:
+                  subject-name: |
+                      index.docker.io/${{env.docker_org}}/${{ github.event.repository.name }}
+                  subject-digest: ${{ steps.docker_build.outputs.digest }}
+                  push-to-registry: true
 
-            # - name: Generate artifact attestation (stacks-blockchain)
-            #   id: attest_secondary
-            #   uses: actions/attest-build-provenance@c074443f1aee8d4aeeae555aebba3282517141b2 # v2.2.3
-            #   with:
-            #       subject-name: |
-            #           index.docker.io/${{env.docker_org}}/stacks-blockchain
-            #       subject-digest: ${{ steps.docker_build.outputs.digest }}
-            #       push-to-registry: true
+            - name: Generate artifact attestation (stacks-blockchain)
+              id: attest_secondary
+              uses: actions/attest-build-provenance@c074443f1aee8d4aeeae555aebba3282517141b2 # v2.2.3
+              with:
+                  subject-name: |
+                      index.docker.io/${{env.docker_org}}/stacks-blockchain
+                  subject-digest: ${{ steps.docker_build.outputs.digest }}
+                  push-to-registry: true
