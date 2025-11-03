@@ -99,6 +99,7 @@ jobs:
                   echo "is-signer-release: ${{ env.is-signer-release }}"
                   echo "node_docker_tag: ${{ inputs.node_docker_tag }}"
                   echo "node_tag: ${{ inputs.node_tag }}"
+
     stacks-node:
         if: |
             needs.set-vars.outputs.is-signer-release == 'false' &&
@@ -297,7 +298,7 @@ jobs:
             max-parallel: 2
             matrix:
                 dist:
-                    # - alpine
+                    - alpine
                     - debian
         steps:
             ## set env var for which artifacts to download
