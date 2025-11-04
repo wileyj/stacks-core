@@ -116,7 +116,7 @@ jobs:
               shell: bash
               run: |
                 # if not signer, then we create a list of stacks-core/stacks-blockchain.
-                docker_images="${{env.docker_org}}/${{ github.event.repository.name }} ${{env.docker_org}}/stacks-blockchain" >> $GITHUB_ENV
+                docker_images="${{env.docker_org}}/${{ github.event.repository.name }}, ${{env.docker_org}}/stacks-blockchain" >> $GITHUB_ENV
 
             - name: Output
               id: output
