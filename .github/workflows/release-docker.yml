@@ -116,8 +116,13 @@ jobs:
               shell: bash
               run: |
                 # if not signer, then we create a list of stacks-core/stacks-blockchain.
-                docker_images="${{env.docker_org}}/${{ github.event.repository.name }}, ${{env.docker_org}}/stacks-blockchain" >> $GITHUB_ENV
-
+                echo "docker_images=\"${{env.docker_org}}/${{ github.event.repository.name }} ${{env.docker_org}}/stacks-blockchain\"" >> $GITHUB_ENV
+                read -d '' images << EOF
+                ${{env.docker_org}}/${{ github.event.repository.name }}
+                ${{env.docker_org}}/stacks-blockchain
+                EOF
+                echo "docker_images2=\"$images\"" >> $GITHUB_ENV
+                #
             - name: Output
               id: output
               shell: bash
@@ -126,6 +131,7 @@ jobs:
                   echo "node_docker_tag: ${{ inputs.node_docker_tag }}"
                   echo "node_tag: ${{ inputs.node_tag }}"
                   echo "images: ${{ env.docker_images }}"
+                  echo "images2: ${{ env.docker_images2 }}"
 
     stacks-node:
         if: |
