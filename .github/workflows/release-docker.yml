@@ -231,10 +231,10 @@ jobs:
               uses: docker/metadata-action@369eb591f429131d6889c46b94e711f089e6ca96 #v5.6.1
               with:
                   ## tag images with current repo name `stacks-core` as well as legacy `stacks-blockchain`
-                  images: ${{ env.images }}
                   # images: |
-                  #     ${{env.docker_org}}/${{ github.event.repository.name }}
-                  #     ${{env.docker_org}}/stacks-blockchain
+                  #   ${{ env.images }}
+                  images: |
+                      ${{env.docker_org}}/${{ github.event.repository.name }} ${{env.docker_org}}/stacks-blockchain
                   tags: |
                       type=raw,value=latest,enable=${{ env.docker_tag != '' && env.docker_tag_rc != 'true' && matrix.dist == 'debian' }}
                       type=raw,value=${{ env.docker_tag }}-${{ matrix.dist }},enable=${{ env.docker_tag != '' && matrix.dist == 'debian'}}
