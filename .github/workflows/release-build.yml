@@ -54,7 +54,7 @@ jobs:
             inputs.signer_tag != ''
         name: Andon Cord
         runs-on: ubuntu-latest
-        environment: "Build Release"
+        # environment: "Build Release"
         steps:
             - name: Check Approval
               id: check
@@ -77,9 +77,9 @@ jobs:
                 arch:
                     - linux-glibc
                     # # disabled for testing
-                    - linux-musl
-                    - macos
-                    - windows
+                    # - linux-musl
+                    # - macos
+                    # - windows
                 cpu:
                     - x86-64 ## defaults to x86-64-v3 variant - intel haswell (2013) and newer
                     - arm64
@@ -119,173 +119,173 @@ jobs:
                     ##
         # runs-on: ${{ matrix.os }}
         steps:
-            # - name: (Build) Check Data
-            #   id: check_data
+            - name: (Build) Check Data
+              id: check_data
+              shell: bash
+              run: |
+                  exit 0
+            # ## Checkout the code
+            # - name: Checkout the latest code
+            #   id: git_checkout
+            #   uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+            # ## Set target env var based on the type of arch build
+            # # ** we could move all later steps here, but it would be messier and and move verbose per arch.
+            # - name: Configure Target Platform
+            #   id: configure_target_platform
             #   shell: bash
             #   run: |
+            #       case ${{ matrix.cpu }} in
+            #         x86-64*)
+            #           # TARGET_CPU="${{ matrix.cpu }}-v3"
+            #           ARCHIVE_NAME="$(echo "${{matrix.cpu}}" | sed -e 's|86-||g')" # if matrix.cpu ever changes to a different x86 version, this will set the archive naming appropriately.
+            #           case ${{ matrix.cpu }} in
+            #             x86-64)
+            #               TARGET_CPU="${{ matrix.cpu }}-v3" # default to x86-64-v3 if generic x86-64 is used for the build
+            #               ;;
+            #             *)
+            #               TARGET_CPU="${{ matrix.cpu }}" # if matrix.cpu is specifically v3/v4, we should target that
+            #               ;;
+            #           esac
+
+            #           case ${{ matrix.arch }} in
+            #             linux-musl)
+            #               # install dependencies for linux x64 musl and set target
+            #               sudo apt-get install -y musl-tools || exit 1
+            #               TARGET="x86_64-unknown-linux-musl"
+            #               ;;
+            #             linux-glibc)
+            #               # install dependencies for linux x64 glibc and set target
+            #               sudo apt-get install -y git libclang-dev llvm || exit 1
+            #               TARGET="x86_64-unknown-linux-gnu"
+            #               ;;
+            #             windows)
+            #               # install dependencies for windos x64 glibc and set target
+            #               sudo apt-get install -y git gcc-mingw-w64-x86-64 || exit 1
+            #               TARGET="x86_64-pc-windows-gnu"
+            #               ;;
+            #             *)
+            #               ;;
+            #           esac
+            #           ;;
+            #         arm64)
+            #           ARCHIVE_NAME=${{matrix.cpu}}
+            #           case ${{ matrix.arch }} in
+            #             linux-musl)
+            #               # install dependencies for linux aarch64 musl and set target
+            #               sudo apt-get install -y gcc-aarch64-linux-gnu musl-dev || exit 1
+            #               curl -LSf -# https://github.com/musl-cc/musl.cc/releases/download/v0.0.1/aarch64-linux-musl-cross.tgz | tar zxf - -C /tmp || exit 1
+            #               TARGET="aarch64-unknown-linux-musl"
+            #               ;;
+            #             linux-glibc)
+            #               # install dependencies for linux aarch64 glibc and set target
+            #               sudo apt-get install -y git gcc-aarch64-linux-gnu libclang-dev llvm || exit 1
+            #               TARGET="aarch64-unknown-linux-gnu"
+            #               ;;
+            #             macos)
+            #               TARGET="aarch64-apple-darwin"
+            #               ;;
+            #             *)
+            #               ;;
+            #           esac
+            #           ;;
+            #         *)
+            #           ;;
+            #       esac
+            #       if [[ -z "$TARGET" ]]; then
+            #         echo "[ERROR] TARGET Variable is empty for ${{ matrix.arch }}-${{ matrix.cpu }}";
+            #         exit 1
+            #       fi
+            #       echo "setting TARGET:${TARGET}"
+            #       echo "setting TARGET_CPU: ${TARGET_CPU}"
+            #       echo "setting ZIPFILE_NAME: ${{ matrix.arch }}-${ARCHIVE_NAME}"
+            #       echo "TARGET=${TARGET}" >> "$GITHUB_ENV"
+            #       echo "TARGET_CPU=${TARGET_CPU}" >> "$GITHUB_ENV"
+            #       echo "ZIPFILE_NAME=${{matrix.arch}}-${ARCHIVE_NAME}" >> "$GITHUB_ENV"
+
+            # ## Install rust toolchain (llvm-tools-preview)
+            # - name: Setup Rust Toolchain
+            #   id: setup_rust_toolchain
+            #   uses: actions-rust-lang/setup-rust-toolchain@11df97af8e8102fd60b60a77dfbf58d40cd843b8 # v1.10.1
+            #   with:
+            #       toolchain: stable
+            #       cache: false
+            #       target: ${{ env.TARGET }}
+
+            # ## Build the release binaries
+            # - name: Build Release
+            #   id: build_release
+            #   shell: bash
+            #   run: |
+            #       echo "arch: ${{ matrix.arch }}"
+            #       echo "cpu: ${{ matrix.cpu }}"
+            #       echo "os: ${{ matrix.os }}"
+            #       echo "TARGET: ${{env.TARGET}}"
+            #       echo "TARGET_CPU: ${{env.TARGET_CPU}}"
+            #       echo "CMD: ${{env.CMD}}"
+            #       echo "ZIPFILE_NAME: ${{env.ZIPFILE_NAME}}"
+
+            #       case "${{env.TARGET}}" in
+            #         # linux glibc aarch64
+            #         aarch64-unknown-linux-gnu) # linux-glibc-arm64
+            #           LINKER=aarch64-linux-gnu-gcc
+            #           echo "$CMD --target $TARGET --config \"target.${TARGET}.linker=\\\"${LINKER}\\\"\" "
+            #           ${{env.CMD}} --target $TARGET --config "target.${{env.TARGET}}.linker=\"${LINKER}\"" || exit 1
+            #           ;;
+            #         # linux glibc x64
+            #         x86_64-unknown-linux-gnu) # linux-glibc-x86_64
+            #            echo "$CMD --target $TARGET --config build.rustflags=\"\\\"-C target-cpu=${TARGET_CPU}\\\"\" "
+            #           ${{env.CMD}} --target $TARGET --config build.rustflags="\"-C target-cpu=${TARGET_CPU}\"" || exit 1
+            #           ;;
+            #         # windows glibc x64
+            #         x86_64-pc-windows-gnu) # windows-x86_64
+            #           LINKER=x86_64-w64-mingw32-gcc
+            #           echo "$CMD --target $TARGET --config \"target.${TARGET}.linker=\\\"${LINKER}\\\"\"  --config build.rustflags="\"-C target-cpu=${TARGET_CPU}\"" "
+            #           ${{env.CMD}} --target $TARGET --config "target.${{env.TARGET}}.linker=\"${LINKER}\"" --config build.rustflags="\"-C target-cpu=${TARGET_CPU}\"" || exit 1
+            #           ;;
+            #         # linux musl x64
+            #         x86_64-unknown-linux-musl) # linux-musl-x86_64
+            #           echo "$CMD --target $TARGET --config build.rustflags=\"\\\"-C target-cpu=${TARGET_CPU}\\\"\" "
+            #           ${{env.CMD}} --target $TARGET --config build.rustflags="\"-C target-cpu=${TARGET_CPU}\"" || exit 1
+            #           ;;
+            #         # linux musl aarch64
+            #         aarch64-unknown-linux-musl) # linux-musl-arm64
+            #           LINKER=/tmp/aarch64-linux-musl-cross/bin/aarch64-linux-musl-gcc
+            #           echo "$CMD --target $TARGET --config \"target.${TARGET}.linker=\\\"${LINKER}\\\"\" "
+            #           ${{env.CMD}} --target $TARGET --config "target.${{env.TARGET}}.linker=\"${LINKER}\"" || exit 1
+            #           ;;
+            #         # macos aarch64
+            #         aarch64-apple-darwin) # macos-arm64
+            #           TARGET_CPU=native
+            #           echo "$CMD --target $TARGET --config build.rustflags=\"\\\"-C target-cpu=${TARGET_CPU}\\\"\" "
+            #           ${{env.CMD}} --target $TARGET --config build.rustflags="\"-C target-cpu=${TARGET_CPU}\"" || exit 1
+            #           ;;
+            #         # catchall - run default command
+            #         *)
+            #           echo "No matrix match for build target ($TARGET). using defaults"
+            #           ${{env.CMD}} || exit 1
+            #           ;;
+            #       esac
             #       exit 0
-            ## Checkout the code
-            - name: Checkout the latest code
-              id: git_checkout
-              uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
-            ## Set target env var based on the type of arch build
-            # ** we could move all later steps here, but it would be messier and and move verbose per arch.
-            - name: Configure Target Platform
-              id: configure_target_platform
-              shell: bash
-              run: |
-                  case ${{ matrix.cpu }} in
-                    x86-64*)
-                      # TARGET_CPU="${{ matrix.cpu }}-v3"
-                      ARCHIVE_NAME="$(echo "${{matrix.cpu}}" | sed -e 's|86-||g')" # if matrix.cpu ever changes to a different x86 version, this will set the archive naming appropriately.
-                      case ${{ matrix.cpu }} in
-                        x86-64)
-                          TARGET_CPU="${{ matrix.cpu }}-v3" # default to x86-64-v3 if generic x86-64 is used for the build
-                          ;;
-                        *)
-                          TARGET_CPU="${{ matrix.cpu }}" # if matrix.cpu is specifically v3/v4, we should target that
-                          ;;
-                      esac
+            # ## Compress the binary artifact
+            # - name: Compress binaries
+            #   id: compress_artifacts
+            #   shell: bash
+            #   run: |
+            #       file -0 ./target/${{env.TARGET}}/release-lite/* | sed -nE 's/\x0:\s*(ELF|PE32+|Mach).*//p' | zip --junk-paths ${{env.ZIPFILE_NAME}}.zip -@
 
-                      case ${{ matrix.arch }} in
-                        linux-musl)
-                          # install dependencies for linux x64 musl and set target
-                          sudo apt-get install -y musl-tools || exit 1
-                          TARGET="x86_64-unknown-linux-musl"
-                          ;;
-                        linux-glibc)
-                          # install dependencies for linux x64 glibc and set target
-                          sudo apt-get install -y git libclang-dev llvm || exit 1
-                          TARGET="x86_64-unknown-linux-gnu"
-                          ;;
-                        windows)
-                          # install dependencies for windos x64 glibc and set target
-                          sudo apt-get install -y git gcc-mingw-w64-x86-64 || exit 1
-                          TARGET="x86_64-pc-windows-gnu"
-                          ;;
-                        *)
-                          ;;
-                      esac
-                      ;;
-                    arm64)
-                      ARCHIVE_NAME=${{matrix.cpu}}
-                      case ${{ matrix.arch }} in
-                        linux-musl)
-                          # install dependencies for linux aarch64 musl and set target
-                          sudo apt-get install -y gcc-aarch64-linux-gnu musl-dev || exit 1
-                          curl -LSf -# https://github.com/musl-cc/musl.cc/releases/download/v0.0.1/aarch64-linux-musl-cross.tgz | tar zxf - -C /tmp || exit 1
-                          TARGET="aarch64-unknown-linux-musl"
-                          ;;
-                        linux-glibc)
-                          # install dependencies for linux aarch64 glibc and set target
-                          sudo apt-get install -y git gcc-aarch64-linux-gnu libclang-dev llvm || exit 1
-                          TARGET="aarch64-unknown-linux-gnu"
-                          ;;
-                        macos)
-                          TARGET="aarch64-apple-darwin"
-                          ;;
-                        *)
-                          ;;
-                      esac
-                      ;;
-                    *)
-                      ;;
-                  esac
-                  if [[ -z "$TARGET" ]]; then
-                    echo "[ERROR] TARGET Variable is empty for ${{ matrix.arch }}-${{ matrix.cpu }}";
-                    exit 1
-                  fi
-                  echo "setting TARGET:${TARGET}"
-                  echo "setting TARGET_CPU: ${TARGET_CPU}"
-                  echo "setting ZIPFILE_NAME: ${{ matrix.arch }}-${ARCHIVE_NAME}"
-                  echo "TARGET=${TARGET}" >> "$GITHUB_ENV"
-                  echo "TARGET_CPU=${TARGET_CPU}" >> "$GITHUB_ENV"
-                  echo "ZIPFILE_NAME=${{matrix.arch}}-${ARCHIVE_NAME}" >> "$GITHUB_ENV"
+            # ## Upload the binary artifact to the github action (used in `github-release.yml` to create a release)
+            # - name: Upload Artifact
+            #   id: upload_artifact
+            #   uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08 # v4.6.0
+            #   with:
+            #       name: ${{ inputs.node_tag || inputs.signer_tag }}-binary-build-${{ env.ZIPFILE_NAME }}
+            #       # name: binaries-${{ env.ZIPFILE_NAME }}
+            #       path: ${{ env.ZIPFILE_NAME }}.zip
 
-            ## Install rust toolchain (llvm-tools-preview)
-            - name: Setup Rust Toolchain
-              id: setup_rust_toolchain
-              uses: actions-rust-lang/setup-rust-toolchain@11df97af8e8102fd60b60a77dfbf58d40cd843b8 # v1.10.1
-              with:
-                  toolchain: stable
-                  cache: false
-                  target: ${{ env.TARGET }}
-
-            ## Build the release binaries
-            - name: Build Release
-              id: build_release
-              shell: bash
-              run: |
-                  echo "arch: ${{ matrix.arch }}"
-                  echo "cpu: ${{ matrix.cpu }}"
-                  echo "os: ${{ matrix.os }}"
-                  echo "TARGET: ${{env.TARGET}}"
-                  echo "TARGET_CPU: ${{env.TARGET_CPU}}"
-                  echo "CMD: ${{env.CMD}}"
-                  echo "ZIPFILE_NAME: ${{env.ZIPFILE_NAME}}"
-
-                  case "${{env.TARGET}}" in
-                    # linux glibc aarch64
-                    aarch64-unknown-linux-gnu) # linux-glibc-arm64
-                      LINKER=aarch64-linux-gnu-gcc
-                      echo "$CMD --target $TARGET --config \"target.${TARGET}.linker=\\\"${LINKER}\\\"\" "
-                      ${{env.CMD}} --target $TARGET --config "target.${{env.TARGET}}.linker=\"${LINKER}\"" || exit 1
-                      ;;
-                    # linux glibc x64
-                    x86_64-unknown-linux-gnu) # linux-glibc-x86_64
-                       echo "$CMD --target $TARGET --config build.rustflags=\"\\\"-C target-cpu=${TARGET_CPU}\\\"\" "
-                      ${{env.CMD}} --target $TARGET --config build.rustflags="\"-C target-cpu=${TARGET_CPU}\"" || exit 1
-                      ;;
-                    # windows glibc x64
-                    x86_64-pc-windows-gnu) # windows-x86_64
-                      LINKER=x86_64-w64-mingw32-gcc
-                      echo "$CMD --target $TARGET --config \"target.${TARGET}.linker=\\\"${LINKER}\\\"\"  --config build.rustflags="\"-C target-cpu=${TARGET_CPU}\"" "
-                      ${{env.CMD}} --target $TARGET --config "target.${{env.TARGET}}.linker=\"${LINKER}\"" --config build.rustflags="\"-C target-cpu=${TARGET_CPU}\"" || exit 1
-                      ;;
-                    # linux musl x64
-                    x86_64-unknown-linux-musl) # linux-musl-x86_64
-                      echo "$CMD --target $TARGET --config build.rustflags=\"\\\"-C target-cpu=${TARGET_CPU}\\\"\" "
-                      ${{env.CMD}} --target $TARGET --config build.rustflags="\"-C target-cpu=${TARGET_CPU}\"" || exit 1
-                      ;;
-                    # linux musl aarch64
-                    aarch64-unknown-linux-musl) # linux-musl-arm64
-                      LINKER=/tmp/aarch64-linux-musl-cross/bin/aarch64-linux-musl-gcc
-                      echo "$CMD --target $TARGET --config \"target.${TARGET}.linker=\\\"${LINKER}\\\"\" "
-                      ${{env.CMD}} --target $TARGET --config "target.${{env.TARGET}}.linker=\"${LINKER}\"" || exit 1
-                      ;;
-                    # macos aarch64
-                    aarch64-apple-darwin) # macos-arm64
-                      TARGET_CPU=native
-                      echo "$CMD --target $TARGET --config build.rustflags=\"\\\"-C target-cpu=${TARGET_CPU}\\\"\" "
-                      ${{env.CMD}} --target $TARGET --config build.rustflags="\"-C target-cpu=${TARGET_CPU}\"" || exit 1
-                      ;;
-                    # catchall - run default command
-                    *)
-                      echo "No matrix match for build target ($TARGET). using defaults"
-                      ${{env.CMD}} || exit 1
-                      ;;
-                  esac
-                  exit 0
-
-            ## Compress the binary artifact
-            - name: Compress binaries
-              id: compress_artifacts
-              shell: bash
-              run: |
-                  file -0 ./target/${{env.TARGET}}/release-lite/* | sed -nE 's/\x0:\s*(ELF|PE32+|Mach).*//p' | zip --junk-paths ${{env.ZIPFILE_NAME}}.zip -@
-
-            ## Upload the binary artifact to the github action (used in `github-release.yml` to create a release)
-            - name: Upload Artifact
-              id: upload_artifact
-              uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08 # v4.6.0
-              with:
-                  name: ${{ inputs.node_tag || inputs.signer_tag }}-binary-build-${{ env.ZIPFILE_NAME }}
-                  # name: binaries-${{ env.ZIPFILE_NAME }}
-                  path: ${{ env.ZIPFILE_NAME }}.zip
-
-            ## Attest the release binaries
-            - name: Attest Release Artifact
-              uses: actions/attest-build-provenance@c074443f1aee8d4aeeae555aebba3282517141b2 #v2.2.3
-              with:
-                  subject-path: ${{ env.ZIPFILE_NAME }}.zip
+            # ## Attest the release binaries
+            # - name: Attest Release Artifact
+            #   uses: actions/attest-build-provenance@c074443f1aee8d4aeeae555aebba3282517141b2 #v2.2.3
+            #   with:
+            #       subject-path: ${{ env.ZIPFILE_NAME }}.zip
