@@ -137,7 +137,7 @@ jobs:
         #     inputs.node_docker_tag != ''
         # if: |
         #     inputs.node_tag != ''
-        name: Docker Image (${{inputs.release_type}})
+        name: Docker Image (${{inputs.release_type}}, ${{matrix.dist}})
         runs-on: ubuntu-latest
         needs:
             - set-vars
@@ -165,29 +165,22 @@ jobs:
               id: docker_images
               shell: bash
               run: |
-                # inputs.node_docker_tag != ''
-                if "[[ ${{ inputs.release_type }}" == "stacks-signer" ]]; then
-                    images="${{ env.docker_org }}/stacks-signer"
-                else
+                  if [ "${{ inputs.release_type }}" != "stacks-signer" ]; then
                     images="${{ env.docker_org }}/${{ github.event.repository.name }} ${{ env.docker_org }}/stacks-blockchain"
-                fi
-                echo "docker_images=$images" >> $GITHUB_ENV
+                  else
+                    images="${{ env.docker_org }}/stacks-signer"
+                  fi
+                  echo "docker_images=$images" >> $GITHUB_ENV
+                  echo "images: $images"
+                  echo "inputs.release_type: ${{inputs.release_type}}"
 
-                # if [[ "${{ env.is-signer-release }}" == "false" ]]; then
-                # # if not signer, then we create a list of stacks-core/stacks-blockchain.
-                # echo "images=\"${{ env.docker_org }}/${{ github.event.repository.name }} ${{ env.docker_org }}/stacks-blockchain\"" >> $GITHUB_ENV
-                # # read -d '' images << EOF
-                # # ${{ env.docker_org }}/${{ github.event.repository.name }}
-                # # ${{ env.docker_org }}/stacks-blockchain
-                # # EOF
-                # # echo "docker_images2=\"$images\"" >> $GITHUB_ENV
-                # #
+
             ## set env var for which artifacts to download
             - name: Set Artifact Arch
               id: set_artifact_arch
               shell: bash
               run: |
-                  if [[ "${{ matrix.dist }}" == "alpine" ]]; then
+                  if [ "${{ matrix.dist }}" == "alpine" ]; then
                     echo "build_arch=musl" >> "$GITHUB_ENV"
                   else
                     echo "build_arch=glibc" >> "$GITHUB_ENV"
@@ -212,6 +205,7 @@ jobs:
                   echo "signer_docker_tag: ${{inputs.signer_docker_tag}}"
                   echo "is_node_release: ${{inputs.is_node_release}}"
                   echo "is_signer_release: ${{inputs.is_signer_release}}"
+                  echo "release_type: ${{inputs.release_type}}"
                   echo
                   echo "Artifact pattern: ${{ env.tag }}-binary-build-linux-${{ env.build_arch }}*"
                   echo
