@@ -126,10 +126,9 @@ jobs:
     release-images:
     # stacks-node:
         if: |
-          env.tag != '' &&
-          env.docker_org != '' &&
-          env.build_arch != '' &&
-          env.is-signer-release != ''
+          inputs.node_tag != '' &&
+          needs.set-vars.outputs.docker_org != '' &&
+          needs.set-vars.outputs.is-signer-release != ''
         # if: |
         #     needs.set-vars.outputs.is-signer-release == 'false' &&
         #     inputs.node_docker_tag != ''
