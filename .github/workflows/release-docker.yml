@@ -22,14 +22,16 @@ on:
                 description: "Signer Docker Release Tag"
                 required: true
                 type: string
-            # is_node_release:
-            #     description: "True if it is a node release"
-            #     required: true
-            #     type: string
-            # is_signer_release:
-            #     description: "True if it is a signer release"
-            #     required: true
-            #     type: string
+            ## remove later
+            is_node_release:
+                description: "True if it is a node release"
+                required: true
+                type: string
+            is_signer_release:
+                description: "True if it is a signer release"
+                required: true
+                type: string
+            ##
             release_type:
                 description: "Release type (one of stacks-node, stacks-signer"
                 required: true
