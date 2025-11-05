@@ -199,12 +199,12 @@ jobs:
               shell: bash
               run: |
                   if [[ "${{ github.repository_owner }}" != "stacks-network" ]]; then
-                    echo "docker_org=${{ github.repository_owner }}"
+                    var_org="${{ github.repository_owner }}"
                   else
-                    echo "docker_org=blockstack"
+                    var_org="blockstack"
                   fi
-                  echo "docker_org=$docker_org"
-                  echo "docker_org=$docker_org" >> $GITHUB_ENV
+                  echo "docker_org=$var_org"
+                  echo "docker_org=$var_org" >> $GITHUB_ENV
 
             - name: Set Local Vars
               id: set_vars
@@ -212,26 +212,26 @@ jobs:
               run: |
                   if [ "${{ inputs.release_type }}" == "stacks-signer" ]; then
                     # stacks-signer
-                    docker_images="${{ env.docker_org }}/stacks-signer"
-                    tag="${{ inputs.signer_tag }}"
-                    docker_tag=${{ inputs.signer_docker_tag }}
+                    var_images="${{ env.docker_org }}/stacks-signer"
+                    var_tag="${{ inputs.signer_tag }}"
+                    var_docker_tag=${{ inputs.signer_docker_tag }}
                   else
                     # stacks-node
-                    docker_images="${{ env.docker_org }}/${{ github.event.repository.name }} ${{ env.docker_org }}/stacks-blockchain"
-                    tag="${{ inputs.node_tag }}"
-                    docker_tag=${{ inputs.node_docker_tag }}
+                    var_images="${{ env.docker_org }}/${{ github.event.repository.name }} ${{ env.docker_org }}/stacks-blockchain"
+                    var_tag="${{ inputs.node_tag }}"
+                    var_docker_tag=${{ inputs.node_docker_tag }}
                   fi
 
 
                   echo
-                  echo "docker_images: $docker_images"
+                  echo "var_images: $images"
                   echo "inputs.release_type: ${{inputs.release_type}}"
-                  echo "tag: $tag"
-                  echo "docker_tag: $docker_tag"
+                  echo "var_tag: $tag"
+                  echo "var_docker_tag: $var_docker_tag"
                   echo
-                  echo "docker_images=$images" >> $GITHUB_ENV
-                  echo "tag=$tag" >> $GITHUB_ENV
-                  echo "docker_tag=$docker_tag" >> $GITHUB_ENV
+                  echo "docker_images=$var_images" >> $GITHUB_ENV
+                  echo "tag=$var_tag" >> $GITHUB_ENV
+                  echo "docker_tag=$var_docker_tag" >> $GITHUB_ENV
 
             - name: Set Docker Tag RC Flag
               id: docker_tag_rc_flag
@@ -243,7 +243,7 @@ jobs:
                     docker_tag_rc=true
                   fi
                   echo "docker_tag_rc: $docker_tag_rc"
-                  echo "docker_tag_rc=$docker_tag_rc" >> $GITHUB_ENV
+                  echo "docker_tag_rc=$docker_tag_rc" >> "$GITHUB_ENV"
 
 
             # - name: Set Docker Image(s) list
