@@ -35,7 +35,7 @@ on:
                 required: true
                 type: string
 concurrency:
-    group: release-docker-${{ github.head_ref || github.ref }}
+    group: ${{ inputs.release_type }}-${{ github.head_ref || github.ref }}
     ## Always cancel duplicate jobs
     cancel-in-progress: true
 
