@@ -42,11 +42,25 @@ jobs:
     ##
     ## Runs when the following is true:
     ##  - either node or signer tag is provided
+    andon-cord:
+        if: |
+            inputs.node_tag != '' ||
+            inputs.signer_tag != ''
+        name: Andon Cord
+        runs-on: ubuntu-latest
+        environment: "Push to Docker"
+        steps:
+            - name: Check Approval
+              id: check
+              run: |
+                  exit 0
     build-binaries:
         if: |
             inputs.node_tag != '' ||
             inputs.signer_tag != ''
         name: Build Binaries
+        needs:
+            - andon-cord
         uses: ./.github/workflows/release-build.yml
         with:
             node_tag: ${{ inputs.node_tag }}
@@ -60,6 +74,7 @@ jobs:
         name: Build Docker Images
         secrets: inherit
         needs:
+            - andon-cord
             - build-binaries
         strategy:
             fail-fast: false
@@ -90,6 +105,7 @@ jobs:
         name: Create Release
         runs-on: ubuntu-latest
         needs:
+            - andon-cord
             - build-binaries
             - docker-images
         permissions:
@@ -120,6 +136,7 @@ jobs:
         name: Create Downstream PR (${{ github.ref_name }})
         runs-on: ubuntu-latest
         needs:
+            - andon-cord
             - build-binaries
             - create-release
             - docker-images

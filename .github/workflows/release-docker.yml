@@ -48,18 +48,18 @@ jobs:
     ## This job's sole purpose is trigger a secondary approval outside of the matrix jobs below.
     ##   - If this job isn't approved to run, then the subsequent jobs will also not run - for this reason, we always exit 0
     ##   - `andon-cord` requires the repo environment "Build Release", which will trigger a secondary approval step before running this workflow.
-    andon-cord:
-        if: |
-            inputs.node_tag != '' ||
-            inputs.signer_tag != ''
-        name: Andon Cord
-        runs-on: ubuntu-latest
-        environment: "Push to Docker"
-        steps:
-            - name: Check Approval
-              id: check
-              run: |
-                  exit 0
+    # andon-cord:
+    #     if: |
+    #         inputs.node_tag != '' ||
+    #         inputs.signer_tag != ''
+    #     name: Andon Cord
+    #     runs-on: ubuntu-latest
+    #     environment: "Push to Docker"
+    #     steps:
+    #         - name: Check Approval
+    #           id: check
+    #           run: |
+    #               exit 0
     # move this to build-release or github-release and pass data as inputs here
     set-vars:
         name: Set Vars
@@ -138,7 +138,7 @@ jobs:
         runs-on: ubuntu-latest
         needs:
             - set-vars
-            - andon-cord
+            # - andon-cord
         env:
             docker_org: ${{ needs.set-vars.outputs.docker_org }}
             docker_tag_rc: ${{ needs.set-vars.outputs.docker_tag_rc }}
@@ -162,12 +162,11 @@ jobs:
               id: docker_images
               shell: bash
               run: |
-                case "${{ env.is-signer-release }}" in
-                  "true")
+                if "[[ ${{ env.is-signer-release }}" == "true" ]]; then
                     images="${{ env.docker_org }}/stacks-signer"
-                  *)
+                else
                     images="${{ env.docker_org }}/${{ github.event.repository.name }} ${{ env.docker_org }}/stacks-blockchain"
-                esac
+                fi
                 echo "docker_images=$images" >> $GITHUB_ENV
 
                 # if [[ "${{ env.is-signer-release }}" == "false" ]]; then
