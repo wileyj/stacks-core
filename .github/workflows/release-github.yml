@@ -94,8 +94,8 @@ jobs:
             node_docker_tag: ${{ inputs.node_docker_tag }} # can be removed, use [node,signer]_tag
             signer_tag: ${{ inputs.signer_tag }}
             signer_docker_tag: ${{ inputs.signer_docker_tag }} # can be removed, use [node,signer]_tag
-            is_node_release: ${{ inputs.is_node_release }}
-            is_signer_release: ${{ inputs.is_signer_release }}
+            # is_node_release: ${{ inputs.is_node_release }}
+            # is_signer_release: ${{ inputs.is_signer_release }}
             release_type: ${{ matrix.type }}
 
     ####
