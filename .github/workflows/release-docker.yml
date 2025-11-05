@@ -65,7 +65,7 @@ jobs:
     # This can be moved to the job that build sdocker images: release-images
     #
     set-vars:
-        name: Set Vars (${{ input.release_type }})
+        name: Set Vars (${{ inputs.release_type }})
         runs-on: ubuntu-latest
         # needs:
         #     - andon-cord
