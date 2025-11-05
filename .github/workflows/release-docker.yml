@@ -111,18 +111,6 @@ jobs:
                     echo "docker_tag_rc=false" >> $GITHUB_ENV
                   fi
 
-            - name: Set Docker Image(s) list
-              id: docker_images
-              shell: bash
-              run: |
-                # if not signer, then we create a list of stacks-core/stacks-blockchain.
-                echo "docker_images=\"${{ needs.set-vars.outputs.docker_org }}/${{ github.event.repository.name }} ${{ needs.set-vars.outputs.docker_org }}/stacks-blockchain\"" >> $GITHUB_ENV
-                # read -d '' images << EOF
-                # ${{ needs.set-vars.outputs.docker_org }}/${{ github.event.repository.name }}
-                # ${{ needs.set-vars.outputs.docker_org }}/stacks-blockchain
-                # EOF
-                # echo "docker_images2=\"$images\"" >> $GITHUB_ENV
-
             - name: Output
               id: output
               shell: bash
@@ -130,8 +118,6 @@ jobs:
                   echo "is-signer-release: ${{ env.is-signer-release }}"
                   echo "node_docker_tag: ${{ inputs.node_docker_tag }}"
                   echo "node_tag: ${{ inputs.node_tag }}"
-                  echo "images: ${{ env.docker_images }}"
-                  echo "images2: ${{ env.docker_images2 }}"
 
     stacks-node:
         if: |
@@ -150,7 +136,6 @@ jobs:
             docker_tag: ${{ inputs.node_docker_tag }}
             is-signer-release: ${{ needs.set-vars.outputs.is-signer-release }}
             tag: ${{ inputs.node_tag }}
-            images: ${{ needs.set-vars.outputs.docker_images }}
         # environment: "Push to Docker" # commented for testing
         permissions:
             id-token: write
@@ -164,6 +149,18 @@ jobs:
                     - alpine
                     - debian
         steps:
+            - name: Set Docker Image(s) list
+              id: docker_images
+              shell: bash
+              run: |
+                # if not signer, then we create a list of stacks-core/stacks-blockchain.
+                echo "images=\"${{ env.docker_org }}/${{ github.event.repository.name }} ${{ env.docker_org }}/stacks-blockchain\"" >> $GITHUB_ENV
+                # read -d '' images << EOF
+                # ${{ env.docker_org }}/${{ github.event.repository.name }}
+                # ${{ env.docker_org }}/stacks-blockchain
+                # EOF
+                # echo "docker_images2=\"$images\"" >> $GITHUB_ENV
+                #
             ## set env var for which artifacts to download
             - name: Set Artifact Arch
               id: set_artifact_arch
@@ -196,6 +193,9 @@ jobs:
                   echo "is_signer_release: ${{inputs.is_signer_release}}"
                   echo
                   echo "Artifact pattern: ${{ env.tag }}-binary-build-linux-${{ env.build_arch }}*"
+                  echo
+                  echo "env.images: ${{env.images}}"
+
 
               # # ## Checkout the code
               # # - name: Checkout the latest code
