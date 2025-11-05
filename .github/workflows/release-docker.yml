@@ -224,9 +224,9 @@ jobs:
 
 
                   echo
-                  echo "var_images: $images"
+                  echo "var_images: $var_images"
                   echo "inputs.release_type: ${{inputs.release_type}}"
-                  echo "var_tag: $tag"
+                  echo "var_tag: $var_tag"
                   echo "var_docker_tag: $var_docker_tag"
                   echo
                   echo "docker_images=$var_images" >> $GITHUB_ENV
@@ -237,13 +237,13 @@ jobs:
               id: docker_tag_rc_flag
               shell: bash
               run: |
-                  docker_tag_rc=false
+                  var_docker_tag_rc=false
                   if [[ "$docker_tag" =~ -rc[0-9]*$ ]]; then
                     # is a release candidate
-                    docker_tag_rc=true
+                    var_docker_tag_rc=true
                   fi
-                  echo "docker_tag_rc: $docker_tag_rc"
-                  echo "docker_tag_rc=$docker_tag_rc" >> "$GITHUB_ENV"
+                  echo "var_docker_tag_rc: $var_docker_tag_rc"
+                  echo "docker_tag_rc=$var_docker_tag_rc" >> "$GITHUB_ENV"
 
 
             # - name: Set Docker Image(s) list
@@ -266,10 +266,12 @@ jobs:
               shell: bash
               run: |
                   if [ "${{ matrix.dist }}" == "alpine" ]; then
-                    echo "build_arch=musl" >> "$GITHUB_ENV"
+                    var_build_arch=musl
                   else
-                    echo "build_arch=glibc" >> "$GITHUB_ENV"
+                    var_build_arch=glibc
                   fi
+                  echo "var_build_arch: $var_build_arch"
+                  echo "build_arch=$var_build_arch" >> "$GITHUB_ENV"
 
             - name: (node) Check Data
               id: check_data
@@ -282,6 +284,7 @@ jobs:
                   echo "env.docker_tag: ${{env.docker_tag}}"
                   echo "env.docker_org: ${{env.docker_org}}"
                   echo "docker_tag_rc: ${{ env.docker_tag_rc }}"
+                  echo "env.docker_images: ${{env.docker_images}}"
                   echo
                   echo "node_tag: ${{inputs.node_tag}}"
                   echo "node_docker_tag: ${{inputs.node_docker_tag}}"
@@ -293,7 +296,7 @@ jobs:
                   echo
                   echo "Artifact pattern: ${{ env.tag }}-binary-build-linux-${{ env.build_arch }}*"
                   echo
-                  echo "env.docker_images: ${{env.docker_images}}"
+
 
 
               # # ## Checkout the code
