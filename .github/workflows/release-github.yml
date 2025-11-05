@@ -61,6 +61,14 @@ jobs:
         secrets: inherit
         needs:
             - build-binaries
+        strategy:
+            fail-fast: false
+            ## Build a maximum of 2 images concurrently based on matrix.dist
+            max-parallel: 2
+            matrix:
+                type:
+                    - stacks-node
+                    - stacks-signer
         ## Creates the node docker image
         uses: ./.github/workflows/release-docker.yml
         with:
@@ -70,6 +78,7 @@ jobs:
             signer_docker_tag: ${{ inputs.signer_docker_tag }} # can be removed, use [node,signer]_tag
             is_node_release: ${{ inputs.is_node_release }}
             is_signer_release: ${{ inputs.is_signer_release }}
+            release_type: ${{ matrix.type }}
 
     ####
     # ## Runs when the following is true:
