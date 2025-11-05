@@ -156,12 +156,12 @@ jobs:
                   # fi
 
     release-images:
-        if: |
-          (
-            inputs.signer_tag != '' ||
-            inputs.node_tag != ''
-          ) &&
-          inputs.docker_org != ''
+        # if: |
+        #   (
+        #     inputs.signer_tag != '' ||
+        #     inputs.node_tag != ''
+        #   ) &&
+        #   inputs.docker_org != ''
         # inputs.node_tag != '' &&
         # needs.set-vars.outputs.docker_org != '' &&
         # needs.set-vars.outputs.is-signer-release != ''
