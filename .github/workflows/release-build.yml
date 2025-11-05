@@ -48,18 +48,18 @@ jobs:
     ## This job's sole purpose is trigger a secondary approval outside of the matrix jobs below.
     ##   - If this job isn't approved to run, then the subsequent jobs will also not run - for this reason, we always exit 0
     ##   - `andon-cord` requires the repo environment "Build Release", which will trigger a secondary approval step before running this workflow.
-    andon-cord:
-        if: |
-            inputs.node_tag != '' ||
-            inputs.signer_tag != ''
-        name: Andon Cord
-        runs-on: ubuntu-latest
-        # environment: "Build Release"
-        steps:
-            - name: Check Approval
-              id: check
-              run: |
-                  exit 0
+    # andon-cord:
+    #     if: |
+    #         inputs.node_tag != '' ||
+    #         inputs.signer_tag != ''
+    #     name: Andon Cord
+    #     runs-on: ubuntu-latest
+    #     # environment: "Build Release"
+    #     steps:
+    #         - name: Check Approval
+    #           id: check
+    #           run: |
+    #               exit 0
 
     build-binaries:
         name: Build Binaries
@@ -67,9 +67,8 @@ jobs:
         permissions:
             id-token: write
             attestations: write
-
-        needs:
-            - andon-cord
+        # needs:
+        #     - andon-cord
         strategy:
             ## Run a maximum of 10 builds concurrently, using the matrix defined in inputs.arch
             max-parallel: 10
