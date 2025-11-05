@@ -64,8 +64,8 @@ jobs:
     set-vars:
         name: Set Vars
         runs-on: ubuntu-latest
-        needs:
-            - andon-cord
+        # needs:
+        #     - andon-cord
         outputs:
             docker_org: ${{ steps.set_docker_org.outputs.docker_org }}
             is-signer-release: ${{ steps.check_signer_release.outputs.is-signer-release }}
@@ -123,8 +123,8 @@ jobs:
                   echo "node_docker_tag: ${{ inputs.node_docker_tag }}"
                   echo "node_tag: ${{ inputs.node_tag }}"
 
-    release-images:
     # stacks-node:
+    release-images:
         if: |
           inputs.node_tag != '' &&
           needs.set-vars.outputs.docker_org != '' &&
