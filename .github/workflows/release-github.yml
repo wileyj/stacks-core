@@ -87,6 +87,8 @@ jobs:
                 type:
                     - stacks-node
                     - stacks-signer
+                exclude:
+                  - type: ${{ 'stacks-node' && inputs.is_signer_release == 'true'}} # exclude stacks-node if a signer release
         ## Creates the node docker image
         uses: ./.github/workflows/release-docker.yml
         with:
