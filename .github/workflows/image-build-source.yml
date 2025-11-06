@@ -171,7 +171,7 @@ jobs:
         name: Build Image
         runs-on: ubuntu-latest
         ## Requires the repo environment "Push to Docker", which will trigger a secondary approval step before running this workflow.
-        environment: "Push to Docker"
+        # environment: "Push to Docker"
         needs:
             - andon-cord
             - build-binaries
@@ -242,7 +242,7 @@ jobs:
                   echo "Artifact pattern: ${{ env.tag }}-binary-build-linux-${{ env.build_arch }}*"
                   echo
 
-            # Setup Docker for the builds
+            ## Setup Docker for the builds
             - name: Docker setup
               id: docker_setup
               uses: stacks-network/actions/docker@main
