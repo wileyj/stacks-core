@@ -84,7 +84,6 @@ jobs:
                       sudo apt-get install -y git gcc-aarch64-linux-gnu libclang-dev llvm || exit 1
                       TARGET="aarch64-unknown-linux-gnu"
                       ;;
-                      ;;
                     *)
                       echo "Unsupporte arch ${{ matrix.cpu }}"
                       exit 1
