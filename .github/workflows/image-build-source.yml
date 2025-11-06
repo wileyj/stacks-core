@@ -22,9 +22,6 @@ concurrency:
 
 jobs:
     andon-cord:
-        if: |
-            inputs.node_tag != '' ||
-            inputs.signer_tag != ''
         name: Andon Cord
         runs-on: ubuntu-latest
         environment: "Push to Docker"
