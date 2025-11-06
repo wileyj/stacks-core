@@ -38,7 +38,7 @@ env:
 jobs:
     release-images:
         if: |
-            ( inputs.release_type == 'stacks-node' || inputs.releast_type == 'stacks-signer') &&
+            ( inputs.release_type == 'stacks-node' || inputs.release_type == 'stacks-signer') &&
             ( inputs.signer_tag != '' || inputs.node_tag != '' )
         name: Docker Image (${{inputs.release_type}}, ${{matrix.dist}})
         runs-on: ubuntu-latest
