@@ -21,22 +21,26 @@ concurrency:
     cancel-in-progress: true
 
 jobs:
-    andon-cord:
-        name: Andon Cord
-        runs-on: ubuntu-latest
-        environment: "Push to Docker"
-        steps:
-            - name: Check Approval
-              id: check
-              run: |
-                  exit 0
-
+    # andon-cord:
+    #     name: Andon Cord
+    #     runs-on: ubuntu-latest
+    #     environment: "Push to Docker"
+    #     # outputs:
+    #     #     VAR1: ${{ steps.check.outputs.VAR1 }}
+    #     #     VAR2: ${{ steps.check.outputs.VAR2 }}
+    #     steps:
+    #         - name: Check Approval
+    #           id: check
+    #           run: |
+    #               exit 0
+    # ::add-mask::VALUE
+    #
     ## Build arch dependent binaries from source
     build-binaries:
         name: Build Binaries
         runs-on: ubuntu-latest
-        needs:
-            - andon-cord
+        # needs:
+        #     - andon-cord
         permissions:
             id-token: write
             attestations: write
@@ -171,9 +175,9 @@ jobs:
         name: Build Image
         runs-on: ubuntu-latest
         ## Requires the repo environment "Push to Docker", which will trigger a secondary approval step before running this workflow.
-        # environment: "Push to Docker"
+        environment: "Push to Docker"
         needs:
-            - andon-cord
+            # - andon-cord
             - build-binaries
         permissions:
             id-token: write
