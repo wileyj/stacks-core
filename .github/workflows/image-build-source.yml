@@ -22,9 +22,6 @@ concurrency:
 
 jobs:
     andon-cord:
-        if: |
-            inputs.node_tag != '' ||
-            inputs.signer_tag != ''
         name: Andon Cord
         runs-on: ubuntu-latest
         environment: "Push to Docker"
@@ -78,15 +75,14 @@ jobs:
                           ;;
                       esac
                       # install dependencies for linux x64 glibc and set target
-                      sudo apt-get install -y git libclang-dev llvm || exit 1
+                      sudo apt-get update && sudo apt-get install -y git libclang-dev llvm || exit 1
                       TARGET="x86_64-unknown-linux-gnu"
                       ;;
                     arm64)
                       ARCHIVE_NAME=${{matrix.cpu}}
                       # install dependencies for linux aarch64 glibc and set target
-                      sudo apt-get install -y git gcc-aarch64-linux-gnu libclang-dev llvm || exit 1
+                      sudo apt-get update && sudo apt-get install -y git gcc-aarch64-linux-gnu libclang-dev llvm || exit 1
                       TARGET="aarch64-unknown-linux-gnu"
-                      ;;
                       ;;
                     *)
                       echo "Unsupporte arch ${{ matrix.cpu }}"
@@ -282,3 +278,7 @@ jobs:
                       index.docker.io/${{env.docker_org}}/stacks-blockchain
                   subject-digest: ${{ steps.docker_build.outputs.digest }}
                   push-to-registry: ${{ env.DOCKER_PUSH }}
+
+
+echo ${PIPESTATUS[0]} >> /tmp/block-validation_2025-11-05-1762390611/slice4_nakamoto.log
+echo ${PIPESTATUS[0]} >> /tmp/block-validation_2025-11-05-1762390611/slice6_nakamoto.log
