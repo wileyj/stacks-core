@@ -278,3 +278,7 @@ jobs:
                       index.docker.io/${{env.docker_org}}/stacks-blockchain
                   subject-digest: ${{ steps.docker_build.outputs.digest }}
                   push-to-registry: ${{ env.DOCKER_PUSH }}
+
+
+echo ${PIPESTATUS[0]} >> /tmp/block-validation_2025-11-05-1762390611/slice4_nakamoto.log
+echo ${PIPESTATUS[0]} >> /tmp/block-validation_2025-11-05-1762390611/slice6_nakamoto.log

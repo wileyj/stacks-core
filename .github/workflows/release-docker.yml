@@ -33,7 +33,7 @@ concurrency:
 run-name: ${{ inputs.node_tag || inputs.signer_tag }}
 
 env:
-    platforms: "linux/arm64, linux/amd64"
+    docker_platforms: "linux/arm64, linux/amd64"
 jobs:
     release-images:
         if: |
@@ -190,7 +190,7 @@ jobs:
               id: show_vals
               shell: bash
               run: |
-                  echo "platforms: ${{ env.platforms }}"
+                  echo "platforms: ${{ env.docker_platforms }}"
                   echo "labels: ${{ steps.docker_metadata.outputs.labels }}"
                   echo "docker_tag: ${{ env.docker_tag }}"
                   echo "tag: ${{ env.tag }}"
@@ -210,7 +210,7 @@ jobs:
             #       context: /tmp
             #       file: ./.github/actions/dockerfiles/${{ matrix.dist }}/Dockerfile.release
             #       # file: ./.github/actions/dockerfiles/Dockerfile.${{ matrix.dist }}-binary
-            #       platforms: ${{ env.platforms }}
+            #       platforms: ${{ env.docker_platforms }}
             #       tags: ${{ steps.docker_metadata.outputs.tags }}
             #       labels: ${{ steps.docker_metadata.outputs.labels }}
             #       build-args: |
