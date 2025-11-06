@@ -44,8 +44,8 @@ jobs:
     build-binaries:
         name: Build Binaries
         runs-on: ubuntu-latest
-        # needs:
-        #     - andon-cord
+        needs:
+            - andon-cord
         permissions:
             id-token: write
             attestations: write
@@ -182,7 +182,7 @@ jobs:
         ## Requires the repo environment "Push to Docker", which will trigger a secondary approval step before running this workflow.
         # environment: "Push to Docker"
         needs:
-            # - andon-cord
+            - andon-cord
             - build-binaries
         permissions:
             id-token: write
