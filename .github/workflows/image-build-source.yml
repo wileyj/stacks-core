@@ -75,13 +75,13 @@ jobs:
                           ;;
                       esac
                       # install dependencies for linux x64 glibc and set target
-                      sudo apt-get install -y git libclang-dev llvm || exit 1
+                      sudo apt-get update && sudo apt-get install -y git libclang-dev llvm || exit 1
                       TARGET="x86_64-unknown-linux-gnu"
                       ;;
                     arm64)
                       ARCHIVE_NAME=${{matrix.cpu}}
                       # install dependencies for linux aarch64 glibc and set target
-                      sudo apt-get install -y git gcc-aarch64-linux-gnu libclang-dev llvm || exit 1
+                      sudo apt-get update && sudo apt-get install -y git gcc-aarch64-linux-gnu libclang-dev llvm || exit 1
                       TARGET="aarch64-unknown-linux-gnu"
                       ;;
                     *)
