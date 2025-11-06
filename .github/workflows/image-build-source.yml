@@ -16,7 +16,7 @@ env:
     LINKER: ""
 
 concurrency:
-    group: docker-image-source-${{ github.head_ref || github.ref || github.run_id }}
+    group: docker-image-${{ github.head_ref || github.ref || github.run_id }}
     ## Always cancel duplicate jobs
     cancel-in-progress: true
 
@@ -231,7 +231,7 @@ jobs:
               id: show_vals
               shell: bash
               run: |
-                  echo "platforms: ${{ env.platforms }}"
+                  echo "platforms: ${{ env.docker_platforms }}"
                   echo "labels: ${{ steps.docker_metadata.outputs.labels }}"
                   echo
                   echo "build args:"
@@ -249,7 +249,7 @@ jobs:
               with:
                   context: /tmp
                   file: ./.github/actions/dockerfiles/debian/Dockerfile
-                  platforms: ${{ env.platforms }}
+                  platforms: ${{ env.docker_platforms }}
                   tags: ${{ steps.docker_metadata.outputs.tags }}
                   labels: ${{ steps.docker_metadata.outputs.labels }}
                   build-args: |
