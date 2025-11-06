@@ -1,6 +1,6 @@
 ## Github workflow to build a docker image from source
 
-name: Docker Image (Source)
+name: Docker Image
 
 on:
     workflow_dispatch:
@@ -32,8 +32,7 @@ jobs:
         # needs:
         #     - andon-cord
         strategy:
-            ## Run a maximum of 10 builds concurrently, using the matrix defined in inputs.arch
-            max-parallel: 10
+            max-parallel: 2
             matrix:
                 arch:
                     - linux-glibc
@@ -41,11 +40,6 @@ jobs:
                     - x86-64
                     - arm64
         steps:
-            # ## cleanup runner
-            # - name: Cleanup Runner
-            #   id: runner_cleanup
-            #   uses: stacks-network/actions/cleanup/disk@main
-
             ## Checkout the code
             - name: Checkout the latest code
               id: git_checkout
@@ -168,6 +162,21 @@ jobs:
             id-token: write
             attestations: write
         steps:
+            ## if the repo owner is not `stacks-network`, default to a docker_org of the repo owner (i.e. github user id)
+            ## this allows forks to run the docker push workflows without having to hardcode a dockerhub org (but it does require docker hub user to match github username)
+            - name: Set Docker Org
+              id: set_docker_org
+              shell: bash
+              run: |
+                  if [[ "${{ github.repository_owner }}" != "stacks-network" ]]; then
+                    var_org="${{ github.repository_owner }}"
+                  else
+                    var_org="blockstack"
+                  fi
+                  var_images="${{ env.docker_org }}/${{ github.event.repository.name }} ${{ env.docker_org }}/stacks-blockchain"
+                  echo "docker_org=$var_org" >> $GITHUB_ENV
+                  echo "docker_images=$var_images" >> $GITHUB_ENV
+
             - name: Download Artifacts
               id: download_artifacts
               uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v4.1.8
@@ -194,30 +203,19 @@ jobs:
                   username: ${{ secrets.DOCKERHUB_USERNAME }}
                   password: ${{ secrets.DOCKERHUB_PASSWORD }}
 
-            ## if the repo owner is not `stacks-network`, default to a docker_org of the repo owner (i.e. github user id)
-            ## this allows forks to run the docker push workflows without having to hardcode a dockerhub org (but it does require docker hub user to match github username)
-            - name: Set Local env vars
-              id: set_env
-              if: |
-                  github.repository_owner != 'stacks-network'
-              run: |
-                  echo "docker_org=${{ github.repository_owner }}" >> "$GITHUB_ENV"
-
             ## Set docker metatdata
             - name: Docker Metadata ( ${{matrix.dist}} )
               id: docker_metadata
               uses: docker/metadata-action@369eb591f429131d6889c46b94e711f089e6ca96 #v5.6.1
               with:
                   images: |
-                      ${{env.docker_org}}/${{ github.event.repository.name }}
-                      ${{env.docker_org}}/stacks-blockchain
+                      ${{env.docker_images}}
                   tags: |
                       type=raw,value=${{ env.BRANCH_NAME }}
                       type=ref,event=pr
 
             ## Build docker image for node release
             - name: Show vals ( ${{matrix.dist}} )
-              if: ${{ env.is-signer-release == 'false' }}
               id: show_vals
               shell: bash
               run: |
@@ -258,7 +256,7 @@ jobs:
                   subject-name: |
                       index.docker.io/${{env.docker_org}}/${{ github.event.repository.name }}
                   subject-digest: ${{ steps.docker_build.outputs.digest }}
-                  push-to-registry: true
+                  push-to-registry: ${{ env.DOCKER_PUSH }}
 
             - name: Generate artifact attestation (stacks-blockchain)
               id: attest_secondary
@@ -267,4 +265,4 @@ jobs:
                   subject-name: |
                       index.docker.io/${{env.docker_org}}/stacks-blockchain
                   subject-digest: ${{ steps.docker_build.outputs.digest }}
-                  push-to-registry: true
+                  push-to-registry: ${{ env.DOCKER_PUSH }}
