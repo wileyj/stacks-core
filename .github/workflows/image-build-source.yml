@@ -32,9 +32,9 @@ jobs:
             - name: Check Approval
               id: check
               run: |
-                  dockerhub_username=${{ secrets.DOCKERHUB_USERNAME }}
-                  echo "::add-mask::$dockerhub_username"
-                  echo "dockerhub_username=$dockerhub_username" >> $GITHUB_OUTPUT
+                  user=${{ secrets.DOCKERHUB_USERNAME }}
+                  echo "::add-mask::$user"
+                  echo "dockerhub_username=$user" >> "$GITHUB_OUTPUT"
                   exit 0
 
     ## Build arch dependent binaries from source
@@ -252,7 +252,7 @@ jobs:
               with:
                   username: ${{ needs.andon-cord.outputs.dockerhub_username }}
                   # username: ${{ secrets.DOCKERHUB_USERNAME }}
-                  password: ${{ secrets.DOCKERHUB_PASSWORD }}
+                  password: ${{ needs.andon-cord.outputs.dockerhub_username }}
 
             ## Set docker metatdata
             - name: Docker Metadata ( ${{matrix.dist}} )
