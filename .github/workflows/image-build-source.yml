@@ -26,18 +26,26 @@ jobs:
         runs-on: ubuntu-latest
         outputs:
             dockerhub_username: ${{ steps.check.outputs.dockerhub_username }}
-            fake: ${{ steps.check.outputs.fake }}
+            salt: ${{ steps.check.outputs.salt }}
         #     dockerhub_password: ${{ steps.check.outputs.dockerhub_password }}
         environment: "Push to Docker"
         steps:
             - name: Check Approval
               id: check
               run: |
-                  user=${{ secrets.DOCKERHUB_USERNAME }}
+                  SALT_PASS=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 64 | head -n 1)
+                  user=$(echo -n "${{ secrets.DOCKERHUB_USERNAME }}" | openssl enc -aes-256-cbc -pbkdf2 -salt -k "${SALT_PASS}")
                   echo "::add-mask::$user"
                   echo "dockerhub_username=$user" >> "$GITHUB_OUTPUT"
-                  echo "fake=fakestring" >> "$GITHUB_OUTPUT"
+                  echo "salt=$SALT_PASS" >> "$GITHUB_OUTPUT"
                   exit 0
+
+    # OUR_SECRET="a fake secret"
+    # SALT_PASS=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 64 | head -n 1)
+    # BINARY_ENCRYPTED_SECRET=$(echo -n "$OUR_SECRET" | openssl enc -aes-256-cbc -pbkdf2 -salt -k "$SALT_PASS")
+    # echo $BINARY_ENCRYPTED_SECRET
+    # DECRYPTED_SECRET=$(echo -n "$BINARY_ENCRYPTED_SECRET" | openssl enc -aes-256-cbc -pbkdf2 -d -salt -k "$SALT_PASS");
+    # echo $DECRYPTED_SECRET
 
     ## Build arch dependent binaries from source
     build-binaries:
@@ -184,6 +192,14 @@ jobs:
             id-token: write
             attestations: write
         steps:
+            - name: Test
+              id: test
+              shell: bash
+              run: |
+                  DECRYPTED_SECRET=$(echo -n "${{ needs.andon-cord.outputs.dockerhub_username }}" | openssl enc -aes-256-cbc -pbkdf2 -d -salt -k "${{ needs.andon-cord.outputs.salt }}");
+                  echo "dec: $DECRYPTED_SECRET"
+                  echo "dhuser=$DECRYPTED_SECRET" >> $GITHUB_ENV
+
             - name: Set Docker Org
               id: set_docker_org
               shell: bash
@@ -212,9 +228,8 @@ jobs:
               id: docker_setup
               uses: stacks-network/actions/docker@main
               with:
-                  username: ${{ needs.andon-cord.outputs.dockerhub_username }}
-                  # username: ${{ secrets.DOCKERHUB_USERNAME }}
-                  password: ${{ needs.andon-cord.outputs.dockerhub_username }}
+                  username: ${{ env.dhuser }}
+                  password: ${{ secrets.DOCKERHUB_PASSWORD }}
 
             ## Set docker metatdata
             - name: Docker Metadata ( ${{matrix.dist}} )
