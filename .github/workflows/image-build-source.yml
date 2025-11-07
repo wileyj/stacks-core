@@ -46,8 +46,6 @@ jobs:
         permissions:
             id-token: write
             attestations: write
-        needs:
-            - andon-cord
         strategy:
             max-parallel: 2
             matrix:
