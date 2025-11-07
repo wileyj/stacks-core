@@ -32,7 +32,7 @@ jobs:
             - name: Check Approval
               id: check
               run: |
-                  $dockerhub_username = ${{ secrets.DOCKERHUB_USERNAME }}
+                  dockerhub_username=${{ secrets.DOCKERHUB_USERNAME }}
                   echo "::add-mask::$dockerhub_username"
                   echo "dockerhub_username=$dockerhub_username" >> $GITHUB_OUTPUT
                   exit 0
