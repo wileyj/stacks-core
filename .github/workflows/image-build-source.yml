@@ -34,9 +34,9 @@ jobs:
               run: |
                   $dockerhub_username = ${{ secrets.DOCKERHUB_USERNAME }}
                   echo "::add-mask::$dockerhub_username"
-                  echo "::set-output name=dockerhub_username::$dockerhub_username"
+                  echo "dockerhub_username=$dockerhub_username" >> $GITHUB_OUTPUT
                   exit 0
-    #
+
     ## Build arch dependent binaries from source
     build-binaries:
         name: Build Binaries
