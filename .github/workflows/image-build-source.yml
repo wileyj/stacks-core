@@ -255,8 +255,8 @@ jobs:
               with:
                   images: |
                       ${{env.docker_images}}
-                  labels: |
-                      org.opencontainers.image.created={{commit_date 'YYYY-MM-DDTHH:mm:ss.SSS[Z]'}}
+                  # labels: |
+                  #     org.opencontainers.image.created={{commit_date 'YYYY-MM-DDTHH:mm:ss.SSS[Z]'}}
                   tags: |
                       type=raw,value=${{ env.BRANCH_NAME }}
                       type=ref,event=pr
@@ -286,8 +286,7 @@ jobs:
               run: |
                   echo "platforms: ${{ env.docker_platforms }}"
                   echo "labels: ${{ steps.docker_metadata.outputs.labels }}"
-                  echo "docker_tag: ${{ env.docker_tag }}"
-                  echo "tag: ${{ env.tag }}"
+                  echo "tags: $${{ steps.docker_metadata.outputs.tags }}"
                   echo
                   echo "build args:"
                   echo "    TAG=$${{ steps.docker_metadata.outputs.tags }}"
