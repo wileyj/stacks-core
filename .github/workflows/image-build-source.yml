@@ -30,10 +30,10 @@ jobs:
     andon-cord:
         name: Andon Cord
         runs-on: ubuntu-latest
-        outputs:
-            dockerhub_username: ${{ steps.check.outputs.dockerhub_username }}
-            salt: ${{ steps.check.outputs.salt }}
-        #     dockerhub_password: ${{ steps.check.outputs.dockerhub_password }}
+        # outputs:
+        #     dockerhub_username: ${{ steps.check.outputs.dockerhub_username }}
+        #     salt: ${{ steps.check.outputs.salt }}
+        # #     dockerhub_password: ${{ steps.check.outputs.dockerhub_password }}
         environment: "Build Release"
         steps:
             - name: Check Approval
@@ -242,10 +242,10 @@ jobs:
               id: docker_login
               uses: docker/login-action@9780b0c442fbb1117ed29e0efdff1e18412f7567 # v3.3.0
               with:
-                  registry: ghcr.io
-                  username: ${{ github.repository_owner }}
-                  # username: ${{ inputs.username }}
-                  password: ${{ inputs.password }}
+                  registry: ${{ env.docker_registry }}
+                  username: ${{ github.actor }}
+                  password: ${{ secrets.GITHUB_TOKEN }}
+
             ## end copy from composite
 
             ## Set docker metatdata
