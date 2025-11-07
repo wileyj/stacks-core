@@ -256,9 +256,7 @@ jobs:
                   images: |
                       ${{env.docker_images}}
                   labels: |
-                      org.opencontainers.image.source="${{ github.server_url }}/${{ github.repository }}"
                       org.opencontainers.image.created={{commit_date 'YYYY-MM-DDTHH:mm:ss.SSS[Z]'}}
-                      org.opencontainers.image.branch={{branch}}
                   tags: |
                       type=raw,value=${{ env.BRANCH_NAME }}
                       type=ref,event=pr
