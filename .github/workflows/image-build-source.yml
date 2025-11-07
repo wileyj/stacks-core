@@ -4,11 +4,17 @@ name: Docker Image
 
 on:
     workflow_dispatch:
-
+    workflow_call:
+        secrets:
+            DOCKERHUB_USERNAME:
+                required: true
+            DOCKERHUB_PASSWORD:
+                required: true
 ## Define which docker arch to build for
 env:
     docker_platforms: "linux/amd64,linux/arm64"
     docker_org: blockstack
+    docker_registry: ghcr.io
     # set a default command to build. we'll define specific build config options later per arch.
     CMD: "cargo build --features monitoring_prom,slog_json --profile release-lite --workspace"
     # ensure these env vars have no values since they will be explicitly set later
@@ -28,17 +34,11 @@ jobs:
             dockerhub_username: ${{ steps.check.outputs.dockerhub_username }}
             salt: ${{ steps.check.outputs.salt }}
         #     dockerhub_password: ${{ steps.check.outputs.dockerhub_password }}
-        environment: "Push to Docker"
+        environment: "Build Release"
         steps:
             - name: Check Approval
               id: check
               run: |
-                  SALT_PASS=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 64 | head -n 1)
-                  echo "salt: $SALT_PASS"
-                  user=$(echo -n "${{ secrets.DOCKERHUB_USERNAME }}" | openssl enc -aes-256-cbc -pbkdf2 -salt -k "${SALT_PASS}")
-                  echo "::add-mask::$user"
-                  echo "dockerhub_username=$user" >> "$GITHUB_OUTPUT"
-                  echo "salt=$SALT_PASS" >> "$GITHUB_OUTPUT"
                   exit 0
 
     # OUR_SECRET="a fake secret"
@@ -193,14 +193,6 @@ jobs:
             id-token: write
             attestations: write
         steps:
-            - name: Test
-              id: test
-              shell: bash
-              run: |
-                  DECRYPTED_SECRET=$(echo -n "${{ needs.andon-cord.outputs.dockerhub_username }}" | openssl enc -aes-256-cbc -pbkdf2 -d -salt -k "${{ needs.andon-cord.outputs.salt }}");
-                  echo "dec: $DECRYPTED_SECRET"
-                  echo "dhuser=$DECRYPTED_SECRET" >> $GITHUB_ENV
-
             - name: Set Docker Org
               id: set_docker_org
               shell: bash
@@ -210,7 +202,7 @@ jobs:
                   else
                     var_org="blockstack"
                   fi
-                  var_images="${{ env.docker_org }}/${{ github.event.repository.name }} ${{ env.docker_org }}/stacks-blockchain"
+                  var_images="${{env.docker_registry}}/${{ env.docker_org }}/${{ github.event.repository.name }} ${{env.docker_registry}}/${{ env.docker_org }}/stacks-blockchain"
                   echo "docker_org=$var_org" >> $GITHUB_ENV
                   echo "docker_images=$var_images" >> $GITHUB_ENV
 
@@ -224,13 +216,37 @@ jobs:
                   echo "docker_org: ${{ env.docker_org }} "
                   echo
 
-            ## Setup Docker for the builds
-            - name: Docker setup
-              id: docker_setup
-              uses: stacks-network/actions/docker@main
+            # ## Setup Docker for the builds
+            # - name: Docker setup
+            #   id: docker_setup
+            #   uses: stacks-network/actions/docker@main
+            #   with:
+            #       username: ${{ secrets.DOCKERHUB_USERNAME }}
+            #       password: ${{ secrets.DOCKERHUB_PASSWORD }}
+            ## copy from composite
+            ## Setup QEMU for multi-arch builds
+            - name: Set up QEMU
+              id: docker_qemu
+              uses: docker/setup-qemu-action@4574d27a4764455b42196d70a065bc6853246a25 # v3.4.0
+
+            ## Setup docker buildx
+            - name: Set up Docker Buildx
+              id: docker_buildx
+              uses: docker/setup-buildx-action@f7ce87c1d6bead3e36075b2ce75da1f6cc28aaca # v3.9.0
+
+            ## Login to dockerhub
+            - name: Login to GHCR
+              # if: |
+              #     inputs.username != '' &&
+              #     inputs.password != ''
+              id: docker_login
+              uses: docker/login-action@9780b0c442fbb1117ed29e0efdff1e18412f7567 # v3.3.0
               with:
-                  username: ${{ env.dhuser }}
-                  password: ${{ secrets.DOCKERHUB_PASSWORD }}
+                  registry: ghcr.io
+                  username: ${{ github.repository_owner }}
+                  # username: ${{ inputs.username }}
+                  password: ${{ inputs.password }}
+            ## end copy from composite
 
             ## Set docker metatdata
             - name: Docker Metadata ( ${{matrix.dist}} )
@@ -239,9 +255,31 @@ jobs:
               with:
                   images: |
                       ${{env.docker_images}}
+                  labels: |
+                      org.opencontainers.image.source = "${{ github.server_url }}/${{ github.repository }}"
+                      org.opencontainers.image.created={{commit_date 'YYYY-MM-DDTHH:mm:ss.SSS[Z]'}}
+                      org.opencontainers.image.branch = {{branch}}
                   tags: |
                       type=raw,value=${{ env.BRANCH_NAME }}
                       type=ref,event=pr
+
+            # org.opencontainers.image.licenses=GPL-3.0
+            # org.opencontainers.image.revision=75af43e798fef143604219d64fb7adcc300e1ba3
+            # org.opencontainers.image.source=https://github.com/wileyj/stacks-core
+            # org.opencontainers.image.title=stacks-core
+            # org.opencontainers.image.url=https://github.com/wileyj/stacks-core
+            # org.opencontainers.image.version=latest
+
+            # const res: Array<string> = [
+            #   `org.opencontainers.image.title=${this.repo.name || ''}`,
+            #   `org.opencontainers.image.description=${this.repo.description || ''}`,
+            #   `org.opencontainers.image.url=${this.repo.html_url || ''}`,
+            #   `org.opencontainers.image.source=${this.repo.html_url || ''}`,
+            #   `org.opencontainers.image.version=${this.version.main || ''}`,
+            #   `org.opencontainers.image.created=${this.date.toISOString()}`,
+            #   `org.opencontainers.image.revision=${this.context.sha || ''}`,
+            #   `org.opencontainers.image.licenses=${this.repo.license?.spdx_id || ''}`
+            # ];
 
             ## Build docker image for node release
             - name: Show vals ( ${{matrix.dist}} )
