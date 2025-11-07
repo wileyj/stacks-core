@@ -25,6 +25,11 @@ on:
                 description: "Release type (one of stacks-node, stacks-signer"
                 required: true
                 type: string
+        secrets:
+            DOCKERHUB_USERNAME:
+                required: true
+            DOCKERHUB_PASSWORD:
+                required: true
 concurrency:
     group: ${{ inputs.release_type }}-${{ github.head_ref || github.ref }}
     ## Always cancel duplicate jobs
@@ -41,6 +46,7 @@ jobs:
             ( inputs.signer_tag != '' || inputs.node_tag != '' )
         name: Docker Image (${{inputs.release_type}}, ${{matrix.dist}})
         runs-on: ubuntu-latest
+        # environment: "Push to Docker"
         permissions:
             id-token: write
             attestations: write

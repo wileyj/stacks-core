@@ -48,7 +48,8 @@ jobs:
             inputs.signer_tag != ''
         name: Andon Cord
         runs-on: ubuntu-latest
-        environment: "Build Release"
+        # environment: "Build Release"
+        environment: "Push to Docker"
         steps:
             - name: Check Approval
               id: check
@@ -71,7 +72,8 @@ jobs:
             inputs.node_tag != '' ||
             inputs.signer_tag != ''
         name: Build Docker Images
-        secrets: inherit
+        # secrets: inherit
+        # environment: "Push to Docker"
         needs:
             - andon-cord
             - build-binaries
@@ -96,6 +98,9 @@ jobs:
             # signer_docker_tag contains only the version, i.e. 3.3.0.0.0.0
             signer_docker_tag: ${{ inputs.signer_docker_tag }}
             release_type: ${{ matrix.type }}
+        secrets:
+            DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+            DOCKERHUB_PASSWORD: ${{ secrets.DOCKERHUB_PASSWORD }}
 
     ####
     # ## Runs when the following is true:
