@@ -24,20 +24,17 @@ jobs:
     andon-cord:
         name: Andon Cord
         runs-on: ubuntu-latest
-        # outputs:
-        #     dockerhub_username: ${{ steps.check.outputs.dockerhub_username }}
+        outputs:
+            dockerhub_username: ${{ steps.check.outputs.dockerhub_username }}
         #     dockerhub_password: ${{ steps.check.outputs.dockerhub_password }}
         environment: "Push to Docker"
         steps:
             - name: Check Approval
               id: check
               run: |
-                  # user=${{ secrets.DOCKERHUB_USERNAME}}
-                  # pass=${{ secrets.DOCKERHUB_PASSWORD }}
-                  # echo "::add-mask::$user"
-                  # echo "::add-mask::$pass"
-                  # echo "dockerhub_username=$user" >> "$GITHUB_OUTPUT"
-                  # echo "dockerhub_password=$pass" >> "$GITHUB_OUTPUT"
+                  $dockerhub_username = ${{ secrets.DOCKERHUB_USERNAME }}
+                  echo "::add-mask::$dockerhub_username"
+                  echo "::set-output name=dockerhub_username::$dockerhub_username"
                   exit 0
     #
     ## Build arch dependent binaries from source
@@ -49,9 +46,8 @@ jobs:
         permissions:
             id-token: write
             attestations: write
-
-        # needs:
-        #     - andon-cord
+        needs:
+            - andon-cord
         strategy:
             max-parallel: 2
             matrix:
@@ -256,9 +252,8 @@ jobs:
               id: docker_setup
               uses: stacks-network/actions/docker@main
               with:
-                  # username: ${{ steps.andon-cord.outputs.dockerhub_username }}
-                  # password: ${{ steps.andon-cord.outputs.dockerhub_password }}
-                  username: ${{ secrets.DOCKERHUB_USERNAME }}
+                  username: ${{ needs.andon-cord.outputs.dockerhub_username }}
+                  # username: ${{ secrets.DOCKERHUB_USERNAME }}
                   password: ${{ secrets.DOCKERHUB_PASSWORD }}
 
             ## Set docker metatdata
