@@ -26,6 +26,7 @@ jobs:
         runs-on: ubuntu-latest
         outputs:
             dockerhub_username: ${{ steps.check.outputs.dockerhub_username }}
+            fake: ${{ steps.check.outputs.fake }}
         #     dockerhub_password: ${{ steps.check.outputs.dockerhub_password }}
         environment: "Push to Docker"
         steps:
@@ -35,6 +36,7 @@ jobs:
                   user=${{ secrets.DOCKERHUB_USERNAME }}
                   echo "::add-mask::$user"
                   echo "dockerhub_username=$user" >> "$GITHUB_OUTPUT"
+                  echo "fake=fakestring" >> "$GITHUB_OUTPUT"
                   exit 0
 
     ## Build arch dependent binaries from source
@@ -195,54 +197,14 @@ jobs:
                   echo "docker_org=$var_org" >> $GITHUB_ENV
                   echo "docker_images=$var_images" >> $GITHUB_ENV
 
-            - name: Set Local Vars
-              id: set_vars
-              shell: bash
-              run: |
-                  if [ "${{ inputs.release_type }}" == "stacks-signer" ]; then
-                    # stacks-signer
-                    var_images="${{ env.docker_org }}/stacks-signer"
-                    var_tag="${{ inputs.signer_tag }}"
-                    var_docker_tag=${{ inputs.signer_docker_tag }}
-                  else
-                    # stacks-node
-                    var_images="${{ env.docker_org }}/${{ github.event.repository.name }} ${{ env.docker_org }}/stacks-blockchain"
-                    var_tag="${{ inputs.node_tag }}"
-                    var_docker_tag=${{ inputs.node_docker_tag }}
-                  fi
-
-                  echo
-                  echo "var_images: $var_images"
-                  echo "inputs.release_type: ${{inputs.release_type}}"
-                  echo "var_tag: $var_tag"
-                  echo "var_docker_tag: $var_docker_tag"
-                  echo
-                  echo "docker_images=$var_images" >> $GITHUB_ENV
-                  echo "tag=$var_tag" >> $GITHUB_ENV
-                  echo "docker_tag=$var_docker_tag" >> $GITHUB_ENV
-
             - name: (node) Check Data
               id: check_data
               shell: bash
               run: |
                   echo "matrix.dist: ${{matrix.dist}}"
-                  echo
-                  echo "env.build_arch: ${{ env.build_arch }}"
-                  echo "env.tag: ${{ env.tag }}"
-                  echo "env.docker_tag: ${{env.docker_tag}}"
-                  echo "env.docker_org: ${{env.docker_org}}"
-                  echo "docker_tag_rc: ${{ env.docker_tag_rc }}"
-                  echo "env.docker_images: ${{env.docker_images}}"
-                  echo
-                  echo "node_tag: ${{inputs.node_tag}}"
-                  echo "node_docker_tag: ${{inputs.node_docker_tag}}"
-                  echo "signer_tag: ${{inputs.signer_tag}}"
-                  echo "signer_docker_tag: ${{inputs.signer_docker_tag}}"
-                  # echo "is_node_release: ${{inputs.is_node_release}}"
-                  # echo "is_signer_release: ${{inputs.is_signer_release}}"
-                  echo "release_type: ${{inputs.release_type}}"
-                  echo
-                  echo "Artifact pattern: ${{ env.tag }}-binary-build-linux-${{ env.build_arch }}*"
+
+                  echo "fake: ${{ needs.andon-cord.outputs.fake }}"
+                  echo "docker_org: ${{ env.docker_org }} "
                   echo
 
             ## Setup Docker for the builds
