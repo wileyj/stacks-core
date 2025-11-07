@@ -269,6 +269,7 @@ jobs:
                   echo "platforms: ${{ env.docker_platforms }}"
                   echo "labels: ${{ steps.docker_metadata.outputs.labels }}"
                   echo "tags: $${{ steps.docker_metadata.outputs.tags }}"
+                  echo "env.branch_name: ${{ env.BRANCH_NAME }}"
                   echo
                   echo "build args:"
                   echo "    TAG=$${{ steps.docker_metadata.outputs.tags }}"
