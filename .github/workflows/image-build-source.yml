@@ -192,7 +192,7 @@ jobs:
               run: |
                   var_org="${{ github.repository_owner }}"
                   var_images="${{env.docker_registry}}/${{ github.repository }}"
-                  var push=${{ (inputs.username != '') && (inputs.password != '') }}
+                  var_push=${{ (github.actor != '') && (secrets.GITHUB_TOKEN != '') }}
                   echo "docker_org=$var_org" >> $GITHUB_ENV
                   echo "docker_images=$var_images" >> $GITHUB_ENV
                   echo "BRANCH_NAME=${GITHUB_REF#refs/heads/}" >> $GITHUB_ENV # from composite
