@@ -265,7 +265,7 @@ jobs:
                   echo "tags: ${{ steps.docker_metadata.outputs.tags }}"
                   echo "push: ${{ env.DOCKER_PUSH }}"
                   echo "env.branch_name: ${{ env.BRANCH_NAME }}"
-                  echo "GITHUB_REF: ${{ GITHUB_REF#refs/heads }}"
+                  echo "GITHUB_REF: ${ GITHUB_REF#refs/heads }"
                   echo "github.repository: ${{ github.repository}}"
                   echo "github.repository_owner: ${{ github.repository_owner}}"
                   echo "github.sha: ${{ github.sha}}"
