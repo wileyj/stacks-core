@@ -190,18 +190,13 @@ jobs:
               id: set_docker_org
               shell: bash
               run: |
-
-                  # if [[ "${{ github.repository_owner }}" != "stacks-network" ]]; then
-                  #   var_org="${{ github.repository_owner }}"
-                  # else
-                  #   var_org="blockstack"
-                  # fi
                   var_org="${{ github.repository_owner }}"
-                  # var_images="${{env.docker_registry}}/${{ github.repository }} ${{env.docker_registry}}/${{ github.repository }}/stacks-blockchain"
                   var_images="${{env.docker_registry}}/${{ github.repository }}"
+                  var push=${{ (inputs.username != '') && (inputs.password != '') }}
                   echo "docker_org=$var_org" >> $GITHUB_ENV
                   echo "docker_images=$var_images" >> $GITHUB_ENV
                   echo "BRANCH_NAME=${GITHUB_REF#refs/heads/}" >> $GITHUB_ENV # from composite
+                  echo "DOCKER_PUSH=$push" >> $GITHUB_ENV
 
             # - name: Download Artifacts
             #   id: download_artifacts
@@ -284,7 +279,7 @@ jobs:
             #       platforms: ${{ env.docker_platforms }}
             #       tags: ${{ steps.docker_metadata.outputs.tags }}
             #       labels: ${{ steps.docker_metadata.outputs.labels }}
-            #       push: ${{ (inputs.username != '') && (inputs.password != '') }}
+            #       push: ${{ env.DOCKER_PUSH }}
 
             # ## Generate docker image attestation(s)
             # - name: Generate artifact attestation (${{ github.event.repository.name }})
@@ -292,17 +287,6 @@ jobs:
             #   uses: actions/attest-build-provenance@c074443f1aee8d4aeeae555aebba3282517141b2 # v2.2.3
             #   with:
             #       subject-name: |
-            #           index.docker.io/${{env.docker_org}}/${{ github.event.repository.name }}
-            #       subject-digest: ${{ steps.docker_build.outputs.digest }}
-            #       push-to-registry: ${{ env.DOCKER_PUSH }}
-
-            # - name: Generate artifact attestation (stacks-blockchain)
-            #   if: |
-            #       inputs.release_type == "stacks-node"
-            #   id: attest_secondary
-            #   uses: actions/attest-build-provenance@c074443f1aee8d4aeeae555aebba3282517141b2 # v2.2.3
-            #   with:
-            #       subject-name: |
-            #           index.docker.io/${{env.docker_org}}/stacks-blockchain
+            #           ${{ env.docker_images }}
             #       subject-digest: ${{ steps.docker_build.outputs.digest }}
             #       push-to-registry: ${{ env.DOCKER_PUSH }}
