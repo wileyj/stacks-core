@@ -197,10 +197,11 @@ jobs:
                   #   var_org="blockstack"
                   # fi
                   var_org="${{ github.repository_owner }}"
-                  var_images="${{env.docker_registry}}/${{ github.repository_owner }}/${{ github.event.repository.name }} ${{env.docker_registry}}/${{ github.repository_owner }}/stacks-blockchain"
+                  # var_images="${{env.docker_registry}}/${{ github.repository }} ${{env.docker_registry}}/${{ github.repository }}/stacks-blockchain"
+                  var_images="${{env.docker_registry}}/${{ github.repository }}"
                   echo "docker_org=$var_org" >> $GITHUB_ENV
                   echo "docker_images=$var_images" >> $GITHUB_ENV
-                  echo "BRANCH=${GITHUB_REF#refs/heads/}" >> $GITHUB_ENV # from composite
+                  echo "BRANCH_NAME=${GITHUB_REF#refs/heads/}" >> $GITHUB_ENV # from composite
 
             # - name: Download Artifacts
             #   id: download_artifacts
