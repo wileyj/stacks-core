@@ -47,6 +47,7 @@ jobs:
         runs-on: ubuntu-latest
         needs:
             - andon-cord
+        # https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax?page=2#permissions
         permissions:
             id-token: write
             attestations: write
@@ -178,13 +179,14 @@ jobs:
         name: Build Image
         runs-on: ubuntu-latest
         ## Requires the repo environment "Push to Docker", which will trigger a secondary approval step before running this workflow.
-        # environment: "Push to Docker"
         needs:
             - andon-cord
             - build-binaries
+        # https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax?page=2#permissions
         permissions:
             id-token: write
             attestations: write
+            packages: write
         steps:
             - name: Set Docker Org
               id: set_docker_org
