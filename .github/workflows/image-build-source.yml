@@ -198,10 +198,10 @@ jobs:
                   echo "BRANCH_NAME=${GITHUB_REF#refs/heads/}" >> $GITHUB_ENV
                   echo "DOCKER_PUSH=$var_push" >> $GITHUB_ENV
 
-            # ## Checkout the code
-            # - name: Checkout the latest code
-            #   id: git_checkout
-            #   uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+            ## Checkout the code
+            - name: Checkout the latest code
+              id: git_checkout
+              uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
             - name: Download Artifacts
               id: download_artifacts
