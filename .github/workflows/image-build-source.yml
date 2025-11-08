@@ -242,7 +242,7 @@ jobs:
             ## end copy from composite
 
             ## Set docker metatdata
-            - name: Docker Metadata ( ${{matrix.dist}} )
+            - name: Docker Metadata
               id: docker_metadata
               uses: docker/metadata-action@318604b99e75e41977312d83839a89be02ca4893 #v5.9.0
               with:
@@ -255,7 +255,7 @@ jobs:
                       type=ref,event=pr
 
             ## Build docker image for node release
-            - name: Show vals ( ${{matrix.dist}} )
+            - name: Show vals
               id: show_vals
               shell: bash
               run: |
@@ -278,12 +278,12 @@ jobs:
                   echo "ls:"
                   ls -al
 
-            - name: Build and Push ( ${{matrix.dist}} )
+            - name: Build and Push
               id: docker_build
               uses: docker/build-push-action@ca877d9245402d1537745e0e356eab47c3520991 # v6.13.0
               with:
                   context: /tmp
-                  file: ./.github/actions/dockerfiles/${{ matrix.dist }}/Dockerfile
+                  file: ./.github/actions/dockerfiles/debian/Dockerfile
                   platforms: ${{ env.docker_platforms }}
                   tags: ${{ steps.docker_metadata.outputs.tags }}
                   labels: ${{ steps.docker_metadata.outputs.labels }}
