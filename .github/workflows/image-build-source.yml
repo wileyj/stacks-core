@@ -195,8 +195,8 @@ jobs:
                   var_push=${{ (github.actor != '') && (secrets.GITHUB_TOKEN != '') }}
                   echo "docker_org=$var_org" >> $GITHUB_ENV
                   echo "docker_images=$var_images" >> $GITHUB_ENV
-                  echo "BRANCH_NAME=${GITHUB_REF#refs/heads/}" >> $GITHUB_ENV # from composite
-                  echo "DOCKER_PUSH=$push" >> $GITHUB_ENV
+                  echo "BRANCH_NAME=${GITHUB_REF#refs/heads/}" >> $GITHUB_ENV
+                  echo "DOCKER_PUSH=$var_push" >> $GITHUB_ENV
 
             - name: Download Artifacts
               id: download_artifacts
