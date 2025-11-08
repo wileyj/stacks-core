@@ -197,24 +197,24 @@ jobs:
               id: set_docker_org
               shell: bash
               run: |
-                  if [[ "${{ github.repository_owner }}" != "stacks-network" ]]; then
-                    var_org="${{ github.repository_owner }}"
-                  else
-                    var_org="blockstack"
-                  fi
-                  var_images="${{env.docker_registry}}/${{ env.docker_org }}/${{ github.event.repository.name }} ${{env.docker_registry}}/${{ env.docker_org }}/stacks-blockchain"
+
+                  # if [[ "${{ github.repository_owner }}" != "stacks-network" ]]; then
+                  #   var_org="${{ github.repository_owner }}"
+                  # else
+                  #   var_org="blockstack"
+                  # fi
+                  var_org="${{ github.repository_owner }}"
+                  var_images="${{env.docker_registry}}/${{ github.repository_owner }}/${{ github.event.repository.name }} ${{env.docker_registry}}/${{ github.repository_owner }}/stacks-blockchain"
                   echo "docker_org=$var_org" >> $GITHUB_ENV
                   echo "docker_images=$var_images" >> $GITHUB_ENV
 
-            - name: (node) Check Data
-              id: check_data
-              shell: bash
-              run: |
-                  echo "matrix.dist: ${{matrix.dist}}"
-
-                  echo "fake: ${{ needs.andon-cord.outputs.fake }}"
-                  echo "docker_org: ${{ env.docker_org }} "
-                  echo
+            # - name: Download Artifacts
+            #   id: download_artifacts
+            #   uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v4.1.8
+            #   with:
+            #       pattern: linux-glibc*
+            #       path: /tmp/release
+            #       merge-multiple: true
 
             # ## Setup Docker for the builds
             # - name: Docker setup
@@ -236,9 +236,6 @@ jobs:
 
             ## Login to dockerhub
             - name: Login to GHCR
-              # if: |
-              #     inputs.username != '' &&
-              #     inputs.password != ''
               id: docker_login
               uses: docker/login-action@9780b0c442fbb1117ed29e0efdff1e18412f7567 # v3.3.0
               with:
@@ -270,73 +267,16 @@ jobs:
                   echo "labels: ${{ steps.docker_metadata.outputs.labels }}"
                   echo "tags: $${{ steps.docker_metadata.outputs.tags }}"
                   echo "env.branch_name: ${{ env.BRANCH_NAME }}"
+                  echo "github.repository: ${{ github.repository}}"
+                  echo "github.repository_owner: ${{ github.repository_owner}}"
+                  echo "github.sha: ${{ github.sha}}"
                   echo
                   echo "build args:"
-                  echo "    TAG=$${{ steps.docker_metadata.outputs.tags }}"
+                  echo "    TAG=${{ steps.docker_metadata.outputs.tags }}"
                   echo "    REPO=${{ github.repository_owner }}/${{ github.event.repository.name }}"
                   echo "    STACKS_NODE_VERSION=${{ env.tag || env.GITHUB_SHA_SHORT }}"
                   echo "    GIT_BRANCH=${{ env.GITHUB_REF_SHORT }}"
                   echo "    GIT_COMMIT=${{ env.GITHUB_SHA_SHORT }}"
-                  echo "push: ${{ env.DOCKER_PUSH }}"
-
-            # ## if the repo owner is not `stacks-network`, default to a docker_org of the repo owner (i.e. github user id)
-            # ## this allows forks to run the docker push workflows without having to hardcode a dockerhub org (but it does require docker hub user to match github username)
-            # - name: Set Docker Org
-            #   id: set_docker_org
-            #   shell: bash
-            #   run: |
-            #       if [[ "${{ github.repository_owner }}" != "stacks-network" ]]; then
-            #         var_org="${{ github.repository_owner }}"
-            #       else
-            #         var_org="blockstack"
-            #       fi
-            #       var_images="${{ env.docker_org }}/${{ github.event.repository.name }} ${{ env.docker_org }}/stacks-blockchain"
-            #       echo "docker_org=$var_org" >> $GITHUB_ENV
-            #       echo "docker_images=$var_images" >> $GITHUB_ENV
-
-            # - name: Download Artifacts
-            #   id: download_artifacts
-            #   uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v4.1.8
-            #   with:
-            #       # pattern: binaries-*
-            #       pattern: linux-glibc*
-            #       path: /tmp/release
-            #       merge-multiple: true
-
-            # ## Setup Docker for the builds
-            # - name: Docker setup
-            #   id: docker_setup
-            #   uses: stacks-network/actions/docker@main
-            #   with:
-            #       username: ${{ secrets.DOCKERHUB_USERNAME }}
-            #       password: ${{ secrets.DOCKERHUB_PASSWORD }}
-
-            # ## Set docker metatdata
-            # - name: Docker Metadata ( ${{matrix.dist}} )
-            #   id: docker_metadata
-            #   uses: docker/metadata-action@369eb591f429131d6889c46b94e711f089e6ca96 #v5.6.1
-            #   with:
-            #       images: |
-            #           ${{env.docker_images}}
-            #       tags: |
-            #           type=raw,value=${{ env.BRANCH_NAME }}
-            #           type=ref,event=pr
-
-            # ## Build docker image for node release
-            # - name: Show vals ( ${{matrix.dist}} )
-            #   id: show_vals
-            #   shell: bash
-            #   run: |
-            #       echo "platforms: ${{ env.docker_platforms }}"
-            #       echo "labels: ${{ steps.docker_metadata.outputs.labels }}"
-            #       echo
-            #       echo "build args:"
-            #       echo "    TAG=$${{ steps.docker_metadata.outputs.tags }}"
-            #       echo "    REPO=${{env.docker_org}}/${{ github.event.repository.name }}"
-            #       echo "    STACKS_NODE_VERSION=${{ env.GITHUB_SHA_SHORT }}"
-            #       echo "    GIT_BRANCH=${{ env.GITHUB_REF_SHORT }}"
-            #       echo "    GIT_COMMIT=${{ env.GITHUB_SHA_SHORT }}"
-            #       echo "push: ${{ env.DOCKER_PUSH }}"
 
             # - name: Build and Push ( ${{matrix.dist}} )
             #   id: docker_build
@@ -348,13 +288,7 @@ jobs:
             #       platforms: ${{ env.docker_platforms }}
             #       tags: ${{ steps.docker_metadata.outputs.tags }}
             #       labels: ${{ steps.docker_metadata.outputs.labels }}
-            #       build-args: |
-            #           TAG=${{ steps.docker_metadata.outputs.tags }}
-            #           REPO=${{ github.repository_owner }}/${{ github.event.repository.name }}
-            #           STACKS_NODE_VERSION=${{ env.tag || env.GITHUB_SHA_SHORT }}
-            #           GIT_BRANCH=${{ env.GITHUB_REF_SHORT }}
-            #           GIT_COMMIT=${{ env.GITHUB_SHA_SHORT }}
-            #       push: ${{ env.DOCKER_PUSH }}
+            #       push: ${{ (inputs.username != '') && (inputs.password != '') }}
 
             # ## Generate docker image attestation(s)
             # - name: Generate artifact attestation (${{ github.event.repository.name }})
