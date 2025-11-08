@@ -41,13 +41,6 @@ jobs:
               run: |
                   exit 0
 
-    # OUR_SECRET="a fake secret"
-    # SALT_PASS=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 64 | head -n 1)
-    # BINARY_ENCRYPTED_SECRET=$(echo -n "$OUR_SECRET" | openssl enc -aes-256-cbc -pbkdf2 -salt -k "$SALT_PASS")
-    # echo $BINARY_ENCRYPTED_SECRET
-    # DECRYPTED_SECRET=$(echo -n "$BINARY_ENCRYPTED_SECRET" | openssl enc -aes-256-cbc -pbkdf2 -d -salt -k "$SALT_PASS");
-    # echo $DECRYPTED_SECRET
-
     ## Build arch dependent binaries from source
     build-binaries:
         name: Build Binaries
@@ -207,6 +200,7 @@ jobs:
                   var_images="${{env.docker_registry}}/${{ github.repository_owner }}/${{ github.event.repository.name }} ${{env.docker_registry}}/${{ github.repository_owner }}/stacks-blockchain"
                   echo "docker_org=$var_org" >> $GITHUB_ENV
                   echo "docker_images=$var_images" >> $GITHUB_ENV
+                  echo "BRANCH=${GITHUB_REF#refs/heads/}" >> $GITHUB_ENV # from composite
 
             # - name: Download Artifacts
             #   id: download_artifacts
@@ -224,6 +218,7 @@ jobs:
             #       username: ${{ secrets.DOCKERHUB_USERNAME }}
             #       password: ${{ secrets.DOCKERHUB_PASSWORD }}
             ## copy from composite
+
             ## Setup QEMU for multi-arch builds
             - name: Set up QEMU
               id: docker_qemu
@@ -265,7 +260,7 @@ jobs:
               run: |
                   echo "platforms: ${{ env.docker_platforms }}"
                   echo "labels: ${{ steps.docker_metadata.outputs.labels }}"
-                  echo "tags: $${{ steps.docker_metadata.outputs.tags }}"
+                  echo "tags: ${{ steps.docker_metadata.outputs.tags }}"
                   echo "env.branch_name: ${{ env.BRANCH_NAME }}"
                   echo "github.repository: ${{ github.repository}}"
                   echo "github.repository_owner: ${{ github.repository_owner}}"
