@@ -15,6 +15,7 @@ env:
     # ensure these env vars have no values since they will be explicitly set later
     TARGET_CPU: ""
     LINKER: ""
+    provenance: false
 
 concurrency:
     group: docker-image-${{ github.head_ref || github.ref || github.run_id }}
@@ -276,7 +277,8 @@ jobs:
               uses: docker/build-push-action@ca877d9245402d1537745e0e356eab47c3520991 # v6.13.0
               with:
                   sbom: false
-                  provenance: mode=max
+                  # provenance: mode=max # this produces attestation, but additional keys for unknown/unknown
+                  provenance: ${{ env.provenance }}
                   context: /tmp
                   file: ./.github/actions/dockerfiles/debian/Dockerfile
                   platforms: ${{ env.docker_platforms }}
@@ -284,15 +286,16 @@ jobs:
                   labels: ${{ steps.docker_metadata.outputs.labels }}
                   push: ${{ env.DOCKER_PUSH }}
 
-            #
-            # possible not needed
-            #
-            # ## Generate docker image attestation(s)
-            # - name: Generate artifact attestation (${{ github.event.repository.name }})
-            #   id: attest_primary
-            #   uses: actions/attest-build-provenance@c074443f1aee8d4aeeae555aebba3282517141b2 # v2.2.3
-            #   with:
-            #       subject-name: |
-            #           ${{ env.docker_images }}
-            #       subject-digest: ${{ steps.docker_build.outputs.digest }}
-            #       push-to-registry: ${{ env.DOCKER_PUSH }}
+
+            ## Generate docker image attestation(s)
+            ##   - if docker/build-push-action provenance is false
+            - name: Generate artifact attestation (${{ github.event.repository.name }})
+              if: |
+                env.provenance != true
+              id: attest_primary
+              uses: actions/attest-build-provenance@c074443f1aee8d4aeeae555aebba3282517141b2 # v2.2.3
+              with:
+                  subject-name: |
+                      ${{ env.docker_images }}
+                  subject-digest: ${{ steps.docker_build.outputs.digest }}
+                  push-to-registry: ${{ env.DOCKER_PUSH }}
