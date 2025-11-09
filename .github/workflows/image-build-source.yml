@@ -26,10 +26,6 @@ jobs:
     andon-cord:
         name: Andon Cord
         runs-on: ubuntu-latest
-        # outputs:
-        #     dockerhub_username: ${{ steps.check.outputs.dockerhub_username }}
-        #     salt: ${{ steps.check.outputs.salt }}
-        # #     dockerhub_password: ${{ steps.check.outputs.dockerhub_password }}
         environment: "Build Release"
         steps:
             - name: Check Approval
@@ -59,6 +55,8 @@ jobs:
             - name: Checkout the latest code
               id: git_checkout
               uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+              with:
+                  ref: ${{ github.ref }}
 
             ## Set target env var based on the type of arch build
             # ** we could move all later steps here, but it would be messier and and move verbose per arch.
@@ -156,7 +154,6 @@ jobs:
               uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
               with:
                   name: ${{ env.ZIPFILE_NAME }}
-                  # name: binaries-${{ env.ZIPFILE_NAME }}
                   path: ${{ env.ZIPFILE_NAME }}.zip
 
             ## Attest the release binaries
@@ -212,7 +209,8 @@ jobs:
               id: git_checkout
               uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
               with:
-                  ref: ${{ env.BRANCH_NAME }}
+                  ref: ${{ github.ref }}
+                  # ref: ${{ env.BRANCH_NAME }}
                   sparse-checkout: |
                       .github
 

@@ -25,11 +25,6 @@ on:
                 description: "Release type (one of stacks-core, stacks-signer"
                 required: true
                 type: string
-        # secrets:
-        #     DOCKERHUB_USERNAME:
-        #         required: true
-        #     DOCKERHUB_PASSWORD:
-        #         required: true
 concurrency:
     group: ${{ inputs.release_type }}-${{ github.head_ref || github.ref }}
     ## Always cancel duplicate jobs
@@ -46,7 +41,6 @@ jobs:
             ( inputs.signer_tag != '' || inputs.node_tag != '' )
         name: Docker Image (${{inputs.release_type}}, ${{matrix.dist}})
         runs-on: ubuntu-latest
-        # environment: "Push to Docker"
         permissions:
             id-token: write
             attestations: write
@@ -124,23 +118,23 @@ jobs:
                   echo "var_build_arch: ${var_build_arch}"
                   echo "build_arch=${var_build_arch}" >> "$GITHUB_ENV"
 
-            # - name: Download Artifacts
-            #   id: download_artifacts
-            #   uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
-            #   with:
-            #       # pattern: binaries-*
-            #       pattern: ${{ env.tag }}-binary-build-linux-${{ env.build_arch }}*
-            #       path: /tmp/release
-            #       merge-multiple: true
+            - name: Download Artifacts
+              id: download_artifacts
+              uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
+              with:
+                  # pattern: binaries-*
+                  pattern: ${{ env.tag }}-binary-build-linux-${{ env.build_arch }}*
+                  path: /tmp/release
+                  merge-multiple: true
 
-            # - name: Check Data
-            #   id: check_data
-            #   shell: bash
-            #   run: |
-            #       echo "pwd:"
-            #       pwd
-            #       echo "checking release dir:"
-            #       ls -al /tmp/release
+            - name: Check Data
+              id: check_data
+              shell: bash
+              run: |
+                  echo "pwd:"
+                  pwd
+                  echo "checking release dir:"
+                  ls -al /tmp/release
 
             ## Setup Docker for the builds
             ##
