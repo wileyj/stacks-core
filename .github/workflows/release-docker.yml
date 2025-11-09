@@ -76,39 +76,40 @@ jobs:
               id: set_vars
               shell: bash
               run: |
+                  var_default_image="${{env.docker_registry}}/${{ github.repository_owner }}/${{ inputs.release_type }}"
                   if [ "${{ inputs.release_type }}" == "stacks-signer" ]; then
                     # stacks-signer
-                    var_images="${{env.docker_registry}}/${{ github.repository_owner }}/${{inputs.release_type}}"
+                    var_images="${var_default_image}"
                     var_tag="${{ inputs.signer_tag }}"
                     var_docker_tag=${{ inputs.signer_docker_tag }}
                   else
                     # stacks-core
-                    var_images="${{env.docker_registry}}/${{ github.repository_owner }}/${{inputs.release_type}} ${{env.docker_registry}}/${{ github.repository_owner }}/stacks-blockchain"
+                    var_images="${var_default_image} ${{env.docker_registry}}/${{ github.repository_owner }}/stacks-blockchain"
                     var_tag="${{ inputs.node_tag }}"
                     var_docker_tag=${{ inputs.node_docker_tag }}
                   fi
 
                   echo
-                  echo "var_images: $var_images"
+                  echo "var_images: ${var_images}"
                   echo "inputs.release_type: ${{inputs.release_type}}"
-                  echo "var_tag: $var_tag"
-                  echo "var_docker_tag: $var_docker_tag"
+                  echo "var_tag: ${var_tag}"
+                  echo "var_docker_tag: ${var_docker_tag}"
                   echo
-                  echo "docker_images=$var_images" >> $GITHUB_ENV
-                  echo "tag=$var_tag" >> $GITHUB_ENV
-                  echo "docker_tag=$var_docker_tag" >> $GITHUB_ENV
+                  echo "docker_images=${var_images}" >> $GITHUB_ENV
+                  echo "tag=${var_tag}" >> $GITHUB_ENV
+                  echo "docker_tag=${var_docker_tag}" >> $GITHUB_ENV
 
             - name: Set Docker Tag RC Flag
               id: docker_tag_rc_flag
               shell: bash
               run: |
                   var_docker_tag_rc=false
-                  if [[ "$docker_tag" =~ -rc[0-9]*$ ]]; then
+                  if [[ "${docker_tag}" =~ -rc[0-9]*$ ]]; then
                     # is a release candidate
                     var_docker_tag_rc=true
                   fi
-                  echo "var_docker_tag_rc: $var_docker_tag_rc"
-                  echo "docker_tag_rc=$var_docker_tag_rc" >> "$GITHUB_ENV"
+                  echo "var_docker_tag_rc: ${var_docker_tag_rc}"
+                  echo "docker_tag_rc=${var_docker_tag_rc}" >> "$GITHUB_ENV"
 
             ## set env var for which artifacts to download
             - name: Set Artifact Arch
@@ -120,8 +121,8 @@ jobs:
                   else
                     var_build_arch=glibc
                   fi
-                  echo "var_build_arch: $var_build_arch"
-                  echo "build_arch=$var_build_arch" >> "$GITHUB_ENV"
+                  echo "var_build_arch: ${var_build_arch}"
+                  echo "build_arch=${var_build_arch}" >> "$GITHUB_ENV"
 
             # - name: Download Artifacts
             #   id: download_artifacts
