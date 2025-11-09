@@ -4,12 +4,7 @@ name: Docker Image
 
 on:
     workflow_dispatch:
-    workflow_call:
-        secrets:
-            DOCKERHUB_USERNAME:
-                required: true
-            DOCKERHUB_PASSWORD:
-                required: true
+
 ## Define which docker arch to build for
 env:
     docker_platforms: "linux/amd64,linux/arm64"
@@ -265,7 +260,6 @@ jobs:
                   echo "tags: ${{ steps.docker_metadata.outputs.tags }}"
                   echo "push: ${{ env.DOCKER_PUSH }}"
                   echo "env.branch_name: ${{ env.BRANCH_NAME }}"
-                  echo "GITHUB_REF: ${ GITHUB_REF#refs/heads }"
                   echo "github.repository: ${{ github.repository}}"
                   echo "github.repository_owner: ${{ github.repository_owner}}"
                   echo "github.sha: ${{ github.sha}}"
@@ -276,15 +270,12 @@ jobs:
                   echo "    STACKS_NODE_VERSION=${{ env.tag || env.GITHUB_SHA_SHORT }}"
                   echo "    GIT_BRANCH=${{ env.GITHUB_REF_SHORT }}"
                   echo "    GIT_COMMIT=${{ env.GITHUB_SHA_SHORT }}"
-                  echo "pwd: $(pwd)"
-                  echo "ls:"
-                  ls -al
 
             - name: Build and Push
               id: docker_build
               uses: docker/build-push-action@ca877d9245402d1537745e0e356eab47c3520991 # v6.13.0
               with:
-                  sbom: true
+                  sbom: false
                   provenance: mode=max
                   context: /tmp
                   file: ./.github/actions/dockerfiles/debian/Dockerfile
@@ -293,6 +284,9 @@ jobs:
                   labels: ${{ steps.docker_metadata.outputs.labels }}
                   push: ${{ env.DOCKER_PUSH }}
 
+            #
+            # possible not needed
+            #
             # ## Generate docker image attestation(s)
             # - name: Generate artifact attestation (${{ github.event.repository.name }})
             #   id: attest_primary
