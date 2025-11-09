@@ -22,7 +22,7 @@ on:
                 required: true
                 type: string
             release_type:
-                description: "Release type (one of stacks-node, stacks-signer"
+                description: "Release type (one of stacks-core, stacks-signer"
                 required: true
                 type: string
         # secrets:
@@ -42,7 +42,7 @@ env:
 jobs:
     release-images:
         if: |
-            ( inputs.release_type == 'stacks-node' || inputs.release_type == 'stacks-signer') &&
+            ( inputs.release_type == 'stacks-core' || inputs.release_type == 'stacks-signer') &&
             ( inputs.signer_tag != '' || inputs.node_tag != '' )
         name: Docker Image (${{inputs.release_type}}, ${{matrix.dist}})
         runs-on: ubuntu-latest
@@ -78,12 +78,12 @@ jobs:
               run: |
                   if [ "${{ inputs.release_type }}" == "stacks-signer" ]; then
                     # stacks-signer
-                    var_images="${{env.docker_registry}}/${{ github.repository_owner }}/stacks-signer"
+                    var_images="${{env.docker_registry}}/${{ github.repository_owner }}/${{inputs.release_type}}"
                     var_tag="${{ inputs.signer_tag }}"
                     var_docker_tag=${{ inputs.signer_docker_tag }}
                   else
-                    # stacks-node
-                    var_images="${{ env.docker_org }}/${{ github.event.repository.name }} ${{env.docker_registry}}/${{ github.repository_owner }}/stacks-blockchain"
+                    # stacks-core
+                    var_images="${{env.docker_registry}}/${{ github.repository_owner }}/${{inputs.release_type}} ${{env.docker_registry}}/${{ github.repository_owner }}/stacks-blockchain"
                     var_tag="${{ inputs.node_tag }}"
                     var_docker_tag=${{ inputs.node_docker_tag }}
                   fi
@@ -125,7 +125,7 @@ jobs:
 
             # - name: Download Artifacts
             #   id: download_artifacts
-            #   uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v4.1.8
+            #   uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
             #   with:
             #       # pattern: binaries-*
             #       pattern: ${{ env.tag }}-binary-build-linux-${{ env.build_arch }}*
@@ -158,7 +158,7 @@ jobs:
             ## Checkout the code
             - name: Checkout the latest code
               id: git_checkout
-              uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+              uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
               with:
                   ref: ${{ env.BRANCH_NAME }}
                   sparse-checkout: |
@@ -212,39 +212,34 @@ jobs:
                   echo "Artifact pattern: ${{ env.tag }}-binary-build-linux-${{ env.build_arch }}*"
                   echo
 
-            # - name: Build and Push ( ${{matrix.dist}} )
-            #   id: docker_build
-            #   uses: docker/build-push-action@ca877d9245402d1537745e0e356eab47c3520991 # v6.13.0
-            #   with:
-            #       sbom: false
-            #       provenance: mode=max
-            #       context: /tmp
-            #       file: ./.github/actions/dockerfiles/${{ matrix.dist }}/Dockerfile.release
-            #       platforms: ${{ env.docker_platforms }}
-            #       tags: ${{ steps.docker_metadata.outputs.tags }}
-            #       labels: ${{ steps.docker_metadata.outputs.labels }}
-            #       push: ${{ env.DOCKER_PUSH }}
+            - name: Build and Push ( ${{matrix.dist}} )
+              id: docker_build
+              uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83 # v6.18.0
+              with:
+                  sbom: false
+                  provenance: mode=max
+                  context: /tmp
+                  file: ./.github/actions/dockerfiles/${{ matrix.dist }}/Dockerfile.release
+                  platforms: ${{ env.docker_platforms }}
+                  tags: ${{ steps.docker_metadata.outputs.tags }}
+                  labels: ${{ steps.docker_metadata.outputs.labels }}
+                  push: ${{ env.DOCKER_PUSH }}
 
-            #
-            # possibly not needed
-            #
-            # # ## Generate docker image attestation(s)
-            # # - name: Generate artifact attestation (${{ github.event.repository.name }})
-            # #   id: attest_primary
-            # #   uses: actions/attest-build-provenance@c074443f1aee8d4aeeae555aebba3282517141b2 # v2.2.3
-            # #   with:
-            # #       subject-name: |
-            # #           index.docker.io/${{env.docker_org}}/${{ github.event.repository.name }}
-            # #       subject-digest: ${{ steps.docker_build.outputs.digest }}
-            # #       push-to-registry: ${{ env.DOCKER_PUSH }}
+            ## Generate docker image attestation(s)
+            - name: Generate artifact attestation (${{ github.event.repository.name }})
+              id: attest_primary
+              uses: actions/attest-build-provenance@977bb373ede98d70efdf65b84cb5f73e068dcc2a # v3.0.0
+              with:
+                  subject-name: ${{env.docker_registry}}/${{ github.repository_owner }}/${{ inputs.release_type }} # attest for stacks-core|stacks-signer
+                  subject-digest: ${{ steps.docker_build.outputs.digest }}
+                  push-to-registry: ${{ env.DOCKER_PUSH }}
 
-            # # - name: Generate artifact attestation (stacks-blockchain)
-            # #   if: |
-            # #     inputs.release_type == "stacks-node"
-            # #   id: attest_secondary
-            # #   uses: actions/attest-build-provenance@c074443f1aee8d4aeeae555aebba3282517141b2 # v2.2.3
-            # #   with:
-            # #       subject-name: |
-            # #           index.docker.io/${{env.docker_org}}/stacks-blockchain
-            # #       subject-digest: ${{ steps.docker_build.outputs.digest }}
-            # #       push-to-registry: ${{ env.DOCKER_PUSH }}
+            - name: Generate artifact attestation (stacks-blockchain)
+              if: |
+                inputs.release_type == "stacks-core"
+              id: attest_secondary
+              uses: actions/attest-build-provenance@977bb373ede98d70efdf65b84cb5f73e068dcc2a # v3.0.0
+              with:
+                  subject-name: ${{env.docker_registry}}/${{ github.repository_owner }}/stacks-blockchain # attest for stacks-blockchain (only for stacks-core)
+                  subject-digest: ${{ steps.docker_build.outputs.digest }}
+                  push-to-registry: ${{ env.DOCKER_PUSH }}

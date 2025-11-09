@@ -83,10 +83,10 @@ jobs:
             max-parallel: 2
             matrix:
                 type:
-                    - stacks-node
+                    - stacks-core
                     - stacks-signer
                 exclude:
-                    - type: ${{ inputs.is_node_release == 'false' && 'stacks-node' }}
+                    - type: ${{ inputs.is_node_release == 'false' && 'stacks-core' }}
         ## Creates the node docker image
         uses: ./.github/workflows/release-docker.yml
         with:
