@@ -53,7 +53,7 @@ jobs:
             max-parallel: 2
             matrix:
                 dist:
-                    # - alpine # uncomment to build alpine images
+                    - alpine # uncomment to build alpine images
                     - debian
         steps:
             - name: Set Docker Org
@@ -128,7 +128,8 @@ jobs:
               with:
                   # pattern: binaries-*
                   # 4.0.0.0.0-binary-build-linux-glibc*'
-                  pattern: ${{ inputs.node_tag }}-binary-build-linux-${{ env.build_arch }}*
+                  # pattern: ${{ inputs.node_tag }}-binary-build-linux-${{ env.build_arch }}*
+                  pattern: ${{ inputs.node_tag || inputs.signer_tag }}-${{ env.build_arch }}* # this is more correct compared to above, since a signer archive will be named differently
                   # pattern: ${{ env.tag }}-binary-build-linux-${{ env.build_arch }}*
                   path: /tmp/release
                   merge-multiple: true
