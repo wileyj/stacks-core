@@ -186,14 +186,19 @@ jobs:
                       #   https://github.com/docker/metadata-action?tab=readme-ov-file#typeraw
                       #
                       # debian tags
+                      #  latest tag
                       type=raw,value=latest,enable=${{ env.docker_tag != '' && env.docker_tag_rc != 'true' && matrix.dist == 'debian' }}
-                      type=raw,value=${{ env.docker_tag }},suffix=-${{ matrix.dist }},enable=${{ env.docker_tag != '' && matrix.dist == 'debian'}}
+                      #  latest-debian tag
+                      type=raw,value=latest,suffix=-${{ matrix.dist }},enable=${{ env.docker_tag != '' && env.docker_tag_rc != 'true' && matrix.dist == 'debian' }}
+                      #  version tag
+                      type=raw,value=${{ env.docker_tag }},enable=${{ env.docker_tag != '' && matrix.dist == 'debian'}}
+                      #  version=dist tag
                       type=raw,value=${{ env.docker_tag }},suffix=-${{ matrix.dist }},enable=${{ env.docker_tag != '' && matrix.dist == 'debian' }}
-                      type=ref,event=tag,enable=${{ matrix.dist == 'debian' }}
                       # alpine tags
-                      type=raw,value=latest,suffix=-${{ matrix.dist }},enable=${{ env.docker_tag != '' && env.docker_tag_rc != 'true' && matrix.dist == 'alpine' }}
+                      #  version tag
                       type=raw,value=${{ env.docker_tag }},suffix=-${{ matrix.dist }},enable=${{ env.docker_tag != '' && matrix.dist == 'alpine' }}
-
+                      #   latest-alpine tag
+                      type=raw,value=latest,suffix=-${{ matrix.dist }},enable=${{ env.docker_tag != '' && env.docker_tag_rc != 'true' && matrix.dist == 'alpine' }}
             ## Build docker image for node release
             - name: Show vals ( ${{matrix.dist}} )
               id: show_vals
