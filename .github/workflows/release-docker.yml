@@ -79,7 +79,8 @@ jobs:
                     var_docker_tag=${{ inputs.signer_docker_tag }}
                   else
                     # stacks-core
-                    var_images="${var_default_image} ${{env.docker_registry}}/${{ github.repository_owner }}/stacks-blockchain"
+                    # var_images="${var_default_image} ${{env.docker_registry}}/${{ github.repository_owner }}/stacks-blockchain"
+                    var_images="${var_default_image}"
                     var_tag="${{ inputs.node_tag }}"
                     var_docker_tag=${{ inputs.node_docker_tag }}
                   fi
@@ -171,14 +172,25 @@ jobs:
                       org.opencontainers.image.created={{commit_date 'YYYY-MM-DDTHH:mm:ss.SSS[Z]'}}
                       org.opencontainers.image.version=${{ env.docker_tag }}
                   tags: |
+                      ## tags are broken :(
+                      #
+                      # ghcr.io/wileyj/stacks-core
+                      # ghcr.io/wileyj/stacks-blockchain:latest
+                      # ghcr.io/wileyj/stacks-core
+                      # ghcr.io/wileyj/stacks-blockchain:4.0.0.0.0-debian
+                      # ghcr.io/wileyj/stacks-core
+                      # ghcr.io/wileyj/stacks-blockchain:4.0.0.0.0
+                      #
+                      #   https://github.com/docker/metadata-action?tab=readme-ov-file#typeraw
+                      #
                       # debian tags
                       type=raw,value=latest,enable=${{ env.docker_tag != '' && env.docker_tag_rc != 'true' && matrix.dist == 'debian' }}
-                      type=raw,value=${{ env.docker_tag }}-${{ matrix.dist }},enable=${{ env.docker_tag != '' && matrix.dist == 'debian'}}
-                      type=raw,value=${{ env.docker_tag }},enable=${{ env.docker_tag != '' && matrix.dist == 'debian' }}
+                      type=raw,value=${{ env.docker_tag }},suffix=-${{ matrix.dist }},enable=${{ env.docker_tag != '' && matrix.dist == 'debian'}}
+                      type=raw,value=${{ env.docker_tag }},suffix=-${{ matrix.dist }},enable=${{ env.docker_tag != '' && matrix.dist == 'debian' }}
                       type=ref,event=tag,enable=${{ matrix.dist == 'debian' }}
                       # alpine tags
-                      type=raw,value=latest-${{ matrix.dist }},enable=${{ env.docker_tag != '' && env.docker_tag_rc != 'true' && matrix.dist == 'alpine' }}
-                      type=raw,value=${{ env.docker_tag }}-${{ matrix.dist }},enable=${{ env.docker_tag != '' && matrix.dist == 'alpine' }}
+                      type=raw,value=latest,suffix=-${{ matrix.dist }},enable=${{ env.docker_tag != '' && env.docker_tag_rc != 'true' && matrix.dist == 'alpine' }}
+                      type=raw,value=${{ env.docker_tag }},suffix=-${{ matrix.dist }},enable=${{ env.docker_tag != '' && matrix.dist == 'alpine' }}
 
             ## Build docker image for node release
             - name: Show vals ( ${{matrix.dist}} )
