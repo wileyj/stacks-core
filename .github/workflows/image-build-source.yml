@@ -100,7 +100,9 @@ jobs:
                   echo "TARGET=${TARGET}" >> "$GITHUB_ENV"
                   echo "TARGET_CPU=${TARGET_CPU}" >> "$GITHUB_ENV"
                   # echo "ZIPFILE_NAME=${{matrix.arch}}-${ARCHIVE_NAME}" >> "$GITHUB_ENV"
-                  echo "ZIPFILE_NAME=${{github.sha}}-${{matrix.arch}}-${ARCHIVE_NAME}" >> "$GITHUB_ENV"
+                  echo "ZIPFILE_NAME=${{matrix.arch}}-${ARCHIVE_NAME}" >> "$GITHUB_ENV"
+                  # echo "ZIPFILE_NAME=${{github.sha}}-${{matrix.arch}}-${ARCHIVE_NAME}" >> "$GITHUB_ENV"
+                  # echo "ZIPFILE_PATH=${{matrix.arch}}-${ARCHIVE_NAME}" >> "$GITHUB_ENV"
 
             ## Install rust toolchain (llvm-tools-preview)
             - name: Setup Rust Toolchain
@@ -154,8 +156,8 @@ jobs:
               id: upload_artifact
               uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
               with:
-                  name: ${{ env.ZIPFILE_NAME }}
-                  path: ${{ env.ZIPFILE_NAME }}.zip
+                  name: ${{github.sha}}-${{ env.ZIPFILE_NAME }}   # this is the name that shows up in workflow summary
+                  path: ${{ env.ZIPFILE_NAME }}.zip  # this is the name of the artifact usable on the VM
 
             ## Attest the release binaries
             - name: Attest Release Artifact
