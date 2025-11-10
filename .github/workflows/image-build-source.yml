@@ -8,7 +8,7 @@ on:
 ## Define which docker arch to build for
 env:
     docker_platforms: "linux/amd64,linux/arm64"
-    docker_org: blockstack
+    # docker_org: blockstack
     docker_registry: ghcr.io
     # set a default command to build. we'll define specific build config options later per arch.
     CMD: "cargo build --features monitoring_prom,slog_json --profile release-lite --workspace"
