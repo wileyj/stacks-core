@@ -75,8 +75,7 @@ jobs:
             matrix:
                 arch:
                     - linux-glibc
-                    # # disabled for testing
-                    # - linux-musl
+                    - linux-musl
                     # - macos
                     # - windows
                 cpu:
