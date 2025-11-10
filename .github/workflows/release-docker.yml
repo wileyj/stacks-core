@@ -71,6 +71,7 @@ jobs:
             - name: Set Local Vars
               id: set_vars
               shell: bash
+              # setting image to release_type may be ok, since we don't need stacks-blockchain in ghcr (only in dockerhub mirror)
               run: |
                   var_default_image="${{env.docker_registry}}/${{ github.repository_owner }}/${{ inputs.release_type }}"
                   if [ "${{ inputs.release_type }}" == "stacks-signer" ]; then
@@ -126,7 +127,9 @@ jobs:
               uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
               with:
                   # pattern: binaries-*
-                  pattern: ${{ env.tag }}-binary-build-linux-${{ env.build_arch }}*
+                  # 4.0.0.0.0-binary-build-linux-glibc*'
+                  pattern: ${{ inputs.node_tag }}-binary-build-linux-${{ env.build_arch }}*
+                  # pattern: ${{ env.tag }}-binary-build-linux-${{ env.build_arch }}*
                   path: /tmp/release
                   merge-multiple: true
 
@@ -243,12 +246,12 @@ jobs:
                   subject-digest: ${{ steps.docker_build.outputs.digest }}
                   push-to-registry: ${{ env.DOCKER_PUSH }}
 
-            - name: Generate artifact attestation (stacks-blockchain)
-              if: |
-                inputs.release_type == 'stacks-core'
-              id: attest_secondary
-              uses: actions/attest-build-provenance@977bb373ede98d70efdf65b84cb5f73e068dcc2a # v3.0.0
-              with:
-                  subject-name: ${{env.docker_registry}}/${{ github.repository_owner }}/stacks-blockchain # attest for stacks-blockchain (only for stacks-core)
-                  subject-digest: ${{ steps.docker_build.outputs.digest }}
-                  push-to-registry: ${{ env.DOCKER_PUSH }}
+            # - name: Generate artifact attestation (stacks-blockchain)
+            #   if: |
+            #     inputs.release_type == 'stacks-core'
+            #   id: attest_secondary
+            #   uses: actions/attest-build-provenance@977bb373ede98d70efdf65b84cb5f73e068dcc2a # v3.0.0
+            #   with:
+            #       subject-name: ${{env.docker_registry}}/${{ github.repository_owner }}/stacks-blockchain # attest for stacks-blockchain (only for stacks-core)
+            #       subject-digest: ${{ steps.docker_build.outputs.digest }}
+            #       push-to-registry: ${{ env.DOCKER_PUSH }}
