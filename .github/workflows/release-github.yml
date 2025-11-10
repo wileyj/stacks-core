@@ -49,7 +49,6 @@ jobs:
         name: Andon Cord
         runs-on: ubuntu-latest
         environment: "Build Release"
-        # environment: "Push to Docker"
         steps:
             - name: Check Approval
               id: check
@@ -72,8 +71,6 @@ jobs:
             inputs.node_tag != '' ||
             inputs.signer_tag != ''
         name: Build Docker Images
-        # secrets: inherit
-        # environment: "Push to Docker"
         needs:
             - andon-cord
             - build-binaries
@@ -123,6 +120,12 @@ jobs:
               id: check
               run: |
                   exit 0
+    #
+    # create the markdown: https://github.com/marketplace/actions/extract-markdown-section
+    #   docker run -v $PWD:/opt -it sean0x42/markdown-extract:v2 3.2.0.0.1 /opt/CHANGELOG.md
+    #   docker run -v $PWD:/opt -it sean0x42/markdown-extract:v2 3.2.0.0.1.0 /opt/stacks-signer/CHANGELOG.md
+    #     markdown-extract -n 3.2.0.0.1 CHANGELOG.md
+    #     markdown-extract -n 3.2.0.0.1.0 stacks-signer/CHANGELOG.md
     #           uses: stacks-network/actions/stacks-core/release/create-releases@main
     #           with:
     #               node_tag: ${{ inputs.node_tag }}

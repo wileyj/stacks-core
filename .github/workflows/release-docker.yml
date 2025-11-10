@@ -51,7 +51,7 @@ jobs:
             max-parallel: 2
             matrix:
                 dist:
-                    - alpine
+                    # - alpine # uncomment to build alpine images
                     - debian
         steps:
             - name: Set Docker Org
