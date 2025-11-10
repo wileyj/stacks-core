@@ -99,7 +99,8 @@ jobs:
                   echo "setting ZIPFILE_NAME: ${{ matrix.arch }}-${ARCHIVE_NAME}"
                   echo "TARGET=${TARGET}" >> "$GITHUB_ENV"
                   echo "TARGET_CPU=${TARGET_CPU}" >> "$GITHUB_ENV"
-                  echo "ZIPFILE_NAME=${{matrix.arch}}-${ARCHIVE_NAME}" >> "$GITHUB_ENV"
+                  # echo "ZIPFILE_NAME=${{matrix.arch}}-${ARCHIVE_NAME}" >> "$GITHUB_ENV"
+                  echo "ZIPFILE_NAME=${{github.sha}}-${ARCHIVE_NAME}" >> "$GITHUB_ENV"
 
             ## Install rust toolchain (llvm-tools-preview)
             - name: Setup Rust Toolchain
@@ -191,7 +192,8 @@ jobs:
               id: download_artifacts
               uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
               with:
-                  pattern: linux-glibc*
+                  pattern: ${{github.sha}}-glibc*
+                  # pattern: linux-glibc*
                   path: /tmp/release
                   merge-multiple: true
 
@@ -275,7 +277,7 @@ jobs:
               uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83 # v6.18.0
               with:
                   sbom: false
-                  # provenance: mode=max # this produces attestation, but additional keys for unknown/unknown
+                  # provenance: mode=max # this produces attestation, but adds additional keys for unknown/unknown. default to disabled
                   provenance: ${{ env.provenance }}
                   context: /tmp
                   file: ./.github/actions/dockerfiles/debian/Dockerfile

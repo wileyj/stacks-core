@@ -198,10 +198,10 @@ jobs:
                   fi
                   echo "setting TARGET:${TARGET}"
                   echo "setting TARGET_CPU: ${TARGET_CPU}"
-                  echo "setting ZIPFILE_NAME: ${{ matrix.arch }}-${ARCHIVE_NAME}"
+                  echo "setting ZIPFILE_NAME: ${{github.sha}}-${{ matrix.arch }}-${ARCHIVE_NAME}"
                   echo "TARGET=${TARGET}" >> "$GITHUB_ENV"
                   echo "TARGET_CPU=${TARGET_CPU}" >> "$GITHUB_ENV"
-                  echo "ZIPFILE_NAME=${{matrix.arch}}-${ARCHIVE_NAME}" >> "$GITHUB_ENV"
+                  echo "ZIPFILE_NAME=${{github.sha}}-${{matrix.arch}}-${ARCHIVE_NAME}" >> "$GITHUB_ENV"
 
             ## Install rust toolchain (llvm-tools-preview)
             - name: Setup Rust Toolchain
@@ -211,6 +211,15 @@ jobs:
                   toolchain: stable
                   cache: false
                   target: ${{ env.TARGET }}
+
+            ## Install llvm-tools-preview
+            - name: show vals
+              id: show_vals
+              shell: bash
+              run: |
+                  echo "github.sha=${{github.sha}}"
+                  echo "ZIPFILE_NAME=${{env.ZIPFILE_NAME}}"
+                  echo "test: ${{matrix.arch}}-${ARCHIVE_NAME}"
 
             ## Build the release binaries
             - name: Build Release
@@ -280,8 +289,8 @@ jobs:
               id: upload_artifact
               uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
               with:
-                  name: ${{ inputs.node_tag || inputs.signer_tag }}-binary-build-${{ env.ZIPFILE_NAME }}
-                  # name: binaries-${{ env.ZIPFILE_NAME }}
+                  # name: ${{ inputs.node_tag || inputs.signer_tag }}-binary-build-${{ env.ZIPFILE_NAME }}
+                  name: ${{ env.ZIPFILE_NAME }}
                   path: ${{ env.ZIPFILE_NAME }}.zip
 
             ## Attest the release binaries
