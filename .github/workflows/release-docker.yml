@@ -130,7 +130,7 @@ jobs:
                   # 4.0.0.0.0-binary-build-linux-glibc*'
                   # pattern: ${{ inputs.node_tag }}-binary-build-linux-${{ env.build_arch }}*
                   # pattern: ${{ inputs.node_tag || inputs.signer_tag }}-binary-build-linux-${{ env.build_arch }}* # this is more correct compared to above, since a signer archive will be named differently
-                  pattern: ${{github.sha}}-${{ env.build_arch }}*
+                  pattern: ${{ github.sha }}-${{ env.build_arch }}*
                   # pattern: ${{ env.tag }}-binary-build-linux-${{ env.build_arch }}*
                   path: /tmp/release
                   merge-multiple: true

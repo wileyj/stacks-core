@@ -96,11 +96,11 @@ jobs:
                   fi
                   echo "setting TARGET:${TARGET}"
                   echo "setting TARGET_CPU: ${TARGET_CPU}"
-                  echo "setting ZIPFILE_NAME: ${{github.sha}}-${{ matrix.arch }}-${ARCHIVE_NAME}"
+                  echo "setting ZIPFILE_NAME: ${{ matrix.arch }}-${ARCHIVE_NAME}"
                   echo "TARGET=${TARGET}" >> "$GITHUB_ENV"
                   echo "TARGET_CPU=${TARGET_CPU}" >> "$GITHUB_ENV"
                   # echo "ZIPFILE_NAME=${{matrix.arch}}-${ARCHIVE_NAME}" >> "$GITHUB_ENV"
-                  echo "ZIPFILE_NAME=${{github.sha}}-${{ matrix.arch }}-${ARCHIVE_NAME}" >> "$GITHUB_ENV"
+                  echo "ZIPFILE_NAME=${{github.sha}}-${{matrix.arch}}-${ARCHIVE_NAME}" >> "$GITHUB_ENV"
 
             ## Install rust toolchain (llvm-tools-preview)
             - name: Setup Rust Toolchain
@@ -192,7 +192,7 @@ jobs:
               id: download_artifacts
               uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
               with:
-                  pattern: ${{github.sha}}-linux-glibc* #only download linux-glibc artifacts
+                  pattern: ${{github.sha}}-${{matrix.arch}}*
                   # pattern: linux-glibc*
                   path: /tmp/release
                   merge-multiple: true
