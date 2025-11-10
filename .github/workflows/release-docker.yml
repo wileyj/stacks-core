@@ -35,6 +35,7 @@ run-name: ${{ inputs.node_tag || inputs.signer_tag }}
 env:
     docker_platforms: "linux/arm64, linux/amd64"
     docker_registry: ghcr.io
+    provenance: false
 jobs:
     release-images:
         if: |
@@ -206,7 +207,7 @@ jobs:
                   echo "platforms: ${{ env.docker_platforms }}"
                   echo
                   echo "metadata:"
-                  echo "    tags: $${{ steps.docker_metadata.outputs.tags }}"
+                  echo "    tags: ${{ steps.docker_metadata.outputs.tags }}"
                   echo "    labels: ${{ steps.docker_metadata.outputs.labels }}"
                   echo
                   echo "node_tag: ${{inputs.node_tag}}"
@@ -225,7 +226,7 @@ jobs:
               uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83 # v6.18.0
               with:
                   sbom: false
-                  provenance: mode=max
+                  provenance: ${{ env.provenance }}
                   context: /tmp
                   file: ./.github/actions/dockerfiles/${{ matrix.dist }}/Dockerfile.release
                   platforms: ${{ env.docker_platforms }}
