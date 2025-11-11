@@ -234,7 +234,7 @@ jobs:
                   echo "CMD: ${{env.CMD}}"
                   echo "ZIPFILE_NAME: ${{env.ZIPFILE_NAME}}"
                   BINS=""
-                  if [ "${{ inputs.node_tag }} == '' ]; then
+                  if [ "${{ inputs.node_tag }}" == '' ]; then
                     BINS="--bin stacks-signer"
                   fi
                   case "${{env.TARGET}}" in
