@@ -233,46 +233,48 @@ jobs:
                   echo "TARGET_CPU: ${{env.TARGET_CPU}}"
                   echo "CMD: ${{env.CMD}}"
                   echo "ZIPFILE_NAME: ${{env.ZIPFILE_NAME}}"
-
+                  if [ "${{ inputs.node_tag }} == '' ]; then
+                    BINS="--bin stacks-signer"
+                  fi
                   case "${{env.TARGET}}" in
                     # linux glibc aarch64
                     aarch64-unknown-linux-gnu) # linux-glibc-arm64
                       LINKER=aarch64-linux-gnu-gcc
-                      echo "$CMD --target $TARGET --config \"target.${TARGET}.linker=\\\"${LINKER}\\\"\" "
-                      ${{env.CMD}} --target $TARGET --config "target.${{env.TARGET}}.linker=\"${LINKER}\"" || exit 1
+                      echo "$CMD $BINS --target $TARGET --config \"target.${TARGET}.linker=\\\"${LINKER}\\\"\" "
+                      ${{env.CMD}} $BINS --target $TARGET --config "target.${{env.TARGET}}.linker=\"${LINKER}\"" || exit 1
                       ;;
                     # linux glibc x64
                     x86_64-unknown-linux-gnu) # linux-glibc-x86_64
-                       echo "$CMD --target $TARGET --config build.rustflags=\"\\\"-C target-cpu=${TARGET_CPU}\\\"\" "
-                      ${{env.CMD}} --target $TARGET --config build.rustflags="\"-C target-cpu=${TARGET_CPU}\"" || exit 1
+                       echo "$CMD $BINS --target $TARGET --config build.rustflags=\"\\\"-C target-cpu=${TARGET_CPU}\\\"\" "
+                      ${{env.CMD}} $BINS--target $TARGET --config build.rustflags="\"-C target-cpu=${TARGET_CPU}\"" || exit 1
                       ;;
                     # windows glibc x64
                     x86_64-pc-windows-gnu) # windows-x86_64
                       LINKER=x86_64-w64-mingw32-gcc
-                      echo "$CMD --target $TARGET --config \"target.${TARGET}.linker=\\\"${LINKER}\\\"\"  --config build.rustflags="\"-C target-cpu=${TARGET_CPU}\"" "
-                      ${{env.CMD}} --target $TARGET --config "target.${{env.TARGET}}.linker=\"${LINKER}\"" --config build.rustflags="\"-C target-cpu=${TARGET_CPU}\"" || exit 1
+                      echo "$CMD $BINS --target $TARGET --config \"target.${TARGET}.linker=\\\"${LINKER}\\\"\"  --config build.rustflags="\"-C target-cpu=${TARGET_CPU}\"" "
+                      ${{env.CMD}} $BINS --target $TARGET --config "target.${{env.TARGET}}.linker=\"${LINKER}\"" --config build.rustflags="\"-C target-cpu=${TARGET_CPU}\"" || exit 1
                       ;;
                     # linux musl x64
                     x86_64-unknown-linux-musl) # linux-musl-x86_64
-                      echo "$CMD --target $TARGET --config build.rustflags=\"\\\"-C target-cpu=${TARGET_CPU}\\\"\" "
-                      ${{env.CMD}} --target $TARGET --config build.rustflags="\"-C target-cpu=${TARGET_CPU}\"" || exit 1
+                      echo "$CMD $BINS --target $TARGET --config build.rustflags=\"\\\"-C target-cpu=${TARGET_CPU}\\\"\" "
+                      ${{env.CMD}} $BINS--target $TARGET --config build.rustflags="\"-C target-cpu=${TARGET_CPU}\"" || exit 1
                       ;;
                     # linux musl aarch64
                     aarch64-unknown-linux-musl) # linux-musl-arm64
                       LINKER=/tmp/aarch64-linux-musl-cross/bin/aarch64-linux-musl-gcc
-                      echo "$CMD --target $TARGET --config \"target.${TARGET}.linker=\\\"${LINKER}\\\"\" "
-                      ${{env.CMD}} --target $TARGET --config "target.${{env.TARGET}}.linker=\"${LINKER}\"" || exit 1
+                      echo "$CMD $BINS --target $TARGET --config \"target.${TARGET}.linker=\\\"${LINKER}\\\"\" "
+                      ${{env.CMD}} $BINS --target $TARGET --config "target.${{env.TARGET}}.linker=\"${LINKER}\"" || exit 1
                       ;;
                     # macos aarch64
                     aarch64-apple-darwin) # macos-arm64
                       TARGET_CPU=native
-                      echo "$CMD --target $TARGET --config build.rustflags=\"\\\"-C target-cpu=${TARGET_CPU}\\\"\" "
-                      ${{env.CMD}} --target $TARGET --config build.rustflags="\"-C target-cpu=${TARGET_CPU}\"" || exit 1
+                      echo "$CMD $BINS--target $TARGET --config build.rustflags=\"\\\"-C target-cpu=${TARGET_CPU}\\\"\" "
+                      ${{env.CMD}} $BINS --target $TARGET --config build.rustflags="\"-C target-cpu=${TARGET_CPU}\"" || exit 1
                       ;;
                     # catchall - run default command
                     *)
                       echo "No matrix match for build target ($TARGET). using defaults"
-                      ${{env.CMD}} || exit 1
+                      ${{env.CMD}} $BINS|| exit 1
                       ;;
                   esac
                   exit 0
@@ -316,11 +318,8 @@ jobs:
               id: compress_artifacts_stacks_signer
               shell: bash
               run: |
+                # remove the stacks-node zipfile and recreate for the signer
                 [ -e "${{env.ZIPFILE_NAME}}.zip" ] && rm -f "${{env.ZIPFILE_NAME}}.zip"
-                # if test -f "${{env.ZIPFILE_NAME}}.zip"; then
-                #   echo "Removing existing zip file ${{env.ZIPFILE_NAME}}.zip"
-                #   rm -f ${{env.ZIPFILE_NAME}}.zip
-                # fi
                 file -0 ./target/${{env.TARGET}}/release-lite/stacks-signer | sed -nE 's/\x0:\s*(ELF|PE32+|Mach).*//p' | zip --junk-paths ${{env.ZIPFILE_NAME}}.zip -@
 
             ## Upload the binary artifact to the github action (used in `github-release.yml` to create a release)

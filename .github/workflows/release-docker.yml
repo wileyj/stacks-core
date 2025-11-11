@@ -71,20 +71,30 @@ jobs:
               shell: bash
               # setting image to release_type may be ok, since we don't need stacks-blockchain in ghcr (only in dockerhub mirror)
               run: |
+                  if [ "${{ matrix.dist }}" == "alpine" ]; then
+                    var_build_arch=musl
+                  else
+                    var_build_arch=glibc
+                  fi
+                  echo "var_build_arch: ${var_build_arch}"
+                  # echo "build_arch=${var_build_arch}" >> "$GITHUB_ENV"
+
                   var_default_image="${{env.docker_registry}}/${{ github.repository_owner }}/${{ inputs.release_type }}"
                   if [ "${{ inputs.release_type }}" == "stacks-signer" ]; then
                     # stacks-signer
                     var_images="${var_default_image}"
                     var_tag="${{ inputs.signer_tag }}"
                     var_docker_tag=${{ inputs.signer_docker_tag }}
-                    var_artifact_pattern="${{github.sha}}-stacks-signer-${{matrix.arch}}*"
+                    # can probably reduce this by adding `linux-(arch) for musl, glibc`
+                    var_artifact_pattern="${{github.sha}}-stacks-signer-linux-$var_build_arch*"
                   else
                     # stacks-core
                     # var_images="${var_default_image} ${{env.docker_registry}}/${{ github.repository_owner }}/stacks-blockchain"
                     var_images="${var_default_image}"
                     var_tag="${{ inputs.node_tag }}"
                     var_docker_tag=${{ inputs.node_docker_tag }}
-                    var_artifact_pattern="${{github.sha}}-stacks-node-${{matrix.arch}}*"
+                    # can probably reduce this by adding `linux-(arch) for musl, glibc`
+                    var_artifact_pattern="${{github.sha}}-stacks-node-linux-$var_build_arch*"
                   fi
 
                   echo
@@ -98,6 +108,8 @@ jobs:
                   echo "tag=${var_tag}" >> $GITHUB_ENV
                   echo "docker_tag=${var_docker_tag}" >> $GITHUB_ENV
                   echo "artifact_pattern=${var_artifact_pattern}" >> $GITHUB_ENV
+                  echo "build_arch=${var_build_arch}" >> "$GITHUB_ENV"
+
 
             - name: Set Docker Tag RC Flag
               id: docker_tag_rc_flag
@@ -111,18 +123,18 @@ jobs:
                   echo "var_docker_tag_rc: ${var_docker_tag_rc}"
                   echo "docker_tag_rc=${var_docker_tag_rc}" >> "$GITHUB_ENV"
 
-            ## set env var for which artifacts to download
-            - name: Set Artifact Arch
-              id: set_artifact_arch
-              shell: bash
-              run: |
-                  if [ "${{ matrix.dist }}" == "alpine" ]; then
-                    var_build_arch=musl
-                  else
-                    var_build_arch=glibc
-                  fi
-                  echo "var_build_arch: ${var_build_arch}"
-                  echo "build_arch=${var_build_arch}" >> "$GITHUB_ENV"
+            # ## set env var for which artifacts to download
+            # - name: Set Artifact Arch
+            #   id: set_artifact_arch
+            #   shell: bash
+            #   run: |
+            #       if [ "${{ matrix.dist }}" == "alpine" ]; then
+            #         var_build_arch=musl
+            #       else
+            #         var_build_arch=glibc
+            #       fi
+            #       echo "var_build_arch: ${var_build_arch}"
+            #       echo "build_arch=${var_build_arch}" >> "$GITHUB_ENV"
 
             - name: Download Artifacts
               id: download_artifacts
@@ -179,17 +191,6 @@ jobs:
                       org.opencontainers.image.created={{commit_date 'YYYY-MM-DDTHH:mm:ss.SSS[Z]'}}
                       org.opencontainers.image.version=${{ env.docker_tag }}
                   tags: |
-                      ## tags are broken :(
-                      #
-                      # ghcr.io/wileyj/stacks-core
-                      # ghcr.io/wileyj/stacks-blockchain:latest
-                      # ghcr.io/wileyj/stacks-core
-                      # ghcr.io/wileyj/stacks-blockchain:4.0.0.0.0-debian
-                      # ghcr.io/wileyj/stacks-core
-                      # ghcr.io/wileyj/stacks-blockchain:4.0.0.0.0
-                      #
-                      #   https://github.com/docker/metadata-action?tab=readme-ov-file#typeraw
-                      #
                       # debian tags
                       #  latest tag
                       type=raw,value=latest,enable=${{ env.docker_tag != '' && env.docker_tag_rc != 'true' && matrix.dist == 'debian' }}

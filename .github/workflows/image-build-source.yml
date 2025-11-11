@@ -149,6 +149,7 @@ jobs:
               id: compress_artifacts
               shell: bash
               run: |
+                  # copy all binaries here, or only stacks-signer, stacks-node?
                   file -0 ./target/${{env.TARGET}}/release-lite/* | sed -nE 's/\x0:\s*(ELF|PE32+|Mach).*//p' | zip --junk-paths ${{env.ZIPFILE_NAME}}.zip -@
 
             ## Upload the binary artifact to the github action (used in `github-release.yml` to create a release)
