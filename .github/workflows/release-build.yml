@@ -219,7 +219,6 @@ jobs:
               run: |
                   echo "github.sha=${{github.sha}}"
                   echo "ZIPFILE_NAME=${{env.ZIPFILE_NAME}}"
-                  echo "test: ${{matrix.arch}}-${ARCHIVE_NAME}"
 
             ## Build the release binaries
             - name: Build Release
@@ -237,45 +236,46 @@ jobs:
                   if [ "${{ inputs.node_tag }}" == '' ]; then
                     BINS="--bin stacks-signer"
                   fi
+                  echo "BINS: ${BINS}"
                   case "${{env.TARGET}}" in
                     # linux glibc aarch64
                     aarch64-unknown-linux-gnu) # linux-glibc-arm64
                       LINKER=aarch64-linux-gnu-gcc
-                      echo "$CMD $BINS --target $TARGET --config \"target.${TARGET}.linker=\\\"${LINKER}\\\"\" "
-                      ${{env.CMD}} $BINS --target $TARGET --config "target.${{env.TARGET}}.linker=\"${LINKER}\"" || exit 1
+                      echo "${CMD} ${BINS} --target $TARGET --config \"target.${TARGET}.linker=\\\"${LINKER}\\\"\" "
+                      ${{env.CMD}} ${BINS} --target $TARGET --config "target.${{env.TARGET}}.linker=\"${LINKER}\"" || exit 1
                       ;;
                     # linux glibc x64
                     x86_64-unknown-linux-gnu) # linux-glibc-x86_64
-                       echo "$CMD $BINS --target $TARGET --config build.rustflags=\"\\\"-C target-cpu=${TARGET_CPU}\\\"\" "
-                      ${{env.CMD}} $BINS--target $TARGET --config build.rustflags="\"-C target-cpu=${TARGET_CPU}\"" || exit 1
+                      echo "${CMD} ${BINS} --target $TARGET --config build.rustflags=\"\\\"-C target-cpu=${TARGET_CPU}\\\"\" "
+                      ${{env.CMD}} ${BINS} --target $TARGET --config build.rustflags="\"-C target-cpu=${TARGET_CPU}\"" || exit 1
                       ;;
                     # windows glibc x64
                     x86_64-pc-windows-gnu) # windows-x86_64
                       LINKER=x86_64-w64-mingw32-gcc
-                      echo "$CMD $BINS --target $TARGET --config \"target.${TARGET}.linker=\\\"${LINKER}\\\"\"  --config build.rustflags="\"-C target-cpu=${TARGET_CPU}\"" "
-                      ${{env.CMD}} $BINS --target $TARGET --config "target.${{env.TARGET}}.linker=\"${LINKER}\"" --config build.rustflags="\"-C target-cpu=${TARGET_CPU}\"" || exit 1
+                      echo "${CMD} ${BINS} --target $TARGET --config \"target.${TARGET}.linker=\\\"${LINKER}\\\"\"  --config build.rustflags="\"-C target-cpu=${TARGET_CPU}\"" "
+                      ${{env.CMD}} ${BINS} --target $TARGET --config "target.${{env.TARGET}}.linker=\"${LINKER}\"" --config build.rustflags="\"-C target-cpu=${TARGET_CPU}\"" || exit 1
                       ;;
                     # linux musl x64
                     x86_64-unknown-linux-musl) # linux-musl-x86_64
-                      echo "$CMD $BINS --target $TARGET --config build.rustflags=\"\\\"-C target-cpu=${TARGET_CPU}\\\"\" "
-                      ${{env.CMD}} $BINS--target $TARGET --config build.rustflags="\"-C target-cpu=${TARGET_CPU}\"" || exit 1
+                      echo "${CMD} ${BINS} --target $TARGET --config build.rustflags=\"\\\"-C target-cpu=${TARGET_CPU}\\\"\" "
+                      ${{env.CMD}} ${BINS} --target $TARGET --config build.rustflags="\"-C target-cpu=${TARGET_CPU}\"" || exit 1
                       ;;
                     # linux musl aarch64
                     aarch64-unknown-linux-musl) # linux-musl-arm64
                       LINKER=/tmp/aarch64-linux-musl-cross/bin/aarch64-linux-musl-gcc
-                      echo "$CMD $BINS --target $TARGET --config \"target.${TARGET}.linker=\\\"${LINKER}\\\"\" "
-                      ${{env.CMD}} $BINS --target $TARGET --config "target.${{env.TARGET}}.linker=\"${LINKER}\"" || exit 1
+                      echo "${CMD} ${BINS} --target $TARGET --config \"target.${TARGET}.linker=\\\"${LINKER}\\\"\" "
+                      ${{env.CMD}} ${BINS} --target $TARGET --config "target.${{env.TARGET}}.linker=\"${LINKER}\"" || exit 1
                       ;;
                     # macos aarch64
                     aarch64-apple-darwin) # macos-arm64
                       TARGET_CPU=native
-                      echo "$CMD $BINS--target $TARGET --config build.rustflags=\"\\\"-C target-cpu=${TARGET_CPU}\\\"\" "
-                      ${{env.CMD}} $BINS --target $TARGET --config build.rustflags="\"-C target-cpu=${TARGET_CPU}\"" || exit 1
+                      echo "${CMD} ${BINS}--target $TARGET --config build.rustflags=\"\\\"-C target-cpu=${TARGET_CPU}\\\"\" "
+                      ${{env.CMD}} ${BINS} --target $TARGET --config build.rustflags="\"-C target-cpu=${TARGET_CPU}\"" || exit 1
                       ;;
                     # catchall - run default command
                     *)
                       echo "No matrix match for build target ($TARGET). using defaults"
-                      ${{env.CMD}} $BINS || exit 1
+                      ${{env.CMD}} ${BINS} || exit 1
                       ;;
                   esac
                   exit 0
