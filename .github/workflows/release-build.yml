@@ -316,6 +316,11 @@ jobs:
               id: compress_artifacts_stacks_signer
               shell: bash
               run: |
+                [ -e "${{env.ZIPFILE_NAME}}.zip" ] && rm -f "${{env.ZIPFILE_NAME}}.zip"
+                # if test -f "${{env.ZIPFILE_NAME}}.zip"; then
+                #   echo "Removing existing zip file ${{env.ZIPFILE_NAME}}.zip"
+                #   rm -f ${{env.ZIPFILE_NAME}}.zip
+                # fi
                 file -0 ./target/${{env.TARGET}}/release-lite/stacks-signer | sed -nE 's/\x0:\s*(ELF|PE32+|Mach).*//p' | zip --junk-paths ${{env.ZIPFILE_NAME}}.zip -@
 
             ## Upload the binary artifact to the github action (used in `github-release.yml` to create a release)
