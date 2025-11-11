@@ -1,6 +1,6 @@
 ## Github workflow to build a docker image from source
 
-name: Docker Image (Source)
+name: Docker Image
 
 on:
     workflow_dispatch:
@@ -8,32 +8,42 @@ on:
 ## Define which docker arch to build for
 env:
     docker_platforms: "linux/amd64,linux/arm64"
-    docker_org: blockstack
+    # docker_org: blockstack
+    docker_registry: ghcr.io
     # set a default command to build. we'll define specific build config options later per arch.
     CMD: "cargo build --features monitoring_prom,slog_json --profile release-lite --workspace"
     # ensure these env vars have no values since they will be explicitly set later
     TARGET_CPU: ""
     LINKER: ""
+    provenance: false
 
 concurrency:
-    group: docker-image-source-${{ github.head_ref || github.ref || github.run_id }}
+    group: docker-image-${{ github.head_ref || github.ref || github.run_id }}
     ## Always cancel duplicate jobs
     cancel-in-progress: true
 
 jobs:
+    andon-cord:
+        name: Andon Cord
+        runs-on: ubuntu-latest
+        environment: "Build Release"
+        steps:
+            - name: Check Approval
+              id: check
+              run: |
+                  exit 0
+
     ## Build arch dependent binaries from source
     build-binaries:
         name: Build Binaries
         runs-on: ubuntu-latest
+        needs:
+            - andon-cord
         permissions:
             id-token: write
             attestations: write
-
-        # needs:
-        #     - andon-cord
         strategy:
-            ## Run a maximum of 10 builds concurrently, using the matrix defined in inputs.arch
-            max-parallel: 10
+            max-parallel: 2
             matrix:
                 arch:
                     - linux-glibc
@@ -41,15 +51,12 @@ jobs:
                     - x86-64
                     - arm64
         steps:
-            # ## cleanup runner
-            # - name: Cleanup Runner
-            #   id: runner_cleanup
-            #   uses: stacks-network/actions/cleanup/disk@main
-
             ## Checkout the code
             - name: Checkout the latest code
               id: git_checkout
-              uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+              uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+              with:
+                  ref: ${{ github.ref }}
 
             ## Set target env var based on the type of arch build
             # ** we could move all later steps here, but it would be messier and and move verbose per arch.
@@ -69,15 +76,14 @@ jobs:
                           ;;
                       esac
                       # install dependencies for linux x64 glibc and set target
-                      sudo apt-get install -y git libclang-dev llvm || exit 1
+                      sudo apt-get update && sudo apt-get install -y git libclang-dev llvm || exit 1
                       TARGET="x86_64-unknown-linux-gnu"
                       ;;
                     arm64)
                       ARCHIVE_NAME=${{matrix.cpu}}
                       # install dependencies for linux aarch64 glibc and set target
-                      sudo apt-get install -y git gcc-aarch64-linux-gnu libclang-dev llvm || exit 1
+                      sudo apt-get update && sudo apt-get install -y git gcc-aarch64-linux-gnu libclang-dev llvm || exit 1
                       TARGET="aarch64-unknown-linux-gnu"
-                      ;;
                       ;;
                     *)
                       echo "Unsupporte arch ${{ matrix.cpu }}"
@@ -93,12 +99,15 @@ jobs:
                   echo "setting ZIPFILE_NAME: ${{ matrix.arch }}-${ARCHIVE_NAME}"
                   echo "TARGET=${TARGET}" >> "$GITHUB_ENV"
                   echo "TARGET_CPU=${TARGET_CPU}" >> "$GITHUB_ENV"
+                  # echo "ZIPFILE_NAME=${{matrix.arch}}-${ARCHIVE_NAME}" >> "$GITHUB_ENV"
                   echo "ZIPFILE_NAME=${{matrix.arch}}-${ARCHIVE_NAME}" >> "$GITHUB_ENV"
+                  # echo "ZIPFILE_NAME=${{github.sha}}-${{matrix.arch}}-${ARCHIVE_NAME}" >> "$GITHUB_ENV"
+                  # echo "ZIPFILE_PATH=${{matrix.arch}}-${ARCHIVE_NAME}" >> "$GITHUB_ENV"
 
             ## Install rust toolchain (llvm-tools-preview)
             - name: Setup Rust Toolchain
               id: setup_rust_toolchain
-              uses: actions-rust-lang/setup-rust-toolchain@11df97af8e8102fd60b60a77dfbf58d40cd843b8 # v1.10.1
+              uses: actions-rust-lang/setup-rust-toolchain@1780873c7b576612439a134613cc4cc74ce5538c # v1.15.2
               with:
                   toolchain: stable
                   cache: false
@@ -140,20 +149,20 @@ jobs:
               id: compress_artifacts
               shell: bash
               run: |
+                  # copy all binaries here, or only stacks-signer, stacks-node?
                   file -0 ./target/${{env.TARGET}}/release-lite/* | sed -nE 's/\x0:\s*(ELF|PE32+|Mach).*//p' | zip --junk-paths ${{env.ZIPFILE_NAME}}.zip -@
 
             ## Upload the binary artifact to the github action (used in `github-release.yml` to create a release)
             - name: Upload Artifact
               id: upload_artifact
-              uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08 # v4.6.0
+              uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
               with:
-                  name: ${{ env.ZIPFILE_NAME }}
-                  # name: binaries-${{ env.ZIPFILE_NAME }}
-                  path: ${{ env.ZIPFILE_NAME }}.zip
+                  name: ${{github.sha}}-${{ env.ZIPFILE_NAME }}   # this is the name that shows up in workflow summary
+                  path: ${{ env.ZIPFILE_NAME }}.zip  # this is the name of the artifact usable on the VM
 
             ## Attest the release binaries
             - name: Attest Release Artifact
-              uses: actions/attest-build-provenance@c074443f1aee8d4aeeae555aebba3282517141b2 #v2.2.3
+              uses: actions/attest-build-provenance@977bb373ede98d70efdf65b84cb5f73e068dcc2a # v3.0.0
               with:
                   subject-path: ${{ env.ZIPFILE_NAME }}.zip
 
@@ -161,110 +170,135 @@ jobs:
         name: Build Image
         runs-on: ubuntu-latest
         ## Requires the repo environment "Push to Docker", which will trigger a secondary approval step before running this workflow.
-        environment: "Push to Docker"
         needs:
+            - andon-cord
             - build-binaries
+        # https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax?page=2#permissions
         permissions:
             id-token: write
             attestations: write
+            packages: write
         steps:
-            - name: Download Artifacts
-              id: download_artifacts
-              uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v4.1.8
-              with:
-                  # pattern: binaries-*
-                  pattern: linux-glibc*
-                  path: /tmp/release
-                  merge-multiple: true
-
-            - name: Check Data
-              id: check_data
+            - name: Set Docker Org
+              id: set_docker_org
               shell: bash
               run: |
-                  echo "pwd:"
-                  pwd
-                  echo "checking release dir:"
-                  ls -al /tmp/release
+                  var_org="${{ github.repository_owner }}"
+                  var_images="${{env.docker_registry}}/${{ github.repository }}"
+                  var_push=${{ (github.actor != '') && (secrets.GITHUB_TOKEN != '') }}
+                  echo "docker_org=${var_org}" >> $GITHUB_ENV
+                  echo "docker_images=${var_images}" >> $GITHUB_ENV
+                  # echo "BRANCH_NAME=${GITHUB_REF#refs/heads/}" >> $GITHUB_ENV
+                  # echo "DOCKER_PUSH=${var_push}" >> $GITHUB_ENV
+
+            - name: Download Artifacts
+              id: download_artifacts
+              uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
+              with:
+                  pattern: ${{github.sha}}-${{matrix.arch}}*
+                  # pattern: linux-glibc*
+                  path: /tmp/release
+                  merge-multiple: true
 
             ## Setup Docker for the builds
             - name: Docker setup
               id: docker_setup
-              uses: stacks-network/actions/docker@main
+              uses: wileyj/actions/docker@chore/update_docker_comp
               with:
-                  username: ${{ secrets.DOCKERHUB_USERNAME }}
-                  password: ${{ secrets.DOCKERHUB_PASSWORD }}
+                  registry: ${{ env.docker_registry }}
+                  username: ${{ github.actor }}
+                  password: ${{ secrets.GITHUB_TOKEN }}
 
-            ## if the repo owner is not `stacks-network`, default to a docker_org of the repo owner (i.e. github user id)
-            ## this allows forks to run the docker push workflows without having to hardcode a dockerhub org (but it does require docker hub user to match github username)
-            - name: Set Local env vars
-              id: set_env
-              if: |
-                  github.repository_owner != 'stacks-network'
-              run: |
-                  echo "docker_org=${{ github.repository_owner }}" >> "$GITHUB_ENV"
+            ## Checkout the code
+            - name: Checkout the latest code
+              id: git_checkout
+              uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+              with:
+                  ref: ${{ github.ref }}
+                  # ref: ${{ env.BRANCH_NAME }}
+                  sparse-checkout: |
+                      .github
+
+            ## copy from composite
+            # ## Setup QEMU for multi-arch builds
+            # - name: Set up QEMU
+            #   id: docker_qemu
+            #   uses: docker/setup-qemu-action@4574d27a4764455b42196d70a065bc6853246a25 # v3.4.0
+
+            # ## Setup docker buildx
+            # - name: Set up Docker Buildx
+            #   id: docker_buildx
+            #   uses: docker/setup-buildx-action@f7ce87c1d6bead3e36075b2ce75da1f6cc28aaca # v3.9.0
+
+            # ## Login to dockerhub
+            # - name: Login to GHCR
+            #   id: docker_login
+            #   uses: docker/login-action@9780b0c442fbb1117ed29e0efdff1e18412f7567 # v3.3.0
+            #   with:
+            #       registry: ${{ env.docker_registry }}
+            #       username: ${{ github.actor }}
+            #       password: ${{ secrets.GITHUB_TOKEN }}
+
+            # ## end copy from composite
 
             ## Set docker metatdata
-            - name: Docker Metadata ( ${{matrix.dist}} )
+            - name: Docker Metadata
               id: docker_metadata
-              uses: docker/metadata-action@369eb591f429131d6889c46b94e711f089e6ca96 #v5.6.1
+              uses: docker/metadata-action@318604b99e75e41977312d83839a89be02ca4893 #v5.9.0
               with:
                   images: |
-                      ${{env.docker_org}}/${{ github.event.repository.name }}
-                      ${{env.docker_org}}/stacks-blockchain
+                      ${{env.docker_images}}
+                  labels: |
+                      org.opencontainers.image.created={{commit_date 'YYYY-MM-DDTHH:mm:ss.SSS[Z]'}}
                   tags: |
                       type=raw,value=${{ env.BRANCH_NAME }}
                       type=ref,event=pr
 
             ## Build docker image for node release
-            - name: Show vals ( ${{matrix.dist}} )
-              if: ${{ env.is-signer-release == 'false' }}
+            - name: Show vals
               id: show_vals
               shell: bash
               run: |
-                  echo "platforms: ${{ env.platforms }}"
+                  echo "platforms: ${{ env.docker_platforms }}"
                   echo "labels: ${{ steps.docker_metadata.outputs.labels }}"
+                  echo "tags: ${{ steps.docker_metadata.outputs.tags }}"
+                  echo "push: ${{ env.DOCKER_PUSH }}"
+                  echo "env.branch_name: ${{ env.BRANCH_NAME }}"
+                  echo "github.repository: ${{ github.repository}}"
+                  echo "github.repository_owner: ${{ github.repository_owner}}"
+                  echo "github.sha: ${{ github.sha}}"
                   echo
                   echo "build args:"
-                  echo "    TAG=$${{ steps.docker_metadata.outputs.tags }}"
-                  echo "    REPO=${{env.docker_org}}/${{ github.event.repository.name }}"
-                  echo "    STACKS_NODE_VERSION=${{ env.GITHUB_SHA_SHORT }}"
+                  echo "    TAG=${{ steps.docker_metadata.outputs.tags }}"
+                  echo "    REPO=${{ github.repository_owner }}/${{ github.event.repository.name }}"
+                  echo "    STACKS_NODE_VERSION=${{ env.tag || env.GITHUB_SHA_SHORT }}"
                   echo "    GIT_BRANCH=${{ env.GITHUB_REF_SHORT }}"
                   echo "    GIT_COMMIT=${{ env.GITHUB_SHA_SHORT }}"
-                  echo "push: ${{ env.DOCKER_PUSH }}"
 
-            - name: Build and Push ( ${{matrix.dist}} )
-              if: ${{ env.is-signer-release == 'false' }}
+            - name: Build and Push
               id: docker_build
-              uses: docker/build-push-action@ca877d9245402d1537745e0e356eab47c3520991 # v6.13.0
+              uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83 # v6.18.0
               with:
+                  sbom: false
+                  # provenance: mode=max # this produces attestation, but adds additional keys for unknown/unknown. default to disabled
+                  provenance: ${{ env.provenance }}
                   context: /tmp
                   file: ./.github/actions/dockerfiles/debian/Dockerfile
-                  platforms: ${{ env.platforms }}
+                  platforms: ${{ env.docker_platforms }}
                   tags: ${{ steps.docker_metadata.outputs.tags }}
                   labels: ${{ steps.docker_metadata.outputs.labels }}
-                  build-args: |
-                      TAG=${{ steps.docker_metadata.outputs.tags }}
-                      REPO=${{ github.repository_owner }}/${{ github.event.repository.name }}
-                      STACKS_NODE_VERSION=${{ env.GITHUB_SHA_SHORT }}
-                      GIT_BRANCH=${{ env.GITHUB_REF_SHORT }}
-                      GIT_COMMIT=${{ env.GITHUB_SHA_SHORT }}
                   push: ${{ env.DOCKER_PUSH }}
 
-            ## Generate docker image attestation(s)
-            - name: Generate artifact attestation (${{ github.event.repository.name }})
-              id: attest_primary
-              uses: actions/attest-build-provenance@c074443f1aee8d4aeeae555aebba3282517141b2 # v2.2.3
-              with:
-                  subject-name: |
-                      index.docker.io/${{env.docker_org}}/${{ github.event.repository.name }}
-                  subject-digest: ${{ steps.docker_build.outputs.digest }}
-                  push-to-registry: true
 
-            - name: Generate artifact attestation (stacks-blockchain)
-              id: attest_secondary
-              uses: actions/attest-build-provenance@c074443f1aee8d4aeeae555aebba3282517141b2 # v2.2.3
+            ## Generate docker image attestation(s)
+            ##   - if docker/build-push-action provenance is false
+            - name: Generate artifact attestation (${{ github.event.repository.name }})
+              if: |
+                env.provenance != true
+              id: attest_primary
+              uses: actions/attest-build-provenance@977bb373ede98d70efdf65b84cb5f73e068dcc2a # v3.0.0
               with:
                   subject-name: |
-                      index.docker.io/${{env.docker_org}}/stacks-blockchain
+                      ${{ env.docker_images }}
                   subject-digest: ${{ steps.docker_build.outputs.digest }}
-                  push-to-registry: true
+                  push-to-registry: ${{ env.DOCKER_PUSH }}

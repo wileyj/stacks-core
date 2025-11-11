@@ -48,7 +48,7 @@ jobs:
             inputs.signer_tag != ''
         name: Andon Cord
         runs-on: ubuntu-latest
-        environment: "Push to Docker"
+        environment: "Build Release"
         steps:
             - name: Check Approval
               id: check
@@ -71,7 +71,6 @@ jobs:
             inputs.node_tag != '' ||
             inputs.signer_tag != ''
         name: Build Docker Images
-        secrets: inherit
         needs:
             - andon-cord
             - build-binaries
@@ -81,18 +80,24 @@ jobs:
             max-parallel: 2
             matrix:
                 type:
-                    - stacks-node
+                    - stacks-core
                     - stacks-signer
                 exclude:
-                    - type: ${{ inputs.is_node_release == 'false' && 'stacks-node' }}
+                    - type: ${{ inputs.is_node_release == 'false' && 'stacks-core' }}
         ## Creates the node docker image
         uses: ./.github/workflows/release-docker.yml
         with:
-            node_tag: ${{ inputs.node_tag }} # used
-            node_docker_tag: ${{ inputs.node_docker_tag }} # can be removed, use [node,signer]_tag
+            # node_tag and node_docker_tag should be identical with the version tag, i.e. 3.3.0.0.0
+            node_tag: ${{ inputs.node_tag }}
+            node_docker_tag: ${{ inputs.node_docker_tag }}
+            # signer_tag will containe `signer` string, i.e. signer-3.3.0.0.0.0
             signer_tag: ${{ inputs.signer_tag }}
-            signer_docker_tag: ${{ inputs.signer_docker_tag }} # can be removed, use [node,signer]_tag
+            # signer_docker_tag contains only the version, i.e. 3.3.0.0.0.0
+            signer_docker_tag: ${{ inputs.signer_docker_tag }}
             release_type: ${{ matrix.type }}
+        # secrets:
+        #     DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+        #     DOCKERHUB_PASSWORD: ${{ secrets.DOCKERHUB_PASSWORD }}
 
     ####
     # ## Runs when the following is true:
