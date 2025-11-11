@@ -219,7 +219,6 @@ jobs:
               run: |
                   echo "github.sha=${{github.sha}}"
                   echo "ZIPFILE_NAME=${{env.ZIPFILE_NAME}}"
-                  echo "test: ${{matrix.arch}}-${ARCHIVE_NAME}"
 
             ## Build the release binaries
             - name: Build Release
@@ -247,8 +246,8 @@ jobs:
                       ;;
                     # linux glibc x64
                     x86_64-unknown-linux-gnu) # linux-glibc-x86_64
-                      echo "${CMD} ${BINS} --target $TARGET --config build.rustflags=\"\\\"-C target-cpu=${TARGET_CPU}\\\"\" "
-                      ${{env.CMD}} ${BINS} --target $TARGET --config build.rustflags="\"-C target-cpu=${TARGET_CPU}\"" || exit 1
+                      echo "${CMD} --target $TARGET --config build.rustflags=\"\\\"-C target-cpu=${TARGET_CPU}\\\"\" "
+                      ${{env.CMD}} --target $TARGET --config build.rustflags="\"-C target-cpu=${TARGET_CPU}\"" || exit 1
                       ;;
                     # windows glibc x64
                     x86_64-pc-windows-gnu) # windows-x86_64
@@ -258,8 +257,8 @@ jobs:
                       ;;
                     # linux musl x64
                     x86_64-unknown-linux-musl) # linux-musl-x86_64
-                      echo "${CMD} ${BINS} --target $TARGET --config build.rustflags=\"\\\"-C target-cpu=${TARGET_CPU}\\\"\" "
-                      ${{env.CMD}} ${BINS} --target $TARGET --config build.rustflags="\"-C target-cpu=${TARGET_CPU}\"" || exit 1
+                      echo "${CMD} --target $TARGET --config build.rustflags=\"\\\"-C target-cpu=${TARGET_CPU}\\\"\" "
+                      ${{env.CMD}} --target $TARGET --config build.rustflags="\"-C target-cpu=${TARGET_CPU}\"" || exit 1
                       ;;
                     # linux musl aarch64
                     aarch64-unknown-linux-musl) # linux-musl-arm64
