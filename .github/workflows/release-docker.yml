@@ -71,6 +71,10 @@ jobs:
               shell: bash
               # setting image to release_type may be ok, since we don't need stacks-blockchain in ghcr (only in dockerhub mirror)
               run: |
+                  var_dockerfile_name="Dockerfile.release"
+                  if [ "${{ inputs.release_type }}" == "stacks-signer" ]; then
+                    var_dockerfile_name="Dockerfile.release.signer"
+                  fi
                   if [ "${{ matrix.dist }}" == "alpine" ]; then
                     var_build_arch=musl
                   else
@@ -109,6 +113,7 @@ jobs:
                   echo "docker_tag=${var_docker_tag}" >> $GITHUB_ENV
                   echo "artifact_pattern=${var_artifact_pattern}" >> $GITHUB_ENV
                   echo "build_arch=${var_build_arch}" >> "$GITHUB_ENV"
+                  echo "dockerfile_name=${var_dockerfile_name}" >> "$GITHUB_ENV"
 
 
             - name: Set Docker Tag RC Flag
@@ -240,7 +245,7 @@ jobs:
                   sbom: false
                   provenance: ${{ env.provenance }}
                   context: /tmp
-                  file: ./.github/actions/dockerfiles/${{ matrix.dist }}/Dockerfile.release
+                  file: ./.github/actions/dockerfiles/${{ matrix.dist }}/${{ env.dockerfile_name}}
                   platforms: ${{ env.docker_platforms }}
                   tags: ${{ steps.docker_metadata.outputs.tags }}
                   labels: ${{ steps.docker_metadata.outputs.labels }}
