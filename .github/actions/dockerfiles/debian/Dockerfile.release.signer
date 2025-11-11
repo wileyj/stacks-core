@@ -17,5 +17,7 @@ RUN case ${TARGETPLATFORM} in \
     esac \
     && unzip "$ARCHIVE" "stacks-signer" -d /out
 
+FROM debian:bookworm
+COPY --from=builder /out/stacks-signer /bin/stacks-signer
 RUN echo "TARGETPLATFORM: ${TARGETPLATFORM}" >> /target
 CMD ["/bin/stacks-signer run --config /signer-config.toml"]

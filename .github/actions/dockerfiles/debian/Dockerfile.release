@@ -1,4 +1,5 @@
-FROM debian:bookworm
+FROM alpine AS builder
+# FROM debian:bookworm AS builder
 
 
 ARG TARGETPLATFORM
@@ -14,4 +15,6 @@ RUN case ${TARGETPLATFORM} in \
     esac \
     && unzip "$ARCHIVE" "stacks-node" -d /out
 
+FROM debian:bookworm
+COPY --from=builder /out/stacks-node /bin/stacks-node
 CMD ["/bin/stacks-node mainnet"]

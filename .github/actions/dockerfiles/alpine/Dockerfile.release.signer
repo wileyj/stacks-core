@@ -1,4 +1,4 @@
-FROM alpine
+FROM alpine AS builder
 
 
 ARG TARGETPLATFORM
@@ -15,6 +15,7 @@ RUN case ${TARGETPLATFORM} in \
     esac \
     && unzip "$ARCHIVE" "stacks-signer" -d /out
 
+FROM alpine
+COPY --from=builder /out/* /bin/
 RUN echo "TARGETPLATFORM: ${TARGETPLATFORM}" >> /target
-
 CMD ["/bin/stacks-signer run --config /signer-config.toml"]
