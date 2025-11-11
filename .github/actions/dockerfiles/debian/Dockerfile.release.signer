@@ -7,6 +7,9 @@ ENV ARCHIVE_ROOT="/release"
 # upload the relase artifacts downloaded to /tmp/release to /release in the build stage
 COPY ./release/ $ARCHIVE_ROOT
 
+RUN apt-get update && apt-get install -y unzip
+
+# targetplatform is unknown???
 RUN case ${TARGETPLATFORM} in \
     linux/amd64*) ARCHIVE=${ARCHIVE_ROOT}/linux-glibc-x64.zip ;; \
     linux/arm64*) ARCHIVE=${ARCHIVE_ROOT}/linux-glibc-arm64.zip ;; \
@@ -14,4 +17,5 @@ RUN case ${TARGETPLATFORM} in \
     esac \
     && unzip "$ARCHIVE" "stacks-signer" -d /out
 
+RUN echo "TARGETPLATFORM: ${TARGETPLATFORM}" >> /target
 CMD ["/bin/stacks-signer run --config /signer-config.toml"]
