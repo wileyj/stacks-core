@@ -233,6 +233,7 @@ jobs:
                   echo "TARGET_CPU: ${{env.TARGET_CPU}}"
                   echo "CMD: ${{env.CMD}}"
                   echo "ZIPFILE_NAME: ${{env.ZIPFILE_NAME}}"
+                  BINS=""
                   if [ "${{ inputs.node_tag }} == '' ]; then
                     BINS="--bin stacks-signer"
                   fi
@@ -274,7 +275,7 @@ jobs:
                     # catchall - run default command
                     *)
                       echo "No matrix match for build target ($TARGET). using defaults"
-                      ${{env.CMD}} $BINS|| exit 1
+                      ${{env.CMD}} $BINS || exit 1
                       ;;
                   esac
                   exit 0
