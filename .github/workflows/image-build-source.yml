@@ -30,7 +30,7 @@ jobs:
       ## Setup Docker for the builds
       - name: Docker setup
         id: docker_setup
-        uses: stacks-network/actions/docker@main
+        uses: wileyj/actions/docker@chore/update_docker_comp
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_PASSWORD }}
