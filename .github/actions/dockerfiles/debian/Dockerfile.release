@@ -18,7 +18,7 @@ RUN case ${TARGETPLATFORM} in \
     esac \
     && unzip "$ARCHIVE" "stacks-node" -d /out
 
-FROM debian:trixie
+FROM debian:stable
 #COPY --from=builder /out/stacks-node /bin/stacks-node
 COPY --from=builder /out/* /bin/
 CMD ["/bin/stacks-signer run --config /signer-config.toml"]
