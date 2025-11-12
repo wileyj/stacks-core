@@ -1,5 +1,4 @@
 FROM alpine AS builder
-# FROM debian:bookworm AS builder
 
 
 ARG TARGETPLATFORM
@@ -8,6 +7,7 @@ ENV ARCHIVE_ROOT="/release"
 # upload the relase artifacts downloaded to /tmp/release to /release in the build stage
 COPY ./release/ $ARCHIVE_ROOT
 
+# targetplatform is unknown???
 RUN case ${TARGETPLATFORM} in \
     linux/amd64*) ARCHIVE=${ARCHIVE_ROOT}/linux-musl-x64.zip ;; \
     linux/arm64*) ARCHIVE=${ARCHIVE_ROOT}/linux-musl-arm64.zip ;; \
@@ -16,5 +16,5 @@ RUN case ${TARGETPLATFORM} in \
     && unzip "$ARCHIVE" "stacks-node" -d /out
 
 FROM alpine
-COPY --from=builder /out/stacks-node /bin/stacks-node
-CMD ["/bin/stacks-node mainnet"]
+COPY --from=builder /out/* /bin/
+CMD ["/bin/stacks-node run --config /signer-config.toml"]
