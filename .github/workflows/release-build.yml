@@ -78,7 +78,7 @@ jobs:
                     - linux-glibc
                     - linux-musl
                     # - macos
-                    # - windows
+                    - windows
                 cpu:
                     - x86-64 ## defaults to x86-64-v3 variant - intel haswell (2013) and newer
                     - arm64
