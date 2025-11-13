@@ -53,19 +53,9 @@ jobs:
             max-parallel: 2
             matrix:
                 dist:
-                    - alpine # uncomment to build alpine images
+                    - alpine
                     - debian
         steps:
-            - name: Set Docker Org
-              id: set_docker_org
-              shell: bash
-              run: |
-                  var_org="${{ github.repository_owner }}"
-                  var_images="${{env.docker_registry}}/${{ github.repository }}"
-                  var_push=${{ (github.actor != '') && (secrets.GITHUB_TOKEN != '') }}
-                  echo "docker_org=$var_org" >> $GITHUB_ENV
-                  echo "docker_images=$var_images" >> $GITHUB_ENV
-
             - name: Set Local Vars
               id: set_vars
               shell: bash
@@ -80,8 +70,8 @@ jobs:
                     var_build_arch=glibc
                   fi
                   echo "var_build_arch: ${var_build_arch}"
-                  # echo "build_arch=${var_build_arch}" >> "$GITHUB_ENV"
 
+                  # set a default docker image: registry/repo/release_type
                   var_default_image="${{env.docker_registry}}/${{ github.repository_owner }}/${{ inputs.release_type }}"
                   if [ "${{ inputs.release_type }}" == "stacks-signer" ]; then
                     # stacks-signer
@@ -97,16 +87,9 @@ jobs:
                     var_tag="${{ inputs.node_tag }}"
                     var_docker_tag=${{ inputs.node_docker_tag }}
                     # can probably reduce this by adding `linux-(arch) for musl, glibc`
-                    var_artifact_pattern="${{github.sha}}-stacks-node-linux-$var_build_arch*"
+                    var_artifact_pattern="${{github.sha}}-stacks-core-linux-$var_build_arch*"
                   fi
-
-                  echo
-                  echo "var_images: ${var_images}"
-                  echo "inputs.release_type: ${{inputs.release_type}}"
-                  echo "var_tag: ${var_tag}"
-                  echo "var_docker_tag: ${var_docker_tag}"
-                  echo "var_artifact_pattern: ${var_artifact_pattern}"
-                  echo
+                  ## Add vars to github env for later steps
                   echo "docker_images=${var_images}" >> $GITHUB_ENV
                   echo "tag=${var_tag}" >> $GITHUB_ENV
                   echo "docker_tag=${var_docker_tag}" >> $GITHUB_ENV
@@ -124,6 +107,9 @@ jobs:
                     # is a release candidate
                     var_docker_tag_rc=true
                   fi
+                  if [[ "${docker_tag}" =~ -rc[0-9]*$ ]]; then
+                    var_docker_tag="${docker_tag}"
+                  fi
                   echo "var_docker_tag_rc: ${var_docker_tag_rc}"
                   echo "docker_tag_rc=${var_docker_tag_rc}" >> "$GITHUB_ENV"
 
@@ -135,19 +121,6 @@ jobs:
                   path: /tmp/release
                   merge-multiple: true
 
-            - name: Check Data
-              id: check_data
-              shell: bash
-              run: |
-                  echo "pwd:"
-                  pwd
-                  echo "checking release dir:"
-                  ls -al /tmp/release
-
-            ## Setup Docker for the builds
-            ##
-            ## note: we can disable the vm cleanup for this. at a minimum, we can use /mnt for ops
-            ##
             ## Setup Docker for the builds
             - name: Docker setup
               id: docker_setup
@@ -170,14 +143,13 @@ jobs:
               id: docker_metadata
               uses: docker/metadata-action@318604b99e75e41977312d83839a89be02ca4893 #v5.9.0
               with:
-                  # tag images with current repo name `stacks-core` as well as legacy `stacks-blockchain`
                   images: |
                       ${{ env.docker_images }}
                   labels: |
                       org.opencontainers.image.created={{commit_date 'YYYY-MM-DDTHH:mm:ss.SSS[Z]'}}
                       org.opencontainers.image.version=${{ env.docker_tag }}
                   tags: |
-                      # debian tags
+                      ## debian tags ##
                       #  latest tag
                       type=raw,value=latest,enable=${{ env.docker_tag != '' && env.docker_tag_rc != 'true' && matrix.dist == 'debian' }}
                       #  latest-debian tag
@@ -186,39 +158,13 @@ jobs:
                       type=raw,value=${{ env.docker_tag }},enable=${{ env.docker_tag != '' && matrix.dist == 'debian'}}
                       #  version=dist tag
                       type=raw,value=${{ env.docker_tag }},suffix=-${{ matrix.dist }},enable=${{ env.docker_tag != '' && matrix.dist == 'debian' }}
-                      # alpine tags
-                      #  version tag
-                      type=raw,value=${{ env.docker_tag }},suffix=-${{ matrix.dist }},enable=${{ env.docker_tag != '' && matrix.dist == 'alpine' }}
+                      ## alpine tags ##
                       #   latest-alpine tag
                       type=raw,value=latest,suffix=-${{ matrix.dist }},enable=${{ env.docker_tag != '' && env.docker_tag_rc != 'true' && matrix.dist == 'alpine' }}
-            ## Build docker image for node release
-            - name: Show vals ( ${{matrix.dist}} )
-              id: show_vals
-              shell: bash
-              run: |
-                  echo "env.build_arch: ${{ env.build_arch }}"
-                  echo "env.tag: ${{ env.tag }}"
-                  echo "env.docker_tag: ${{env.docker_tag}}"
-                  echo "env.docker_org: ${{env.docker_org}}"
-                  echo "docker_tag_rc: ${{ env.docker_tag_rc }}"
-                  echo "env.docker_images: ${{env.docker_images}}"
-                  echo "platforms: ${{ env.docker_platforms }}"
-                  echo
-                  echo "metadata:"
-                  echo "    tags: ${{ steps.docker_metadata.outputs.tags }}"
-                  echo "    labels: ${{ steps.docker_metadata.outputs.labels }}"
-                  echo
-                  echo "node_tag: ${{inputs.node_tag}}"
-                  echo "node_docker_tag: ${{inputs.node_docker_tag}}"
-                  echo "signer_tag: ${{inputs.signer_tag}}"
-                  echo "signer_docker_tag: ${{inputs.signer_docker_tag}}"
-                  echo "release_type: ${{inputs.release_type}}"
-                  echo
-                  echo "push: ${{ env.DOCKER_PUSH }}"
-                  echo
-                  echo "Artifact pattern: ${{ env.tag }}-binary-build-linux-${{ env.build_arch }}*"
-                  echo
+                      #  version tag
+                      type=raw,value=${{ env.docker_tag }},suffix=-${{ matrix.dist }},enable=${{ env.docker_tag != '' && matrix.dist == 'alpine' }}
 
+            ## Build docker image for node release
             - name: Build and Push ( ${{matrix.dist}} )
               id: docker_build
               uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83 # v6.18.0

@@ -19,7 +19,7 @@ concurrency:
     ## Always cancel duplicate jobs
     cancel-in-progress: true
 
-run-name: test release build matrix
+run-name: Build Release Binaries
 
 env:
     # set a default command to build. we'll define specific build config options later per arch.
@@ -91,8 +91,8 @@ jobs:
               run: |
                   case ${{ matrix.cpu }} in
                     x86-64*)
-                      # TARGET_CPU="${{ matrix.cpu }}-v3"
-                      ARCHIVE_NAME="$(echo "${{matrix.cpu}}" | sed -e 's|86-||g')" # if matrix.cpu ever changes to a different x86 version, this will set the archive naming appropriately.
+                      ARCHIVE_NAME="$(echo "${{matrix.cpu}}" | sed -e 's|86-||g')" # if matrix.cpu ever changes to a different x86 version, this will set the archive naming appropriately to `*-x64`
+                      # set the CPU to build for. if the matrix defines x86-64, default to -v3, else use what's defined in the matrix
                       case ${{ matrix.cpu }} in
                         x86-64)
                           TARGET_CPU="${{ matrix.cpu }}-v3" # default to x86-64-v3 if generic x86-64 is used for the build
@@ -102,19 +102,17 @@ jobs:
                           ;;
                       esac
 
+                      # install dependencies for the x86-64 architecture, and set the rust target for the build step
                       case ${{ matrix.arch }} in
                         linux-musl)
-                          # install dependencies for linux x64 musl and set target
                           sudo apt-get update && sudo apt-get install -y musl-tools || exit 1
                           TARGET="x86_64-unknown-linux-musl"
                           ;;
                         linux-glibc)
-                          # install dependencies for linux x64 glibc and set target
                           sudo apt-get update && sudo apt-get install -y git libclang-dev llvm || exit 1
                           TARGET="x86_64-unknown-linux-gnu"
                           ;;
                         windows)
-                          # install dependencies for windos x64 glibc and set target
                           sudo apt-get update && sudo apt-get install -y git gcc-mingw-w64-x86-64 || exit 1
                           TARGET="x86_64-pc-windows-gnu"
                           ;;
@@ -124,15 +122,15 @@ jobs:
                       ;;
                     arm64)
                       ARCHIVE_NAME=${{matrix.cpu}}
+                      # install dependencies for the arm64 architecture, and set the rust target for the build step
                       case ${{ matrix.arch }} in
                         linux-musl)
-                          # install dependencies for linux aarch64 musl and set target
                           sudo apt-get update && sudo apt-get install -y gcc-aarch64-linux-gnu musl-dev || exit 1
+                          # this download is required, and must come from a mirror as musl.cc has aggressive rate limits from azure ips (hosted github runners)
                           curl -LSf -# https://github.com/musl-cc/musl.cc/releases/download/v0.0.1/aarch64-linux-musl-cross.tgz | tar zxf - -C /tmp || exit 1
                           TARGET="aarch64-unknown-linux-musl"
                           ;;
                         linux-glibc)
-                          # install dependencies for linux aarch64 glibc and set target
                           sudo apt-get update && sudo apt-get install -y git gcc-aarch64-linux-gnu libclang-dev llvm || exit 1
                           TARGET="aarch64-unknown-linux-gnu"
                           ;;
@@ -150,15 +148,15 @@ jobs:
                     echo "[ERROR] TARGET Variable is empty for ${{ matrix.arch }}-${{ matrix.cpu }}";
                     exit 1
                   fi
-                  echo "setting TARGET:${TARGET}"
-                  echo "setting TARGET_CPU: ${TARGET_CPU}"
-                  echo "setting ZIPFILE_NAME: ${{ matrix.arch }}-${ARCHIVE_NAME}"
+                  ## Add vars to github env for later steps
+                  # set the rust target arch for build
                   echo "TARGET=${TARGET}" >> "$GITHUB_ENV"
+                  # set the target cpu for build
                   echo "TARGET_CPU=${TARGET_CPU}" >> "$GITHUB_ENV"
-                  # echo "ZIPFILE_NAME=${{github.sha}}-${{matrix.arch}}-${ARCHIVE_NAME}" >> "$GITHUB_ENV"
+                  # set the zipfile archive name
                   echo "ZIPFILE_NAME=${{matrix.arch}}-${ARCHIVE_NAME}" >> "$GITHUB_ENV"
 
-            ## Install rust toolchain (llvm-tools-preview)
+            ## Install rust toolchain for the target being built
             - name: Setup Rust Toolchain
               id: setup_rust_toolchain
               uses: actions-rust-lang/setup-rust-toolchain@11df97af8e8102fd60b60a77dfbf58d40cd843b8 # v1.10.1
@@ -167,57 +165,54 @@ jobs:
                   cache: false
                   target: ${{ env.TARGET }}
 
-            ## Install llvm-tools-preview
-            - name: show vals
-              id: show_vals
-              shell: bash
-              run: |
-                  echo "github.sha=${{github.sha}}"
-                  echo "ZIPFILE_NAME=${{env.ZIPFILE_NAME}}"
-
             ## Build the release binaries
             - name: Build Release
               id: build_release
               shell: bash
               run: |
+                  #
+                  # for each target, we will also echo the command being run so it's easier to see in the logs what command was run
+                  #
                   BINS=""
+                  # only build the stacks-signer binary if node_tag is not defined - this is a signer only release (reduce time compiling)
                   if [ "${{ inputs.node_tag }}" == '' ]; then
                     BINS="--bin stacks-signer"
                   fi
-                  echo "BINS: ${BINS}"
                   case "${{env.TARGET}}" in
                     # linux glibc aarch64
-                    aarch64-unknown-linux-gnu) # linux-glibc-arm64
+                    aarch64-unknown-linux-gnu)
                       LINKER=aarch64-linux-gnu-gcc
-                      echo "Running: ${CMD} ${BINS} --target $TARGET --config \"target.${TARGET}.linker=\\\"${LINKER}\\\"\" "
+                      echo "${CMD} ${BINS} --target $TARGET --config \"target.${TARGET}.linker=\\\"${LINKER}\\\"\" "
                       ${{env.CMD}} ${BINS} --target $TARGET --config "target.${{env.TARGET}}.linker=\"${LINKER}\"" || exit 1
                       ;;
                     # linux glibc x64
-                    x86_64-unknown-linux-gnu) # linux-glibc-x86_64
-                      echo "Running: ${CMD} ${BINS} --target $TARGET --config build.rustflags=\"\\\"-C target-cpu=${TARGET_CPU}\\\"\" "
+                    x86_64-unknown-linux-gnu)
+                      # use the default linker
+                      echo "${CMD} ${BINS} --target $TARGET --config build.rustflags=\"\\\"-C target-cpu=${TARGET_CPU}\\\"\" "
                       ${{env.CMD}} ${BINS} --target $TARGET --config build.rustflags="\"-C target-cpu=${TARGET_CPU}\"" || exit 1
                       ;;
                     # windows glibc x64
-                    x86_64-pc-windows-gnu) # windows-x86_64
+                    x86_64-pc-windows-gnu)
                       LINKER=x86_64-w64-mingw32-gcc
-                      echo "Running: ${CMD} ${BINS} --target $TARGET --config \"target.${TARGET}.linker=\\\"${LINKER}\\\"\"  --config build.rustflags="\"-C target-cpu=${TARGET_CPU}\"" "
+                      echo "${CMD} ${BINS} --target $TARGET --config \"target.${TARGET}.linker=\\\"${LINKER}\\\"\"  --config build.rustflags="\"-C target-cpu=${TARGET_CPU}\"" "
                       ${{env.CMD}} ${BINS} --target $TARGET --config "target.${{env.TARGET}}.linker=\"${LINKER}\"" --config build.rustflags="\"-C target-cpu=${TARGET_CPU}\"" || exit 1
                       ;;
                     # linux musl x64
-                    x86_64-unknown-linux-musl) # linux-musl-x86_64
-                      echo "Running: ${CMD} ${BINS} --target $TARGET --config build.rustflags=\"\\\"-C target-cpu=${TARGET_CPU}\\\"\" "
+                    x86_64-unknown-linux-musl)
+                      echo "${CMD} ${BINS} --target $TARGET --config build.rustflags=\"\\\"-C target-cpu=${TARGET_CPU}\\\"\" "
                       ${{env.CMD}} ${BINS} --target $TARGET --config build.rustflags="\"-C target-cpu=${TARGET_CPU}\"" || exit 1
                       ;;
                     # linux musl aarch64
-                    aarch64-unknown-linux-musl) # linux-musl-arm64
+                    aarch64-unknown-linux-musl)
+                      # use the musl linker installed in previous step
                       LINKER=/tmp/aarch64-linux-musl-cross/bin/aarch64-linux-musl-gcc
-                      echo "Running: ${CMD} ${BINS} --target $TARGET --config \"target.${TARGET}.linker=\\\"${LINKER}\\\"\" "
+                      echo "${CMD} ${BINS} --target $TARGET --config \"target.${TARGET}.linker=\\\"${LINKER}\\\"\" "
                       ${{env.CMD}} ${BINS} --target $TARGET --config "target.${{env.TARGET}}.linker=\"${LINKER}\"" || exit 1
                       ;;
                     # macos aarch64
-                    aarch64-apple-darwin) # macos-arm64
+                    aarch64-apple-darwin)
                       TARGET_CPU=native
-                      echo "Running: ${CMD} ${BINS}--target $TARGET --config build.rustflags=\"\\\"-C target-cpu=${TARGET_CPU}\\\"\" "
+                      echo "${CMD} ${BINS}--target $TARGET --config build.rustflags=\"\\\"-C target-cpu=${TARGET_CPU}\\\"\" "
                       ${{env.CMD}} ${BINS} --target $TARGET --config build.rustflags="\"-C target-cpu=${TARGET_CPU}\"" || exit 1
                       ;;
                     # catchall - run the default command
@@ -228,28 +223,31 @@ jobs:
                   esac
                   exit 0
 
-
-            ## Compress the binary artifact
-            - name: Compress binaries (stacks-node)
+            ##############################################################################
+            ## Stacks core release artifact steps
+            ##  - binary archive includes stacks-signer binary
+            ## Compress the binary artifacts
+            - name: Compress binaries (stacks-core)
               if: |
                 inputs.node_tag != ''
               id: compress_artifacts_stacks_node
               shell: bash
               run: |
+                  # compress all binaries in the target directory for any architecture
                   file -0 ./target/${{env.TARGET}}/release-lite/* | sed -nE 's/\x0:\s*(ELF|PE32+|Mach).*//p' | zip --junk-paths ${{env.ZIPFILE_NAME}}.zip -@
 
-            ## Upload the binary artifact to the github action (used in `github-release.yml` to create a release)
-            - name: Upload Artifact (stacks-node)
+            ## Upload the binary archive using the commit sha as the key
+            - name: Upload Artifact (stacks-core)
               if: |
                 inputs.node_tag != ''
               id: upload_artifact_stacks_node
               uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
               with:
-                  name: ${{github.sha}}-stacks-node-${{ env.ZIPFILE_NAME }}
+                  name: ${{github.sha}}-stacks-core-${{ env.ZIPFILE_NAME }}
                   path: ${{ env.ZIPFILE_NAME }}.zip
 
-            ## Attest the release binaries
-            - name: Attest Release Artifact (stacks-node)
+            ## Attest the binary archive
+            - name: Attest Release Artifact (stacks-core)
               if: |
                 inputs.node_tag != ''
               id: attest_artifact_stacks_node
@@ -257,19 +255,22 @@ jobs:
               with:
                   subject-path: ${{ env.ZIPFILE_NAME }}.zip
 
-            ## Second set of steps for the signer only if the release type is stacks-node
-            ## Compress the binary artifact
+            ##############################################################################
+            ## Stacks signer release artifact steps
+            ##
+            ## Compress the binary artifacts
             - name: Compress binaries (stacks-signer)
               if: |
                 inputs.signer_tag != ''
               id: compress_artifacts_stacks_signer
               shell: bash
               run: |
-                # remove the stacks-node zipfile and recreate for the signer
+                # remove the stacks-core zipfile and recreate for the signer
                 [ -e "${{env.ZIPFILE_NAME}}.zip" ] && rm -f "${{env.ZIPFILE_NAME}}.zip"
+                # compress all binaries in the target directory for any architecture
                 file -0 ./target/${{env.TARGET}}/release-lite/stacks-signer* | sed -nE 's/\x0:\s*(ELF|PE32+|Mach).*//p' | zip --junk-paths ${{env.ZIPFILE_NAME}}.zip -@
 
-            ## Upload the binary artifact to the github action (used in `github-release.yml` to create a release)
+            ## Upload the binary archive using the commit sha as the key
             - name: Upload Artifact (stacks-signer)
               if: |
                 inputs.signer_tag != ''
@@ -279,7 +280,7 @@ jobs:
                   name: ${{github.sha}}-stacks-signer-${{ env.ZIPFILE_NAME }}
                   path: ${{ env.ZIPFILE_NAME }}.zip
 
-            ## Attest the release binaries
+            ## Attest the binary archive
             - name: Attest Release Artifact (stacks-signer)
               if: |
                 inputs.signer_tag != ''

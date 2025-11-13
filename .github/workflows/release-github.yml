@@ -48,6 +48,7 @@ jobs:
             inputs.signer_tag != ''
         name: Andon Cord
         runs-on: ubuntu-latest
+        environment: "Build Release"
         steps:
             - name: Check Approval
               id: check
@@ -112,8 +113,6 @@ jobs:
             ## Creates releases
             - name: Create Release
               id: check
-              # run: |
-              #     exit 0
               uses: wileyj/actions/stacks-core/release/create-releases@chore/update_docker_comp
               # uses: stacks-network/actions/stacks-core/release/create-releases@main
               with:
@@ -133,14 +132,11 @@ jobs:
             - build-binaries
             - create-release
             - docker-images
-        # permissions:
-        #     pull-requests: write
+        permissions:
+            pull-requests: write
         steps:
             - name: Open Downstream PR
-              id: check
-              run: |
-                  exit 0
-    #           id: create-pr
-    #           uses: stacks-network/actions/stacks-core/release/downstream-pr@main
-    #           with:
-    #               token: ${{ secrets.GITHUB_TOKEN }}
+              id: create-pr
+              uses: stacks-network/actions/stacks-core/release/downstream-pr@main
+              with:
+                  token: ${{ secrets.GITHUB_TOKEN }}
