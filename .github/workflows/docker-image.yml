@@ -168,6 +168,13 @@ jobs:
             attestations: write
             packages: write
         steps:
+            - name: Set Local Vars
+              id: set_vars
+              shell: bash
+              run: |
+                  var_default_image="${{ env.docker_registry }}/${{ github.repository }}"
+                  echo "docker_images=${var_images}" >> $GITHUB_ENV
+
             ## Setup Docker for the builds
             - name: Docker setup
               id: docker_setup
@@ -192,7 +199,7 @@ jobs:
               uses: docker/metadata-action@318604b99e75e41977312d83839a89be02ca4893 #v5.9.0
               with:
                   images: |
-                      ${{env.docker_registry}}/${{ github.repository }}
+                      ${{ env.docker_images }}
                   labels: |
                       org.opencontainers.image.created={{commit_date 'YYYY-MM-DDTHH:mm:ss.SSS[Z]'}}
                   tags: |

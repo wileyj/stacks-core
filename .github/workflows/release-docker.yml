@@ -41,7 +41,7 @@ jobs:
         if: |
             ( inputs.release_type == 'stacks-core' || inputs.release_type == 'stacks-signer') &&
             ( inputs.signer_tag != '' || inputs.node_tag != '' )
-        name: Docker Image (${{inputs.release_type}}, ${{matrix.dist}})
+        name: Docker Image (${{ inputs.release_type }}, ${{ matrix.dist }})
         runs-on: ubuntu-latest
         permissions:
             id-token: write
@@ -72,22 +72,22 @@ jobs:
                   echo "var_build_arch: ${var_build_arch}"
 
                   # set a default docker image: registry/repo/release_type
-                  var_default_image="${{env.docker_registry}}/${{ github.repository_owner }}/${{ inputs.release_type }}"
+                  var_default_image="${{ env.docker_registry }}/${{ github.repository_owner }}/${{ inputs.release_type }}"
                   if [ "${{ inputs.release_type }}" == "stacks-signer" ]; then
                     # stacks-signer
                     var_images="${var_default_image}"
                     var_tag="${{ inputs.signer_tag }}"
                     var_docker_tag=${{ inputs.signer_docker_tag }}
                     # can probably reduce this by adding `linux-(arch) for musl, glibc`
-                    var_artifact_pattern="${{github.sha}}-stacks-signer-linux-$var_build_arch*"
+                    var_artifact_pattern="${{ github.sha }}-stacks-signer-linux-$var_build_arch*"
                   else
                     # stacks-core
-                    # var_images="${var_default_image} ${{env.docker_registry}}/${{ github.repository_owner }}/stacks-blockchain"
+                    # var_images="${var_default_image} ${{ env.docker_registry }}/${{ github.repository_owner }}/stacks-blockchain"
                     var_images="${var_default_image}"
                     var_tag="${{ inputs.node_tag }}"
                     var_docker_tag=${{ inputs.node_docker_tag }}
                     # can probably reduce this by adding `linux-(arch) for musl, glibc`
-                    var_artifact_pattern="${{github.sha}}-stacks-core-linux-$var_build_arch*"
+                    var_artifact_pattern="${{ github.sha }}-stacks-core-linux-$var_build_arch*"
                   fi
                   ## Add vars to github env for later steps
                   echo "docker_images=${var_images}" >> $GITHUB_ENV
@@ -183,7 +183,7 @@ jobs:
               id: attest_primary
               uses: actions/attest-build-provenance@977bb373ede98d70efdf65b84cb5f73e068dcc2a # v3.0.0
               with:
-                  subject-name: ${{env.docker_registry}}/${{ github.repository_owner }}/${{ inputs.release_type }} # attest for stacks-core|stacks-signer
+                  subject-name: ${{ env.docker_registry }}/${{ github.repository_owner }}/${{ inputs.release_type }} # attest for stacks-core|stacks-signer
                   subject-digest: ${{ steps.docker_build.outputs.digest }}
                   push-to-registry: ${{ env.DOCKER_PUSH }}
 
@@ -193,6 +193,6 @@ jobs:
             #   id: attest_secondary
             #   uses: actions/attest-build-provenance@977bb373ede98d70efdf65b84cb5f73e068dcc2a # v3.0.0
             #   with:
-            #       subject-name: ${{env.docker_registry}}/${{ github.repository_owner }}/stacks-blockchain # attest for stacks-blockchain (only for stacks-core)
+            #       subject-name: ${{ env.docker_registry }}/${{ github.repository_owner }}/stacks-blockchain # attest for stacks-blockchain (only for stacks-core)
             #       subject-digest: ${{ steps.docker_build.outputs.digest }}
             #       push-to-registry: ${{ env.DOCKER_PUSH }}
