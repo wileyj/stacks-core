@@ -37,11 +37,6 @@ jobs:
 
       ## if the repo owner is not `stacks-network`, default to a docker-org of the repo owner (i.e. github user id)
       ## this allows forks to run the docker push workflows without having to hardcode a dockerhub org (but it does require docker hub user to match github username)
-      - name: output
-        id: output
-        run: |
-          echo "github.repository_owner: ${{ github.repository_owner }}"
-
       - name: Set Local env vars
         id: set_env
         if: |
@@ -56,11 +51,8 @@ jobs:
         uses: docker/metadata-action@369eb591f429131d6889c46b94e711f089e6ca96 #v5.6.1
         with:
           images: |
-            wileyj/${{ github.event.repository.name }}
-            wileyj/stacks-blockchain
-          # images: |
-          #   ${{env.docker-org}}/${{ github.event.repository.name }}
-          #   ${{env.docker-org}}/stacks-blockchain
+            ${{env.docker-org}}/${{ github.event.repository.name }}
+            ${{env.docker-org}}/stacks-blockchain
           tags: |
             type=raw,value=${{ env.BRANCH_NAME }}
             type=ref,event=pr
