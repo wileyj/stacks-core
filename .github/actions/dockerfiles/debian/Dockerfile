@@ -15,6 +15,6 @@ RUN case ${TARGETPLATFORM} in \
     && unzip "$ARCHIVE" -d /out
 
 
-FROM debian:bookworm
+FROM debian:stable-slim
 COPY --from=builder /out/* /bin/
 CMD ["/bin/stacks-node mainnet"]

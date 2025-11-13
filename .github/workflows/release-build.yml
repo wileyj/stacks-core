@@ -78,7 +78,7 @@ jobs:
                     - linux-glibc
                     - linux-musl
                     # - macos
-                    # - windows
+                    - windows
                 cpu:
                     - x86-64 ## defaults to x86-64-v3 variant - intel haswell (2013) and newer
                     - arm64
@@ -321,7 +321,7 @@ jobs:
               run: |
                 # remove the stacks-node zipfile and recreate for the signer
                 [ -e "${{env.ZIPFILE_NAME}}.zip" ] && rm -f "${{env.ZIPFILE_NAME}}.zip"
-                file -0 ./target/${{env.TARGET}}/release-lite/stacks-signer | sed -nE 's/\x0:\s*(ELF|PE32+|Mach).*//p' | zip --junk-paths ${{env.ZIPFILE_NAME}}.zip -@
+                file -0 ./target/${{env.TARGET}}/release-lite/stacks-signer* | sed -nE 's/\x0:\s*(ELF|PE32+|Mach).*//p' | zip --junk-paths ${{env.ZIPFILE_NAME}}.zip -@
 
             ## Upload the binary artifact to the github action (used in `github-release.yml` to create a release)
             - name: Upload Artifact (stacks-signer)
