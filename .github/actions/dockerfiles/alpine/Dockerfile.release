@@ -4,10 +4,9 @@ FROM alpine AS builder
 ARG TARGETPLATFORM
 ENV ARCHIVE_ROOT="/release"
 
-# upload the relase artifacts downloaded to /tmp/release to /release in the build stage
+# upload the release artifacts downloaded to /tmp/release to /release in the build stage
 COPY ./release/ $ARCHIVE_ROOT
 
-# targetplatform is unknown???
 RUN case ${TARGETPLATFORM} in \
     linux/amd64*) ARCHIVE=${ARCHIVE_ROOT}/linux-musl-x64.zip ;; \
     linux/arm64*) ARCHIVE=${ARCHIVE_ROOT}/linux-musl-arm64.zip ;; \
