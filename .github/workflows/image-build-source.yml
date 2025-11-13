@@ -8,7 +8,6 @@ on:
 ## Define which docker arch to build for
 env:
     docker_platforms: "linux/amd64,linux/arm64"
-    # docker_org: blockstack
     docker_registry: ghcr.io
     # set a default command to build. we'll define specific build config options later per arch.
     CMD: "cargo build --features monitoring_prom,slog_json --profile release-lite --workspace"
@@ -59,7 +58,6 @@ jobs:
                   ref: ${{ github.ref }}
 
             ## Set target env var based on the type of arch build
-            # ** we could move all later steps here, but it would be messier and and move verbose per arch.
             - name: Configure Target Platform
               id: configure_target_platform
               shell: bash
@@ -157,8 +155,8 @@ jobs:
               id: upload_artifact
               uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
               with:
-                  name: ${{github.sha}}-${{ env.ZIPFILE_NAME }}   # this is the name that shows up in workflow summary
-                  path: ${{ env.ZIPFILE_NAME }}.zip  # this is the name of the artifact usable on the VM
+                  name: ${{github.sha}}-${{ env.ZIPFILE_NAME }}
+                  path: ${{ env.ZIPFILE_NAME }}.zip
 
             ## Attest the release binaries
             - name: Attest Release Artifact
@@ -169,11 +167,9 @@ jobs:
     image:
         name: Build Image
         runs-on: ubuntu-latest
-        ## Requires the repo environment "Push to Docker", which will trigger a secondary approval step before running this workflow.
         needs:
             - andon-cord
             - build-binaries
-        # https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax?page=2#permissions
         permissions:
             id-token: write
             attestations: write
@@ -188,15 +184,12 @@ jobs:
                   var_push=${{ (github.actor != '') && (secrets.GITHUB_TOKEN != '') }}
                   echo "docker_org=${var_org}" >> $GITHUB_ENV
                   echo "docker_images=${var_images}" >> $GITHUB_ENV
-                  # echo "BRANCH_NAME=${GITHUB_REF#refs/heads/}" >> $GITHUB_ENV
-                  # echo "DOCKER_PUSH=${var_push}" >> $GITHUB_ENV
 
             - name: Download Artifacts
               id: download_artifacts
               uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
               with:
                   pattern: ${{github.sha}}-${{matrix.arch}}*
-                  # pattern: linux-glibc*
                   path: /tmp/release
                   merge-multiple: true
 
@@ -215,31 +208,8 @@ jobs:
               uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
               with:
                   ref: ${{ github.ref }}
-                  # ref: ${{ env.BRANCH_NAME }}
                   sparse-checkout: |
                       .github
-
-            ## copy from composite
-            # ## Setup QEMU for multi-arch builds
-            # - name: Set up QEMU
-            #   id: docker_qemu
-            #   uses: docker/setup-qemu-action@4574d27a4764455b42196d70a065bc6853246a25 # v3.4.0
-
-            # ## Setup docker buildx
-            # - name: Set up Docker Buildx
-            #   id: docker_buildx
-            #   uses: docker/setup-buildx-action@f7ce87c1d6bead3e36075b2ce75da1f6cc28aaca # v3.9.0
-
-            # ## Login to dockerhub
-            # - name: Login to GHCR
-            #   id: docker_login
-            #   uses: docker/login-action@9780b0c442fbb1117ed29e0efdff1e18412f7567 # v3.3.0
-            #   with:
-            #       registry: ${{ env.docker_registry }}
-            #       username: ${{ github.actor }}
-            #       password: ${{ secrets.GITHUB_TOKEN }}
-
-            # ## end copy from composite
 
             ## Set docker metatdata
             - name: Docker Metadata
@@ -280,7 +250,6 @@ jobs:
               uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83 # v6.18.0
               with:
                   sbom: false
-                  # provenance: mode=max # this produces attestation, but adds additional keys for unknown/unknown. default to disabled
                   provenance: ${{ env.provenance }}
                   context: /tmp
                   file: ./.github/actions/dockerfiles/debian/Dockerfile

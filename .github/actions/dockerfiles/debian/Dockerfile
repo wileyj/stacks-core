@@ -4,7 +4,7 @@ FROM alpine AS builder
 ARG TARGETPLATFORM
 ENV ARCHIVE_ROOT="/release"
 
-# upload the relase artifacts downloaded to /tmp/release to /release in the build stage
+# upload the release artifacts downloaded to /tmp/release to /release in the build stage
 COPY ./release/ $ARCHIVE_ROOT
 
 RUN case ${TARGETPLATFORM} in \
@@ -13,7 +13,6 @@ RUN case ${TARGETPLATFORM} in \
     *) exit 1 ;; \
     esac \
     && unzip "$ARCHIVE" -d /out
-
 
 FROM debian:stable-slim
 COPY --from=builder /out/* /bin/

@@ -69,7 +69,6 @@ jobs:
             - name: Set Local Vars
               id: set_vars
               shell: bash
-              # setting image to release_type may be ok, since we don't need stacks-blockchain in ghcr (only in dockerhub mirror)
               run: |
                   var_dockerfile_name="Dockerfile.release"
                   if [ "${{ inputs.release_type }}" == "stacks-signer" ]; then
@@ -128,27 +127,10 @@ jobs:
                   echo "var_docker_tag_rc: ${var_docker_tag_rc}"
                   echo "docker_tag_rc=${var_docker_tag_rc}" >> "$GITHUB_ENV"
 
-            # ## set env var for which artifacts to download
-            # - name: Set Artifact Arch
-            #   id: set_artifact_arch
-            #   shell: bash
-            #   run: |
-            #       if [ "${{ matrix.dist }}" == "alpine" ]; then
-            #         var_build_arch=musl
-            #       else
-            #         var_build_arch=glibc
-            #       fi
-            #       echo "var_build_arch: ${var_build_arch}"
-            #       echo "build_arch=${var_build_arch}" >> "$GITHUB_ENV"
-
             - name: Download Artifacts
               id: download_artifacts
               uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
               with:
-                  # pattern: ${{ env.tag }}-binary-build-linux-${{ env.build_arch }}*
-                  # this will only download the full artifact, not the signer one. need to use the version here :sad:
-                  # if the release_type is stacks-signer, then the pattern will be like ${{github.sha}}-signer-${{matrix.arch}}*
-                  # pattern: ${{github.sha}}-${{matrix.arch}}*
                   pattern: ${{ env.artifact_pattern }}
                   path: /tmp/release
                   merge-multiple: true
@@ -166,13 +148,12 @@ jobs:
             ##
             ## note: we can disable the vm cleanup for this. at a minimum, we can use /mnt for ops
             ##
-            # Setup Docker for the builds
             ## Setup Docker for the builds
             - name: Docker setup
               id: docker_setup
               uses: wileyj/actions/docker@chore/update_docker_comp
               with:
-                  registry: ${{ env.docker_registry }}
+                  registry: ${{ env.docker_registry }} # set the registry to ghcr (default is docker.io)
                   username: ${{ github.actor }}
                   password: ${{ secrets.GITHUB_TOKEN }}
 

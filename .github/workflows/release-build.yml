@@ -9,26 +9,10 @@ on:
                 description: "Node Release Tag"
                 required: true
                 type: string
-            # node_docker_tag:
-            #     description: "Node Docker Release Tag"
-            #     required: true
-            #     type: string
             signer_tag:
                 description: "Signer Release Tag"
                 required: true
                 type: string
-            # signer_docker_tag:
-            #     description: "Signer Docker Release Tag"
-            #     required: true
-            #     type: string
-            # is_node_release:
-            #     description: "True if it is a node release"
-            #     required: true
-            #     type: string
-            # is_signer_release:
-            #     description: "True if it is a signer release"
-            #     required: true
-            #     type: string
 
 concurrency:
     group: release-build-${{ github.head_ref || github.ref }}
@@ -44,32 +28,12 @@ env:
     TARGET_CPU: ""
     LINKER: ""
 jobs:
-    ## Build arch dependent binaries from source
-    ## This job's sole purpose is trigger a secondary approval outside of the matrix jobs below.
-    ##   - If this job isn't approved to run, then the subsequent jobs will also not run - for this reason, we always exit 0
-    ##   - `andon-cord` requires the repo environment "Build Release", which will trigger a secondary approval step before running this workflow.
-    # andon-cord:
-    #     if: |
-    #         inputs.node_tag != '' ||
-    #         inputs.signer_tag != ''
-    #     name: Andon Cord
-    #     runs-on: ubuntu-latest
-    #     # environment: "Build Release"
-    #     steps:
-    #         - name: Check Approval
-    #           id: check
-    #           run: |
-    #               exit 0
-
     build-binaries:
         name: Build Binaries
         runs-on: ${{ matrix.os }}
-        # runs-on: ubuntu-latest
         permissions:
             id-token: write
             attestations: write
-        # needs:
-        #     - andon-cord
         strategy:
             ## Run a maximum of 10 builds concurrently, using the matrix defined in inputs.arch
             max-parallel: 10
@@ -80,15 +44,11 @@ jobs:
                     # - macos
                     - windows
                 cpu:
-                    - x86-64 ## defaults to x86-64-v3 variant - intel haswell (2013) and newer
+                    - x86-64
                     - arm64
-                    ## legacy
-                    # - x86-64-v2 ## intel nehalem (2008) and newer
-                    # - x86-64-v3 ## intel haswell (2013) and newer
-                    # - x86-64-v4 ## intel skylake (2017) and newer
                 os:
                     - ubuntu-latest
-                    # - macos-latest-large # this is a paid runner apparently
+                    # - macos-latest-large # this is a paid runner
                 exclude:
                     ############################################
                     # exclude linux-musl on macos
@@ -117,11 +77,6 @@ jobs:
                       cpu: arm64
                     ##
         steps:
-            # - name: (Build) Check Data
-            #   id: check_data
-            #   shell: bash
-            #   run: |
-            #       exit 0
             ## Checkout the code
             - name: Checkout the latest code
               id: git_checkout
@@ -130,7 +85,6 @@ jobs:
                   ref: ${{ github.ref }}
 
             ## Set target env var based on the type of arch build
-            # ** we could move all later steps here, but it would be messier and and move verbose per arch.
             - name: Configure Target Platform
               id: configure_target_platform
               shell: bash
@@ -203,6 +157,7 @@ jobs:
                   echo "TARGET_CPU=${TARGET_CPU}" >> "$GITHUB_ENV"
                   # echo "ZIPFILE_NAME=${{github.sha}}-${{matrix.arch}}-${ARCHIVE_NAME}" >> "$GITHUB_ENV"
                   echo "ZIPFILE_NAME=${{matrix.arch}}-${ARCHIVE_NAME}" >> "$GITHUB_ENV"
+
             ## Install rust toolchain (llvm-tools-preview)
             - name: Setup Rust Toolchain
               id: setup_rust_toolchain
@@ -225,13 +180,6 @@ jobs:
               id: build_release
               shell: bash
               run: |
-                  echo "arch: ${{ matrix.arch }}"
-                  echo "cpu: ${{ matrix.cpu }}"
-                  echo "os: ${{ matrix.os }}"
-                  echo "TARGET: ${{env.TARGET}}"
-                  echo "TARGET_CPU: ${{env.TARGET_CPU}}"
-                  echo "CMD: ${{env.CMD}}"
-                  echo "ZIPFILE_NAME: ${{env.ZIPFILE_NAME}}"
                   BINS=""
                   if [ "${{ inputs.node_tag }}" == '' ]; then
                     BINS="--bin stacks-signer"
@@ -241,38 +189,38 @@ jobs:
                     # linux glibc aarch64
                     aarch64-unknown-linux-gnu) # linux-glibc-arm64
                       LINKER=aarch64-linux-gnu-gcc
-                      echo "${CMD} ${BINS} --target $TARGET --config \"target.${TARGET}.linker=\\\"${LINKER}\\\"\" "
+                      echo "Running: ${CMD} ${BINS} --target $TARGET --config \"target.${TARGET}.linker=\\\"${LINKER}\\\"\" "
                       ${{env.CMD}} ${BINS} --target $TARGET --config "target.${{env.TARGET}}.linker=\"${LINKER}\"" || exit 1
                       ;;
                     # linux glibc x64
                     x86_64-unknown-linux-gnu) # linux-glibc-x86_64
-                      echo "${CMD} ${BINS} --target $TARGET --config build.rustflags=\"\\\"-C target-cpu=${TARGET_CPU}\\\"\" "
+                      echo "Running: ${CMD} ${BINS} --target $TARGET --config build.rustflags=\"\\\"-C target-cpu=${TARGET_CPU}\\\"\" "
                       ${{env.CMD}} ${BINS} --target $TARGET --config build.rustflags="\"-C target-cpu=${TARGET_CPU}\"" || exit 1
                       ;;
                     # windows glibc x64
                     x86_64-pc-windows-gnu) # windows-x86_64
                       LINKER=x86_64-w64-mingw32-gcc
-                      echo "${CMD} ${BINS} --target $TARGET --config \"target.${TARGET}.linker=\\\"${LINKER}\\\"\"  --config build.rustflags="\"-C target-cpu=${TARGET_CPU}\"" "
+                      echo "Running: ${CMD} ${BINS} --target $TARGET --config \"target.${TARGET}.linker=\\\"${LINKER}\\\"\"  --config build.rustflags="\"-C target-cpu=${TARGET_CPU}\"" "
                       ${{env.CMD}} ${BINS} --target $TARGET --config "target.${{env.TARGET}}.linker=\"${LINKER}\"" --config build.rustflags="\"-C target-cpu=${TARGET_CPU}\"" || exit 1
                       ;;
                     # linux musl x64
                     x86_64-unknown-linux-musl) # linux-musl-x86_64
-                      echo "${CMD} ${BINS} --target $TARGET --config build.rustflags=\"\\\"-C target-cpu=${TARGET_CPU}\\\"\" "
+                      echo "Running: ${CMD} ${BINS} --target $TARGET --config build.rustflags=\"\\\"-C target-cpu=${TARGET_CPU}\\\"\" "
                       ${{env.CMD}} ${BINS} --target $TARGET --config build.rustflags="\"-C target-cpu=${TARGET_CPU}\"" || exit 1
                       ;;
                     # linux musl aarch64
                     aarch64-unknown-linux-musl) # linux-musl-arm64
                       LINKER=/tmp/aarch64-linux-musl-cross/bin/aarch64-linux-musl-gcc
-                      echo "${CMD} ${BINS} --target $TARGET --config \"target.${TARGET}.linker=\\\"${LINKER}\\\"\" "
+                      echo "Running: ${CMD} ${BINS} --target $TARGET --config \"target.${TARGET}.linker=\\\"${LINKER}\\\"\" "
                       ${{env.CMD}} ${BINS} --target $TARGET --config "target.${{env.TARGET}}.linker=\"${LINKER}\"" || exit 1
                       ;;
                     # macos aarch64
                     aarch64-apple-darwin) # macos-arm64
                       TARGET_CPU=native
-                      echo "${CMD} ${BINS}--target $TARGET --config build.rustflags=\"\\\"-C target-cpu=${TARGET_CPU}\\\"\" "
+                      echo "Running: ${CMD} ${BINS}--target $TARGET --config build.rustflags=\"\\\"-C target-cpu=${TARGET_CPU}\\\"\" "
                       ${{env.CMD}} ${BINS} --target $TARGET --config build.rustflags="\"-C target-cpu=${TARGET_CPU}\"" || exit 1
                       ;;
-                    # catchall - run default command
+                    # catchall - run the default command
                     *)
                       echo "No matrix match for build target ($TARGET). using defaults"
                       ${{env.CMD}} ${BINS} || exit 1
@@ -297,9 +245,8 @@ jobs:
               id: upload_artifact_stacks_node
               uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
               with:
-                  # name: ${{ inputs.node_tag || inputs.signer_tag }}-binary-build-${{ env.ZIPFILE_NAME }}
-                  name: ${{github.sha}}-stacks-node-${{ env.ZIPFILE_NAME }}   # this is the name that shows up in workflow summary
-                  path: ${{ env.ZIPFILE_NAME }}.zip # this is the name of the artifact usable on the VM
+                  name: ${{github.sha}}-stacks-node-${{ env.ZIPFILE_NAME }}
+                  path: ${{ env.ZIPFILE_NAME }}.zip
 
             ## Attest the release binaries
             - name: Attest Release Artifact (stacks-node)
@@ -310,8 +257,7 @@ jobs:
               with:
                   subject-path: ${{ env.ZIPFILE_NAME }}.zip
 
-  # second set of steps for the signer only if the release type is stacks-node
-  # will the zipfile be overwritten?
+            ## Second set of steps for the signer only if the release type is stacks-node
             ## Compress the binary artifact
             - name: Compress binaries (stacks-signer)
               if: |
@@ -330,9 +276,8 @@ jobs:
               id: upload_artifact_stacks_signer
               uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
               with:
-                  # name: ${{ inputs.node_tag || inputs.signer_tag }}-binary-build-${{ env.ZIPFILE_NAME }}
-                  name: ${{github.sha}}-stacks-signer-${{ env.ZIPFILE_NAME }}   # this is the name that shows up in workflow summary
-                  path: ${{ env.ZIPFILE_NAME }}.zip # this is the name of the artifact usable on the VM
+                  name: ${{github.sha}}-stacks-signer-${{ env.ZIPFILE_NAME }}
+                  path: ${{ env.ZIPFILE_NAME }}.zip
 
             ## Attest the release binaries
             - name: Attest Release Artifact (stacks-signer)
