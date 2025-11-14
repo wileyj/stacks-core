@@ -155,6 +155,14 @@ jobs:
             attestations: write
             packages: write
         steps:
+            ## set local env vars
+            - name: Set Local Vars
+              id: set_vars
+              shell: bash
+              run: |
+                var_default_image="${{ env.docker_registry }}/${{ github.repository }}"
+                echo "docker_images=${var_default_image}" >> $GITHUB_ENV
+
             ## Setup Docker for the builds
             - name: Docker setup
               id: docker_setup
