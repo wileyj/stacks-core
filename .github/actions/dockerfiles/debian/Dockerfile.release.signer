@@ -1,6 +1,7 @@
 FROM alpine AS builder
 # FROM debian:bookworm AS builder
 
+LABEL org.opencontainers.image.description "Stacks Signer CLI"
 
 ARG TARGETPLATFORM
 ENV ARCHIVE_ROOT="/release"
