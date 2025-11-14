@@ -14,7 +14,6 @@ env:
     # ensure these env vars have no values since they will be explicitly set later
     TARGET_CPU: ""
     LINKER: ""
-    docker_image: "${{ env.docker_registry }}/${{ github.repository }}"
     provenance: false
 
 concurrency:
