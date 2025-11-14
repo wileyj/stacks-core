@@ -35,7 +35,7 @@ jobs:
                     - linux-glibc
                 cpu:
                     - x86-64
-                    # - arm64
+                    - arm64
         steps:
             ## Checkout the code
             - name: Checkout the latest code
