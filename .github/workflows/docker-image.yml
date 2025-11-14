@@ -7,8 +7,7 @@ on:
 
 ## Define which docker arch to build for
 env:
-    docker_platforms: "linux/amd64"
-    # docker_platforms: "linux/amd64,linux/arm64"
+    docker_platforms: "linux/amd64,linux/arm64"
     docker_registry: ghcr.io
     # set a default command to build. we'll define specific build config options later per arch.
     CMD: "cargo build --features monitoring_prom,slog_json --profile release-lite --workspace"
@@ -181,6 +180,14 @@ jobs:
                   sparse-checkout: |
                       .github
 
+            - name: Download Artifacts
+              id: download_artifacts
+              uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
+              with:
+                  pattern: ${{github.sha}}-${{matrix.arch}}*
+                  path: /tmp/release
+                  merge-multiple: true
+
             ## Set docker metatdata
             - name: Docker Metadata
               id: docker_metadata
@@ -195,21 +202,12 @@ jobs:
                   tags: |
                       type=raw,value=${{ env.BRANCH_NAME }}
                       type=ref,event=pr
-
-            - name: Download Artifacts
-              id: download_artifacts
-              uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
-              with:
-                  pattern: ${{github.sha}}-${{matrix.arch}}*
-                  path: /tmp/release
-                  merge-multiple: true
-
             - name: Build and Push
               id: docker_build
               uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83 # v6.18.0
               with:
-                  sbom: false
-                  provenance: ${{ env.provenance }}
+                  # sbom: false
+                  # provenance: ${{ env.provenance }}
                   context: /tmp
                   file: ./.github/actions/dockerfiles/debian/Dockerfile
                   platforms: ${{ env.docker_platforms }}
