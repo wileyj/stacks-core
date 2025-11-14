@@ -142,9 +142,6 @@ jobs:
             - name: Docker Metadata ( ${{matrix.dist}} )
               id: docker_metadata
               uses: docker/metadata-action@318604b99e75e41977312d83839a89be02ca4893 #v5.9.0
-              env:
-                DOCKER_METADATA_ANNOTATIONS_LEVELS: manifest
-                # DOCKER_METADATA_ANNOTATIONS_LEVELS: manifest,index
               with:
                   images: |
                       ${{ env.docker_images }}
@@ -167,7 +164,7 @@ jobs:
                       #  version tag
                       type=raw,value=${{ env.docker_tag }},suffix=-${{ matrix.dist }},enable=${{ env.docker_tag != '' && matrix.dist == 'alpine' }}
 
-            ## Build docker image for node release
+            ## Build docker image for release
             - name: Build and Push ( ${{matrix.dist}} )
               id: docker_build
               uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83 # v6.18.0
@@ -179,7 +176,7 @@ jobs:
                   platforms: ${{ env.docker_platforms }}
                   tags: ${{ steps.docker_metadata.outputs.tags }}
                   labels: ${{ steps.docker_metadata.outputs.labels }}
-                  annotations: ${{ steps.docker_metadata.outputs.annotations }}
+                  annotations: ${{ steps.docker_metadata.outputs.annotations }} # annotations are required for multi-architecture images
                   push: ${{ env.DOCKER_PUSH }}
 
             ## Generate docker image attestation(s)
