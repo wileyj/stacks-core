@@ -159,7 +159,7 @@ jobs:
               id: set_vars
               shell: bash
               run: |
-                  var_default_image="${{ env.docker_registry }}/${{ github.repository }}"
+                  var_default_image="${{ env.docker_registry }}/${{ github.repository }} ${{ env.docker_registry }}/stacks-blockchain"
                   echo "docker_images=${var_default_image}" >> $GITHUB_ENV
 
             ## Setup Docker for the builds
@@ -184,7 +184,7 @@ jobs:
               id: download_artifacts
               uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
               with:
-                  pattern: ${{github.sha}}-${{matrix.arch}}*
+                  pattern: ${{github.sha}}-* # linux-glibc variants are the only artifacts produced, download for both architectures
                   path: /tmp/release
                   merge-multiple: true
 
@@ -192,8 +192,6 @@ jobs:
             - name: Docker Metadata
               id: docker_metadata
               uses: docker/metadata-action@318604b99e75e41977312d83839a89be02ca4893 #v5.9.0
-              # env:
-              #   DOCKER_METADATA_ANNOTATIONS_LEVELS: manifest,index
               with:
                   images: |
                       ${{ env.docker_images }}
@@ -214,7 +212,7 @@ jobs:
                   platforms: ${{ env.docker_platforms }}
                   tags: ${{ steps.docker_metadata.outputs.tags }}
                   labels: ${{ steps.docker_metadata.outputs.labels }}
-                  # annotations: ${{ steps.docker_metadata.outputs.annotations }}
+                  # annotations: ${{ steps.docker_metadata.outputs.annotations }} # annotations are required for multi-architecture images
                   push: ${{ env.DOCKER_PUSH }}
 
             ## Generate docker image attestation(s)
