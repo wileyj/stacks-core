@@ -214,6 +214,7 @@ jobs:
                   platforms: ${{ env.docker_platforms }}
                   tags: ${{ steps.docker_metadata.outputs.tags }}
                   labels: ${{ steps.docker_metadata.outputs.labels }}
+                  annotations: ${{ steps.docker_metadata.outputs.annotations }}
                   push: ${{ env.DOCKER_PUSH }}
 
             ## Generate docker image attestation(s)
