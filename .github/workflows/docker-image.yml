@@ -5,9 +5,9 @@ name: Docker Image
 on:
     workflow_dispatch:
 
-## Define which docker arch to build for
 env:
-    docker_platforms: "linux/amd64,linux/arm64"
+    docker_platforms: "linux/amd64"
+    # docker_platforms: "linux/amd64,linux/arm64"
     docker_registry: ghcr.io
     # set a default command to build. we'll define specific build config options later per arch.
     CMD: "cargo build --features monitoring_prom,slog_json --profile release-lite --workspace"
@@ -192,8 +192,8 @@ jobs:
             - name: Docker Metadata
               id: docker_metadata
               uses: docker/metadata-action@318604b99e75e41977312d83839a89be02ca4893 #v5.9.0
-              env:
-                DOCKER_METADATA_ANNOTATIONS_LEVELS: manifest,index
+              # env:
+              #   DOCKER_METADATA_ANNOTATIONS_LEVELS: manifest,index
               with:
                   images: |
                       ${{ env.docker_images }}
@@ -202,18 +202,19 @@ jobs:
                   tags: |
                       type=raw,value=${{ env.BRANCH_NAME }}
                       type=ref,event=pr
+
             - name: Build and Push
               id: docker_build
               uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83 # v6.18.0
               with:
-                  # sbom: false
-                  # provenance: ${{ env.provenance }}
+                  sbom: false
+                  provenance: ${{ env.provenance }}
                   context: /tmp
                   file: ./.github/actions/dockerfiles/debian/Dockerfile
                   platforms: ${{ env.docker_platforms }}
                   tags: ${{ steps.docker_metadata.outputs.tags }}
                   labels: ${{ steps.docker_metadata.outputs.labels }}
-                  annotations: ${{ steps.docker_metadata.outputs.annotations }}
+                  # annotations: ${{ steps.docker_metadata.outputs.annotations }}
                   push: ${{ env.DOCKER_PUSH }}
 
             ## Generate docker image attestation(s)
