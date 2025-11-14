@@ -8,19 +8,19 @@ on:
 env:
     docker_platforms: "linux/amd64"
     # docker_platforms: "linux/amd64,linux/arm64"
-    docker_registry: ghcr.io
+    docker_registry: "ghcr.io"
     # set a default command to build. we'll define specific build config options later per arch.
     CMD: "cargo build --features monitoring_prom,slog_json --profile release-lite --workspace"
     # ensure these env vars have no values since they will be explicitly set later
     TARGET_CPU: ""
     LINKER: ""
+    docker_image: "${{ env.docker_registry }}/${{ github.repository }}"
     provenance: false
 
 concurrency:
     group: docker-image-${{ github.head_ref || github.ref || github.run_id }}
     ## Always cancel duplicate jobs
     cancel-in-progress: true
-
 jobs:
     ## Build arch dependent binaries from source
     build-binaries:
@@ -155,13 +155,6 @@ jobs:
             attestations: write
             packages: write
         steps:
-            - name: Set Local Vars
-              id: set_vars
-              shell: bash
-              run: |
-                  var_default_image="${{ env.docker_registry }}/${{ github.repository }} ${{ env.docker_registry }}/stacks-blockchain"
-                  echo "docker_images=${var_default_image}" >> $GITHUB_ENV
-
             ## Setup Docker for the builds
             - name: Docker setup
               id: docker_setup
@@ -193,11 +186,9 @@ jobs:
               id: docker_metadata
               uses: docker/metadata-action@318604b99e75e41977312d83839a89be02ca4893 #v5.9.0
               with:
-                  images: |
-                      ${{ env.docker_registry }}/${{ github.repository }}
-                      ${{ env.docker_registry }}/stacks-blockchain
-                  labels: |
-                      org.opencontainers.image.created={{commit_date 'YYYY-MM-DDTHH:mm:ss.SSS[Z]'}}
+                  images: ${{ env.docker_image }}
+                  # labels: |
+                  #     org.opencontainers.image.created={{commit_date 'YYYY-MM-DDTHH:mm:ss.SSS[Z]'}}
                   tags: |
                       type=raw,value=${{ env.BRANCH_NAME }}
                       type=ref,event=pr
