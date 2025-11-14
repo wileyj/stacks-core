@@ -194,7 +194,8 @@ jobs:
               uses: docker/metadata-action@318604b99e75e41977312d83839a89be02ca4893 #v5.9.0
               with:
                   images: |
-                      ${{ env.docker_images }}
+                      ${{ env.docker_registry }}/${{ github.repository }}
+                      ${{ env.docker_registry }}/stacks-blockchain
                   labels: |
                       org.opencontainers.image.created={{commit_date 'YYYY-MM-DDTHH:mm:ss.SSS[Z]'}}
                   tags: |
