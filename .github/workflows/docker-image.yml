@@ -6,8 +6,7 @@ on:
     workflow_dispatch:
 
 env:
-    docker_platforms: "linux/amd64"
-    # docker_platforms: "linux/amd64,linux/arm64"
+    docker_platforms: "linux/amd64,linux/arm64"
     docker_registry: "ghcr.io"
     # set a default command to build. we'll define specific build config options later per arch.
     CMD: "cargo build --features monitoring_prom,slog_json --profile release-lite --workspace"
@@ -35,7 +34,7 @@ jobs:
                     - linux-glibc
                 cpu:
                     - x86-64
-                    # - arm64
+                    - arm64
         steps:
             ## Checkout the code
             - name: Checkout the latest code
@@ -159,7 +158,7 @@ jobs:
               id: set_vars
               shell: bash
               run: |
-                var_default_image="${{ env.docker_registry }}/${{ github.repository }}"
+                var_default_image="${{ env.docker_registry }}/${{ github.repository }}" # package for the repository must exist. ex: ghcr/foo/bar with bar being the package name
                 echo "docker_images=${var_default_image}" >> $GITHUB_ENV
 
             ## Setup Docker for the builds
