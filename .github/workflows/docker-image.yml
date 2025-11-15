@@ -228,3 +228,28 @@ jobs:
                       ${{ env.docker_images }}
                   subject-digest: ${{ steps.docker_build.outputs.digest }}
                   push-to-registry: ${{ env.DOCKER_PUSH }}
+
+            ## Sign the images with GitHub OIDC Token
+            ## https://github.blog/security/supply-chain-security/safeguard-container-signing-capability-actions/
+            - name: Install Cosign
+              id: cosign_install
+              uses: sigstore/cosign-installer@faadad0cce49287aee09b3a48701e75088a2c6ad # v4.0.0
+
+            - name: Sign the images with GitHub OIDC Token
+              id: cosign_image
+              shell: bash
+              env:
+                DIGEST: ${{ steps.docker_build.outputs.digest }}
+                TAGS: ${{ steps.docker_metadata.outputs.tags }}
+              run: |
+                images=""
+                for tag in ${TAGS}; do
+                  images+="${tag}@${DIGEST} "
+                done
+                cosign sign --yes ${images}
+
+          # cosign sign --key cosign.key \
+          #   -a "repo=${{ github.repository }}" \
+          #   -a "workflow=${{ github.workflow }}" \
+          #   -a "ref=${{ github.sha }}" \
+          #   ghcr.io/your-org/your-repo:some-tag
