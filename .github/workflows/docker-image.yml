@@ -244,10 +244,19 @@ jobs:
                 for tag in ${TAGS}; do
                   images+="${tag}@${DIGEST} "
                 done
-                cosign sign --yes ${images}
+                cosign sign \
+                    -a "repo=${{ github.repository }}" \
+                    -a "workflow=${{ github.workflow }}" \
+                    -a "ref=${{ github.sha }}" \
+                --yes ${images}
 
           # cosign sign --key cosign.key \
           #   -a "repo=${{ github.repository }}" \
           #   -a "workflow=${{ github.workflow }}" \
           #   -a "ref=${{ github.sha }}" \
           #   ghcr.io/your-org/your-repo:some-tag
+          #
+# cosign verify \
+#   --certificate-oidc-issuer=https://token.actions.githubusercontent.com \
+#   --certificate-identity=https://github.com/wileyj/stacks-core/.github/workflows/docker-image.yml@refs/heads/feat/image7 \
+# ghcr.io/wileyj/stacks-core:feat-image7
