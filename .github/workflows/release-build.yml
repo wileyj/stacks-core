@@ -247,7 +247,7 @@ jobs:
                   path: ${{ env.ZIPFILE_NAME }}.zip
 
             ## Attest the binary archive
-            - name: Attest Release Artifact (stacks-core)
+            - name: Attest Artifact (stacks-core)
               if: |
                 inputs.node_tag != ''
               id: attest_artifact_stacks_node
@@ -281,7 +281,7 @@ jobs:
                   path: ${{ env.ZIPFILE_NAME }}.zip
 
             ## Attest the binary archive
-            - name: Attest Release Artifact (stacks-signer)
+            - name: Attest Artifact (stacks-signer)
               if: |
                 inputs.signer_tag != ''
               id: attest_artifact_stacks_signer

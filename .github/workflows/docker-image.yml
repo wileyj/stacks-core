@@ -138,7 +138,7 @@ jobs:
                   path: ${{ env.ZIPFILE_NAME }}.zip
 
             ## Attest the binary archive
-            - name: Attest Release Artifact
+            - name: Attest Artifact
               uses: actions/attest-build-provenance@977bb373ede98d70efdf65b84cb5f73e068dcc2a # v3.0.0
               with:
                   subject-path: ${{ env.ZIPFILE_NAME }}.zip
@@ -234,10 +234,10 @@ jobs:
                   push: ${{ env.DOCKER_PUSH }}
 
             ## Generate docker image attestation(s)
-            - name: Generate artifact attestation
+            - name: Attest Image
               if: |
                 env.provenance != true
-              id: attest_primary
+              id: attest_artifact
               uses: actions/attest-build-provenance@977bb373ede98d70efdf65b84cb5f73e068dcc2a # v3.0.0
               with:
                   subject-name: |
