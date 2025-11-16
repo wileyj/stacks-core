@@ -203,4 +203,4 @@ jobs:
                     -a "ref=${{ github.sha }}" \
                     -a "dist=${{ matrix.dist }}" \
                     --yes \
-                ${{ env.ZIPFILE_NAME }}.zip
+                ${images}
