@@ -288,17 +288,3 @@ jobs:
               uses: actions/attest-build-provenance@977bb373ede98d70efdf65b84cb5f73e068dcc2a # v3.0.0
               with:
                   subject-path: ${{ env.ZIPFILE_NAME }}.zip
-
-            ## Sign the images with GitHub OIDC Token
-            ## https://github.blog/security/supply-chain-security/safeguard-container-signing-capability-actions/
-            - name: Install Cosign
-              id: cosign_install
-              uses: sigstore/cosign-installer@faadad0cce49287aee09b3a48701e75088a2c6ad # v4.0.0
-
-            - name: Sign the images with GitHub OIDC Token
-              id: cosign_artifact
-              shell: bash
-              run: |
-                cosign sign-blob \
-                    --yes \
-                ${{ env.ZIPFILE_NAME }}.zip

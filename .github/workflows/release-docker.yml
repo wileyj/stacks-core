@@ -201,7 +201,6 @@ jobs:
                 cosign sign \
                     -a "repo=${{ github.repository }}" \
                     -a "ref=${{ github.sha }}" \
-                    -a "cpu=${{ matrix.cpu }}" \
-                    -a "arch=${{ matrix.arch }}" \
+                    -a "dist=${{ matrix.dist }}" \
                     --yes \
                 ${{ env.ZIPFILE_NAME }}.zip
