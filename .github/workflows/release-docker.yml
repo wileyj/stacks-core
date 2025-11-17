@@ -196,6 +196,9 @@ jobs:
             - name: Sign the images with GitHub OIDC Token
               id: cosign_artifact
               shell: bash
+              env:
+                  DIGEST: ${{ steps.docker_build.outputs.digest }}
+                  TAGS: ${{ steps.docker_metadata.outputs.tags }}
               run: |
                   images=""
                   for tag in ${TAGS}; do
