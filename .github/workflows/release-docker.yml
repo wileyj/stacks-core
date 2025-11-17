@@ -97,7 +97,6 @@ jobs:
                   echo "build_arch=${var_build_arch}" >> "$GITHUB_ENV"
                   echo "dockerfile_name=${var_dockerfile_name}" >> "$GITHUB_ENV"
 
-
             - name: Set Docker Tag RC Flag
               id: docker_tag_rc_flag
               shell: bash
@@ -198,9 +197,13 @@ jobs:
               id: cosign_artifact
               shell: bash
               run: |
-                cosign sign \
-                    -a "repo=${{ github.repository }}" \
-                    -a "ref=${{ github.sha }}" \
-                    -a "dist=${{ matrix.dist }}" \
-                    --yes \
-                ${images}
+                  images=""
+                  for tag in ${TAGS}; do
+                    images+="${tag}@${DIGEST} "
+                  done
+                  cosign sign \
+                      -a "repo=${{ github.repository }}" \
+                      -a "ref=${{ github.sha }}" \
+                      -a "dist=${{ matrix.dist }}" \
+                      --yes \
+                  ${images}
