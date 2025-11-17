@@ -9,7 +9,7 @@ env:
     docker_platforms: "linux/amd64,linux/arm64"
     docker_registry: "ghcr.io"
     # set a default command to build. we'll define specific build config options later per arch.
-    CMD: "cargo build --features monitoring_prom,slog_json --profile release-lite --workspace"
+    CMD: "cargo build --features monitoring_prom,slog_json --profile release --workspace"
     # ensure these env vars have no values since they will be explicitly set later
     TARGET_CPU: ""
     LINKER: ""
@@ -126,8 +126,8 @@ jobs:
               id: compress_artifacts
               shell: bash
               run: |
-                # compress all binaries in the target directory for any architecture
-                file -0 ./target/${{env.TARGET}}/release-lite/* | sed -nE 's/\x0:\s*(ELF|PE32+|Mach).*//p' | zip --junk-paths ${{env.ZIPFILE_NAME}}.zip -@
+                  # compress all binaries in the target directory for any architecture
+                  file -0 ./target/${{env.TARGET}}/release/* | sed -nE 's/\x0:\s*(ELF|PE32+|Mach).*//p' | zip --junk-paths ${{env.ZIPFILE_NAME}}.zip -@
 
             ## Upload the binary archive using the commit sha as the key
             - name: Upload Artifact
@@ -158,8 +158,8 @@ jobs:
               id: set_vars
               shell: bash
               run: |
-                var_default_image="${{ env.docker_registry }}/${{ github.repository }}"
-                echo "docker_images=${var_default_image}" >> $GITHUB_ENV
+                  var_default_image="${{ env.docker_registry }}/${{ github.repository }}"
+                  echo "docker_images=${var_default_image}" >> $GITHUB_ENV
 
             ## Setup Docker for the builds
             - name: Docker setup
@@ -192,7 +192,7 @@ jobs:
               id: docker_metadata
               uses: docker/metadata-action@318604b99e75e41977312d83839a89be02ca4893 #v5.9.0
               env:
-                DOCKER_METADATA_ANNOTATIONS_LEVELS: manifest,index
+                  DOCKER_METADATA_ANNOTATIONS_LEVELS: manifest,index
               with:
                   images: ${{ env.docker_images }}
                   labels: |
@@ -218,7 +218,7 @@ jobs:
             ## Generate docker image attestation(s)
             - name: Attest Image
               if: |
-                env.provenance != true
+                  env.provenance != true
               id: attest_artifact
               uses: actions/attest-build-provenance@977bb373ede98d70efdf65b84cb5f73e068dcc2a # v3.0.0
               with:
@@ -237,18 +237,18 @@ jobs:
               id: cosign_image
               shell: bash
               env:
-                DIGEST: ${{ steps.docker_build.outputs.digest }}
-                TAGS: ${{ steps.docker_metadata.outputs.tags }}
+                  DIGEST: ${{ steps.docker_build.outputs.digest }}
+                  TAGS: ${{ steps.docker_metadata.outputs.tags }}
               run: |
-                images=""
-                for tag in ${TAGS}; do
-                  images+="${tag}@${DIGEST} "
-                done
-                cosign sign \
-                    -a "repo=${{ github.repository }}" \
-                    -a "ref=${{ github.sha }}" \
-                    --yes \
-                ${images}
+                  images=""
+                  for tag in ${TAGS}; do
+                    images+="${tag}@${DIGEST} "
+                  done
+                  cosign sign \
+                      -a "repo=${{ github.repository }}" \
+                      -a "ref=${{ github.sha }}" \
+                      --yes \
+                  ${images}
 
 ## verfiy with:
 # cosign verify \
