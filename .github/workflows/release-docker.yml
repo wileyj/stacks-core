@@ -193,7 +193,7 @@ jobs:
               id: cosign_install
               uses: sigstore/cosign-installer@faadad0cce49287aee09b3a48701e75088a2c6ad # v4.0.0
 
-            - name: Sign the images with GitHub OIDC Token
+            - name: Sign the images with OIDC Token
               id: cosign_artifact
               shell: bash
               env:
