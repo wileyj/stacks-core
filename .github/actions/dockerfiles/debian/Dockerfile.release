@@ -1,6 +1,4 @@
 FROM alpine AS builder
-# FROM debian:bookworm AS builder
-
 
 ARG TARGETPLATFORM
 ENV ARCHIVE_ROOT="/release"
