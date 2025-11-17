@@ -1,6 +1,5 @@
 FROM alpine AS builder
 
-
 ARG TARGETPLATFORM
 ENV ARCHIVE_ROOT="/release"
 
