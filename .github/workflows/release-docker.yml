@@ -1,23 +1,30 @@
 ## Github workflow to create release docker images
 
-name: Docker Release Images
+name:
+    Docker Release Images
+
+    # node_tag: 4.0.0.0.4
+    # node_docker_tag: 4.0.0.0.4
+    # signer_tag: signer-4.0.0.0.4.0
+    # signer_docker_tag: 4.0.0.0.4.0
+    # release_type: stacks-core
 
 on:
     workflow_call:
         inputs:
+            # node_tag:
+            #     description: "Node Release Tag"
+            #     required: true
+            #     type: string
             node_tag:
-                description: "Node Release Tag"
-                required: true
-                type: string
-            node_docker_tag:
                 description: "Node Docker Release Tag"
                 required: true
                 type: string
+            # signer_tag:
+            #     description: "Signer Release Tag"
+            #     required: true
+            #     type: string
             signer_tag:
-                description: "Signer Release Tag"
-                required: true
-                type: string
-            signer_docker_tag:
                 description: "Signer Docker Release Tag"
                 required: true
                 type: string
@@ -73,25 +80,21 @@ jobs:
 
                   # set a default docker image: registry/repo/release_type
                   var_default_image="${{ env.docker_registry }}/${{ github.repository_owner }}/${{ inputs.release_type }}"
+                  var_artifact_pattern="${{ github.sha }}-${{ inputs.release_type }}-linux-${var_build_arch}*"
                   if [ "${{ inputs.release_type }}" == "stacks-signer" ]; then
                     # stacks-signer
-                    var_images="${var_default_image}"
-                    var_tag="${{ inputs.signer_tag }}"
-                    var_docker_tag=${{ inputs.signer_docker_tag }}
-                    # can probably reduce this by adding `linux-(arch) for musl, glibc`
-                    var_artifact_pattern="${{ github.sha }}-stacks-signer-linux-$var_build_arch*"
+                    var_images="${var_default_image}" # use default, set in conditional to allow for individual changes based on release type
+                    var_docker_tag=${{ inputs.signer_tag }} # use the input signer_tag if this is the stacks-signer build
+                    # var_artifact_pattern="${{ github.sha }}-stacks-signer-linux-$var_build_arch*"
                   else
                     # stacks-core
-                    # var_images="${var_default_image} ${{ env.docker_registry }}/${{ github.repository_owner }}/stacks-blockchain"
-                    var_images="${var_default_image}"
-                    var_tag="${{ inputs.node_tag }}"
-                    var_docker_tag=${{ inputs.node_docker_tag }}
-                    # can probably reduce this by adding `linux-(arch) for musl, glibc`
-                    var_artifact_pattern="${{ github.sha }}-stacks-core-linux-$var_build_arch*"
+                    var_images="${var_default_image}" # use default, set in conditional to allow for individual changes based on release type
+                    var_docker_tag=${{ inputs.node_tag }} # use the input node_tag if this is the stacks-node build
+                    # var_artifact_pattern="${{ github.sha }}-${{ inputs.release_type }}-linux-$var_build_arch*"
                   fi
+
                   ## Add vars to github env for later steps
                   echo "docker_images=${var_images}" >> $GITHUB_ENV
-                  echo "tag=${var_tag}" >> $GITHUB_ENV
                   echo "docker_tag=${var_docker_tag}" >> $GITHUB_ENV
                   echo "artifact_pattern=${var_artifact_pattern}" >> $GITHUB_ENV
                   echo "build_arch=${var_build_arch}" >> "$GITHUB_ENV"
@@ -106,9 +109,9 @@ jobs:
                     # is a release candidate
                     var_docker_tag_rc=true
                   fi
-                  if [[ "${docker_tag}" =~ -rc[0-9]*$ ]]; then
-                    var_docker_tag="${docker_tag}"
-                  fi
+                  # if [[ "${docker_tag}" =~ -rc[0-9]*$ ]]; then
+                  #   var_docker_tag="${docker_tag}"
+                  # fi
                   echo "var_docker_tag_rc: ${var_docker_tag_rc}"
                   echo "docker_tag_rc=${var_docker_tag_rc}" >> "$GITHUB_ENV"
 
@@ -157,6 +160,7 @@ jobs:
                       type=raw,value=${{ env.docker_tag }},enable=${{ env.docker_tag != '' && matrix.dist == 'debian'}}
                       #  version=dist tag
                       type=raw,value=${{ env.docker_tag }},suffix=-${{ matrix.dist }},enable=${{ env.docker_tag != '' && matrix.dist == 'debian' }}
+                      ##
                       ## alpine tags ##
                       #   latest-alpine tag
                       type=raw,value=latest,suffix=-${{ matrix.dist }},enable=${{ env.docker_tag != '' && env.docker_tag_rc != 'true' && matrix.dist == 'alpine' }}
@@ -175,7 +179,7 @@ jobs:
                   platforms: ${{ env.docker_platforms }}
                   tags: ${{ steps.docker_metadata.outputs.tags }}
                   labels: ${{ steps.docker_metadata.outputs.labels }}
-                  annotations: ${{ steps.docker_metadata.outputs.annotations }} # annotations are required for multi-architecture images
+                  annotations: ${{ steps.docker_metadata.outputs.annotations }} # Note: annotations are required for multi-architecture images
                   push: ${{ env.DOCKER_PUSH }}
 
             ## Generate docker image attestation(s)
@@ -183,13 +187,13 @@ jobs:
               id: attest_image
               uses: actions/attest-build-provenance@977bb373ede98d70efdf65b84cb5f73e068dcc2a # v3.0.0
               with:
-                  subject-name: ${{ env.docker_registry }}/${{ github.repository_owner }}/${{ inputs.release_type }} # attest for stacks-core|stacks-signer
+                  subject-name: ${{ env.docker_registry }}/${{ github.repository_owner }}/${{ inputs.release_type }}
                   subject-digest: ${{ steps.docker_build.outputs.digest }}
                   push-to-registry: ${{ env.DOCKER_PUSH }}
 
             ## Sign the images with GitHub OIDC Token
             ##   - https://github.blog/security/supply-chain-security/safeguard-container-signing-capability-actions/
-            ##   - annotations show as null per https://github.com/sigstore/cosign/pull/4508
+            ##   - annotations show as null per https://github.com/sigstore/cosign/pull/4508 until a future release (or tagging this specific commit)
             - name: Install Cosign
               id: cosign_install
               uses: sigstore/cosign-installer@faadad0cce49287aee09b3a48701e75088a2c6ad # v4.0.0

@@ -145,7 +145,7 @@ jobs:
                     echo "[ERROR] TARGET Variable is empty for ${{ matrix.arch }}-${{ matrix.cpu }}";
                     exit 1
                   fi
-                  ## Add vars to github env for later steps
+                  ## Add vars to env for later steps
                   # set the rust target arch for build
                   echo "TARGET=${TARGET}" >> "$GITHUB_ENV"
                   # set the target cpu for build
@@ -209,17 +209,10 @@ jobs:
                     # macos aarch64
                     aarch64-apple-darwin)
                       TARGET_CPU=native
-                      ####
-                      echo "pwd"
-                      pwd
-                      echo "ls"
-                      ls
-                      echo
-                      ####
                       echo "${CMD} ${BINS}--target $TARGET --config build.rustflags=\"\\\"-C target-cpu=${TARGET_CPU}\\\"\" "
                       ${{ env.CMD }} ${BINS} --target $TARGET --config build.rustflags="\"-C target-cpu=${TARGET_CPU}\"" || exit 1
                       ;;
-                    # catchall - run the default command
+                    # catchall - run the default command if no matching target triple
                     *)
                       echo "No matrix match for build target ($TARGET). using defaults"
                       ${{ env.CMD }} ${BINS} || exit 1
@@ -227,34 +220,23 @@ jobs:
                   esac
                   exit 0
 
-            ##############################################################################
-            ## Stacks core release artifact steps
-            ##  - binary archive includes stacks-signer binary
-            ## Compress the binary artifacts
-
-            - name: Install GNU sed on Mac
+            ## For macOS,install the GNU version of sed used in compress_artifacts_stacks_node
+            ##  - Included BSD version of sed returns an error: `sed: first RE may not be empty`
+            - name: Install GNU sed on macOS
               if: |
                   runner.os == 'macOS'
               run: |
-                  echo "pwd"
-                  pwd
-                  echo "ls -al"
-                  ls -al
-                  echo
-                  echo "ls ./target"
-                  ls -al ./target
-                  echo
-                  echo "ls -al ./target/${{ env.TARGET }}"
-                  ls -al ./target/${{ env.TARGET }}
-                  echo "ls -al ./target/${{ env.TARGET }}/release-lite"
-                  ls -al ./target/${{ env.TARGET }}/release-lite
-                  echo
-
                   brew install gnu-sed
 
                   echo "/usr/local/bin" >> $GITHUB_PATH
                   echo "$(brew --prefix)/opt/gnu-sed/libexec/gnubin" >> $GITHUB_PATH
 
+            ##############################################################################
+            ## Stacks core release artifact steps
+            ##  - binary archive includes stacks-signer binary
+            #   - all steps are conditional on if a node_tag input is provided (will not run for signer releases)
+
+            ## Compress the binaries in the target directory
             - name: Compress binaries (stacks-core)
               if: |
                   inputs.node_tag != ''
@@ -285,15 +267,17 @@ jobs:
 
             ##############################################################################
             ## Stacks signer release artifact steps
-            ##
-            ## Compress the binary artifacts
+            ##  - all steps are conditional on if a signer_tag input is provided
+
+            ## Compress the stacks-signer binary in the target directory
             - name: Compress binaries (stacks-signer)
               if: |
                   inputs.signer_tag != ''
               id: compress_artifacts_stacks_signer
               shell: bash
               run: |
-                  # remove the stacks-core zipfile and recreate for the signer
+                  # since the archives are named generically and identically for both stacks-core and stacks-signer:
+                  #   - remove the stacks-core zipfile and recreate for the signer
                   [ -e "${{ env.ZIPFILE_NAME}}.zip" ] && rm -f "${{env.ZIPFILE_NAME}}.zip"
                   # compress all binaries in the target directory for any architecture
                   file -0 ./target/${{env.TARGET}}/release-lite/stacks-signer* | sed -nE 's/\x0:\s*(ELF|PE32+|Mach).*//p' | zip --junk-paths ${{ env.ZIPFILE_NAME}}.zip -@
