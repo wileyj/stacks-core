@@ -39,12 +39,12 @@ jobs:
             max-parallel: 10
             matrix:
                 arch:
-                    - linux-glibc
-                    - linux-musl
+                    # - linux-glibc
+                    # - linux-musl
                     - macos
-                    - windows
+                    # - windows
                 cpu:
-                    - x86-64
+                    # - x86-64
                     - arm64
                 os:
                     - ubuntu-latest # update to large for more cpu cores NOTE: need to update excludes below if a different runner is used
@@ -209,6 +209,13 @@ jobs:
                     # macos aarch64
                     aarch64-apple-darwin)
                       TARGET_CPU=native
+                      ####
+                      echo "pwd"
+                      pwd
+                      echo "ls"
+                      ls
+                      echo
+                      ####
                       echo "${CMD} ${BINS}--target $TARGET --config build.rustflags=\"\\\"-C target-cpu=${TARGET_CPU}\\\"\" "
                       ${{ env.CMD }} ${BINS} --target $TARGET --config build.rustflags="\"-C target-cpu=${TARGET_CPU}\"" || exit 1
                       ;;
@@ -231,8 +238,21 @@ jobs:
               shell: bash
               run: |
                   # compress all binaries in the target directory for any architecture
+                  echo "pwd"
+                  pwd
+                  echo "ls -al"
+                  ls -al
+                  echo
+                  echo "ls .target"
+                  ls -al .target
+                  echo
+                  echo "ls -al ./target/${{ env.TARGET }}"
+                  ls -al ./target/${{ env.TARGET }}
+                  echo "ls -al ./target/${{ env.TARGET }}/release-lite"
+                  ls -al ./target/${{ env.TARGET }}/release-lite
+                  echo
                   file -0 ./target/${{ env.TARGET }}/release-lite/* | sed -nE 's/\x0:\s*(ELF|PE32+|Mach).*//p' | zip --junk-paths ${{ env.ZIPFILE_NAME }}.zip -@
-
+                  exit 1
             ## Upload the binary archive using the commit sha as the key
             - name: Upload Artifact (stacks-core)
               if: |
