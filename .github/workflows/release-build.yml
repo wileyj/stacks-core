@@ -39,12 +39,12 @@ jobs:
             max-parallel: 10
             matrix:
                 arch:
-                    # - linux-glibc
-                    # - linux-musl
+                    - linux-glibc
+                    - linux-musl
                     - macos
-                    # - windows
+                    - windows
                 cpu:
-                    # - x86-64
+                    - x86-64
                     - arm64
                 os:
                     - ubuntu-latest # update to large for more cpu cores NOTE: need to update excludes below if a different runner is used
@@ -263,7 +263,7 @@ jobs:
               run: |
                   # compress all binaries in the target directory for any architecture
                   file -0 ./target/${{ env.TARGET }}/release-lite/* | sed -nE 's/\x0:\s*(ELF|PE32+|Mach).*//p' | zip --junk-paths ${{ env.ZIPFILE_NAME }}.zip -@
-                  exit 1
+
             ## Upload the binary archive using the commit sha as the key
             - name: Upload Artifact (stacks-core)
               if: |
