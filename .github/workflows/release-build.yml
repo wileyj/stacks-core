@@ -231,6 +231,30 @@ jobs:
             ## Stacks core release artifact steps
             ##  - binary archive includes stacks-signer binary
             ## Compress the binary artifacts
+
+            - name: Install GNU sed on Mac
+              if: |
+                  runner.os == 'macOS'
+              run: |
+                  echo "pwd"
+                  pwd
+                  echo "ls -al"
+                  ls -al
+                  echo
+                  echo "ls ./target"
+                  ls -al ./target
+                  echo
+                  echo "ls -al ./target/${{ env.TARGET }}"
+                  ls -al ./target/${{ env.TARGET }}
+                  echo "ls -al ./target/${{ env.TARGET }}/release-lite"
+                  ls -al ./target/${{ env.TARGET }}/release-lite
+                  echo
+
+                  brew install gnu-sed
+
+                  echo "/usr/local/bin" >> $GITHUB_PATH
+                  echo "$(brew --prefix)/opt/gnu-sed/libexec/gnubin" >> $GITHUB_PATH
+
             - name: Compress binaries (stacks-core)
               if: |
                   inputs.node_tag != ''
@@ -238,19 +262,6 @@ jobs:
               shell: bash
               run: |
                   # compress all binaries in the target directory for any architecture
-                  echo "pwd"
-                  pwd
-                  echo "ls -al"
-                  ls -al
-                  echo
-                  echo "ls .target"
-                  ls -al .target
-                  echo
-                  echo "ls -al ./target/${{ env.TARGET }}"
-                  ls -al ./target/${{ env.TARGET }}
-                  echo "ls -al ./target/${{ env.TARGET }}/release-lite"
-                  ls -al ./target/${{ env.TARGET }}/release-lite
-                  echo
                   file -0 ./target/${{ env.TARGET }}/release-lite/* | sed -nE 's/\x0:\s*(ELF|PE32+|Mach).*//p' | zip --junk-paths ${{ env.ZIPFILE_NAME }}.zip -@
                   exit 1
             ## Upload the binary archive using the commit sha as the key
