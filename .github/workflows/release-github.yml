@@ -99,7 +99,7 @@ jobs:
             ## Creates releases
             - name: Create Release
               id: check
-              uses: wileyj/actions/stacks-core/release/create-releases@@chore/update_docker_comp
+              uses: wileyj/actions/stacks-core/release/create-releases@chore/update_docker_comp
               with:
                   node_tag: ${{ inputs.node_tag }} # name used for release (use the version by itself
                   signer_tag: signer-${{ inputs.signer_tag }} # name used for release (prefix with 'signer-')
