@@ -107,7 +107,7 @@ jobs:
             ## Setup Docker for the builds
             - name: Docker setup
               id: docker_setup
-              uses: stacks-network/actions/docker@main
+              uses: wileyj/actions/docker@@chore/update_docker_comp
               with:
                   registry: ${{ env.docker_registry }} # set the registry to ghcr (default is docker.io)
                   username: ${{ github.actor }}
