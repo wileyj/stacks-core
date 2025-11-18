@@ -48,20 +48,20 @@ jobs:
                     - arm64
                 os:
                     - ubuntu-latest
-                    - macos-latest-large
+                    - macos-latest
                 exclude:
                     ## exclude linux-musl on macos
                     - arch: linux-musl
-                      os: macos-latest-large
+                      os: macos-latest
                     ## exclude linux-glibc on macos
                     - arch: linux-glibc
-                      os: macos-latest-large
+                      os: macos-latest
                     ## excludes macos on ubuntu
                     - arch: macos
                       os: ubuntu-latest
                     ## excludes windows on macos
                     - arch: windows
-                      os: macos-latest-large
+                      os: macos-latest
                     ## excludes windows-arm64
                     - arch: windows
                       cpu: arm64
