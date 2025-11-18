@@ -188,7 +188,8 @@ jobs:
                   push-to-registry: ${{ env.DOCKER_PUSH }}
 
             ## Sign the images with GitHub OIDC Token
-            ## https://github.blog/security/supply-chain-security/safeguard-container-signing-capability-actions/
+            ##   - https://github.blog/security/supply-chain-security/safeguard-container-signing-capability-actions/
+            ##   - annotations show as null per https://github.com/sigstore/cosign/pull/4508
             - name: Install Cosign
               id: cosign_install
               uses: sigstore/cosign-installer@faadad0cce49287aee09b3a48701e75088a2c6ad # v4.0.0
