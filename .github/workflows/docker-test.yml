@@ -215,7 +215,7 @@ jobs:
                       org.opencontainers.image.created={{commit_date 'YYYY-MM-DDTHH:mm:ss.SSS[Z]'}}
                   tags: |
                       # if workflow_dispatch
-                      type=ref,event=workflow_dispatch
+                      type=ref,event=branch,enable=${{ github.event_name == 'workflow_dispatch' }}
                       # if schedule
                       type=schedule,pattern={{date 'YYYYMMDD'}}
                       # alternatively:
