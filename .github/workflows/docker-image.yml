@@ -6,6 +6,8 @@ name: Docker Image
 
 on:
     workflow_dispatch:
+    schedule:
+        - cron: "30 22 * * *" # 1430 pst
 
 env:
     docker_platforms: "linux/amd64,linux/arm64"
@@ -161,13 +163,19 @@ jobs:
               id: set_vars
               shell: bash
               run: |
+                  var_branch="${{ github.ref }}"
+                  if [ "${{ github.event_name }}" == "schedule" ]; then
+                    var_branch="develop"
+                  fi
                   var_default_image="${{ env.docker_registry }}/${{ github.repository }}"
                   echo "docker_images=${var_default_image}" >> $GITHUB_ENV
+                  echo "branch=${var_branch}" >> $GITHUB_ENV
 
             ## Setup Docker for the builds
             - name: Docker setup
               id: docker_setup
-              uses: stacks-network/actions/docker@main
+              uses: wileyj/actions/docker@chore/update_docker_comp
+              # uses: stacks-network/actions/docker@main
               with:
                   registry: ${{ env.docker_registry }}
                   username: ${{ github.actor }}
@@ -178,7 +186,7 @@ jobs:
               id: git_checkout
               uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
               with:
-                  ref: ${{ github.ref }}
+                  ref: ${{ env.branch }}
                   sparse-checkout: |
                       .github
 
@@ -201,8 +209,12 @@ jobs:
                   labels: |
                       org.opencontainers.image.created={{commit_date 'YYYY-MM-DDTHH:mm:ss.SSS[Z]'}}
                   tags: |
-                      type=raw,value=${{ env.BRANCH_NAME }}
-                      type=ref,event=pr
+                      # if trigger is workflow_dispatch
+                      type=ref,event=branch,enable=${{ github.event_name == 'workflow_dispatch' }}
+                      # if trigger is schedule, use a timestamp
+                      type=schedule,pattern={{date 'YYYYMMDD'}}
+                      # alternatively:
+                      # type=schedule,pattern=nightly # will create repository/owner/name:nightly
 
             - name: Build and Push
               id: docker_build
