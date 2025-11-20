@@ -172,7 +172,7 @@ jobs:
               shell: bash
               run: |
                   var_branch="${{ github.ref }}"
-                  if [ "${{ github.event_name }}" == "schedule" ]]; then
+                  if [ "${{ github.event_name }}" == "schedule" ]; then
                     var_branch="develop"
                   fi
                   var_default_image="${{ env.docker_registry }}/${{ github.repository }}"
