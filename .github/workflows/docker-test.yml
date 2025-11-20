@@ -7,7 +7,7 @@ name: Docker TEST
 on:
     workflow_dispatch:
     schedule:
-        - cron: "0 0 * * *" # midnight utc
+        - cron: "15 20 * * *" # 2015 utc
 
 env:
     docker_platforms: "linux/amd64,linux/arm64"
@@ -171,11 +171,16 @@ jobs:
               id: set_vars
               shell: bash
               run: |
+                  var_branch="${{ github.ref }}"
+                  if [ "${{ github.event_name }}" == "schedule" ]]; then
+                    var_branch="develop"
+                  fi
                   var_default_image="${{ env.docker_registry }}/${{ github.repository }}"
                   # if [ "${{ github.event_name }}" == "schedule" ]]; then
                   #   var_default_image="${{ env.docker_registry }}/${{ env.NIGHTLY_NAME }}"
                   # fi
                   echo "docker_images=${var_default_image}" >> $GITHUB_ENV
+                  echo "branch=${var_branch}" >> $GITHUB_ENV
 
             ## Setup Docker for the builds
             - name: Docker setup
@@ -191,7 +196,7 @@ jobs:
               id: git_checkout
               uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
               with:
-                  ref: ${{ github.ref }}
+                  ref: ${{ env.branch }} #${{ github.ref }}
                   sparse-checkout: |
                       .github
 
