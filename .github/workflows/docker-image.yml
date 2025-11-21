@@ -7,7 +7,7 @@ name: Docker Image
 on:
     workflow_dispatch:
     schedule:
-        - cron: "30 22 * * *" # 1430 pst
+        - cron: "00 20 * * *" # 1000 pst
 
 env:
     docker_platforms: "linux/amd64,linux/arm64"
@@ -48,7 +48,7 @@ jobs:
               run: |
                   var_branch="${{ github.ref }}"
                   if [ "${{ github.event_name }}" == "schedule" ]; then
-                    var_branch="${{ github.ref }}" # change to "develop" for PR. for now, stick to the chore branch otherwise the cron will fail
+                    var_branch="chore/nightly" # change to "develop" for PR. for now, stick to the chore branch otherwise the cron will fail
                   fi
                   echo "branch=${var_branch}" >> $GITHUB_ENV
 
@@ -176,7 +176,7 @@ jobs:
               run: |
                   var_branch="${{ github.ref }}"
                   if [ "${{ github.event_name }}" == "schedule" ]; then
-                    var_branch="develop"
+                    var_branch="chore/nightly" # change to "develop" for PR. for now, stick to the chore branch otherwise the cron will fail
                   fi
                   var_default_image="${{ env.docker_registry }}/${{ github.repository }}"
                   echo "docker_images=${var_default_image}" >> $GITHUB_ENV
