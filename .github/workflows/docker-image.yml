@@ -41,12 +41,23 @@ jobs:
                     - x86-64
                     - arm64
         steps:
+            ## set local env vars
+            - name: Set Local Vars
+              id: set_vars
+              shell: bash
+              run: |
+                  var_branch="${{ github.ref }}"
+                  if [ "${{ github.event_name }}" == "schedule" ]; then
+                    var_branch="${{ github.ref }}" # change to "develop" for PR. for now, stick to the chore branch otherwise the cron will fail
+                  fi
+                  echo "branch=${var_branch}" >> $GITHUB_ENV
+
             ## Checkout the code
             - name: Checkout the latest code
               id: git_checkout
               uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
               with:
-                  ref: ${{ github.ref }}
+                ref: ${{ env.branch }}
 
             ## Set target env var based on the type of arch build
             ##   - simplified from ./release-build.yml configure_target_platform step (only 2 target triples to build in this workflow)
@@ -171,16 +182,6 @@ jobs:
                   echo "docker_images=${var_default_image}" >> $GITHUB_ENV
                   echo "branch=${var_branch}" >> $GITHUB_ENV
 
-            ## Setup Docker for the builds
-            - name: Docker setup
-              id: docker_setup
-              uses: wileyj/actions/docker@chore/update_docker_comp
-              # uses: stacks-network/actions/docker@main
-              with:
-                  registry: ${{ env.docker_registry }}
-                  username: ${{ github.actor }}
-                  password: ${{ secrets.GITHUB_TOKEN }}
-
             ## Checkout the code
             - name: Checkout the latest code
               id: git_checkout
@@ -215,6 +216,16 @@ jobs:
                       type=schedule,pattern={{date 'YYYYMMDD'}}
                       # alternatively:
                       # type=schedule,pattern=nightly # will create repository/owner/name:nightly
+
+            ## Setup Docker for the builds
+            - name: Docker setup
+              id: docker_setup
+              uses: wileyj/actions/docker@chore/update_docker_comp
+              # uses: stacks-network/actions/docker@main
+              with:
+                  registry: ${{ env.docker_registry }}
+                  username: ${{ github.actor }}
+                  password: ${{ secrets.GITHUB_TOKEN }}
 
             - name: Build and Push
               id: docker_build
