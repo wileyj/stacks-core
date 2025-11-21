@@ -213,9 +213,8 @@ jobs:
                       # if trigger is workflow_dispatch
                       type=ref,event=branch,enable=${{ github.event_name == 'workflow_dispatch' }}
                       # if trigger is schedule, use a timestamp
-                      type=schedule,pattern={{date 'YYYYMMDD'}}
-                      # alternatively:
-                      # type=schedule,pattern=nightly # will create repository/owner/name:nightly
+                      # type=schedule,pattern={{date 'YYYYMMDD'}}
+                      type=schedule,pattern=nightly
 
             ## Setup Docker for the builds
             - name: Docker setup
