@@ -8,15 +8,15 @@ on:
       cache-ttl:
         description: "How many days to keep a cache (default: 7)"
         required: false
-        default: "7"
+        default: "2"
       workflow-ttl:
         description: "How many days to keep a successful workflow (default: 30)"
         required: false
-        default: "60"
+        default: "2"
       failed-workflow-ttl:
         description: "How many days to keep failed workflows (default: 15)"
         required: false
-        default: "60"
+        default: "2"
   schedule:
     ## Run every day at 00:00:00
     - cron: "0 0 * * *"
@@ -43,7 +43,7 @@ jobs:
     steps:
       - name: Cleanup
         id: cleanup
-        uses: stacks-network/actions/cleanup/workflows@main
+        uses: wileyj/actions/cleanup/workflows@feat/keep_release_jobs
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           cache-ttl: ${{ inputs.cache-ttl || env.CACHE_TTL}}
