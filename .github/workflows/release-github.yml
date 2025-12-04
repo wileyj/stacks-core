@@ -113,7 +113,7 @@ jobs:
             ## Creates releases
             - name: Create Release
               id: check
-              uses: wileyj/actions/stacks-core/release/create-releases@chore/update_docker_comp
+              uses: wileyj/actions/stacks-core/release/create-releases@chore/chore/6601_pr_comment
               # uses: stacks-network/actions/stacks-core/release/create-releases@main
               with:
                   node_tag: ${{ inputs.node_tag }}
