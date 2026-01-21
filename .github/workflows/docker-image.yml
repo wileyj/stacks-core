@@ -209,7 +209,12 @@ jobs:
                   images: ${{ env.docker_images }}
                   labels: |
                       org.opencontainers.image.created={{commit_date 'YYYY-MM-DDTHH:mm:ss.SSS[Z]'}}
-                      org.opencontainers.image.description="Stacks Core nightly image"
+                  annotations: |
+                      org.opencontainers.image.description="stacks-network/stacks-core repo nightly image"
+                      org.opencontainers.image.revision=${{ github.sha }}
+                      org.opencontainers.image.source=${{ github.event.repository.name }}
+                      org.opencontainers.image.licenses=GPL-3.0-only
+                      org.opencontainers.image.title=Stacks Core Nightly
                   tags: |
                       # if trigger is workflow_dispatch
                       type=ref,event=branch,enable=${{ github.event_name == 'workflow_dispatch' }}
