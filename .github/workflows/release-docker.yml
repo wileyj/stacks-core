@@ -61,25 +61,23 @@ jobs:
               shell: bash
               run: |
                   var_dockerfile_name="Dockerfile.release"
-                  if [ "${{ inputs.release_type }}" == "stacks-signer" ]; then
-                    var_dockerfile_name="Dockerfile.release.signer"
-                  fi
                   if [ "${{ matrix.dist }}" == "alpine" ]; then
                     var_build_arch=musl
                   else
                     var_build_arch=glibc
                   fi
-                  echo "var_build_arch: ${var_build_arch}"
 
                   # set a default docker image: registry/repo/release_type
                   var_default_image="${{ env.docker_registry }}/${{ github.repository_owner }}/${{ inputs.release_type }}"
                   if [ "${{ inputs.release_type }}" == "stacks-signer" ]; then
                     # stacks-signer
+                    var_dockerfile_name="Dockerfile.release.signer"
                     var_images="${var_default_image}"
                     var_tag="${{ inputs.signer_tag }}"
                     var_docker_tag=${{ inputs.signer_docker_tag }}
                     # can probably reduce this by adding `linux-(arch) for musl, glibc`
                     var_artifact_pattern="${{ github.sha }}-stacks-signer-linux-$var_build_arch*"
+                    var_annotation_pattern="Stacks Signer"
                   else
                     # stacks-core
                     # var_images="${var_default_image} ${{ env.docker_registry }}/${{ github.repository_owner }}/stacks-blockchain"
@@ -88,12 +86,14 @@ jobs:
                     var_docker_tag=${{ inputs.node_docker_tag }}
                     # can probably reduce this by adding `linux-(arch) for musl, glibc`
                     var_artifact_pattern="${{ github.sha }}-stacks-core-linux-$var_build_arch*"
+                    var_annotation_pattern="Stacks Core"
                   fi
                   ## Add vars to github env for later steps
                   echo "docker_images=${var_images}" >> $GITHUB_ENV
                   echo "tag=${var_tag}" >> $GITHUB_ENV
                   echo "docker_tag=${var_docker_tag}" >> $GITHUB_ENV
                   echo "artifact_pattern=${var_artifact_pattern}" >> $GITHUB_ENV
+                  echo "annotation_pattern=${var_annotation_pattern}" >> $GITHUB_ENV
                   echo "build_arch=${var_build_arch}" >> "$GITHUB_ENV"
                   echo "dockerfile_name=${var_dockerfile_name}" >> "$GITHUB_ENV"
 
@@ -147,7 +147,13 @@ jobs:
                   labels: |
                       org.opencontainers.image.created={{commit_date 'YYYY-MM-DDTHH:mm:ss.SSS[Z]'}}
                       org.opencontainers.image.version=${{ env.docker_tag }}
-                      org.opencontainers.image.description="${{ inputs.release_type }} ${{ inputs.release_version }}"
+                      org.opencontainers.image.revision=${{ github.sha }}
+                  annotations: |
+                      org.opencontainers.image.description=${{ env.annotation_pattern}} Image
+                      org.opencontainers.image.revision=${{ github.sha }}
+                      org.opencontainers.image.source=${{ github.event.repository.name }}
+                      org.opencontainers.image.licenses=GPL-3.0-only
+                      org.opencontainers.image.title=${{ env.annotation_pattern}}
                   tags: |
                       ## debian tags ##
                       #  latest tag

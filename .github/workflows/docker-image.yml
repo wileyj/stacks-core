@@ -1,19 +1,24 @@
 ## Github workflow to build a docker image from source
+#  - first builds the binaries from source for x86_64 and arm64
+#  - then builds the docker image from the binary artifacts
 
 name: Docker Image
 
 on:
     workflow_dispatch:
+    schedule:
+        - cron: "00 20 * * *" # 1000 pst
 
 env:
     docker_platforms: "linux/amd64,linux/arm64"
     docker_registry: "ghcr.io"
     # set a default command to build. we'll define specific build config options later per arch.
     CMD: "cargo build --features monitoring_prom,slog_json --profile release --workspace"
+    # do not generate provenance from the docker build step, instead attest the image specifically
+    provenance: false
     # ensure these env vars have no values since they will be explicitly set later
     TARGET_CPU: ""
     LINKER: ""
-    provenance: false
 
 concurrency:
     group: docker-image-${{ github.head_ref || github.ref || github.run_id }}
@@ -36,22 +41,33 @@ jobs:
                     - x86-64
                     - arm64
         steps:
+            ## set local env vars
+            - name: Set Local Vars
+              id: set_vars
+              shell: bash
+              run: |
+                  var_branch="${{ github.ref }}"
+                  if [ "${{ github.event_name }}" == "schedule" ]; then
+                    var_branch="chore/nightly" # change to "develop" for PR. for now, stick to the chore branch otherwise the cron will fail
+                  fi
+                  echo "branch=${var_branch}" >> $GITHUB_ENV
+
             ## Checkout the code
             - name: Checkout the latest code
               id: git_checkout
               uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
               with:
-                  ref: ${{ github.ref }}
+                ref: ${{ env.branch }}
 
             ## Set target env var based on the type of arch build
-            ##   - simplified from ./release-build.yml configure_target_platform step
+            ##   - simplified from ./release-build.yml configure_target_platform step (only 2 target triples to build in this workflow)
             - name: Configure Target Platform
               id: configure_target_platform
               shell: bash
               run: |
                   case ${{ matrix.cpu }} in
                     x86-64*)
-                      ARCHIVE_NAME="$(echo "${{matrix.cpu}}" | sed -e 's|86-||g')" # if matrix.cpu ever changes to a different x86 version, this will set the archive naming appropriately.
+                      ARCHIVE_NAME="$(echo "${{ matrix.cpu }}" | sed -e 's|86-||g')" # if matrix.cpu ever changes to a different x86 version, this will set the archive naming appropriately.
                       # set the CPU to build for. if the matrix defines x86-64, default to -v3, else use what's defined in the matrix
                       case ${{ matrix.cpu }} in
                         x86-64)
@@ -67,7 +83,7 @@ jobs:
                       ;;
                     arm64)
                       # install dependencies for the arm64 architecture, and set the rust target for the build step
-                      ARCHIVE_NAME=${{matrix.cpu}}
+                      ARCHIVE_NAME=${{ matrix.cpu }}
                       sudo apt-get update && sudo apt-get install -y git gcc-aarch64-linux-gnu libclang-dev llvm || exit 1
                       TARGET="aarch64-unknown-linux-gnu"
                       ;;
@@ -82,7 +98,7 @@ jobs:
                   fi
                   echo "TARGET=${TARGET}" >> "$GITHUB_ENV"
                   echo "TARGET_CPU=${TARGET_CPU}" >> "$GITHUB_ENV"
-                  echo "ZIPFILE_NAME=${{matrix.arch}}-${ARCHIVE_NAME}" >> "$GITHUB_ENV"
+                  echo "ZIPFILE_NAME=${{ matrix.arch }}-${ARCHIVE_NAME}" >> "$GITHUB_ENV"
 
             ## Install rust toolchain for the target being built
             - name: Setup Rust Toolchain
@@ -101,22 +117,22 @@ jobs:
                   #
                   # for each target, we will also echo the command being run so it's easier to see in the logs what command was run
                   #
-                  case "${{env.TARGET}}" in
+                  case "${{ env.TARGET }}" in
                     # linux glibc aarch64
                     aarch64-unknown-linux-gnu)
                       LINKER=aarch64-linux-gnu-gcc
                       echo "$CMD --target $TARGET --config \"target.${TARGET}.linker=\\\"${LINKER}\\\"\" "
-                      ${{env.CMD}} --target $TARGET --config "target.${{env.TARGET}}.linker=\"${LINKER}\"" || exit 1
+                      ${{ env.CMD }} --target $TARGET --config "target.${{ env.TARGET }}.linker=\"${LINKER}\"" || exit 1
                       ;;
                     # linux glibc x64
                     x86_64-unknown-linux-gnu)
                       # use the default linker
                       echo "$CMD --target $TARGET --config build.rustflags=\"\\\"-C target-cpu=${TARGET_CPU}\\\"\" "
-                      ${{env.CMD}} --target $TARGET --config build.rustflags="\"-C target-cpu=${TARGET_CPU}\"" || exit 1
+                      ${{ env.CMD }} --target $TARGET --config build.rustflags="\"-C target-cpu=${TARGET_CPU}\"" || exit 1
                       ;;
                     *)
                       echo "No matrix match for build target ($TARGET). using defaults"
-                      ${{env.CMD}} || exit 1
+                      ${{ env.CMD }} || exit 1
                       ;;
                   esac
                   exit 0
@@ -127,14 +143,14 @@ jobs:
               shell: bash
               run: |
                   # compress all binaries in the target directory for any architecture
-                  file -0 ./target/${{env.TARGET}}/release/* | sed -nE 's/\x0:\s*(ELF|PE32+|Mach).*//p' | zip --junk-paths ${{env.ZIPFILE_NAME}}.zip -@
+                  file -0 ./target/${{ env.TARGET }}/release/* | sed -nE 's/\x0:\s*(ELF|PE32+|Mach).*//p' | zip --junk-paths ${{ env.ZIPFILE_NAME }}.zip -@
 
             ## Upload the binary archive using the commit sha as the key
             - name: Upload Artifact
               id: upload_artifact
               uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
               with:
-                  name: ${{github.sha}}-${{ env.ZIPFILE_NAME }}
+                  name: ${{ github.sha }}-${{ env.ZIPFILE_NAME }}
                   path: ${{ env.ZIPFILE_NAME }}.zip
 
             ## Attest the binary archive
@@ -158,24 +174,23 @@ jobs:
               id: set_vars
               shell: bash
               run: |
+                  var_branch="${{ github.ref }}"
+                  var_annotation_pattern="${var_branch}" # default to use the branch name
+                  if [ "${{ github.event_name }}" == "schedule" ]; then
+                    var_branch="chore/nightly" # change to "develop" for PR. for now, stick to the chore branch otherwise the cron will fail
+                    var_annotation_pattern="Nightly" # for scheduled (nightly) builds, use 'Nightly'
+                  fi
                   var_default_image="${{ env.docker_registry }}/${{ github.repository }}"
                   echo "docker_images=${var_default_image}" >> $GITHUB_ENV
-
-            ## Setup Docker for the builds
-            - name: Docker setup
-              id: docker_setup
-              uses: wileyj/actions/docker@chore/update_docker_comp
-              with:
-                  registry: ${{ env.docker_registry }}
-                  username: ${{ github.actor }}
-                  password: ${{ secrets.GITHUB_TOKEN }}
+                  echo "branch=${var_branch}" >> $GITHUB_ENV
+                  echo "annotation_pattern=${var_annotation_pattern}" >> $GITHUB_ENV
 
             ## Checkout the code
             - name: Checkout the latest code
               id: git_checkout
               uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
               with:
-                  ref: ${{ github.ref }}
+                  ref: ${{ env.branch }}
                   sparse-checkout: |
                       .github
 
@@ -183,7 +198,7 @@ jobs:
               id: download_artifacts
               uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
               with:
-                  pattern: ${{github.sha}}-* # linux-glibc variants are the only artifacts produced, download for both architectures
+                  pattern: ${{ github.sha }}-* # linux-glibc variants are the only artifacts produced, download for both architectures (Dockerfile will choose specific architecture arhive)
                   path: /tmp/release
                   merge-multiple: true
 
@@ -197,9 +212,28 @@ jobs:
                   images: ${{ env.docker_images }}
                   labels: |
                       org.opencontainers.image.created={{commit_date 'YYYY-MM-DDTHH:mm:ss.SSS[Z]'}}
+                  annotations: |
+                      org.opencontainers.image.description=Stacks Core ${{ env.annotation_pattern }} Image
+                      org.opencontainers.image.revision=${{ github.sha }}
+                      org.opencontainers.image.source=${{ github.event.repository.name }}
+                      org.opencontainers.image.licenses=GPL-3.0-only
+                      org.opencontainers.image.title=Stacks Core ${{ env.annotation_pattern}}
                   tags: |
-                      type=raw,value=${{ env.BRANCH_NAME }}
-                      type=ref,event=pr
+                      # if trigger is workflow_dispatch
+                      type=ref,event=branch,enable=${{ github.event_name == 'workflow_dispatch' }}
+                      # if trigger is schedule, use a timestamp
+                      # type=schedule,pattern={{date 'YYYYMMDD'}}
+                      type=schedule,pattern=nightly
+
+            ## Setup Docker for the builds
+            - name: Docker setup
+              id: docker_setup
+              uses: wileyj/actions/docker@chore/update_docker_comp
+              # uses: stacks-network/actions/docker@main
+              with:
+                  registry: ${{ env.docker_registry }}
+                  username: ${{ github.actor }}
+                  password: ${{ secrets.GITHUB_TOKEN }}
 
             - name: Build and Push
               id: docker_build
@@ -212,7 +246,7 @@ jobs:
                   platforms: ${{ env.docker_platforms }}
                   tags: ${{ steps.docker_metadata.outputs.tags }}
                   labels: ${{ steps.docker_metadata.outputs.labels }}
-                  annotations: ${{ steps.docker_metadata.outputs.annotations }} # annotations are required for multi-architecture images
+                  annotations: ${{ steps.docker_metadata.outputs.annotations }} # Note: annotations are used for multi-architecture ghcr images
                   push: ${{ env.DOCKER_PUSH }}
 
             ## Generate docker image attestation(s)
@@ -228,12 +262,13 @@ jobs:
                   push-to-registry: ${{ env.DOCKER_PUSH }}
 
             ## Sign the images with GitHub OIDC Token
-            ## https://github.blog/security/supply-chain-security/safeguard-container-signing-capability-actions/
+            ##   - https://github.blog/security/supply-chain-security/safeguard-container-signing-capability-actions/
+            ##   - annotations show as null per https://github.com/sigstore/cosign/pull/4508 until a future release (or tagging this specific commit)
             - name: Install Cosign
               id: cosign_install
               uses: sigstore/cosign-installer@faadad0cce49287aee09b3a48701e75088a2c6ad # v4.0.0
 
-            - name: Sign the images with GitHub OIDC Token
+            - name: Sign the images OIDC Token
               id: cosign_image
               shell: bash
               env:
@@ -249,9 +284,3 @@ jobs:
                       -a "ref=${{ github.sha }}" \
                       --yes \
                   ${images}
-
-## verfiy with:
-# cosign verify \
-#   --certificate-oidc-issuer=https://token.actions.githubusercontent.com \
-#   --certificate-identity-regexp=https://github.com/wileyj/stacks-core \
-# ghcr.io/wileyj/stacks-core:feat-image8
