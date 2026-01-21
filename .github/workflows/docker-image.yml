@@ -210,7 +210,7 @@ jobs:
                   labels: |
                       org.opencontainers.image.created={{commit_date 'YYYY-MM-DDTHH:mm:ss.SSS[Z]'}}
                   annotations: |
-                      org.opencontainers.image.description=Stacks Core Nightly Nightly Image
+                      org.opencontainers.image.description=Stacks Core Nightly Image
                       org.opencontainers.image.revision=${{ github.sha }}
                       org.opencontainers.image.source=${{ github.event.repository.name }}
                       org.opencontainers.image.licenses=GPL-3.0-only
