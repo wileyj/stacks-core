@@ -175,12 +175,15 @@ jobs:
               shell: bash
               run: |
                   var_branch="${{ github.ref }}"
+                  var_annotation_pattern="${var_branch}" # default to use the branch name
                   if [ "${{ github.event_name }}" == "schedule" ]; then
                     var_branch="chore/nightly" # change to "develop" for PR. for now, stick to the chore branch otherwise the cron will fail
+                    var_annotation_pattern="Nightly" # for scheduled (nightly) builds, use 'Nightly'
                   fi
                   var_default_image="${{ env.docker_registry }}/${{ github.repository }}"
                   echo "docker_images=${var_default_image}" >> $GITHUB_ENV
                   echo "branch=${var_branch}" >> $GITHUB_ENV
+                  echo "annotation_pattern=${var_annotation_pattern}" >> $GITHUB_ENV
 
             ## Checkout the code
             - name: Checkout the latest code
@@ -210,11 +213,11 @@ jobs:
                   labels: |
                       org.opencontainers.image.created={{commit_date 'YYYY-MM-DDTHH:mm:ss.SSS[Z]'}}
                   annotations: |
-                      org.opencontainers.image.description=Stacks Core Nightly Image
+                      org.opencontainers.image.description=Stacks Core ${{ env.annotation_pattern }} Image
                       org.opencontainers.image.revision=${{ github.sha }}
                       org.opencontainers.image.source=${{ github.event.repository.name }}
                       org.opencontainers.image.licenses=GPL-3.0-only
-                      org.opencontainers.image.title=Stacks Core Nightly
+                      org.opencontainers.image.title=Stacks Core ${{ env.annotation_pattern}}
                   tags: |
                       # if trigger is workflow_dispatch
                       type=ref,event=branch,enable=${{ github.event_name == 'workflow_dispatch' }}
