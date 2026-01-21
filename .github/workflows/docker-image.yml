@@ -46,7 +46,7 @@ jobs:
               id: set_vars
               shell: bash
               run: |
-                  var_branch="${{ github.ref }}"
+                  var_branch="${{ github.ref_name }}"
                   if [ "${{ github.event_name }}" == "schedule" ]; then
                     var_branch="chore/nightly" # change to "develop" for PR. for now, stick to the chore branch otherwise the cron will fail
                   fi
