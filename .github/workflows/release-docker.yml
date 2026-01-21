@@ -147,6 +147,7 @@ jobs:
                   labels: |
                       org.opencontainers.image.created={{commit_date 'YYYY-MM-DDTHH:mm:ss.SSS[Z]'}}
                       org.opencontainers.image.version=${{ env.docker_tag }}
+                      org.opencontainers.image.description="${{ inputs.release_type }} ${{ inputs.release_version }}"
                   tags: |
                       ## debian tags ##
                       #  latest tag
