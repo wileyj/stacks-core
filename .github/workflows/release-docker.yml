@@ -126,6 +126,8 @@ jobs:
         - name: Docker Metadata ( ${{matrix.dist}} )
           id: docker_metadata
           uses: docker/metadata-action@318604b99e75e41977312d83839a89be02ca4893 #v5.9.0
+          env:
+            DOCKER_METADATA_ANNOTATIONS_LEVELS: manifest,index
           with:
             images: |
               ${{ env.DOCKER_IMAGES }}
@@ -135,9 +137,6 @@ jobs:
               org.opencontainers.image.revision=${{ github.sha }}
             annotations: |
               org.opencontainers.image.description=${{ env.ANNOTATION_PATTERN}} Image
-              org.opencontainers.image.revision=${{ github.sha }}
-              org.opencontainers.image.source=${{ github.event.repository.name }}
-              org.opencontainers.image.licenses=GPL-3.0-only
               org.opencontainers.image.title=${{ env.ANNOTATION_PATTERN}}
             tags: |
               ## debian tags ##

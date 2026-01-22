@@ -216,9 +216,6 @@ jobs:
             org.opencontainers.image.revision=${{ github.sha }}
           annotations: |
             org.opencontainers.image.description=Stacks Core ${{ env.ANNOTATION_PATTERN }} Image
-            org.opencontainers.image.revision=${{ github.sha }}
-            org.opencontainers.image.source=${{ github.event.repository.name }}
-            org.opencontainers.image.licenses=GPL-3.0-only
             org.opencontainers.image.title=Stacks Core ${{ env.ANNOTATION_PATTERN}}
           tags: |
             # if trigger is workflow_dispatch
