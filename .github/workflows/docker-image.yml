@@ -10,12 +10,12 @@ on:
         - cron: "00 20 * * *" # 1000 pst
 
 env:
-    docker_platforms: "linux/amd64,linux/arm64"
-    docker_registry: "ghcr.io"
+    DOCKER_PLATFORMS: "linux/amd64,linux/arm64"
+    DOCKER_REGISTRY: "ghcr.io"
     # set a default command to build. we'll define specific build config options later per arch.
     CMD: "cargo build --features monitoring_prom,slog_json --profile release --workspace"
     # do not generate provenance from the docker build step, instead attest the image specifically
-    provenance: false
+    PROVENANCE: false
     # ensure these env vars have no values since they will be explicitly set later
     TARGET_CPU: ""
     LINKER: ""
@@ -57,7 +57,7 @@ jobs:
               id: git_checkout
               uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
               with:
-                ref: ${{ env.branch }}
+                  ref: ${{ env.BRANCH }}
 
             ## Set target env var based on the type of arch build
             ##   - simplified from ./release-build.yml configure_target_platform step (only 2 target triples to build in this workflow)
@@ -176,21 +176,30 @@ jobs:
               run: |
                   var_branch="${{ github.ref_name }}"
                   var_annotation_pattern="${var_branch}" # default to use the branch name
+                  var_default_image="${{ env.DOCKER_REGISTRY }}/${{ github.repository }}"
                   if [ "${{ github.event_name }}" == "schedule" ]; then
-                    var_branch="chore/nightly" # change to "develop" for PR. for now, stick to the chore branch otherwise the cron will fail
+                    var_branch="chore/nightly"
                     var_annotation_pattern="Nightly" # for scheduled (nightly) builds, use 'Nightly'
                   fi
-                  var_default_image="${{ env.docker_registry }}/${{ github.repository }}"
-                  echo "docker_images=${var_default_image}" >> $GITHUB_ENV
-                  echo "branch=${var_branch}" >> $GITHUB_ENV
-                  echo "annotation_pattern=${var_annotation_pattern}" >> $GITHUB_ENV
+                  echo "DOCKER_IMAGES=${var_default_image}" >> $GITHUB_ENV
+                  echo "BRANCH=${var_branch}" >> $GITHUB_ENV
+                  echo "ANNOTATION_PATTERN=${var_annotation_pattern}" >> $GITHUB_ENV
+
+            ## Setup Docker for the builds
+            - name: Docker setup
+              id: docker_setup
+              uses: stacks-network/actions/docker@main
+              with:
+                  registry: ${{ env.DOCKER_REGISTRY }}
+                  username: ${{ github.actor }}
+                  password: ${{ secrets.GITHUB_TOKEN }}
 
             ## Checkout the code
             - name: Checkout the latest code
               id: git_checkout
               uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
               with:
-                  ref: ${{ env.branch }}
+                  ref: ${{ env.BRANCH }}
                   sparse-checkout: |
                       .github
 
@@ -209,15 +218,16 @@ jobs:
               env:
                   DOCKER_METADATA_ANNOTATIONS_LEVELS: manifest,index
               with:
-                  images: ${{ env.docker_images }}
+                  images: ${{ env.DOCKER_IMAGES }}
                   labels: |
                       org.opencontainers.image.created={{commit_date 'YYYY-MM-DDTHH:mm:ss.SSS[Z]'}}
+                      org.opencontainers.image.revision=${{ github.sha }}
                   annotations: |
-                      org.opencontainers.image.description=Stacks Core ${{ env.annotation_pattern }} Image
+                      org.opencontainers.image.description=Stacks Core ${{ env.ANNOTATION_PATTERN }} Image
                       org.opencontainers.image.revision=${{ github.sha }}
                       org.opencontainers.image.source=${{ github.event.repository.name }}
                       org.opencontainers.image.licenses=GPL-3.0-only
-                      org.opencontainers.image.title=Stacks Core ${{ env.annotation_pattern}}
+                      org.opencontainers.image.title=Stacks Core ${{ env.ANNOTATION_PATTERN}}
                   tags: |
                       # if trigger is workflow_dispatch
                       type=ref,event=branch,enable=${{ github.event_name == 'workflow_dispatch' }}
@@ -231,7 +241,7 @@ jobs:
               uses: wileyj/actions/docker@chore/update_docker_comp
               # uses: stacks-network/actions/docker@main
               with:
-                  registry: ${{ env.docker_registry }}
+                  registry: ${{ env.DOCKER_REGISTRY }}
                   username: ${{ github.actor }}
                   password: ${{ secrets.GITHUB_TOKEN }}
 
@@ -240,10 +250,10 @@ jobs:
               uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83 # v6.18.0
               with:
                   sbom: false
-                  provenance: ${{ env.provenance }}
+                  provenance: ${{ env.PROVENANCE }}
                   context: /tmp
                   file: ./.github/actions/dockerfiles/debian/Dockerfile
-                  platforms: ${{ env.docker_platforms }}
+                  platforms: ${{ env.DOCKER_PLATFORMS }}
                   tags: ${{ steps.docker_metadata.outputs.tags }}
                   labels: ${{ steps.docker_metadata.outputs.labels }}
                   annotations: ${{ steps.docker_metadata.outputs.annotations }} # Note: annotations are used for multi-architecture ghcr images
@@ -252,12 +262,12 @@ jobs:
             ## Generate docker image attestation(s)
             - name: Attest Image
               if: |
-                  env.provenance != true
+                  env.PROVENANCE != true
               id: attest_artifact
               uses: actions/attest-build-provenance@977bb373ede98d70efdf65b84cb5f73e068dcc2a # v3.0.0
               with:
                   subject-name: |
-                      ${{ env.docker_images }}
+                      ${{ env.DOCKER_IMAGES }}
                   subject-digest: ${{ steps.docker_build.outputs.digest }}
                   push-to-registry: ${{ env.DOCKER_PUSH }}
 
