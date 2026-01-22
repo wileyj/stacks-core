@@ -9,16 +9,8 @@ on:
                 description: "Node Release Tag"
                 required: true
                 type: string
-            node_docker_tag:
-                description: "Node Docker Release Tag"
-                required: true
-                type: string
             signer_tag:
                 description: "Signer Release Tag"
-                required: true
-                type: string
-            signer_docker_tag:
-                description: "Signer Docker Release Tag"
                 required: true
                 type: string
             release_type:
