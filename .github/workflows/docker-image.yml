@@ -7,7 +7,7 @@ name: Docker Image
 on:
     workflow_dispatch:
     schedule:
-        - cron: "30 05 * * *" # 2130 pst
+        - cron: "00 10 * * *" # 0200 pst
 
 env:
     DOCKER_PLATFORMS: "linux/amd64,linux/arm64"
