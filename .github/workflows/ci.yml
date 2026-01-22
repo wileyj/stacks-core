@@ -2,141 +2,141 @@
 name: CI
 
 on:
-    merge_group:
-        types:
-            - checks_requested
-    push:
-        branches:
-            - master
-            - develop
-            - next
-        paths-ignore:
-            - "**.md"
-            - "**.yml"
-    workflow_dispatch:
-    pull_request:
-        types:
-            - opened
-            - reopened
-            - synchronize
+  merge_group:
+    types:
+      - checks_requested
+  push:
+    branches:
+      - master
+      - develop
+      - next
+    paths-ignore:
+      - "**.md"
+      - "**.yml"
+  workflow_dispatch:
+  pull_request:
+    types:
+      - opened
+      - reopened
+      - synchronize
 
 defaults:
-    run:
-        shell: bash
+  run:
+    shell: bash
 
 concurrency:
-    group: ci-${{ github.head_ref || github.ref || github.run_id }}
-    ## Always cancel duplicate jobs
-    cancel-in-progress: true
+  group: ci-${{ github.head_ref || github.ref || github.run_id }}
+  ## Always cancel duplicate jobs
+  cancel-in-progress: true
 
 run-name: ${{ github.ref_name }}
 
 jobs:
-    ##
-    ## Jobs to execute everytime workflow runs
-    ##   do not run if the trigger is any of the following:
-    ##   - PR review submitted (not approved)
-    ##   and any of:
-    ##     - PR review comment
-    ##     - PR change is requested
-    rustfmt:
-        name: Rust Format
-        runs-on: ubuntu-latest
-        steps:
-            - name: Rustfmt
-              id: rustfmt
-              uses: stacks-network/actions/rustfmt@main
-              with:
-                  alias: "fmt-stacks"
+  ##
+  ## Jobs to execute everytime workflow runs
+  ##   do not run if the trigger is any of the following:
+  ##   - PR review submitted (not approved)
+  ##   and any of:
+  ##     - PR review comment
+  ##     - PR change is requested
+  rustfmt:
+    name: Rust Format
+    runs-on: ubuntu-latest
+    steps:
+      - name: Rustfmt
+        id: rustfmt
+        uses: stacks-network/actions/rustfmt@main
+        with:
+          alias: "fmt-stacks"
 
-    ######################################################################################
-    ## Check if the branch that this workflow is being run against is a release branch
-    ##
-    ## Outputs:
-    ##  - node_tag: Tag of the stacks-node if the branch is a release one (example: release/3.4.0.0.1), null otherwise
-    ##  - node_docker_tag: Version of the stacks-node if the branch is a release one (example: 3.4.0.0.1), null otherwise
-    ##  - signer_tag: Tag of the stacks-signer if the branch is a release one (example: release/3.4.0.0.1.0), null otherwise
-    ##  - signer_docker_tag: Version of the stacks-signer if the branch is a release one (example: 3.4.0.0.1.0), null otherwise
-    ##  - is_node_release: True if the branch represents a 'stacks-node' release, false otherwise.
-    ##                     If this is true, 'is_signer_release' will also be true, since a 'stacks-signer' binary
-    ##                     is always released alongside 'stacks-node'.
-    ##  - is_signer_release: True if the branch represents a 'stacks-signer' release, false otherwise.
-    check-release:
-        name: Check Release
-        needs:
-            - rustfmt
-        runs-on: ubuntu-latest
-        outputs:
-            node_tag: ${{ steps.check_release.outputs.node_tag }}
-            node_docker_tag: ${{ steps.check_release.outputs.node_docker_tag }}
-            signer_tag: ${{ steps.check_release.outputs.signer_tag }}
-            signer_docker_tag: ${{ steps.check_release.outputs.signer_docker_tag }}
-            is_node_release: ${{ steps.check_release.outputs.is_node_release }}
-            is_signer_release: ${{ steps.check_release.outputs.is_signer_release }}
-        steps:
-            - name: Check Release
-              id: check_release
-              uses: stacks-network/actions/stacks-core/release/check-release@main
-              with:
-                  tag: ${{ github.ref_name }}
+  ######################################################################################
+  ## Check if the branch that this workflow is being run against is a release branch
+  ##
+  ## Outputs:
+  ##  - node_tag: Tag of the stacks-node if the branch is a release one (example: release/3.4.0.0.1), null otherwise
+  ##  - node_docker_tag: Version of the stacks-node if the branch is a release one (example: 3.4.0.0.1), null otherwise
+  ##  - signer_tag: Tag of the stacks-signer if the branch is a release one (example: release/3.4.0.0.1.0), null otherwise
+  ##  - signer_docker_tag: Version of the stacks-signer if the branch is a release one (example: 3.4.0.0.1.0), null otherwise
+  ##  - is_node_release: True if the branch represents a 'stacks-node' release, false otherwise.
+  ##                     If this is true, 'is_signer_release' will also be true, since a 'stacks-signer' binary
+  ##                     is always released alongside 'stacks-node'.
+  ##  - is_signer_release: True if the branch represents a 'stacks-signer' release, false otherwise.
+  check-release:
+    name: Check Release
+    needs:
+      - rustfmt
+    runs-on: ubuntu-latest
+    outputs:
+      node_tag: ${{ steps.check_release.outputs.node_tag }}
+      node_docker_tag: ${{ steps.check_release.outputs.node_docker_tag }}
+      signer_tag: ${{ steps.check_release.outputs.signer_tag }}
+      signer_docker_tag: ${{ steps.check_release.outputs.signer_docker_tag }}
+      is_node_release: ${{ steps.check_release.outputs.is_node_release }}
+      is_signer_release: ${{ steps.check_release.outputs.is_signer_release }}
+    steps:
+      - name: Check Release
+        id: check_release
+        uses: stacks-network/actions/stacks-core/release/check-release@main
+        with:
+            tag: ${{ github.ref_name }}
 
-    ######################################################################################
-    ## Create a tagged github release
-    ##
-    ## Runs when:
-    ##  - it is either a node release or a signer release
+  ######################################################################################
+  ## Create a tagged github release
+  ##
+  ## Runs when:
+  ##  - it is either a node release or a signer release
 
-    # build-binaries:
-    #     if: |
-    #         needs.check-release.outputs.is_node_release == 'true' ||
-    #         needs.check-release.outputs.is_signer_release == 'true'
-    #     name: Build Binaries
-    #     needs:
-    #         - rustfmt
-    #         - check-release
-    #     uses: ./.github/workflows/release-build.yml
-    #     with:
-    #         node_tag: ${{ needs.check-release.outputs.node_tag }}
-    #         # node_docker_tag: ${{ inputs.node_docker_tag }}
-    #         signer_tag: ${{ needs.check-release.outputs.signer_tag }}
-    #         # signer_docker_tag: ${{ inputs.signer_docker_tag }}
-    #         # is_node_release: ${{ inputs.is_node_release }}
-    #         is_signer_release: ${{ needs.check-release.outputs.is_signer_release }}
+  # build-binaries:
+  #     if: |
+  #         needs.check-release.outputs.is_node_release == 'true' ||
+  #         needs.check-release.outputs.is_signer_release == 'true'
+  #     name: Build Binaries
+  #     needs:
+  #         - rustfmt
+  #         - check-release
+  #     uses: ./.github/workflows/release-build.yml
+  #     with:
+  #         node_tag: ${{ needs.check-release.outputs.node_tag }}
+  #         # node_docker_tag: ${{ inputs.node_docker_tag }}
+  #         signer_tag: ${{ needs.check-release.outputs.signer_tag }}
+  #         # signer_docker_tag: ${{ inputs.signer_docker_tag }}
+  #         # is_node_release: ${{ inputs.is_node_release }}
+  #         is_signer_release: ${{ needs.check-release.outputs.is_signer_release }}
 
-    # docker-image:
-    #     if: |
-    #         needs.check-release.outputs.is_node_release == 'true' ||
-    #         needs.check-release.outputs.is_signer_release == 'true'
-    #     name: Build Docker Images
-    #     secrets: inherit
-    #     needs:
-    #         # - andon-cord
-    #         - check-release
-    #         - build-binaries
-    #     ## Creates the node docker image
-    #     uses: ./.github/workflows/release-docker.yml
-    #     with:
-    #         node_tag: ${{ needs.check-release.outputs.node_tag }}
-    #         node_docker_tag: ${{ needs.check-release.outputs.node_docker_tag }}
-    #         signer_tag: ${{ needs.check-release.outputs.signer_tag }}
-    #         signer_docker_tag: ${{ needs.check-release.outputs.signer_docker_tag }}
-    #         is_node_release: ${{ needs.check-release.outputs.is_node_release }}
-    #         is_signer_release: ${{ needs.check-release.outputs.is_signer_release }}
+  # docker-image:
+  #     if: |
+  #         needs.check-release.outputs.is_node_release == 'true' ||
+  #         needs.check-release.outputs.is_signer_release == 'true'
+  #     name: Build Docker Images
+  #     secrets: inherit
+  #     needs:
+  #         # - andon-cord
+  #         - check-release
+  #         - build-binaries
+  #     ## Creates the node docker image
+  #     uses: ./.github/workflows/release-docker.yml
+  #     with:
+  #         node_tag: ${{ needs.check-release.outputs.node_tag }}
+  #         node_docker_tag: ${{ needs.check-release.outputs.node_docker_tag }}
+  #         signer_tag: ${{ needs.check-release.outputs.signer_tag }}
+  #         signer_docker_tag: ${{ needs.check-release.outputs.signer_docker_tag }}
+  #         is_node_release: ${{ needs.check-release.outputs.is_node_release }}
+  #         is_signer_release: ${{ needs.check-release.outputs.is_signer_release }}
 
-    create-release:
-      if: |
-          needs.check-release.outputs.is_node_release == 'true' ||
-          needs.check-release.outputs.is_signer_release == 'true'
-      name: Create Release
-      needs:
-          - rustfmt
-          - check-release
-      secrets: inherit
-      uses: ./.github/workflows/release-github.yml
-      with:
-          node_tag: ${{ needs.check-release.outputs.node_docker_tag }} # 5 place version format like x.x.x.x.x
-          signer_tag: ${{ needs.check-release.outputs.signer_docker_tag }} # 6 place version format like x.x.x.x.x.x
-          is_node_release: ${{ needs.check-release.outputs.is_node_release }} # used in matrix conitional in release-github.yml
+  create-release:
+    if: |
+      needs.check-release.outputs.is_node_release == 'true' ||
+      needs.check-release.outputs.is_signer_release == 'true'
+    name: Create Release
+    needs:
+      - rustfmt
+      - check-release
+    secrets: inherit
+    uses: ./.github/workflows/release-github.yml
+    with:
+      node_tag: ${{ needs.check-release.outputs.node_docker_tag }} # 5 place version format like x.x.x.x.x
+      signer_tag: ${{ needs.check-release.outputs.signer_docker_tag }} # 6 place version format like x.x.x.x.x.x
+      is_node_release: ${{ needs.check-release.outputs.is_node_release }} # used in matrix conitional in release-github.yml
 
     # ## Create a reusable cache for tests
     # ##
