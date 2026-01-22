@@ -185,15 +185,6 @@ jobs:
                   echo "BRANCH=${var_branch}" >> $GITHUB_ENV
                   echo "ANNOTATION_PATTERN=${var_annotation_pattern}" >> $GITHUB_ENV
 
-            ## Setup Docker for the builds
-            - name: Docker setup
-              id: docker_setup
-              uses: stacks-network/actions/docker@main
-              with:
-                  registry: ${{ env.DOCKER_REGISTRY }}
-                  username: ${{ github.actor }}
-                  password: ${{ secrets.GITHUB_TOKEN }}
-
             ## Checkout the code
             - name: Checkout the latest code
               id: git_checkout
