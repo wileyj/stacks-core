@@ -69,6 +69,7 @@ jobs:
 
                   # set a default docker image: registry/repo/release_type
                   var_default_image="${{ env.DOCKER_REGISTRY }}/${{ github.repository_owner }}/${{ inputs.release_type }}"
+                  var_artifact_pattern="${{ github.sha }}-${{ inputs.release_type }}-linux-${var_build_arch}*"
                   if [ "${{ inputs.release_type }}" == "stacks-signer" ]; then
                     # stacks-signer
                     var_dockerfile_name="Dockerfile.release.signer"
