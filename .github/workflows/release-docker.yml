@@ -50,6 +50,15 @@ jobs:
           - alpine
           - debian
     steps:
+      ## Retrieve repository description for image annotation
+      - name: Get repository description
+        id: repo_desc
+        run: |
+          DESCRIPTION=$(gh api repos/${{ github.repository }} --jq '.description')
+          echo "description=$DESCRIPTION" >> $GITHUB_OUTPUT
+        env:
+          GH_TOKEN: ${{ github.token }}
+
       - name: Set Local Vars
         id: set_vars
         shell: bash
@@ -135,9 +144,10 @@ jobs:
             org.opencontainers.image.created={{commit_date 'YYYY-MM-DDTHH:mm:ss.SSS[Z]'}}
             org.opencontainers.image.version=${{ env.DOCKER_TAG }}
             org.opencontainers.image.revision=${{ github.sha }}
+            org.opencontainers.image.title=${{ inputs.release_type }}
           annotations: |
-            org.opencontainers.image.description=${{ env.ANNOTATION_PATTERN}} Image
-            org.opencontainers.image.title=${{ env.ANNOTATION_PATTERN}}
+            org.opencontainers.image.title=${{ inputs.release_type }}
+            org.opencontainers.image.description=${{ steps.repo-desc.outputs.description }} /  ${{ env.ANNOTATION_PATTERN}} Image
           tags: |
             ## debian tags ##
             #  latest tag

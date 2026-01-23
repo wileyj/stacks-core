@@ -170,6 +170,15 @@ jobs:
         attestations: write
         packages: write
     steps:
+      ## Retrieve repository description for image annotation
+      - name: Get repository description
+        id: repo_desc
+        run: |
+          DESCRIPTION=$(gh api repos/${{ github.repository }} --jq '.description')
+          echo "description=$DESCRIPTION" >> $GITHUB_OUTPUT
+        env:
+          GH_TOKEN: ${{ github.token }}
+
       ## set local env vars
       - name: Set Local Vars
         id: set_vars
@@ -215,7 +224,7 @@ jobs:
             org.opencontainers.image.created={{commit_date 'YYYY-MM-DDTHH:mm:ss.SSS[Z]'}}
             org.opencontainers.image.revision=${{ github.sha }}
           annotations: |
-            org.opencontainers.image.description=Stacks Core ${{ env.ANNOTATION_PATTERN }} Image
+            org.opencontainers.image.description=${{ steps.repo-desc.outputs.description }} / ${{ env.ANNOTATION_PATTERN}} Image
             org.opencontainers.image.title=Stacks Core ${{ env.ANNOTATION_PATTERN}}
           tags: |
             # if trigger is workflow_dispatch
