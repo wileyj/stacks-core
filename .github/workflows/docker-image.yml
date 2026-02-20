@@ -2,6 +2,8 @@
 #  - first builds the binaries from source for x86_64 and arm64
 #  - then builds the docker image from the binary artifacts
 
+# ghost commit
+
 name: Docker Image
 
 on:
