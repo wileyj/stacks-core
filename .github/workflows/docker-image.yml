@@ -6,7 +6,8 @@ name: Docker Image
 
 on:
   schedule:
-    - cron: "00 21 * * *" # 1130 pst for some reason :shrug:
+    # - cron: "00 19 * * *" # 1230 pst for some reason :shrug:
+    - cron: '0 7 * * *' # 2300 PST
   workflow_dispatch:
 
 env:
