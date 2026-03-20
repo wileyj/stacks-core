@@ -28,7 +28,7 @@ jobs:
       ## Setup test environment
       - name: Setup Test Environment
         id: setup_tests
-        uses: stacks-network/actions/stacks-core/testenv@main
+        uses: wileyj/actions/stacks-core/testenv@chore/remote_retry
         with:
           btc-version: "25.0"
 
@@ -167,7 +167,7 @@ jobs:
       ## Setup test environment
       - name: Setup Test Environment
         id: setup_tests
-        uses: stacks-network/actions/stacks-core/testenv@main
+        uses: wielyj/actions/stacks-core/testenv@chore/remote_retry
         with:
           btc-version: "25.0"
 
@@ -181,13 +181,13 @@ jobs:
       - name: Run Tests
         id: run_tests
         timeout-minutes: ${{ fromJSON(env.TEST_TIMEOUT) }}
-        uses: stacks-network/actions/stacks-core/run-tests@main
+        uses: wileyj/actions/stacks-core/run-tests@chore/remote_retry
         with:
           test-name: ${{ matrix.test-name }}
           threads: 1
 
       - name: Code Coverage
-        uses: stacks-network/actions/codecov@main
+        uses: wileyj/actions/codecov@chore/remote_retry
         with:
           test-name: ${{ matrix.test-name }}
 
@@ -202,7 +202,7 @@ jobs:
         test-name: ${{ fromJSON(needs.generate-tests.outputs.matrix2) }}
     steps:
       - name: Setup Test Environment
-        uses: stacks-network/actions/stacks-core/testenv@main
+        uses: wileyj/actions/stacks-core/testenv@chore/remote_retry
         with:
           btc-version: "25.0"
 
@@ -214,13 +214,13 @@ jobs:
       - name: Run Test
         id: run_tests
         timeout-minutes: ${{ fromJSON(env.TEST_TIMEOUT) }}
-        uses: stacks-network/actions/stacks-core/run-tests@main
+        uses: wileyj/actions/stacks-core/run-tests@chore/remote_retry
         with:
           test-name: ${{ matrix.test-name }}
           threads: 1
 
       - name: Code Coverage
-        uses: stacks-network/actions/codecov@main
+        uses: wileyj/actions/codecov@chore/remote_retry
         with:
           test-name: ${{ matrix.test-name }}
 
@@ -234,7 +234,7 @@ jobs:
     steps:
       - name: Check Tests Status
         id: check_tests_status
-        uses: stacks-network/actions/check-jobs-status@main
+        uses: wileyj/actions/check-jobs-status@chore/remote_retry
         with:
           jobs: ${{ toJson(needs) }}
           summary_print: "true"

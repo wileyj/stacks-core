@@ -218,7 +218,7 @@ jobs:
       ## Setup Docker for the builds
       - name: Docker setup
         id: docker_setup
-        uses: stacks-network/actions/docker@main
+        uses: wileyj/actions/docker@chore/remote_retry
         with:
           registry: ${{ env.DOCKER_REGISTRY }}
           username: ${{ github.actor }}

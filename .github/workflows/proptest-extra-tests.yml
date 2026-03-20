@@ -1,7 +1,7 @@
 ## GitHub workflow to run newly introduced proptests with higher case counts.
 ##
 ## This works for tests tagged with `t_prop` tag like this:
-##  
+##
 ## #[tag(t_prop)]
 ## fn my_prop_test() { ... }
 ##  ```
@@ -60,11 +60,11 @@ env:
 jobs:
   ## Gate 1: on manual dispatch, always proceed.
   ## On pull_request_review, proceed only when the triggering review is an
-  ## approval targeting the `develop` base branch and check approvals 
+  ## approval targeting the `develop` base branch and check approvals
   ## from users with write+ permission to be at least `REQUIRED_APPROVALS`.
   check-approvals:
     name: Check Approval Count
-    if: > 
+    if: >
       (github.event_name == 'workflow_dispatch') ||
       (github.event.review.state == 'approved' && github.event.pull_request.base.ref == 'develop')
     runs-on: ubuntu-latest
@@ -187,7 +187,7 @@ jobs:
       - name: Setup Test Environment
         id: setup_tests
         continue-on-error: true
-        uses: stacks-network/actions/stacks-core/testenv@main
+        uses: wileyj/actions/stacks-core/testenv@chore/remote_retry
 
       ## If testenv failed (e.g. cache miss), cargo-nextest will not be installed.
       ## Install it explicitly as a fallback using a pre-built binary.
@@ -228,7 +228,7 @@ jobs:
       ## unmodified stacks-core crates) is reused, so only the crates
       ## that actually differ need recompiling.
       ##
-      ## NOTE: 
+      ## NOTE:
       ## Overwriting HEAD binaries in target/ is harmless — the test-run step
       ## uses --archive-file, which extracts HEAD binaries into a temp dir and
       ## never reads from target/.
@@ -286,7 +286,7 @@ jobs:
           if [ "$count" -gt 0 ]; then
             echo "New proptest tests found: $count"
             cat /tmp/new-prop-tests.txt
-          else 
+          else
             echo "No new proptest tests discovered in this PR."
           fi
 

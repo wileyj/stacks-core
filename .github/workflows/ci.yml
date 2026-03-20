@@ -44,7 +44,7 @@ jobs:
     steps:
       - name: Rustfmt
         id: rustfmt
-        uses: stacks-network/actions/rustfmt@main
+        uses: wileyj/actions/rustfmt@chore/remote_retry
         with:
           alias: "fmt-stacks"
 
@@ -80,7 +80,7 @@ jobs:
     steps:
       - name: Check Release
         id: check_release
-        uses: stacks-network/actions/stacks-core/release/check-release@main
+        uses: wileyj/actions/stacks-core/release/check-release@chore/remote_retry
         with:
           tag: ${{ github.ref_name }}
 
