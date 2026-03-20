@@ -36,7 +36,7 @@ jobs:
       ## Setup test environment
       - name: Setup Test Environment
         id: setup_tests
-        uses: wileyj/actions/stacks-core/testenv@chore/test_retry
+        uses: wileyj/actions/stacks-core/testenv@test_retry
         with:
           btc-version: "25.0"
 
@@ -45,7 +45,7 @@ jobs:
       - name: Run Tests
         id: run_tests
         timeout-minutes: ${{ fromJSON(env.TEST_TIMEOUT) }}
-        uses: wileyj/actions/stacks-core/run-tests/partition@chore/test_retry
+        uses: wileyj/actions/stacks-core/run-tests/partition@test_retry
         with:
           partition: ${{ matrix.partition }}
           total-partitions: 8
@@ -53,7 +53,7 @@ jobs:
       ## Create and upload code coverage file
       - name: Code Coverage
         id: codecov
-        uses: wileyj/actions/codecov@chore/test_retry
+        uses: wileyj/actions/codecov@test_retry
         with:
           test-name: ${{ github.job }}-${{ matrix.partition }}
 
@@ -64,7 +64,7 @@ jobs:
     steps:
       - name: Generate OpenAPI documentation
         id: openapi
-        uses: wileyj/actions/openapi@chore/test_retry
+        uses: wileyj/actions/openapi@test_retry
         with:
           input: "./docs/rpc/openapi.yaml"
           output: "./openapi-docs.html"
@@ -79,7 +79,7 @@ jobs:
     steps:
       - name: Generate Node Configuration Documentation
         id: node_config_docsgen
-        uses: wileyj/actions/stacks-core/node-config-docsgen@chore/test_retry
+        uses: wileyj/actions/stacks-core/node-config-docsgen@test_retry
 
   ## Disabled
   ##   - this test can take several hours to run
@@ -155,7 +155,7 @@ jobs:
     steps:
       - name: Check Tests Status
         id: check_tests_status
-        uses: wileyj/actions/check-jobs-status@chore/test_retry
+        uses: wileyj/actions/check-jobs-status@test_retry
         with:
           jobs: ${{ toJson(needs) }}
           summary_print: "true"

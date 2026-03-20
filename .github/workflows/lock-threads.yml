@@ -27,7 +27,7 @@ jobs:
     steps:
       - name: Lock Threads
         id: lock_threads
-        uses: wileyj/actions/lock-threads@chore/test_retry
+        uses: wileyj/actions/lock-threads@test_retry
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           issue-inactive-days: 7

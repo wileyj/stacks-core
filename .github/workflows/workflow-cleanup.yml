@@ -43,7 +43,7 @@ jobs:
     steps:
       - name: Cleanup
         id: cleanup
-        uses: wileyj/actions/cleanup/workflows@chore/test_retry
+        uses: wileyj/actions/cleanup/workflows@test_retry
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           cache-ttl: ${{ inputs.cache-ttl || env.CACHE_TTL}}

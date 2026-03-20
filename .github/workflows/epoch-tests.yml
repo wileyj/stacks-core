@@ -52,7 +52,7 @@ jobs:
       ## Setup test environment
       - name: Setup Test Environment
         id: setup_tests
-        uses: wileyj/actions/stacks-core/testenv@chore/test_retry
+        uses: wileyj/actions/stacks-core/testenv@test_retry
         with:
           btc-version: "25.0"
 
@@ -61,7 +61,7 @@ jobs:
       - name: Run Tests
         id: run_tests
         timeout-minutes: ${{ fromJSON(env.TEST_TIMEOUT) }}
-        uses: wileyj/actions/stacks-core/run-tests@chore/test_retry
+        uses: wileyj/actions/stacks-core/run-tests@test_retry
         with:
           test-name: ${{ matrix.test-name }}
           threads: 1
@@ -69,7 +69,7 @@ jobs:
       ## Create and upload code coverage file
       - name: Code Coverage
         id: codecov
-        uses: wileyj/actions/codecov@chore/test_retry
+        uses: wileyj/actions/codecov@test_retry
         with:
           test-name: ${{ matrix.test-name }}
 
@@ -82,7 +82,7 @@ jobs:
     steps:
       - name: Check Tests Status
         id: check_tests_status
-        uses: wileyj/actions/check-jobs-status@chore/test_retry
+        uses: wileyj/actions/check-jobs-status@test_retry
         with:
           jobs: ${{ toJson(needs) }}
           summary_print: "true"

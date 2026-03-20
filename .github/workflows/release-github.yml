@@ -99,7 +99,7 @@ jobs:
       ## Creates releases
       - name: Create Release
         id: check
-        uses: wileyj/actions/stacks-core/release/create-releases@chore/test_retry
+        uses: wileyj/actions/stacks-core/release/create-releases@test_retry
         with:
           node_tag: ${{ inputs.node_tag }} # name used for release (use the version by itself
           signer_tag: signer-${{ inputs.signer_tag }} # name used for release (prefix with 'signer-')
