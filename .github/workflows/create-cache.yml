@@ -30,7 +30,7 @@ jobs:
       ## Perform a lookup to check if the cache already exists
       - name: Cargo Cache
         id: cargo-cache
-        uses: wileyj/actions/stacks-core/cache/cargo@chore/remote_retry
+        uses: wileyj/actions/stacks-core/cache/cargo@chore/test_retry
         with:
           action: save
 
@@ -41,7 +41,7 @@ jobs:
     steps:
       - name: Bitcoin Cache
         id: bitcoin-cache
-        uses: wileyj/actions/stacks-core/cache/bitcoin@chore/remote_retry
+        uses: wileyj/actions/stacks-core/cache/bitcoin@chore/test_retry
         with:
           action: save
           btc-version: "25.0"
@@ -55,6 +55,6 @@ jobs:
     steps:
       - name: Build Nexttest Cache
         id: nextest-cache
-        uses: wileyj/actions/stacks-core/cache/build-cache@chore/remote_retry
+        uses: wileyj/actions/stacks-core/cache/build-cache@chore/test_retry
         with:
           genesis: true

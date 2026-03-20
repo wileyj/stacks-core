@@ -187,7 +187,7 @@ jobs:
       - name: Setup Test Environment
         id: setup_tests
         continue-on-error: true
-        uses: wileyj/actions/stacks-core/testenv@chore/remote_retry
+        uses: wileyj/actions/stacks-core/testenv@chore/test_retry
 
       ## If testenv failed (e.g. cache miss), cargo-nextest will not be installed.
       ## Install it explicitly as a fallback using a pre-built binary.
