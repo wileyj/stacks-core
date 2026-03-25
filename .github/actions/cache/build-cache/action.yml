@@ -1,0 +1,101 @@
+name: "Build Test Archive Caches"
+description: "Build Test Archive Caches"
+branding:
+  icon: "archive"
+  color: "gray-dark"
+
+inputs:
+  genesis:
+    description: "Run steps for genesis test archive"
+    required: false
+    default: "false"
+
+runs:
+  using: "composite"
+  steps:
+    ## Perform a lookup to check if the caches already exist
+    - name: Check Cargo Target Cache
+      uses: ./.github/actions/cache/target
+      id: check_target_cache
+
+    - name: Check Test Archive Cache
+      uses: ./.github/actions/cache/test-archive
+      id: check_test_archive_cache
+
+    ## Determine if a build is required based on cache status.
+    - name: Compute Build Plan
+      id: build_plan
+      shell: bash
+      run: |
+        target_hit="${{ steps.check_target_cache.outputs.cache-hit }}"
+        test_hit="${{ steps.check_test_archive_cache.outputs.cache-hit }}"
+
+        build_required=false
+
+        # If either the target cache or test archive cache is missing, we need a rebuild.
+        if [[ "$target_hit" != "true" || "$test_hit" != "true" ]]; then
+          build_required=true
+        fi
+
+        echo "build_required=$build_required" >> "$GITHUB_OUTPUT"
+
+    - name: Checkout the latest code
+      if: |
+          steps.check_test_archive_cache.outputs.cache-hit != true ||
+          steps.check_test_archive_cache.outputs.cache-hit != true
+      id: git_checkout
+      uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+
+    - name: Setup Rust Toolchain
+      if: |
+          steps.check_test_archive_cache.outputs.cache-hit != true ||
+          steps.check_test_archive_cache.outputs.cache-hit != true
+      id: setup_rust_toolchain
+      uses: actions-rust-lang/setup-rust-toolchain@11df97af8e8102fd60b60a77dfbf58d40cd843b8 # v1.10.1
+      with:
+        components: llvm-tools-preview
+        cache: false
+
+    - name: Restore Cargo Cache
+      if: |
+          steps.check_test_archive_cache.outputs.cache-hit != true ||
+          steps.check_test_archive_cache.outputs.cache-hit != true
+      id: restore_cargo_cache
+      uses: ./.github/actions/cache/cargo
+      with:
+        action: restore
+
+    - name: Build and Archive Tests
+      if: |
+          steps.check_test_archive_cache.outputs.cache-hit != true ||
+          steps.check_test_archive_cache.outputs.cache-hit != true
+      id: archive_tests
+      shell: bash
+      run: |
+        export RUSTFLAGS="-C instrument-coverage" && \
+        cargo nextest archive \
+          --build-jobs 8 \
+          --workspace \
+          --tests \
+          --locked \
+          --features monitoring_prom \
+          --archive-file ~/test_archive.tar.zst
+
+    ## Save Caches
+    - name: Cache Cargo Target
+      if: |
+          steps.check_test_archive_cache.outputs.cache-hit != true ||
+          steps.check_test_archive_cache.outputs.cache-hit != true
+      id: save_target_cache
+      uses: ./.github/actions/cache/target
+      with:
+        action: save
+
+    - name: Cache Test Archive
+      if: |
+          steps.check_test_archive_cache.outputs.cache-hit != true ||
+          steps.check_test_archive_cache.outputs.cache-hit != true
+      id: save_nextest_cache
+      uses: ./.github/actions/cache/test-archive
+      with:
+        action: save

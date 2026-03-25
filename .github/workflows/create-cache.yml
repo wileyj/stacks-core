@@ -10,7 +10,7 @@ on:
 env:
   RUSTFLAGS: "-Cinstrument-coverage -Awarnings"
   LLVM_PROFILE_FILE: "stacks-core-%p-%m.profraw"
-  BTC_VERSION: "0.20.0"
+  BTC_VERSION: "25.0"
 
 ##
 ## Cache will exist longer than workflow execution so other runners have access
@@ -26,10 +26,16 @@ jobs:
     name: Cargo
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout the latest code
+        id: git_checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 1
+          ref: ${{ github.base_ref }}
       ## Perform a lookup to check if the cache already exists
       - name: Cargo Cache
         id: cargo-cache
-        uses: stacks-network/actions/stacks-core/cache/cargo@main
+        uses: ./.github/actions/cache/cargo
         with:
           action: save
 
@@ -38,9 +44,15 @@ jobs:
     name: Bitcoin Binary
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout the latest code
+        id: git_checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 1
+          ref: ${{ github.base_ref }}
       - name: Bitcoin Cache
         id: bitcoin-cache
-        uses: stacks-network/actions/stacks-core/cache/bitcoin@main
+        uses: ./.github/actions/cache/bitcoin
         with:
           action: save
           btc-version: "25.0"
@@ -52,8 +64,12 @@ jobs:
     needs:
       - cargo
     steps:
+      - name: Checkout the latest code
+        id: git_checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 1
+          ref: ${{ github.base_ref }}
       - name: Build Nexttest Cache
         id: nextest-cache
-        uses: stacks-network/actions/stacks-core/cache/build-cache@main
-        with:
-          genesis: true
+        uses: ./.github/actions/cache/build-cache
