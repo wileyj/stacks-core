@@ -33,6 +33,16 @@ run-name: ${{ github.ref_name }}
 jobs:
 
 
+  checkout:
+    name: Checkout the latest code
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout the latest code
+        id: git_checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          ref: ${{ github.base_ref }}
+
   ##
   ## Jobs to execute everytime workflow runs
   ##   do not run if the trigger is any of the following:
