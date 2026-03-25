@@ -17,6 +17,7 @@ runs:
       id: check_test_archive_cache
 
     - name: echo
+      shell: bash
       run: |
           echo "cache-hit=${{ steps.check_test_archive_cache.outputs.cache-hit }}"
           echo "cargo-cache-hit=${{ steps.check_target_cache.outputs.cache-hit }}"
