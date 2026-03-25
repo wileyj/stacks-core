@@ -16,17 +16,22 @@ runs:
       uses: ./.github/actions/cache/test-archive
       id: check_test_archive_cache
 
+    - name: echo
+      run: |
+          echo "cache-hit=${{ steps.check_test_archive_cache.outputs.cache-hit }}"
+          echo "cargo-cache-hit=${{ steps.check_target_cache.outputs.cache-hit }}"
+
     - name: Checkout the latest code
       if: |
           steps.check_test_archive_cache.outputs.cache-hit != true ||
-          steps.check_test_archive_cache.outputs.cache-hit != true
+          steps.check_target_cache.outputs.cache-hit != true
       id: git_checkout
       uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
 
     - name: Setup Rust Toolchain
       if: |
           steps.check_test_archive_cache.outputs.cache-hit != true ||
-          steps.check_test_archive_cache.outputs.cache-hit != true
+          steps.check_target_cache.outputs.cache-hit != true
       id: setup_rust_toolchain
       uses: actions-rust-lang/setup-rust-toolchain@11df97af8e8102fd60b60a77dfbf58d40cd843b8 # v1.10.1
       with:
@@ -36,7 +41,7 @@ runs:
     - name: Restore Cargo Cache
       if: |
           steps.check_test_archive_cache.outputs.cache-hit != true ||
-          steps.check_test_archive_cache.outputs.cache-hit != true
+          steps.check_target_cache.outputs.cache-hit != true
       id: restore_cargo_cache
       uses: ./.github/actions/cache/cargo
       with:
@@ -45,7 +50,7 @@ runs:
     - name: Build and Archive Tests
       if: |
           steps.check_test_archive_cache.outputs.cache-hit != true ||
-          steps.check_test_archive_cache.outputs.cache-hit != true
+          steps.check_target_cache.outputs.cache-hit != true
       id: archive_tests
       shell: bash
       run: |
@@ -62,7 +67,7 @@ runs:
     - name: Cache Cargo Target
       if: |
           steps.check_test_archive_cache.outputs.cache-hit != true ||
-          steps.check_test_archive_cache.outputs.cache-hit != true
+          steps.check_target_cache.outputs.cache-hit != true
       id: save_target_cache
       uses: ./.github/actions/cache/cargo-target
       with:
@@ -71,7 +76,7 @@ runs:
     - name: Cache Test Archive
       if: |
           steps.check_test_archive_cache.outputs.cache-hit != true ||
-          steps.check_test_archive_cache.outputs.cache-hit != true
+          steps.check_target_cache.outputs.cache-hit != true
       id: save_nextest_cache
       uses: ./.github/actions/cache/test-archive
       with:
