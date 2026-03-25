@@ -42,7 +42,7 @@ runs:
     ## Restore cache data
     - name: Restore Cache
       if: |
-        inputs.action == 'restore'
+        inputs.action == 'restore' &&
         steps.check_cache.outputs.cache-hit == 'true'
       id: restore_cache
       uses: actions/cache/restore@0c907a75c2c80ebcb7f088228285e798b750cf8f # v4.2.1
