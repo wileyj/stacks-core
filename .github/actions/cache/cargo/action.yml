@@ -39,6 +39,11 @@ runs:
           ~/.cargo/git/db/
         key: ${{ inputs.cache-key }}
 
+    - name: echo cache hit
+      run: |
+        echo "inputs.cache-key: ${{ inputs.cache-key }}"
+        echo "cache-hit=${{ steps.check_cache.outputs.cache-hit }}"
+
     ## Restore cache data
     - name: Restore Cache
       if: |

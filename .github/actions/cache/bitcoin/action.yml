@@ -39,6 +39,11 @@ runs:
         path: ~/bitcoin
         key: ${{ inputs.cache-key }}-${{ inputs.btc-version }}
 
+    - name: echo cache hit
+      run: |
+        echo "inputs.cache-key: ${{ inputs.cache-key }}"
+        echo "cache-hit=${{ steps.check_cache.outputs.cache-hit }}"
+
     ## Restore cache data
     - name: Restore Cache
       if: |
