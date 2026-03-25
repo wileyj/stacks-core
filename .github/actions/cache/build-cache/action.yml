@@ -4,18 +4,12 @@ branding:
   icon: "archive"
   color: "gray-dark"
 
-inputs:
-  genesis:
-    description: "Run steps for genesis test archive"
-    required: false
-    default: "false"
-
 runs:
   using: "composite"
   steps:
     ## Perform a lookup to check if the caches already exist
     - name: Check Cargo Target Cache
-      uses: ./.github/actions/cache/target
+      uses: ./.github/actions/cache/cargo-target
       id: check_target_cache
 
     - name: Check Test Archive Cache
@@ -70,7 +64,7 @@ runs:
           steps.check_test_archive_cache.outputs.cache-hit != true ||
           steps.check_test_archive_cache.outputs.cache-hit != true
       id: save_target_cache
-      uses: ./.github/actions/cache/target
+      uses: ./.github/actions/cache/cargo-target
       with:
         action: save
 
