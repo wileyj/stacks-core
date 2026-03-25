@@ -22,23 +22,6 @@ runs:
       uses: ./.github/actions/cache/test-archive
       id: check_test_archive_cache
 
-    ## Determine if a build is required based on cache status.
-    - name: Compute Build Plan
-      id: build_plan
-      shell: bash
-      run: |
-        target_hit="${{ steps.check_target_cache.outputs.cache-hit }}"
-        test_hit="${{ steps.check_test_archive_cache.outputs.cache-hit }}"
-
-        build_required=false
-
-        # If either the target cache or test archive cache is missing, we need a rebuild.
-        if [[ "$target_hit" != "true" || "$test_hit" != "true" ]]; then
-          build_required=true
-        fi
-
-        echo "build_required=$build_required" >> "$GITHUB_OUTPUT"
-
     - name: Checkout the latest code
       if: |
           steps.check_test_archive_cache.outputs.cache-hit != true ||
