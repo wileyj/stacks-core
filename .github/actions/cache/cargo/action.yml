@@ -6,9 +6,9 @@ branding:
 
 inputs:
   action:
-    description: "Type of operation (check,restore,save)"
+    description: "Type of operation (restore,save)"
     required: false
-    default: "check"
+    default: ""
   fail-on-cache-miss:
     description: "Fail workflow if cache is not restorable"
     required: false
