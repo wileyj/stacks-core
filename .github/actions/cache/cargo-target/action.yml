@@ -8,7 +8,7 @@ inputs:
   action:
     description: "Type of operation (check,restore,save)"
     required: false
-    default: "check"
+    default: ""
   fail-on-cache-miss:
     description: "Fail workflow if cache is not restorable"
     required: false
@@ -36,6 +36,7 @@ runs:
         key: ${{ inputs.cache-key }}
 
     ## Restore cache data
+    #  Only restore if cache hit (i.e. existing data)
     - name: Restore Cache
       if: |
         inputs.action == 'restore' &&
@@ -48,6 +49,7 @@ runs:
         key: ${{ inputs.cache-key }}
 
     ## Save cache data
+    #  Only save if cache miss (i.e. no existing data)
     - name: Save Cache
       if: |
         inputs.action == 'save' &&
