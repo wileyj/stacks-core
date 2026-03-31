@@ -26,8 +26,8 @@ outputs:
 runs:
   using: "composite"
   steps:
-    ## Check if nextest cache data exists
-    - name: Check Nextest Archive Cache
+    ## Check if cache data exists
+    - name: Check Cache
       uses: actions/cache@0c907a75c2c80ebcb7f088228285e798b750cf8f # v4.2.1
       id: check_cache
       with:
@@ -35,18 +35,7 @@ runs:
         path: ~/test_archive.tar.zst
         key: ${{ inputs.cache-key }}
 
-    ## Check if cargo target cache data exists
-    # only needed when saving the test archive to cache
-    - name: Check Cargo Target Cache
-      uses: ./.github/actions/cache/cargo-target
-      id: check_target_cache
-
-  ## maybe an intermediate step here to output if the action is save, and the caches don't exist? then, conditionals later only check a single output
-
-
     ## Restore cache data
-    #  Only restore if cache hit (i.e. existing data)
-    #  no need to restore the target cache if nextest cache hit
     - name: Restore Cache
       if: |
         inputs.action == 'restore' &&
@@ -59,83 +48,12 @@ runs:
         key: ${{ inputs.cache-key }}
 
     ## Save cache data
-    # #  Only save if cache miss (i.e. no existing data)
-
-    # - name: Save Cache
-    #   if: |
-    #     inputs.action == 'save' &&
-    #     steps.check_cache.outputs.cache-hit != 'true'
-    #   id: save_cache
-    #   uses: actions/cache/save@5a3ec84eff668545956fd18022155c47e93e2684 # v4.2.3
-    #   with:
-    #     path: ~/test_archive.tar.zst
-    #     key: ${{ inputs.cache-key }}
-
-    # - name: Checkout the latest code
-    #   if: |
-    #       inputs.action == 'save' && (
-    #       steps.check_archive_cache.outputs.cache-hit != true ||
-    #       steps.check_target_cache.outputs.cache-hit != true )
-    #   id: git_checkout
-    #   uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-    #   with:
-    #     fetch-depth: 1
-    #     ref: ${{ github.base_ref }}
-
-    - name: Setup Rust Toolchain
+    - name: Save Cache
       if: |
-          inputs.action == 'save' && (
-          steps.check_archive_cache.outputs.cache-hit != true ||
-          steps.check_target_cache.outputs.cache-hit != true )
-      id: setup_rust_toolchain
-      uses: actions-rust-lang/setup-rust-toolchain@11df97af8e8102fd60b60a77dfbf58d40cd843b8 # v1.10.1
+        inputs.action == 'save' &&
+        steps.check_cache.outputs.cache-hit != 'true'
+      id: save_cache
+      uses: actions/cache/save@5a3ec84eff668545956fd18022155c47e93e2684 # v4.2.3
       with:
-        components: llvm-tools-preview
-        cache: false
-
-    - name: Restore Cargo Cache
-      if: |
-          inputs.action == 'save' && (
-          steps.check_archive_cache.outputs.cache-hit != true ||
-          steps.check_target_cache.outputs.cache-hit != true )
-      id: restore_cargo_cache
-      uses: ./.github/actions/cache/cargo
-      with:
-        action: restore
-
-    - name: Build and Archive Tests
-      if: |
-          inputs.action == 'save' && (
-          steps.check_archive_cache.outputs.cache-hit != true ||
-          steps.check_target_cache.outputs.cache-hit != true )
-      id: archive_tests
-      shell: bash
-      run: |
-        export RUSTFLAGS="-C instrument-coverage" && \
-        cargo nextest archive \
-          --workspace \
-          --tests \
-          --locked \
-          --features monitoring_prom \
-          --archive-file ~/test_archive.tar.zst
-
-    ## Save Caches
-    - name: Cache Cargo Target
-      if: |
-          inputs.action == 'save' && (
-          steps.check_archive_cache.outputs.cache-hit != true ||
-          steps.check_target_cache.outputs.cache-hit != true )
-      id: save_target_cache
-      uses: ./.github/actions/cache/cargo-target
-      with:
-        action: save
-
-    - name: Cache Test Archive
-      if: |
-          inputs.action == 'save' && (
-          steps.check_archive_cache.outputs.cache-hit != true ||
-          steps.check_target_cache.outputs.cache-hit != true )
-      id: save_nextest_cache
-      uses: ./.github/actions/cache/test-archive
-      with:
-        action: save
+        path: ~/test_archive.tar.zst
+        key: ${{ inputs.cache-key }}

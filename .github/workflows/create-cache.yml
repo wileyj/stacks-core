@@ -73,6 +73,6 @@ jobs:
       - name: Build Nexttest Cache
         id: nextest-cache
         uses: ./.github/actions/cache/test-archive
-        with:
-          fail-on-cache-miss: false
+        # with:
+        #   fail-on-cache-miss: false
         # uses: ./.github/actions/cache/build-cache
