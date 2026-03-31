@@ -15,8 +15,6 @@
 | `action` | Type of cache action - one of: `check`, `restore`, `save` | true | `check` |
 | `cache-key` | Cache Key name | false | `${{ github.event.repository.name }}-${{ github.sha }}-test-archive` |
 | `fail_ci_if_error` | Fail the workflow on an error | false | `false` |
-| `retries` | Number of times to retry codecov upload | false | `3` |
-| `retry-delay` | Time in ms between upload retries | false | `10000` |
 
 ### Outputs
 

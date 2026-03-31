@@ -1,8 +1,6 @@
-name: "Build Test Archive Caches"
-description: "Build Test Archive Caches"
-branding:
-  icon: "archive"
-  color: "gray-dark"
+name: Build Test Archive Caches
+description: |
+    Builds nextest test archive caches
 
 runs:
   using: "composite"
