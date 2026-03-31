@@ -62,16 +62,16 @@ runs:
           ~/.cargo/git/db/
         key: ${{ inputs.cache-key }}
 
-    ## Save cache data
-    #  Only install dependencies if cache miss (i.e. no existing data)
-    - name: Install Dependencies
-      if: |
-        inputs.action == 'save' &&
-        steps.check_cache.outputs.cache-hit != 'true'
-      id: install_dependencies
-      uses: taiki-e/install-action@d12e869b89167df346dd0ff65da342d1fb1202fb # v2.53.2
-      with:
-        tool: nextest, grcov # can be versioned, ex: tool@1.1.1.1
+    # ## Save cache data
+    # #  Only install dependencies if cache miss (i.e. no existing data)
+    # - name: Install Dependencies
+    #   if: |
+    #     inputs.action == 'save' &&
+    #     steps.check_cache.outputs.cache-hit != 'true'
+    #   id: install_dependencies
+    #   uses: taiki-e/install-action@d12e869b89167df346dd0ff65da342d1fb1202fb # v2.53.2
+    #   with:
+    #     tool: nextest, grcov # can be versioned, ex: tool@1.1.1.1
 
     ## Use wretry action to retry on a failed upload
     #  Only save if cache miss (i.e. no existing data)

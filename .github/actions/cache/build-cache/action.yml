@@ -25,12 +25,21 @@ runs:
         components: llvm-tools-preview
         cache: false
 
+    ## Save cache data
     - name: Restore Cargo Cache
       if: steps.check_test_archive_cache.outputs.cache-hit != 'true'
       id: restore_cargo_cache
       uses: ./.github/actions/cache/cargo
       with:
         action: restore
+
+    #  Only install dependencies if cache miss (i.e. no existing data)
+    - name: Install Dependencies
+      if: steps.check_test_archive_cache.outputs.cache-hit != 'true'
+      id: install_dependencies
+      uses: taiki-e/install-action@d12e869b89167df346dd0ff65da342d1fb1202fb # v2.53.2
+      with:
+        tool: nextest, grcov # can be versioned, ex: tool@1.1.1.1
 
     - name: Build and Archive Tests
       if: steps.check_test_archive_cache.outputs.cache-hit != 'true'
