@@ -95,12 +95,12 @@ jobs:
       is_node_release: ${{ steps.check_release.outputs.is_node_release }}
       is_signer_release: ${{ steps.check_release.outputs.is_signer_release }}
     steps:
-      # - name: Checkout the latest code
-      #   id: git_checkout
-      #   uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-      #   with:
-      #     fetch-depth: 1
-      #     ref: ${{ github.base_ref }}
+      - name: Checkout the latest code
+        id: git_checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          ref: ${{ github.head_ref || github.ref }}
+
       - name: Check Release
         id: check_release
         uses: ./.github/actions/check-release
