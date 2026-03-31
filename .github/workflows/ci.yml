@@ -43,11 +43,11 @@ jobs:
     name: Rust Format
     runs-on: ubuntu-latest
     steps:
-      # - name: Checkout the latest code
-      #   id: git_checkout
-      #   uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-      #   with:
-      #     ref: ${{ github.head_ref || github.ref }}
+      - name: Checkout the latest code
+        id: git_checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          ref: ${{ github.head_ref || github.ref }}
       - name: Rustfmt
         id: rustfmt
         uses: ./.github/actions/rustfmt
@@ -57,7 +57,17 @@ jobs:
 
   changelog-check:
     name: Changelog Check
-    uses: ./.github/workflows/changelog-check.yml
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout the latest code
+        id: git_checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          ref: ${{ github.head_ref || github.ref }}
+      - name: Changelog Check
+        id: changelog
+        uses: ./.github/actions/changelog-check
+    # uses: ./.github/workflows/changelog-check.yml
 
   ######################################################################################
   ## Check if the branch that this workflow is being run against is a release branch
