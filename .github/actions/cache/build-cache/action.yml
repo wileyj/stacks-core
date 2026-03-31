@@ -20,8 +20,8 @@ runs:
       id: setup_rust_toolchain
       uses: actions-rust-lang/setup-rust-toolchain@11df97af8e8102fd60b60a77dfbf58d40cd843b8 # v1.10.1
       with:
-        components: llvm-tools-preview
-        cache: false
+        components: llvm-tools-preview, nextest, grcov
+        cache: true
 
     ## Save cache data
     - name: Restore Cargo Cache
@@ -31,13 +31,13 @@ runs:
       with:
         action: restore
 
-    #  Only install dependencies if cache miss (i.e. no existing data)
-    - name: Install Dependencies
-      if: steps.check_test_archive_cache.outputs.cache-hit != 'true'
-      id: install_dependencies
-      uses: taiki-e/install-action@d12e869b89167df346dd0ff65da342d1fb1202fb # v2.53.2
-      with:
-        tool: nextest, grcov # can be versioned, ex: tool@1.1.1.1
+    # #  Only install dependencies if cache miss (i.e. no existing data)
+    # - name: Install Dependencies
+    #   if: steps.check_test_archive_cache.outputs.cache-hit != 'true'
+    #   id: install_dependencies
+    #   uses: taiki-e/install-action@d12e869b89167df346dd0ff65da342d1fb1202fb # v2.53.2
+    #   with:
+    #     tool: nextest, grcov # can be versioned, ex: tool@1.1.1.1
 
     - name: Build and Archive Tests
       if: steps.check_test_archive_cache.outputs.cache-hit != 'true'

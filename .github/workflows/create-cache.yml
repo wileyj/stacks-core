@@ -61,7 +61,7 @@ jobs:
         id: cargo-cache
         uses: ./.github/actions/cache/cargo
         with:
-          action: save
+          ref: ${{ github.head_ref || github.ref }}
 
   ## Cache the bitcoin binary
   bitcoin-binary:
@@ -74,7 +74,7 @@ jobs:
         id: git_checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
-          fetch-depth: 1
+          ref: ${{ github.head_ref || github.ref }}
       - name: Bitcoin Cache
         id: bitcoin-cache
         uses: ./.github/actions/cache/bitcoin
