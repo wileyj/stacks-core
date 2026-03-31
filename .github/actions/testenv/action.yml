@@ -1,0 +1,65 @@
+name: Stacks Blockchain Test Environment
+description: |
+    Sets up the testing environment for the Stacks Blockchain.
+
+
+inputs:
+  btc-version:
+    description: "Bitcoin version"
+    required: false
+    default: "25.0"
+
+runs:
+  using: "composite"
+  steps:
+    ## Checkout the code
+    - name: Checkout the latest code
+      id: git_checkout
+      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      with:
+        # ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || '' }}
+        ref: ${{ github.event.pull_request.head.sha || github.ref }}
+
+    ## Install rust toolchain (llvm-tools-preview)
+    - name: Setup Rust Toolchain
+      id: setup_rust_toolchain
+      uses: actions-rust-lang/setup-rust-toolchain@150fca883cd4034361b621bd4e6a9d34e5143606 # v1.15.4
+      with:
+        components: llvm-tools-preview
+        cache: false
+
+    ## Restore cargo cache data
+    - name: Restore Cargo Cache
+      id: restore_cargo_cache
+      uses: ./github/workflows/cache/cargo
+      with:
+        action: restore
+
+    # ## Restore nextest target cache data
+    # - name: Restore Target Cache
+    #   id: restore_target_cache
+    #   uses: stacks-network/actions/stacks-core/cache/target@main
+    #   with:
+    #     action: restore
+
+    ## Restore bitcoin cache data
+    - name: Restore Bitcoin Binary Cache
+      id: restore_bitcoin_cache
+      uses: ./github/workflows/cache/bitcoin
+      with:
+        action: restore
+        btc-version: ${{ inputs.btc-version }}
+
+    ## Symlink bitoind to $PATH
+    - name: Link Bitcoin Binary
+      id: bitcoin_binary
+      shell: bash
+      run: |
+        sudo ln -s ~/bitcoin/bin/bitcoind /bin/
+
+    ## Restore nextest test archive cache data
+    - name: Restore Test Archive Cache
+      id: restore_test_cache
+      uses: ./github/actions/cache/test-archive
+      with:
+        action: restore
