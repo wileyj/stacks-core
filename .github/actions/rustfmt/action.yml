@@ -29,4 +29,4 @@ runs:
       env:
         INPUT_ALIAS: ${{ inputs.alias }}
         INPUT_MANIFEST_PATH: ${{ inputs.manifest-path }}
-      run: ./.github/scripts/rustfmt.sh
+      run: bash ./.github/scripts/rustfmt.sh
