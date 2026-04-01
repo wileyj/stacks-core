@@ -56,12 +56,12 @@ jobs:
         id: git_checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
-          fetch-depth: 1
+          ref: ${{ github.head_ref || github.ref }}
       - name: Cargo Cache
         id: cargo-cache
         uses: ./.github/actions/cache/cargo
         with:
-          ref: ${{ github.head_ref || github.ref }}
+          action: save
 
   ## Cache the bitcoin binary
   bitcoin-binary:
