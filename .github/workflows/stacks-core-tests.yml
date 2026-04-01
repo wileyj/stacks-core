@@ -43,7 +43,7 @@ jobs:
       ## Setup test environment
       - name: Setup Test Environment
         id: setup_tests
-        uses: ./github/actions/testenv
+        uses: ./.github/actions/testenv
         with:
           btc-version: "25.0"
 
@@ -52,7 +52,7 @@ jobs:
       - name: Run Tests
         id: run_tests
         timeout-minutes: ${{ fromJSON(env.TEST_TIMEOUT) }}
-        uses: ./github/actions/run-tests/partition
+        uses: ./.github/actions/run-tests/partition
         with:
           partition: ${{ matrix.partition }}
           total-partitions: 8
@@ -60,7 +60,7 @@ jobs:
       ## Create and upload code coverage file
       - name: Code Coverage
         id: codecov
-        uses: ./github/actions/codecov
+        uses: ./.github/actions/codecov
         with:
           test-name: ${{ github.job }}-${{ matrix.partition }}
 
@@ -78,7 +78,7 @@ jobs:
 
       - name: Generate OpenAPI documentation
         id: openapi
-        uses: ./github/actions/openapi
+        uses: ./.github/actions/openapi
         with:
           input: "./docs/rpc/openapi.yaml"
           output: "./openapi-docs.html"
