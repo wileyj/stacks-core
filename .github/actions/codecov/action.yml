@@ -22,6 +22,13 @@ runs:
         SANITIZED_FILE_NAME=$(echo "lcov_${{ inputs.test-name }}.info" | sed 's/[\\/:\*\?"<>|]/_/g')
         echo "result=$SANITIZED_FILE_NAME" >> $GITHUB_OUTPUT
 
+    - name: echo test name
+      shell: bash
+      run: |
+        ls -ald ./target
+        ls -al ./target
+        ls -al ./
+
     ## Generate code coverage using grcov
     ## Resulting coverage filenames must be unique, so use test-name input to name the file
     - name: Run grcov
