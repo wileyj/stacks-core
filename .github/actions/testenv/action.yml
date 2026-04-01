@@ -12,12 +12,12 @@ inputs:
 runs:
   using: "composite"
   steps:
-    # ## Checkout the code
-    # - name: Checkout the latest code
-    #   id: git_checkout
-    #   uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-    #   with:
-    #     ref: ${{ github.event.pull_request.head.sha || github.ref }}
+    ## Checkout the code
+    - name: Checkout the latest code
+      id: git_checkout
+      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      with:
+        ref: ${{ github.event.pull_request.head.sha || github.ref }}
 
     ## Install rust toolchain (llvm-tools-preview)
     - name: Setup Rust Toolchain
