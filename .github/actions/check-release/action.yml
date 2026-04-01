@@ -10,22 +10,22 @@ inputs:
 
 outputs:
   node_tag:
-    description: "The node release tag, if there is one (empty otherwise)."
+    description: "The node release tag (default: null)"
     value: ${{ steps.check_release.outputs.node_tag }}
   node_docker_tag:
-    description: "The node release tag for docker, if there is one (empty otherwise)."
+    description: "The node release tag for docker (default: null)"
     value: ${{ steps.check_release.outputs.node_docker_tag }}
   signer_tag:
-    description: "The signer release tag, if there is one (empty otherwise)."
+    description: "The signer release tag (default: null)"
     value: ${{ steps.check_release.outputs.signer_tag }}
   signer_docker_tag:
-    description: "The signer release tag for docker, if there is one (empty otherwise)."
+    description: "The signer release tag for docker (default: null)"
     value: ${{ steps.check_release.outputs.signer_docker_tag }}
   is_node_release:
-    description: "True if the branch is a release one, false otherwise."
+    description: "True if the branch is a release (default: false)"
     value: ${{ steps.check_release.outputs.is_node_release }}
   is_signer_release:
-    description: "True if the branch is a release one, false otherwise."
+    description: "True if the branch is a release (default: false)"
     value: ${{ steps.check_release.outputs.is_signer_release }}
 
 runs:
