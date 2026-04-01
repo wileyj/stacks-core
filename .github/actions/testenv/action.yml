@@ -59,7 +59,7 @@ runs:
     ## Restore cargo target cache data
     - name: Restore Cargo Target Cache
       id: restore_target_cache
-      uses: ./.github/actions/cache/target
+      uses: ./.github/actions/cache/cargo-target
       with:
         action: restore
 

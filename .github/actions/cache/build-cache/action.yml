@@ -7,7 +7,7 @@ runs:
   steps:
     ## Check if the test archive cache already exists
     - name: Check Cargo Target Cache
-      uses: ./.github/actions/cache/target
+      uses: ./.github/actions/cache/cargo-target
       id: check_target_cache
 
     - name: Check Test Archive Cache
@@ -76,6 +76,6 @@ runs:
         steps.check_target_cache.outputs.cache-hit != 'true' ||
         steps.check_test_archive_cache.outputs.cache-hit != 'true'
       id: save_target_cache
-      uses: stacks-network/actions/stacks-core/cache/target@main
+      uses: ./.github/actions/cache/cargo-target
       with:
         action: save
