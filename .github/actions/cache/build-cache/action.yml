@@ -10,10 +10,10 @@ runs:
       uses: ./.github/actions/cache/test-archive
       id: check_test_archive_cache
 
-    - name: Checkout the latest code
-      if: steps.check_test_archive_cache.outputs.cache-hit != 'true'
-      id: git_checkout
-      uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+    # - name: Checkout the latest code
+    #   if: steps.check_test_archive_cache.outputs.cache-hit != 'true'
+    #   id: git_checkout
+    #   uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
 
     - name: Setup Rust Toolchain
       if: steps.check_test_archive_cache.outputs.cache-hit != 'true'
