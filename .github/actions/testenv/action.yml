@@ -25,7 +25,7 @@ runs:
       uses: actions-rust-lang/setup-rust-toolchain@150fca883cd4034361b621bd4e6a9d34e5143606 # v1.15.4
       with:
         components: llvm-tools-preview
-        cache: true
+        cache: false
 
     ## Restore cargo cache data
     - name: Restore Cargo Cache
@@ -53,6 +53,13 @@ runs:
     - name: Restore Test Archive Cache
       id: restore_test_cache
       uses: ./.github/actions/cache/test-archive
+      with:
+        action: restore
+
+    ## Restore cargo target cache data
+    - name: Restore Cargo Target Cache
+      id: restore_target_cache
+      uses: ./.github/actions/cache/target
       with:
         action: restore
 

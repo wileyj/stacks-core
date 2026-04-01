@@ -15,11 +15,17 @@ inputs:
 runs:
   using: "composite"
   steps:
+    - name: echo
+      shell: bash
+      run: |
+        echo "jobs: ${{ inputs.jobs }}"
+        echo "summary_print: ${{ inputs.summary_print }}"
+
     - name: Check Jobs
       id: check_jobs
       shell: bash
       env:
-        JOBS: ${{ inputs.jobs }}
+        JOBS: ${{ inputs.jobs }}  # this is passing json to the script, which is why it is failing, but still passing
         SUMMARY_PRINT: ${{ inputs.summary_print }}
       run: bash ./.github/scripts/check_jobs_status.sh
 

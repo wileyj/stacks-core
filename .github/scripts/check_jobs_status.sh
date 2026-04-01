@@ -21,9 +21,9 @@ fi
 for job_name in $(echo '${JOBS}' | jq -r 'keys[]'); do
     result=$(echo '${JOBS}' | jq -r ".[\"$job_name\"].result")
     if [[ "$result" != "success" ]]; then
-    failing_jobs+=("$job_name")
+        failing_jobs+=("$job_name")
     fi
-done
+done || exit 1
 
 # If there is no failing job, exit
 if [[ ${#failing_jobs[@]} -eq 0 ]]; then
