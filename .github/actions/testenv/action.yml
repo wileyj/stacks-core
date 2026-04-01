@@ -30,14 +30,14 @@ runs:
     ## Restore cargo cache data
     - name: Restore Cargo Cache
       id: restore_cargo_cache
-      uses: ./github/actions/cache/cargo
+      uses: ./.github/actions/cache/cargo
       with:
         action: restore
 
     ## Restore bitcoin cache data
     - name: Restore Bitcoin Binary Cache
       id: restore_bitcoin_cache
-      uses: ./github/actions/cache/bitcoin
+      uses: ./.github/actions/cache/bitcoin
       with:
         action: restore
         btc-version: ${{ inputs.btc-version }}
@@ -52,6 +52,6 @@ runs:
     ## Restore nextest test archive cache data
     - name: Restore Test Archive Cache
       id: restore_test_cache
-      uses: ./github/actions/cache/test-archive
+      uses: ./.github/actions/cache/test-archive
       with:
         action: restore
