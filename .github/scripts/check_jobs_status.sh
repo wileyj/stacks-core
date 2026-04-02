@@ -16,7 +16,7 @@ print_to_step_summary() {
 
 # Check that 'jq' command exists
 if ! command -v jq > /dev/null 2>&1; then
-    echo "jq command doesn't exist!"
+    echo "jq command doesn't exist"
     exit 1
 fi
 
@@ -28,15 +28,17 @@ done < <(jq -r 'to_entries[] | select(.value.result != "success") | .key' <<< "$
 
 # If there are no failing jobs, exit
 if [[ ${#failing_jobs[@]} -eq 0 ]]; then
-    echo "All jobs were successful!"
+    echo "All jobs were successful"
     exit 0
 fi
 
 # Print failing jobs to console
-echo "Required jobs failed:"
-for job in "${failing_jobs[@]}"; do
-    echo "- $job"
-done
+if [ ${#failing_jobs[@]} -gt 0 ]; then
+    echo "Required jobs failed:"
+    for job in "${failing_jobs[@]}"; do
+        echo "$job"
+    done
+fi
 
 # If the 'summary_print' input is true, print to GitHub Step Summary, then fail
 if [[ "${SUMMARY_PRINT}" == "true" ]]; then
