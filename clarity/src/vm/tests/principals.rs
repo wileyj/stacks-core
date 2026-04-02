@@ -41,7 +41,7 @@ fn test_simple_is_standard_check_inputs() {
         .unwrap_err(),
         RuntimeCheckErrorKind::TypeValueError(
             Box::new(PrincipalType),
-            Value::UInt(10).to_error_string()
+            Value::UInt(11).to_error_string()
         )
         .into()
     );
