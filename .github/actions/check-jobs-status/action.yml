@@ -15,12 +15,6 @@ inputs:
 runs:
   using: "composite"
   steps:
-    - name: echo
-      shell: bash
-      run: |
-        echo "jobs: ${{ inputs.jobs }}"
-        echo "summary_print: ${{ inputs.summary_print }}"
-
     - name: Check Jobs
       id: check_jobs
       shell: bash
