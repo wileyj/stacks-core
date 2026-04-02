@@ -24,7 +24,7 @@ jobs:
     name: Unit Tests
     runs-on: ubuntu-latest
     ## Continue the workflow in case a step fails (ex a single test fails)
-    continue-on-error: true
+    # continue-on-error: true
     strategy:
       ## Continue the workflow in case a step fails (ex a single test fails)
       fail-fast: false
