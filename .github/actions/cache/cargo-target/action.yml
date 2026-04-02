@@ -27,8 +27,6 @@ runs:
   steps:
     ## Check if cache data exists
     - name: Check Cache
-      if: |
-        inputs.action == 'check'
       uses: actions/cache@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5.0.4
       id: check_cache
       with:
