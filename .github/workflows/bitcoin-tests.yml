@@ -30,9 +30,7 @@ jobs:
       ## Setup test environment
       - name: Setup Test Environment
         id: setup_tests
-        uses: stacks-network/actions/stacks-core/testenv@main
-        with:
-          btc-version: "25.0"
+        uses: ./.github/actions/testenv
 
       - name: List ignored tests
         id: list
@@ -169,9 +167,7 @@ jobs:
       ## Setup test environment
       - name: Setup Test Environment
         id: setup_tests
-        uses: stacks-network/actions/stacks-core/testenv@main
-        with:
-          btc-version: "25.0"
+        uses: ./.github/actions/testenv
 
       ## Increase open file descriptors limit
       - name: Increase Open File Descriptors
@@ -183,12 +179,12 @@ jobs:
       - name: Run Tests
         id: run_tests
         timeout-minutes: ${{ fromJSON(env.TEST_TIMEOUT) }}
-        uses: stacks-network/actions/stacks-core/run-tests@main
+        uses: ./.github/actions/run-tests
         with:
           test-name: ${{ matrix.test-name }}
 
       - name: Code Coverage
-        uses: stacks-network/actions/codecov@main
+        uses: ./.github/actions/codecov
         with:
           test-name: ${{ matrix.test-name }}
 
@@ -203,9 +199,7 @@ jobs:
         test-name: ${{ fromJSON(needs.generate-tests.outputs.matrix2) }}
     steps:
       - name: Setup Test Environment
-        uses: stacks-network/actions/stacks-core/testenv@main
-        with:
-          btc-version: "25.0"
+        uses: ./.github/actions/testenv
 
       ## Increase open file descriptors limit
       - name: Increase Open File Descriptors
@@ -215,12 +209,12 @@ jobs:
       - name: Run Test
         id: run_tests
         timeout-minutes: ${{ fromJSON(env.TEST_TIMEOUT) }}
-        uses: stacks-network/actions/stacks-core/run-tests@main
+        uses: ./.github/actions/run-tests
         with:
           test-name: ${{ matrix.test-name }}
 
       - name: Code Coverage
-        uses: stacks-network/actions/codecov@main
+        uses: ./.github/actions/codecov
         with:
           test-name: ${{ matrix.test-name }}
 
@@ -229,12 +223,13 @@ jobs:
     runs-on: ubuntu-latest
     if: always()
     needs:
+      - generate-tests
       - integration-tests-1
       - integration-tests-2
     steps:
       - name: Check Tests Status
         id: check_tests_status
-        uses: stacks-network/actions/check-jobs-status@main
+        uses: ./.github/actions/check-jobs-status
         with:
           jobs: ${{ toJson(needs) }}
           summary_print: "true"

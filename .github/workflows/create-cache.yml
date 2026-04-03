@@ -80,7 +80,6 @@ jobs:
         uses: ./.github/actions/cache/bitcoin
         with:
           action: save
-          btc-version: "25.0"
 
   ## Cache nextest archives for tests
   nextest-archive:

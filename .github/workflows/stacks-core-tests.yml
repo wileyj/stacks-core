@@ -44,8 +44,6 @@ jobs:
       - name: Setup Test Environment
         id: setup_tests
         uses: ./.github/actions/testenv
-        with:
-          btc-version: "25.0"
 
       ## Run test matrix using restored cache of archive file
       ##   - Test will timeout after env.TEST_TIMEOUT minutes
