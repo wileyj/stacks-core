@@ -92,6 +92,24 @@ jobs:
         with:
           action: save
 
+
+  echo:
+    name: Echo
+    runs-on: ubuntu-latest
+    needs:
+      - check-caches
+      - cargo
+    if: |
+      always()
+    steps:
+      - name: echo
+        shell: bash
+        run: |
+            echo "needs.cargo.result: ${{ needs.cargo.result }}"
+            echo "needs.check-caches.outputs.cargo-target-cache-hit: ${{ needs.check-caches.outputs.cargo-target-cache-hit }}"
+            echo "needs.check-caches.outputs.test-archive-cache-hit: ${{ needs.check-caches.outputs.test-archive-cache-hit }}"
+
+
   ## Cache nextest archives for tests
   nextest-archive:
     name: Test Archive
@@ -101,11 +119,12 @@ jobs:
       - cargo
     ## Run if test-archive is missing; tolerate cargo being skipped (cache already existed)
     if: |
-      always() && (
+      always() &&
+      needs.cargo.result == 'success' || needs.cargo.result == 'skipped' &&
+      (
         needs.check-caches.outputs.cargo-target-cache-hit != 'true' ||
         needs.check-caches.outputs.test-archive-cache-hit != 'true'
-      ) &&
-      needs.cargo.result == 'success' || needs.cargo.result == 'skipped'
+      )
     steps:
       - name: Checkout the latest code
         id: git_checkout
