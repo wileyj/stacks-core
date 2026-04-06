@@ -11,13 +11,13 @@ env:
   RUSTFLAGS: "-Cinstrument-coverage -Awarnings"
   LLVM_PROFILE_FILE: "stacks-core-%p-%m.profraw"
   BTC_VERSION: "25.0"
-  # testing env vars
-  CARGO_INCREMENTAL: 0
-  CARGO_PROFILE_DEV_DEBUG: 0
-  CARGO_TERM_COLOR: always
-  RUST_BACKTRACE: short
-  CARGO_UNSTABLE_SPARSE_REGISTRY: true
-  CARGO_REGISTRIES_CRATES_IO_PROTOCOL: sparse
+  # # testing env vars
+  # CARGO_INCREMENTAL: 0
+  # CARGO_PROFILE_DEV_DEBUG: 0
+  # CARGO_TERM_COLOR: always
+  # RUST_BACKTRACE: short
+  # CARGO_UNSTABLE_SPARSE_REGISTRY: true
+  # CARGO_REGISTRIES_CRATES_IO_PROTOCOL: sparse
 
 ##
 ## Cache will exist longer than workflow execution so other runners have access

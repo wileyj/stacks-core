@@ -151,11 +151,15 @@ jobs:
           echo "ZIPFILE_NAME=${{ matrix.arch }}-${ARCHIVE_NAME}" >> "$GITHUB_ENV"
 
       ## Install rust toolchain for the target being built
+      - name: Define Rust Toolchain
+        id: define_rust_toolchain
+        run: echo "RUST_TOOLCHAIN=$(cat ./rust-toolchain)" >> $GITHUB_ENV
+
       - name: Setup Rust Toolchain
         id: setup_rust_toolchain
         uses: actions-rust-lang/setup-rust-toolchain@11df97af8e8102fd60b60a77dfbf58d40cd843b8 # v1.10.1
         with:
-          toolchain: stable
+          toolchain: ${{ env.RUST_TOOLCHAIN }}
           cache: false
           target: ${{ env.TARGET }}
 

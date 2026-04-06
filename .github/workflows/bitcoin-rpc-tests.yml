@@ -24,6 +24,8 @@ jobs:
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           persist-credentials: false
+          sparse-checkout: |
+            .github
 
       - name: Discover available major tags on Docker Hub
         id: discover
@@ -57,10 +59,10 @@ jobs:
         id: setup_tests
         uses: ./.github/actions/testenv
 
-      - name: Check Docker
-        run: docker version
+      # - name: Check Docker
+      #   run: docker version
 
-      - name: Pre-pull bitcoind image ${{ matrix.bitcoin_version }}
+      - name: Pull bitcoind image ${{ matrix.bitcoin_version }}
         run: docker pull bitcoin/bitcoin:${{ matrix.bitcoin_version }}
 
       - name: Run tests on bitcoind ${{ matrix.bitcoin_version }}

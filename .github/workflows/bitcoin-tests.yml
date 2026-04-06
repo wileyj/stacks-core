@@ -206,7 +206,7 @@ jobs:
         run: |
           sudo prlimit --nofile=4096:4096
 
-      - name: Run Test
+      - name: Run Tests
         id: run_tests
         timeout-minutes: ${{ fromJSON(env.TEST_TIMEOUT) }}
         uses: ./.github/actions/run-tests

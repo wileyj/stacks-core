@@ -1,0 +1,122 @@
+## Github workflow to create multiarch binaries from source
+name: Create Binaries
+description: "Create Binary Archives"
+branding:
+  icon: "archive"
+  color: "gray-dark"
+
+inputs:
+  arch:
+    description: "Architecture to build binary"
+    required: true
+  cpu:
+    description: "CPU to build binary"
+    required: true
+  node_tag:
+    description: "Node Release Tag"
+    required: true
+  signer_tag:
+    description: "Signer Release Tag"
+    required: true
+  signer_docker_tag:
+    description: "Signer Docker Release Tag"
+    required: true
+  is_node_release:
+    description: "True if it is a node release"
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    ## Setup Docker for the builds
+    - name: Docker setup
+      id: docker_setup
+      uses: stacks-network/actions/docker@main
+
+    ## Set env vars based on the type of arch build
+    - name: Set local env vars
+      id: set_env
+      shell: bash
+      run: |
+        case ${{ inputs.cpu }} in
+          x86-64)
+            ## default x64 builds to use v3 variant. TARGET_CPU is required to build for v3 via RUSTFLAGS
+            TARGET_CPU="${{ inputs.cpu }}-v3"
+            DOCKERFILE_CPU="x64"
+            ARCHIVE_NAME="x64"
+            ;;
+          x86-64-v2)
+            ## intel nehalem (2008) and newer
+            TARGET_CPU="${{ inputs.cpu }}"
+            DOCKERFILE_CPU="x64"
+            ARCHIVE_NAME="x64-v2"
+            ;;
+          x86-64-v3)
+            ## intel haswell (2013) and newer
+            TARGET_CPU="${{ inputs.cpu }}"
+            DOCKERFILE_CPU="x64"
+            ARCHIVE_NAME="x64-v3"
+            ;;
+          x86-64-v4)
+            ## intel skylake (2017) and newer
+            TARGET_CPU="${{ inputs.cpu }}"
+            DOCKERFILE_CPU="x64"
+            ARCHIVE_NAME="x64-v4"
+            ;;
+          *)
+            TARGET_CPU=""
+            DOCKERFILE_CPU="${{ inputs.cpu }}"
+            ARCHIVE_NAME="${{ inputs.cpu }}"
+            ;;
+        esac
+        echo "DOCKERFILE=Dockerfile.${{ inputs.arch }}-${DOCKERFILE_CPU}" >> "$GITHUB_ENV"
+        echo "ZIPFILE=${{ inputs.arch }}-${ARCHIVE_NAME}" >> "$GITHUB_ENV"
+        echo "TARGET_CPU=${TARGET_CPU}" >> "$GITHUB_ENV"
+
+    ## Build the binaries using defined dockerfiles
+    - name: Build Binary (${{ inputs.arch }}_${{ inputs.cpu }})
+      id: build_binaries
+      uses: docker/build-push-action@ca877d9245402d1537745e0e356eab47c3520991 # v6.13.0
+      with:
+        file: ${{ github.action_path }}/build-scripts/${{ env.DOCKERFILE }}
+        outputs: type=local,dest=./release/${{ inputs.arch }}
+        build-args: |
+          STACKS_NODE_VERSION=${{ inputs.node_tag || inputs.signer_docker_tag || env.GITHUB_SHA_SHORT }}
+          OS_ARCH=${{ inputs.arch }}
+          TARGET_CPU=${{ env.TARGET_CPU }}
+          GIT_BRANCH=${{ env.GITHUB_REF_SHORT }}
+          GIT_COMMIT=${{ env.GITHUB_SHA_SHORT }}
+          TAG=${{ inputs.node_tag || inputs.signer_tag }}
+
+    ## Compress the binary artifact
+    - name: Compress artifact
+      id: compress_artifact
+      shell: bash
+      run: |
+        zip --junk-paths ${{ env.ZIPFILE }} ./release/${{ inputs.arch }}/*
+
+    ## Upload the binary artifact to the github action (used in `github-release.yml` to create a release)
+    - name: Upload artifact
+      id: upload_artifact
+      uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08 # v4.6.0
+      with:
+        name: ${{ inputs.node_tag || inputs.signer_docker_tag }}-binary-build-${{ env.ZIPFILE }}
+        path: ${{ env.ZIPFILE }}.zip
+
+    ## Extract and upload the signer binaries from the previously built node archives
+    - name: Extract and upload signer binary
+      if: |
+        inputs.is_node_release == 'true'
+      id: extract_signer_binary
+      uses: stacks-network/actions/stacks-core/release/extract-signer-binary@main
+      with:
+        arch: ${{ inputs.arch }}
+        cpu: ${{ inputs.cpu }}
+        signer_docker_tag: ${{ inputs.signer_docker_tag }}
+        node_tag: ${{ inputs.node_tag }}
+
+    ## Attest the release binaries
+    - name: Attest release artifact
+      uses: actions/attest-build-provenance@c074443f1aee8d4aeeae555aebba3282517141b2 #v2.2.3
+      with:
+        subject-path: ${{ env.ZIPFILE }}.zip

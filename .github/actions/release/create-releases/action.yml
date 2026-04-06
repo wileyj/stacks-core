@@ -1,0 +1,51 @@
+## Github workflow to create and upload github releases
+name: Create Releases
+description: "Create GitHub Releases"
+branding:
+    icon: "archive"
+    color: "gray-dark"
+
+inputs:
+    node_tag:
+        description: "Node Release Tag"
+        required: true
+    signer_tag:
+        description: "Signer Release Tag"
+        required: true
+    GH_TOKEN:
+        description: "GitHub Token"
+        required: true
+
+runs:
+    using: "composite"
+    steps:
+        ## Checkout the code
+        - name: Checkout the latest code
+          id: git_checkout
+          uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+          with:
+            ref: ${{ github.event.pull_request.head.sha || github.ref }}
+            sparse-checkout: |
+              .github
+
+        ## Creates the node release
+        - name: Create Node Release
+          if: |
+              inputs.node_tag != ''
+          id: create_node_release
+          uses: ./.github/actions/release/create-github-release
+          with:
+              tag: ${{ inputs.node_tag }}
+              GH_TOKEN: ${{ inputs.GH_TOKEN }}
+              release_type: stacks-core
+
+        ## Creates the signer release
+        - name: Create Signer Release
+          if: |
+              inputs.signer_tag != ''
+          id: create_signer_release
+          uses: ./.github/actions/release/create-github-release
+          with:
+              tag: ${{ inputs.signer_tag }}
+              GH_TOKEN: ${{ inputs.GH_TOKEN }}
+              release_type: stacks-signer
