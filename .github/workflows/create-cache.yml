@@ -28,6 +28,7 @@ jobs:
     outputs:
       bitcoin-cache-hit: ${{ steps.bitcoin.outputs.cache-hit }}
       cargo-cache-hit: ${{ steps.cargo.outputs.cache-hit }}
+      cargo-target-cache-hit: ${{ steps.cargo-target.outputs.cache-hit }}
       test-archive-cache-hit: ${{ steps.test-archive.outputs.cache-hit }}
     steps:
       - name: Checkout the latest code
@@ -43,6 +44,9 @@ jobs:
       - name: Check Cargo Cache
         id: cargo
         uses: ./.github/actions/cache/cargo
+      - name: Check Cargo Target Cache
+        id: cargo-target
+        uses: ./.github/actions/cache/cargo-target
       - name: Check Test Archive Cache
         id: test-archive
         uses: ./.github/actions/cache/test-archive
@@ -97,9 +101,11 @@ jobs:
       - cargo
     ## Run if test-archive is missing; tolerate cargo being skipped (cache already existed)
     if: |
-      always() &&
-      needs.check-caches.outputs.test-archive-cache-hit != 'true' &&
-      (needs.cargo.result == 'success' || needs.cargo.result == 'skipped')
+      always() && (
+        needs.check-caches.outputs.cargo-target-cache-hit != 'true' ||
+        needs.check-caches.outputs.test-archive-cache-hit != 'true'
+      ) &&
+      (needs.cargo.result == 'success' || needs.cargo.result == 'skipped'
     steps:
       - name: Checkout the latest code
         id: git_checkout

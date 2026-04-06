@@ -55,7 +55,6 @@ jobs:
         with:
           alias: "fmt-stacks"
 
-
   changelog-check:
     name: Changelog Check
     runs-on: ubuntu-latest
