@@ -21,7 +21,9 @@ runs:
           echo "test archive cache: ${{ steps.check_test_archive_cache.outputs.cache-hit }}"
 
     - name: Setup Rust Toolchain
-      if: steps.check_test_archive_cache.outputs.cache-hit != 'true'
+      if: |
+        steps.check_target_cache.outputs.cache-hit != 'true' ||
+        steps.check_test_archive_cache.outputs.cache-hit != 'true'
       id: setup_rust_toolchain
       uses: actions-rust-lang/setup-rust-toolchain@11df97af8e8102fd60b60a77dfbf58d40cd843b8 # v1.10.1
       with:
@@ -31,7 +33,9 @@ runs:
     ## Save cache data
     # restore cargo cache
     - name: Restore Cargo Cache
-      if: steps.check_test_archive_cache.outputs.cache-hit != 'true'
+      if: |
+        steps.check_target_cache.outputs.cache-hit != 'true' ||
+        steps.check_test_archive_cache.outputs.cache-hit != 'true'
       id: restore_cargo_cache
       uses: ./.github/actions/cache/cargo
       with:
