@@ -105,7 +105,7 @@ jobs:
         needs.check-caches.outputs.cargo-target-cache-hit != 'true' ||
         needs.check-caches.outputs.test-archive-cache-hit != 'true'
       ) &&
-      (needs.cargo.result == 'success' || needs.cargo.result == 'skipped'
+      needs.cargo.result == 'success' || needs.cargo.result == 'skipped'
     steps:
       - name: Checkout the latest code
         id: git_checkout
