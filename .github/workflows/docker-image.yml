@@ -224,7 +224,7 @@ jobs:
       ## Setup Docker for the builds
       - name: Docker setup
         id: docker_setup
-        uses: .github/actions/docker
+        uses: ./.github/actions/docker
         with:
           registry: ${{ env.DOCKER_REGISTRY }}
           username: ${{ github.actor }}
