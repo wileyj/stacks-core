@@ -26,6 +26,11 @@ SIGNER_ONLY="${SIGNER_ONLY:-false}"
 
 ## ── Preserve cargo color output in CI (cargo disables color when stdout is not a TTY)
 export CARGO_TERM_COLOR=always
+## ansi color codes for terminal output
+COLRED=$'\033[31m'    ## Red
+COLGREEN=$'\033[32m'  ## Green
+COLYELLOW=$'\033[33m' ## Yellow
+COLRESET=$'\033[0m'   ## reset color/formatting
 
 ## ── Determine which binaries to build ────────────────────────────────────────
 BINS=""
@@ -43,6 +48,7 @@ ARCHIVE_NAME=""
 case "${MATRIX_CPU}" in
     x86-64*)
         # Derive archive suffix: x86-64 → x64, x86-64-v3 → x64-v3, etc.
+        # shellcheck disable=SC2001
         ARCHIVE_NAME="$(echo "${MATRIX_CPU}" | sed -e 's|86-||g')"
         # Default generic x86-64 to -v3; honor explicit versioned variants as-is
         case "${MATRIX_CPU}" in
@@ -52,23 +58,23 @@ case "${MATRIX_CPU}" in
 
         case "${MATRIX_ARCH}" in
             linux-glibc)
-                echo "-- Installing dependencies for linux-glibc x86_64 build --"
+                echo "-- ${COLGREEN}Installing dependencies for linux-glibc x86_64 build${COLRESET} --"
                 sudo apt-get update && sudo apt-get install -y git libclang-dev llvm
                 TARGET="x86_64-unknown-linux-gnu"
                 ;;
             linux-musl)
-                echo "-- Installing dependencies for linux-musl x86_64 build --"
+                echo "-- ${COLGREEN}Installing dependencies for linux-musl x86_64 build${COLRESET} --"
                 sudo apt-get update && sudo apt-get install -y musl-tools
                 TARGET="x86_64-unknown-linux-musl"
                 ;;
             windows)
-                echo "-- Installing dependencies for windows x86_64 build --"
+                echo "-- ${COLGREEN}Installing dependencies for windows x86_64 build${COLRESET} --"
                 sudo apt-get update && sudo apt-get install -y git gcc-mingw-w64-x86-64
                 TARGET="x86_64-pc-windows-gnu"
                 LINKER="x86_64-w64-mingw32-gcc"
                 ;;
             *)
-                echo "Unsupported arch '${MATRIX_ARCH}' for cpu '${MATRIX_CPU}'"
+                echo "-- ${COLRED}ERROR:${COLRESET} Unsupported arch '${MATRIX_ARCH}' for cpu '${MATRIX_CPU}'"
                 exit 1
                 ;;
         esac
@@ -79,13 +85,13 @@ case "${MATRIX_CPU}" in
 
         case "${MATRIX_ARCH}" in
             linux-glibc)
-                echo "-- Installing dependencies for linux-glibc arm64 build --"
+                echo "-- ${COLGREEN}Installing dependencies for linux-glibc arm64 build${COLRESET} --"
                 sudo apt-get update && sudo apt-get install -y git gcc-aarch64-linux-gnu libclang-dev llvm
                 TARGET="aarch64-unknown-linux-gnu"
                 LINKER="aarch64-linux-gnu-gcc"
                 ;;
             linux-musl)
-                echo "-- Installing dependencies for linux-musl arm64 build --"
+                echo "-- ${COLGREEN}Installing dependencies for linux-musl arm64 build${COLRESET} --"
                 sudo apt-get update && sudo apt-get install -y gcc-aarch64-linux-gnu musl-dev
                 # musl.cc has aggressive rate limits from Azure IPs; use the GitHub mirror instead
                 curl -LSf -# \
@@ -95,48 +101,45 @@ case "${MATRIX_CPU}" in
                 LINKER="/tmp/aarch64-linux-musl-cross/bin/aarch64-linux-musl-gcc"
                 ;;
             macos)
-                echo "-- Installing dependencies for macOS arm64 build --"
+                echo "-- ${COLGREEN}Installing dependencies for macOS arm64 build${COLRESET} --"
                 # macOS arm64 — no extra deps, use native CPU tuning
                 TARGET="aarch64-apple-darwin"
                 TARGET_CPU="native"
                 ;;
             *)
-                echo "Unsupported arch '${MATRIX_ARCH}' for cpu '${MATRIX_CPU}'"
+                echo "-- ${COLRED}ERROR:${COLRESET} Unsupported arch '${MATRIX_ARCH}' for cpu '${MATRIX_CPU}'"
                 exit 1
                 ;;
         esac
         ;;
 
     *)
-        echo "Unsupported cpu '${MATRIX_CPU}'"
+        echo "-- ${COLRED}ERROR:${COLRESET} Unsupported cpu '${MATRIX_CPU}' --"
         exit 1
         ;;
 esac
 
 if [[ -z "${TARGET}" ]]; then
-    echo "[ERROR] TARGET is empty for ${MATRIX_ARCH}-${MATRIX_CPU}"
+    echo "-- ${COLRED}ERROR:${COLRESET} TARGET is empty for ${MATRIX_ARCH}-${MATRIX_CPU} --"
     exit 1
 fi
 
 ZIPFILE_NAME="${MATRIX_ARCH}-${ARCHIVE_NAME}"
 
 ## ── Export env vars for subsequent workflow steps ────────────────────────────
-echo "TARGET=${TARGET}"           >> "${GITHUB_ENV}"
-echo "TARGET_CPU=${TARGET_CPU}"   >> "${GITHUB_ENV}"
+# shellcheck disable=SC2129
+echo "TARGET=${TARGET}" >> "${GITHUB_ENV}"
+echo "TARGET_CPU=${TARGET_CPU}" >> "${GITHUB_ENV}"
 echo "ZIPFILE_NAME=${ZIPFILE_NAME}" >> "${GITHUB_ENV}"
-
-echo "TARGET=${TARGET}"
-echo "LINKER=${LINKER}"
-echo "ZIPFILE_NAME=${ZIPFILE_NAME}"
 
 ## ── Install Rust toolchain and add the cross-compilation target ──────────────
 RUST_TOOLCHAIN="$(cat ./rust-toolchain)"
 rustup toolchain install "${RUST_TOOLCHAIN}" --no-self-update || {
-    echo "Error installing Rust toolchain ${RUST_TOOLCHAIN}"
+    echo "-- ${COLRED}Error installing Rust toolchain ${RUST_TOOLCHAIN}${COLRESET} --"
     exit 1
 }
 rustup target add "${TARGET}" --toolchain "${RUST_TOOLCHAIN}" || {
-    echo "Error adding target ${TARGET} to Rust toolchain ${RUST_TOOLCHAIN}"
+    echo "-- ${COLRED}Error adding target ${TARGET} to Rust toolchain ${RUST_TOOLCHAIN}${COLRESET} --"
     exit 1
 }
 
@@ -147,43 +150,43 @@ rustup target add "${TARGET}" --toolchain "${RUST_TOOLCHAIN}" || {
 case "${TARGET}" in
     # linux-glibc aarch64 — requires an explicit cross-linker
     aarch64-unknown-linux-gnu)
-        echo "-- Running: ${CMD} ${BINS} --target ${TARGET} --config \"target.${TARGET}.linker=\\\"${LINKER}\\\"\" --"
+        echo "-- ${COLGREEN}Running:${COLRESET} ${CMD} ${BINS} --target ${TARGET} --config \"target.${TARGET}.linker=\\\"${LINKER}\\\"\" --"
         ${CMD} ${BINS} --target "${TARGET}" --config "target.${TARGET}.linker=\"${LINKER}\"" || exit 1
         ;;
 
     # linux-glibc x86_64 — use the default linker, tune CPU
     x86_64-unknown-linux-gnu)
-        echo "-- Running: ${CMD} ${BINS} --target ${TARGET} --config build.rustflags=\"\\\"-C target-cpu=${TARGET_CPU}\\\"\" --"
+        echo "-- ${COLGREEN}Running:${COLRESET} ${CMD} ${BINS} --target ${TARGET} --config build.rustflags=\"\\\"-C target-cpu=${TARGET_CPU}\\\"\" --"
         ${CMD} ${BINS} --target "${TARGET}" --config build.rustflags="\"-C target-cpu=${TARGET_CPU}\"" || exit 1
         ;;
 
     # windows x86_64 — MinGW cross-linker + CPU tuning
     x86_64-pc-windows-gnu)
-        echo "-- Running: ${CMD} ${BINS} --target ${TARGET} --config \"target.${TARGET}.linker=\\\"${LINKER}\\\"\" --config build.rustflags=\"\\\"-C target-cpu=${TARGET_CPU}\\\"\" --"
+        echo "-- ${COLGREEN}Running:${COLRESET} ${CMD} ${BINS} --target ${TARGET} --config \"target.${TARGET}.linker=\\\"${LINKER}\\\"\" --config build.rustflags=\"\\\"-C target-cpu=${TARGET_CPU}\\\"\" --"
         ${CMD} ${BINS} --target "${TARGET}" --config "target.${TARGET}.linker=\"${LINKER}\"" --config build.rustflags="\"-C target-cpu=${TARGET_CPU}\"" || exit 1
         ;;
 
     # linux-musl x86_64 — static musl, CPU tuning
     x86_64-unknown-linux-musl)
-        echo "-- Running: ${CMD} ${BINS} --target ${TARGET} --config build.rustflags=\"\\\"-C target-cpu=${TARGET_CPU}\\\"\" --"
+        echo "-- ${COLGREEN}Running:${COLRESET} ${CMD} ${BINS} --target ${TARGET} --config build.rustflags=\"\\\"-C target-cpu=${TARGET_CPU}\\\"\" --"
         ${CMD} ${BINS} --target "${TARGET}" --config build.rustflags="\"-C target-cpu=${TARGET_CPU}\"" || exit 1
         ;;
 
     # linux-musl aarch64 — musl cross-linker
     aarch64-unknown-linux-musl)
-        echo "-- Running: ${CMD} ${BINS} --target ${TARGET} --config \"target.${TARGET}.linker=\\\"${LINKER}\\\"\" --"
+        echo "-- ${COLGREEN}Running:${COLRESET} ${CMD} ${BINS} --target ${TARGET} --config \"target.${TARGET}.linker=\\\"${LINKER}\\\"\" --"
         ${CMD} ${BINS} --target "${TARGET}" --config "target.${TARGET}.linker=\"${LINKER}\"" || exit 1
         ;;
 
     # macOS aarch64 — native CPU tuning, no cross-linker needed
     aarch64-apple-darwin)
-        echo "-- Running: ${CMD} ${BINS} --target ${TARGET} --config build.rustflags=\"\\\"-C target-cpu=${TARGET_CPU}\\\"\" --"
+        echo "-- ${COLGREEN}Running:${COLRESET} ${CMD} ${BINS} --target ${TARGET} --config build.rustflags=\"\\\"-C target-cpu=${TARGET_CPU}\\\"\" --"
         ${CMD} ${BINS} --target "${TARGET}" --config build.rustflags="\"-C target-cpu=${TARGET_CPU}\"" || exit 1
         ;;
 
     # Catch-all: run the default command if no target triple matched
     *)
-        echo "No explicit configuration for target '${TARGET}'. Using defaults."
+        echo "-- ${COLYELLOW}No explicit configuration for target '${TARGET}'. Using defaults.${COLRESET}"
         ${CMD} ${BINS} || exit 1
         ;;
 esac
