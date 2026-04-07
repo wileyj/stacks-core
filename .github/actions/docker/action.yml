@@ -39,6 +39,11 @@ runs:
               echo "GITHUB_REF_SHORT=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
               echo "DOCKER_PUSH=${{ (inputs.username != '') && (inputs.password != '') }}" >> $GITHUB_ENV
 
+              echo "branch_name=$branch" >> $GITHUB_OUTPUT
+              echo "github_sha_short=${GITHUB_SHA::7}" >> $GITHUB_OUTPUT
+              echo "github_ref_short=${GITHUB_REF#refs/*/}" >> $GITHUB_OUTPUT
+              echo "docker_push=${{ (inputs.username != '') && (inputs.password != '') }}" >> $GITHUB_OUTPUT
+
         ## Setup QEMU for multi-arch builds
         - name: Set up QEMU
           id: docker_qemu
