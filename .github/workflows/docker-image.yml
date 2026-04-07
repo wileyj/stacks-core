@@ -31,6 +31,8 @@ jobs:
   build-binaries:
     name: Build Binaries
     runs-on: ubuntu-latest
+    outputs:
+      branch: ${{ steps.set_vars.outputs.branch }}
     permissions:
       id-token: write
       attestations: write
@@ -53,14 +55,14 @@ jobs:
           if [ "${{ github.event_name }}" == "schedule" ]; then
             var_branch="develop"
           fi
-          echo "BRANCH=${var_branch}" >> $GITHUB_ENV
+          echo "BRANCH=${var_branch}" >> "$GITHUB_OUTPUT"
 
       ## Checkout the code
       - name: Checkout the latest code
         id: git_checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
-          ref: ${{ env.BRANCH }}
+          ref: ${{ steps.set_vars.outputs.branch }}
 
       ## Configure target platform, install Rust toolchain, and build binaries
       - name: Build Binaries
@@ -74,6 +76,7 @@ jobs:
         run: bash ./.github/scripts/build-binaries.sh
 
       ## Compress the binary artifacts
+      # ZIPFILE_NAME is defined in the .github/scripts/build-binaries.sh script
       - name: Compress binaries
         id: compress_artifacts
         shell: bash
@@ -119,16 +122,16 @@ jobs:
         id: set_vars
         shell: bash
         run: |
-          var_branch="${{ github.ref_name }}"
-          var_annotation_pattern="${var_branch}" # default to use the branch name
+          # var_branch="${{ github.ref_name }}"
+          var_annotation_pattern="${{ needs.build-binaries.outputs.branch }}" # default to use the branch name
           var_default_image="${{ env.DOCKER_REGISTRY }}/${{ github.repository }}"
           if [ "${{ github.event_name }}" == "schedule" ]; then
             var_default_image="${{ env.DOCKER_REGISTRY }}/${{ github.repository_owner }}/stacks-nightly"
-            var_branch="develop"
+            # var_branch="develop"
             var_annotation_pattern="Nightly" # for scheduled (nightly) builds, use 'Nightly'
           fi
           echo "docker_images=${var_default_image}" >> "$GITHUB_OUTPUT"
-          echo "BRANCH=${var_branch}" >> "$GITHUB_OUTPUT"
+          # echo "BRANCH=${var_branch}" >> "$GITHUB_OUTPUT"
           echo "annotation_pattern=${var_annotation_pattern}" >> "$GITHUB_OUTPUT"
 
       ## Checkout the code
@@ -136,7 +139,7 @@ jobs:
         id: git_checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
-          ref: ${{ steps.set_vars.outputs.branch }}
+          ref: ${{ needs.build-binaries.outputs.branch }}
           sparse-checkout: |
             .github
 
