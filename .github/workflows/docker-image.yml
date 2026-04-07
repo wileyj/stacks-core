@@ -45,6 +45,25 @@ jobs:
           - x86-64
           - arm64
     steps:
+      ## set local env vars.
+      #   if the event is a schedule, use develop branch; otherwise use ref_name
+      - name: Set Local Vars
+        id: set_vars
+        shell: bash
+        run: |
+          var_branch="${{ github.ref_name }}"
+          if [ "${{ github.event_name }}" == "schedule" ]; then
+            var_branch="develop"
+          fi
+          echo "BRANCH=${var_branch}" >> "$GITHUB_OUTPUT"
+
+      ## Checkout the code
+      - name: Checkout the latest code
+        id: git_checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          ref: ${{ steps.set_vars.outputs.branch }}
+
       ## Setup Docker for the builds
       - name: Docker setup
         id: docker_setup
@@ -67,25 +86,6 @@ jobs:
             echo "-----------------------------------"
             echo
             exit 1
-
-      ## set local env vars.
-      #   if the event is a schedule, use develop branch; otherwise use ref_name
-      - name: Set Local Vars
-        id: set_vars
-        shell: bash
-        run: |
-          var_branch="${{ github.ref_name }}"
-          if [ "${{ github.event_name }}" == "schedule" ]; then
-            var_branch="develop"
-          fi
-          echo "BRANCH=${var_branch}" >> "$GITHUB_OUTPUT"
-
-      ## Checkout the code
-      - name: Checkout the latest code
-        id: git_checkout
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-        with:
-          ref: ${{ steps.set_vars.outputs.branch }}
 
       ## Configure target platform, install Rust toolchain, and build binaries
       - name: Build Binaries
