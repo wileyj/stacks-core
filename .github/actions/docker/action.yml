@@ -15,6 +15,21 @@ inputs:
         description: "Docker Registry"
         required: false
         default: "docker.io"
+
+outputs:
+  branch_name:
+    description: "The branch name (default: null)"
+    value: ${{ steps.set_vars.outputs.branch_name }}
+  github_sha_short:
+    description: "The short SHA of the commit (default: null)"
+    value: ${{ steps.set_vars.outputs.github_sha_short }}
+  github_ref_short:
+    description: "The short ref of the commit (default: null)"
+    value: ${{ steps.set_vars.outputs.github_ref_short }}
+  docker_push:
+    description: "True if the branch is a release (default: false)"
+    value: ${{ steps.set_vars.outputs.docker_push }}
+
 runs:
     using: "composite"
     steps:
