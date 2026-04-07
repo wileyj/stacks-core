@@ -45,6 +45,29 @@ jobs:
           - x86-64
           - arm64
     steps:
+      ## Setup Docker for the builds
+      - name: Docker setup
+        id: docker_setup
+        uses: ./.github/actions/docker
+        with:
+          registry: ${{ env.DOCKER_REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # echo
+      - name: echo
+        shell: bash
+        run: |
+            echo
+            echo "-----------------------------------"
+            echo "steps.docker_setup.branch_name: ${{ steps.docker_setup.outputs.branch_name }}"
+            echo "steps.docker_setup.github_sha_short: ${{ steps.docker_setup.outputs.github_sha_short }}"
+            echo "steps.docker_setup.github_ref_short: ${{ steps.docker_setup.outputs.github_ref_short }}"
+            echo "steps.docker_setup.docker_push: ${{ steps.docker_setup.outputs.docker_push }}"
+            echo "-----------------------------------"
+            echo
+            exit 1
+
       ## set local env vars.
       #   if the event is a schedule, use develop branch; otherwise use ref_name
       - name: Set Local Vars
@@ -161,20 +184,6 @@ jobs:
           registry: ${{ env.DOCKER_REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-
-      # echo
-      - name: echo
-        shell: bash
-        run: |
-            echo
-            echo "-----------------------------------"
-            echo "steps.docker_setup.branch_name: ${{ steps.docker_setup.outputs.branch_name }}"
-            echo "steps.docker_setup.github_sha_short: ${{ steps.docker_setup.outputs.github_sha_short }}"
-            echo "steps.docker_setup.github_ref_short: ${{ steps.docker_setup.outputs.github_ref_short }}"
-            echo "steps.docker_setup.docker_push: ${{ steps.docker_setup.outputs.docker_push }}"
-            echo "-----------------------------------"
-            echo
-
 
       ## Set docker metadata
       - name: Docker Metadata
