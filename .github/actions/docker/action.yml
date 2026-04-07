@@ -17,15 +17,15 @@ inputs:
         default: "docker.io"
 
 outputs:
-  branch_name:
-    description: "The branch name (default: null)"
-    value: ${{ steps.set_vars.outputs.branch_name }}
-  github_sha_short:
-    description: "The short SHA of the commit (default: null)"
-    value: ${{ steps.set_vars.outputs.github_sha_short }}
-  github_ref_short:
-    description: "The short ref of the commit (default: null)"
-    value: ${{ steps.set_vars.outputs.github_ref_short }}
+  # branch_name:
+  #   description: "The branch name (default: null)"
+  #   value: ${{ steps.set_vars.outputs.branch_name }}
+  # github_sha_short:
+  #   description: "The short SHA of the commit (default: null)"
+  #   value: ${{ steps.set_vars.outputs.github_sha_short }}
+  # github_ref_short:
+  #   description: "The short ref of the commit (default: null)"
+  #   value: ${{ steps.set_vars.outputs.github_ref_short }}
   docker_push:
     description: "True if the branch is a release (default: false)"
     value: ${{ steps.set_vars.outputs.docker_push }}
@@ -38,25 +38,25 @@ runs:
           id: set_vars
           shell: bash
           run: |
-              event=${{ github.event_name }}
-              case ${event} in
-                pull_request|pull_request_target|pull_request_review)
-                  echo "[PR]: true"
-                  branch=${{ github.event.pull_request.head.ref }}
-                  ;;
-                *)
-                  echo "[PR]: false"
-                  branch=${GITHUB_REF#refs/heads/}
-                  ;;
-              esac
-              echo "BRANCH_NAME=$branch" >> $GITHUB_ENV
-              echo "GITHUB_SHA_SHORT=${GITHUB_SHA::7}" >> $GITHUB_ENV
-              echo "GITHUB_REF_SHORT=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
+              # event=${{ github.event_name }}
+              # case ${event} in
+              #   pull_request|pull_request_target|pull_request_review)
+              #     echo "[PR]: true"
+              #     branch=${{ github.event.pull_request.head.ref }}
+              #     ;;
+              #   *)
+              #     echo "[PR]: false"
+              #     branch=${GITHUB_REF#refs/heads/}
+              #     ;;
+              # esac
+              # echo "BRANCH_NAME=$branch" >> $GITHUB_ENV
+              # echo "GITHUB_SHA_SHORT=${GITHUB_SHA::7}" >> $GITHUB_ENV
+              # echo "GITHUB_REF_SHORT=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
               echo "DOCKER_PUSH=${{ (inputs.username != '') && (inputs.password != '') }}" >> $GITHUB_ENV
 
-              echo "branch_name=$branch" >> $GITHUB_OUTPUT
-              echo "github_sha_short=${GITHUB_SHA::7}" >> $GITHUB_OUTPUT
-              echo "github_ref_short=${GITHUB_REF#refs/*/}" >> $GITHUB_OUTPUT
+              # echo "branch_name=$branch" >> $GITHUB_OUTPUT
+              # echo "github_sha_short=${GITHUB_SHA::7}" >> $GITHUB_OUTPUT
+              # echo "github_ref_short=${GITHUB_REF#refs/*/}" >> $GITHUB_OUTPUT
               echo "docker_push=${{ (inputs.username != '') && (inputs.password != '') }}" >> $GITHUB_OUTPUT
 
         ## Setup QEMU for multi-arch builds

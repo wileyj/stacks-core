@@ -55,7 +55,7 @@ jobs:
           if [ "${{ github.event_name }}" == "schedule" ]; then
             var_branch="develop"
           fi
-          echo "BRANCH=${var_branch}" >> "$GITHUB_OUTPUT"
+          echo "branch=${var_branch}" >> "$GITHUB_OUTPUT"
 
       ## Checkout the code
       - name: Checkout the latest code
@@ -79,13 +79,9 @@ jobs:
         run: |
             echo
             echo "-----------------------------------"
-            echo "steps.docker_setup.branch_name: ${{ steps.docker_setup.outputs.branch_name }}"
-            echo "steps.docker_setup.github_sha_short: ${{ steps.docker_setup.outputs.github_sha_short }}"
-            echo "steps.docker_setup.github_ref_short: ${{ steps.docker_setup.outputs.github_ref_short }}"
             echo "steps.docker_setup.docker_push: ${{ steps.docker_setup.outputs.docker_push }}"
             echo "-----------------------------------"
             echo
-            exit 1
 
       ## Configure target platform, install Rust toolchain, and build binaries
       - name: Build Binaries
