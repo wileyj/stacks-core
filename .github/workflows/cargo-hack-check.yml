@@ -16,16 +16,16 @@ jobs:
     name: Setup
     runs-on: ubuntu-latest
     outputs:
-      rust-toolchain: ${{ steps.toolchain.outputs.rust-toolchain }}
+      rust-toolchain: ${{ steps.define_rust_toolchain.outputs.rust-toolchain }}
     steps:
       - name: Checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           persist-credentials: false
 
-      - name: Get Rust toolchain
-        id: toolchain
-        run: echo "rust-toolchain=$(cat ./rust-toolchain)" >> $GITHUB_OUTPUT
+      - name: Define Rust toolchain
+        id: define_rust_toolchain
+        run: echo "rust-toolchain=$(cat ./rust-toolchain)" >> "$GITHUB_OUTPUT"
 
   # Native targets (Windows/Linux)
   native-targets:
