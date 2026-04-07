@@ -21,6 +21,7 @@ runs:
 
     - name: Define Rust Toolchain
       id: define_rust_toolchain
+      shell: bash
       run: echo "RUST_TOOLCHAIN=$(cat ./rust-toolchain)" >> "$GITHUB_OUTPUT"
 
     ## Install rust toolchain (llvm-tools-preview)
