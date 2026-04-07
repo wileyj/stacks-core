@@ -127,16 +127,16 @@ jobs:
             var_branch="develop"
             var_annotation_pattern="Nightly" # for scheduled (nightly) builds, use 'Nightly'
           fi
-          echo "DOCKER_IMAGES=${var_default_image}" >> $GITHUB_ENV
-          echo "BRANCH=${var_branch}" >> $GITHUB_ENV
-          echo "ANNOTATION_PATTERN=${var_annotation_pattern}" >> $GITHUB_ENV
+          echo "docker_images=${var_default_image}" >> "$GITHUB_OUTPUT"
+          echo "BRANCH=${var_branch}" >> "$GITHUB_OUTPUT"
+          echo "annotation_pattern=${var_annotation_pattern}" >> "$GITHUB_OUTPUT"
 
       ## Checkout the code
       - name: Checkout the latest code
         id: git_checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
-          ref: ${{ env.BRANCH }}
+          ref: ${{ steps.set_vars.outputs.branch }}
           sparse-checkout: |
             .github
 
@@ -166,13 +166,13 @@ jobs:
         env:
           DOCKER_METADATA_ANNOTATIONS_LEVELS: manifest,index
         with:
-          images: ${{ env.DOCKER_IMAGES }}
+          images: ${{ steps.set_vars.outputs.docker_images }}
           labels: |
             org.opencontainers.image.created={{commit_date 'YYYY-MM-DDTHH:mm:ss.SSS[Z]'}}
             org.opencontainers.image.revision=${{ github.sha }}
           annotations: |
-            org.opencontainers.image.description=${{ steps.repo_desc.outputs.description }} | ${{ env.ANNOTATION_PATTERN}} Image
-            org.opencontainers.image.title=Stacks Core ${{ env.ANNOTATION_PATTERN}}
+            org.opencontainers.image.description=${{ steps.repo_desc.outputs.description }} | ${{ steps.set_vars.outputs.annotation_pattern }} Image
+            org.opencontainers.image.title=Stacks Core ${{ steps.set_vars.outputs.annotation_pattern }}
           tags: |
             # if trigger is workflow_dispatch
             type=ref,event=branch,enable=${{ github.event_name == 'workflow_dispatch' }}
@@ -202,7 +202,7 @@ jobs:
         uses: actions/attest-build-provenance@a2bbfa25375fe432b6a289bc6b6cd05ecd0c4c32 # v4.1.0
         with:
           subject-name: |
-            ${{ env.DOCKER_IMAGES }}
+            ${{ steps.set_vars.outputs.docker_images }}
           subject-digest: ${{ steps.docker_build.outputs.digest }}
           push-to-registry: ${{ env.DOCKER_PUSH }}
 
