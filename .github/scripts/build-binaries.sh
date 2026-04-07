@@ -24,6 +24,9 @@ set -euo pipefail
 : "${CMD:?CMD is required}"
 SIGNER_ONLY="${SIGNER_ONLY:-false}"
 
+## ── Preserve cargo color output in CI (cargo disables color when stdout is not a TTY)
+export CARGO_TERM_COLOR=always
+
 ## ── Determine which binaries to build ────────────────────────────────────────
 BINS=""
 if [[ "${SIGNER_ONLY}" == "true" ]]; then
