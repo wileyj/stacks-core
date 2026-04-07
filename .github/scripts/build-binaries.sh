@@ -49,17 +49,17 @@ case "${MATRIX_CPU}" in
 
         case "${MATRIX_ARCH}" in
             linux-glibc)
-                echo "Installing dependencies for linux-glibc x86_64 build"
+                echo "-- Installing dependencies for linux-glibc x86_64 build --"
                 sudo apt-get update && sudo apt-get install -y git libclang-dev llvm
                 TARGET="x86_64-unknown-linux-gnu"
                 ;;
             linux-musl)
-                echo "Installing dependencies for linux-musl x86_64 build"
+                echo "-- Installing dependencies for linux-musl x86_64 build --"
                 sudo apt-get update && sudo apt-get install -y musl-tools
                 TARGET="x86_64-unknown-linux-musl"
                 ;;
             windows)
-                echo "Installing dependencies for windows x86_64 build"
+                echo "-- Installing dependencies for windows x86_64 build --"
                 sudo apt-get update && sudo apt-get install -y git gcc-mingw-w64-x86-64
                 TARGET="x86_64-pc-windows-gnu"
                 LINKER="x86_64-w64-mingw32-gcc"
@@ -76,13 +76,13 @@ case "${MATRIX_CPU}" in
 
         case "${MATRIX_ARCH}" in
             linux-glibc)
-                echo "Installing dependencies for linux-glibc arm64 build"
+                echo "-- Installing dependencies for linux-glibc arm64 build --"
                 sudo apt-get update && sudo apt-get install -y git gcc-aarch64-linux-gnu libclang-dev llvm
                 TARGET="aarch64-unknown-linux-gnu"
                 LINKER="aarch64-linux-gnu-gcc"
                 ;;
             linux-musl)
-                echo "Installing dependencies for linux-musl arm64 build"
+                echo "-- Installing dependencies for linux-musl arm64 build --"
                 sudo apt-get update && sudo apt-get install -y gcc-aarch64-linux-gnu musl-dev
                 # musl.cc has aggressive rate limits from Azure IPs; use the GitHub mirror instead
                 curl -LSf -# \
@@ -92,7 +92,7 @@ case "${MATRIX_CPU}" in
                 LINKER="/tmp/aarch64-linux-musl-cross/bin/aarch64-linux-musl-gcc"
                 ;;
             macos)
-                echo "Installing dependencies for macOS arm64 build"
+                echo "-- Installing dependencies for macOS arm64 build --"
                 # macOS arm64 — no extra deps, use native CPU tuning
                 TARGET="aarch64-apple-darwin"
                 TARGET_CPU="native"
@@ -144,38 +144,38 @@ rustup target add "${TARGET}" --toolchain "${RUST_TOOLCHAIN}" || {
 case "${TARGET}" in
     # linux-glibc aarch64 — requires an explicit cross-linker
     aarch64-unknown-linux-gnu)
-        echo "${CMD} ${BINS} --target ${TARGET} --config \"target.${TARGET}.linker=\\\"${LINKER}\\\"\""
-        # ${CMD} ${BINS} --target "${TARGET}" --config "target.${TARGET}.linker=\"${LINKER}\"" || exit 1
+        echo "-- Running: ${CMD} ${BINS} --target ${TARGET} --config \"target.${TARGET}.linker=\\\"${LINKER}\\\"\" --"
+        ${CMD} ${BINS} --target "${TARGET}" --config "target.${TARGET}.linker=\"${LINKER}\"" || exit 1
         ;;
 
     # linux-glibc x86_64 — use the default linker, tune CPU
     x86_64-unknown-linux-gnu)
-        echo "${CMD} ${BINS} --target ${TARGET} --config build.rustflags=\"\\\"-C target-cpu=${TARGET_CPU}\\\"\""
-        # ${CMD} ${BINS} --target "${TARGET}" --config build.rustflags="\"-C target-cpu=${TARGET_CPU}\"" || exit 1
+        echo "-- Running: ${CMD} ${BINS} --target ${TARGET} --config build.rustflags=\"\\\"-C target-cpu=${TARGET_CPU}\\\"\" --"
+        ${CMD} ${BINS} --target "${TARGET}" --config build.rustflags="\"-C target-cpu=${TARGET_CPU}\"" || exit 1
         ;;
 
     # windows x86_64 — MinGW cross-linker + CPU tuning
     x86_64-pc-windows-gnu)
-        echo "${CMD} ${BINS} --target ${TARGET} --config \"target.${TARGET}.linker=\\\"${LINKER}\\\"\" --config build.rustflags=\"\\\"-C target-cpu=${TARGET_CPU}\\\"\""
-        # ${CMD} ${BINS} --target "${TARGET}" --config "target.${TARGET}.linker=\"${LINKER}\"" --config build.rustflags="\"-C target-cpu=${TARGET_CPU}\"" || exit 1
+        echo "-- Running: ${CMD} ${BINS} --target ${TARGET} --config \"target.${TARGET}.linker=\\\"${LINKER}\\\"\" --config build.rustflags=\"\\\"-C target-cpu=${TARGET_CPU}\\\"\" --"
+        ${CMD} ${BINS} --target "${TARGET}" --config "target.${TARGET}.linker=\"${LINKER}\"" --config build.rustflags="\"-C target-cpu=${TARGET_CPU}\"" || exit 1
         ;;
 
     # linux-musl x86_64 — static musl, CPU tuning
     x86_64-unknown-linux-musl)
-        echo "${CMD} ${BINS} --target ${TARGET} --config build.rustflags=\"\\\"-C target-cpu=${TARGET_CPU}\\\"\""
-        # ${CMD} ${BINS} --target "${TARGET}" --config build.rustflags="\"-C target-cpu=${TARGET_CPU}\"" || exit 1
+        echo "-- Running: ${CMD} ${BINS} --target ${TARGET} --config build.rustflags=\"\\\"-C target-cpu=${TARGET_CPU}\\\"\" --"
+        ${CMD} ${BINS} --target "${TARGET}" --config build.rustflags="\"-C target-cpu=${TARGET_CPU}\"" || exit 1
         ;;
 
     # linux-musl aarch64 — musl cross-linker
     aarch64-unknown-linux-musl)
-        echo "${CMD} ${BINS} --target ${TARGET} --config \"target.${TARGET}.linker=\\\"${LINKER}\\\"\""
-        # ${CMD} ${BINS} --target "${TARGET}" --config "target.${TARGET}.linker=\"${LINKER}\"" || exit 1
+        echo "-- Running: ${CMD} ${BINS} --target ${TARGET} --config \"target.${TARGET}.linker=\\\"${LINKER}\\\"\" --"
+        ${CMD} ${BINS} --target "${TARGET}" --config "target.${TARGET}.linker=\"${LINKER}\"" || exit 1
         ;;
 
     # macOS aarch64 — native CPU tuning, no cross-linker needed
     aarch64-apple-darwin)
-        echo "${CMD} ${BINS} --target ${TARGET} --config build.rustflags=\"\\\"-C target-cpu=${TARGET_CPU}\\\"\""
-        # ${CMD} ${BINS} --target "${TARGET}" --config build.rustflags="\"-C target-cpu=${TARGET_CPU}\"" || exit 1
+        echo "-- Running: ${CMD} ${BINS} --target ${TARGET} --config build.rustflags=\"\\\"-C target-cpu=${TARGET_CPU}\\\"\" --"
+        ${CMD} ${BINS} --target "${TARGET}" --config build.rustflags="\"-C target-cpu=${TARGET_CPU}\"" || exit 1
         ;;
 
     # Catch-all: run the default command if no target triple matched
