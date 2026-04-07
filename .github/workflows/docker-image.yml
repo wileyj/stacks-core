@@ -258,7 +258,7 @@ jobs:
           sbom: false
           provenance: ${{ env.PROVENANCE }}
           context: /tmp
-          file: ./.github/actions/dockerfiles/debian/Dockerfile
+          file: ./.github/dockerfiles/debian/Dockerfile
           platforms: ${{ env.DOCKER_PLATFORMS }}
           tags: ${{ steps.docker_metadata.outputs.tags }}
           labels: ${{ steps.docker_metadata.outputs.labels }}

@@ -178,7 +178,7 @@ jobs:
           sbom: false
           provenance: ${{ env.PROVENANCE }}
           context: /tmp
-          file: ./.github/actions/dockerfiles/${{ matrix.dist }}/${{ env.DOCKERFILE_NAME }}
+          file: ./.github/dockerfiles/${{ matrix.dist }}/${{ env.DOCKERFILE_NAME }}
           platforms: ${{ env.DOCKER_PLATFORMS }}
           tags: ${{ steps.docker_metadata.outputs.tags }}
           labels: ${{ steps.docker_metadata.outputs.labels }}
