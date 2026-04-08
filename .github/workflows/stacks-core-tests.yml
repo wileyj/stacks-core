@@ -3,6 +3,7 @@
 name: Tests::Stacks Core
 
 on:
+  workflow_dispatch:
   workflow_call:
 
 ## env vars are transferred to composite action steps
