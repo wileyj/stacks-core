@@ -54,7 +54,9 @@ jobs:
           echo "versions=$versions_json" >> "$GITHUB_OUTPUT"
 
   test-rpc:
-    needs: discover-bitcoin-majors
+    needs:
+      - discover-bitcoin-majors
+      - create-cache
     name: test-rpc-bitcoin:${{ matrix.bitcoin_version }}
     runs-on: ubuntu-latest
     strategy:

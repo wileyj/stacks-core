@@ -162,7 +162,9 @@ jobs:
           echo "matrix2=$matrix2" >> "$GITHUB_OUTPUT"
 
   integration-tests-1:
-    needs: generate-tests
+    needs:
+      - generate-tests
+      - create-cache
     runs-on: ubuntu-latest
     if: ${{ needs.generate-tests.outputs.matrix1 != '[]' }}
     strategy:
@@ -197,7 +199,9 @@ jobs:
           test-name: ${{ matrix.test-name }}
 
   integration-tests-2:
-    needs: generate-tests
+    needs:
+      - generate-tests
+      - create-cache
     runs-on: ubuntu-latest
     if: ${{ needs.generate-tests.outputs.matrix2 != '[]' }}
     strategy:

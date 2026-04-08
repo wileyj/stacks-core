@@ -28,6 +28,7 @@ jobs:
   # Epoch integration tests with code coverage
   epoch-tests:
     name: Epoch Tests
+    needs: create-cache
     runs-on: ubuntu-latest
     strategy:
       ## Continue with the test matrix even if we've had a failure

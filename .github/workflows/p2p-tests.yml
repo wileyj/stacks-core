@@ -28,6 +28,7 @@ jobs:
   # p2p integration tests with code coverage
   integration-tests:
     name: Integration Tests
+    needs: create-cache
     runs-on: ubuntu-latest
     strategy:
       ## Continue with the test matrix even if we've had a failure
