@@ -173,6 +173,15 @@ jobs:
       matrix:
         test-name: ${{ fromJSON(needs.generate-tests.outputs.matrix1) }}
     steps:
+      ## Checkout the code
+      - name: Checkout the latest code
+        id: git_checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.ref }}
+          sparse-checkout: |
+            .github
+
       ## Setup test environment
       - name: Setup Test Environment
         id: setup_tests
@@ -210,6 +219,15 @@ jobs:
       matrix:
         test-name: ${{ fromJSON(needs.generate-tests.outputs.matrix2) }}
     steps:
+      ## Checkout the code
+      - name: Checkout the latest code
+        id: git_checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.ref }}
+          sparse-checkout: |
+            .github
+
       - name: Setup Test Environment
         uses: ./.github/actions/testenv
 
