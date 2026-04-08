@@ -41,7 +41,7 @@ jobs:
         run: |
           set -euo pipefail
 
-          result_json="$(bash ./.github/workflows/scripts/docker-bitcoin-majors.sh "$START_MAJOR")"
+          result_json="$(bash ./.github/scripts/docker-bitcoin-majors.sh "$START_MAJOR")"
           echo "$result_json" | jq .
 
           versions_json="$(jq -c '.versions' <<< "$result_json")"
