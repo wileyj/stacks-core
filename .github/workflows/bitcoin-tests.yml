@@ -3,6 +3,7 @@
 name: Tests::Bitcoin
 
 on:
+  workflow_dispatch:
   workflow_call:
 
 ## env vars are transferred to composite action steps
@@ -20,6 +21,12 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
+  # if triggered manually, create the cache
+  create-cache:
+    if: always() && github.event_name == 'workflow_dispatch'
+    name: Create Test Cache
+    uses: ./.github/workflows/create-cache.yml
+
   generate-tests:
     name: Generate balanced test matrix
     runs-on: ubuntu-latest
@@ -184,6 +191,7 @@ jobs:
           test-name: ${{ matrix.test-name }}
 
       - name: Code Coverage
+        id: codecov
         uses: ./.github/actions/codecov
         with:
           test-name: ${{ matrix.test-name }}
@@ -214,6 +222,7 @@ jobs:
           test-name: ${{ matrix.test-name }}
 
       - name: Code Coverage
+        id: codecov
         uses: ./.github/actions/codecov
         with:
           test-name: ${{ matrix.test-name }}
@@ -227,6 +236,16 @@ jobs:
       - integration-tests-1
       - integration-tests-2
     steps:
+      ## Checkout the code
+      - name: Checkout the latest code
+        id: git_checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.ref }}
+          sparse-checkout: |
+            .github
+
+      ## Check if all jobs succeeded
       - name: Check Tests Status
         id: check_tests_status
         uses: ./.github/actions/check-jobs-status

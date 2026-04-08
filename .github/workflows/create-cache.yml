@@ -42,19 +42,22 @@ jobs:
         id: git_checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
-          fetch-depth: 1
+          ref: ${{ github.head_ref || github.ref }}
           sparse-checkout: |
             .github
 
       - name: Check Bitcoin Cache
         id: bitcoin
         uses: ./.github/actions/cache/bitcoin
+
       - name: Check Cargo Cache
         id: cargo
         uses: ./.github/actions/cache/cargo
+
       - name: Check Cargo Target Cache
         id: cargo-target
         uses: ./.github/actions/cache/cargo-target
+
       - name: Check Test Archive Cache
         id: test-archive
         uses: ./.github/actions/cache/test-archive
@@ -94,6 +97,7 @@ jobs:
           ref: ${{ github.head_ref || github.ref }}
           sparse-checkout: |
             .github
+
       - name: Bitcoin Cache
         id: bitcoin-cache
         uses: ./.github/actions/cache/bitcoin
@@ -135,6 +139,7 @@ jobs:
         needs.check-caches.outputs.test-archive-cache-hit != 'true'
       )
     steps:
+      # Checkout the latest code, full source is required for this job
       - name: Checkout the latest code
         id: git_checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2

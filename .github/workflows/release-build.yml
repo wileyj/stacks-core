@@ -29,6 +29,8 @@ jobs:
   build-binaries:
     name: Build Binaries
     runs-on: ${{ matrix.os }}
+    outputs:
+      branch: ${{ steps.set_vars.outputs.branch }}
     permissions:
       id-token: write
       attestations: write

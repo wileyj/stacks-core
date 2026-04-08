@@ -59,9 +59,6 @@ jobs:
         id: setup_tests
         uses: ./.github/actions/testenv
 
-      # - name: Check Docker
-      #   run: docker version
-
       - name: Pull bitcoind image ${{ matrix.bitcoin_version }}
         run: docker pull bitcoin/bitcoin:${{ matrix.bitcoin_version }}
 
@@ -77,3 +74,27 @@ jobs:
             --run-ignored all \
             --no-tests fail \
             -E 'package(stacks-node) & binary(stacks-node) & test(/^tests::bitcoin::rpc_integrations::/)'
+
+  check-tests:
+    name: Check Tests
+    runs-on: ubuntu-latest
+    if: always()
+    needs:
+      - test-rpc
+    steps:
+      ## Checkout the code
+      - name: Checkout the latest code
+        id: git_checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.ref }}
+          sparse-checkout: |
+            .github
+
+      ## Check if all jobs succeeded
+      - name: Check Tests Status
+        id: check_tests_status
+        uses: ./.github/actions/check-jobs-status
+        with:
+          jobs: ${{ toJson(needs) }}
+          summary_print: "true"
