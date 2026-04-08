@@ -91,11 +91,11 @@ jobs:
           fi
 
           # Add vars to github env for later steps
-          echo "DOCKER_IMAGES=${var_images}" >> $GITHUB_ENV
-          echo "DOCKER_TAG=${var_docker_tag}" >> $GITHUB_ENV
-          echo "ARTIFACT_PATTERN=${var_artifact_pattern}" >> $GITHUB_ENV
-          echo "ANNOTATION_PATTERN=${var_annotation_pattern}" >> $GITHUB_ENV
-          echo "DOCKERFILE_NAME=${var_dockerfile_name}" >> "$GITHUB_ENV"
+          echo "docker_images=${var_images}" >> "$GITHUB_OUTPUT"
+          echo "docker_tag=${var_docker_tag}" >> "$GITHUB_OUTPUT"
+          echo "artifact_pattern=${var_artifact_pattern}" >> "$GITHUB_OUTPUT"
+          echo "annotation_pattern=${var_annotation_pattern}" >> "$GITHUB_OUTPUT"
+          echo "dockerfile_name=${var_dockerfile_name}" >> "$GITHUB_OUTPUT"
 
       ## Set docker rc tag if branch is named `..-rc[0-9]`
       - name: Set Docker Tag RC Flag
@@ -103,18 +103,19 @@ jobs:
         shell: bash
         run: |
           var_docker_tag_rc=false
-          if [[ "${{ env.DOCKER_TAG }}" =~ -rc[0-9]*$ ]]; then
+          if [[ "${{ steps.set_vars.outputs.docker_tag }}" =~ -rc[0-9]*$ ]]; then
             # is a release candidate
             var_docker_tag_rc=true
           fi
-          echo "DOCKER_TAG_RC=${var_docker_tag_rc}" >> "$GITHUB_ENV"
+          echo "docker_tag_rc=${var_docker_tag_rc}" >> "$GITHUB_OUTPUT"
 
       ## Checkout the code
       - name: Checkout the latest code
         id: git_checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
-          ref: ${{ env.BRANCH_NAME }}
+          # ref: ${{ env.BRANCH_NAME }}
+          ref: ${{ github.ref }}
           sparse-checkout: |
             .github
 
@@ -123,9 +124,19 @@ jobs:
         id: download_artifacts
         uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
         with:
-          pattern: ${{ env.ARTIFACT_PATTERN }}
+          pattern: ${{ steps.set_vars.outputs.artifact_pattern }}
           path: /tmp/release
           merge-multiple: true
+
+      # echo
+      - name: echo
+        shell: bash
+        run: |
+            echo
+            echo "-----------------------------------"
+            echo "steps.docker_setup.docker_push: ${{ steps.docker_setup.outputs.docker_push }}"
+            echo "-----------------------------------"
+            echo
 
       ## Setup Docker for the builds
       - name: Docker setup
@@ -144,31 +155,31 @@ jobs:
           DOCKER_METADATA_ANNOTATIONS_LEVELS: manifest,index
         with:
           images: |
-            ${{ env.DOCKER_IMAGES }}
+            ${{ steps.set_vars.outputs.docker_images }}
           labels: |
             org.opencontainers.image.created={{commit_date 'YYYY-MM-DDTHH:mm:ss.SSS[Z]'}}
-            org.opencontainers.image.version=${{ env.DOCKER_TAG }}
+            org.opencontainers.image.version=${{ steps.set_vars.outputs.docker_tag }}
             org.opencontainers.image.revision=${{ github.sha }}
             org.opencontainers.image.title=${{ inputs.release_type }}
           annotations: |
             org.opencontainers.image.title=${{ inputs.release_type }}
-            org.opencontainers.image.description=${{ steps.repo_desc.outputs.description }} | ${{ env.ANNOTATION_PATTERN}} Image
+            org.opencontainers.image.description=${{ steps.repo_desc.outputs.description }} | ${{ steps.set_vars.outputs.annotatoin_pattern }} Image
           tags: |
             # debian tags #
             #  latest tag
-            type=raw,value=latest,enable=${{ env.DOCKER_TAG != '' && env.DOCKER_TAG_RC != 'true' && matrix.dist == 'debian' }}
+            type=raw,value=latest,enable=${{ steps.set_vars.outputs.docker_tag != '' && steps.set_vars.outputs.artifact_pattern != 'true' && matrix.dist == 'debian' }}
             #  latest-debian tag
-            type=raw,value=latest,suffix=-${{ matrix.dist }},enable=${{ env.DOCKER_TAG != '' && env.DOCKER_TAG_RC != 'true' && matrix.dist == 'debian' }}
+            type=raw,value=latest,suffix=-${{ matrix.dist }},enable=${{ steps.set_vars.outputs.docker_tag != '' && steps.set_vars.outputs.docker_tag_rc != 'true' && matrix.dist == 'debian' }}
             #  version tag
-            type=raw,value=${{ env.DOCKER_TAG }},enable=${{ env.DOCKER_TAG != '' && matrix.dist == 'debian'}}
+            type=raw,value=${{ steps.set_vars.outputs.docker_tag }},enable=${{ steps.set_vars.outputs.docker_tag != '' && matrix.dist == 'debian'}}
             #  version-dist tag
-            type=raw,value=${{ env.DOCKER_TAG }},suffix=-${{ matrix.dist }},enable=${{ env.DOCKER_TAG != '' && matrix.dist == 'debian' }}
+            type=raw,value=${{ steps.set_vars.outputs.docker_tag }},suffix=-${{ matrix.dist }},enable=${{ steps.set_vars.outputs.docker_tag != '' && matrix.dist == 'debian' }}
             #
             # alpine tags #
             #   latest-alpine tag
-            type=raw,value=latest,suffix=-${{ matrix.dist }},enable=${{ env.DOCKER_TAG != '' && env.DOCKER_TAG_RC != 'true' && matrix.dist == 'alpine' }}
+            type=raw,value=latest,suffix=-${{ matrix.dist }},enable=${{ steps.set_vars.outputs.docker_tag != '' && steps.set_vars.outputs.docker_tag_rc != 'true' && matrix.dist == 'alpine' }}
             #  version-dist tag
-            type=raw,value=${{ env.DOCKER_TAG }},suffix=-${{ matrix.dist }},enable=${{ env.DOCKER_TAG != '' && matrix.dist == 'alpine' }}
+            type=raw,value=${{ steps.set_vars.outputs.docker_tag }},suffix=-${{ matrix.dist }},enable=${{ steps.set_vars.outputs.docker_tag != '' && matrix.dist == 'alpine' }}
 
       ## Build docker image for release
       - name: Build and Push ( ${{matrix.dist}} )
@@ -178,12 +189,12 @@ jobs:
           sbom: false
           provenance: ${{ env.PROVENANCE }}
           context: /tmp
-          file: ./.github/dockerfiles/${{ matrix.dist }}/${{ env.DOCKERFILE_NAME }}
+          file: ./.github/dockerfiles/${{ matrix.dist }}/${{ steps.set_vars.outputs.dockerfile_name }}
           platforms: ${{ env.DOCKER_PLATFORMS }}
           tags: ${{ steps.docker_metadata.outputs.tags }}
           labels: ${{ steps.docker_metadata.outputs.labels }}
           annotations: ${{ steps.docker_metadata.outputs.annotations }} # Note: annotations are used for multi-architecture ghcr images
-          push: ${{ env.DOCKER_PUSH }}
+          push: ${{ step.docker_setup.outputs.docker_push }} # defined in .github/actions/docker composite
 
       ## Generate docker image attestation(s)
       - name: Attest Image (${{ github.event.repository.name }})

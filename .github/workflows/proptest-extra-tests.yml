@@ -181,6 +181,15 @@ jobs:
     permissions:
       pull-requests: write
     steps:
+      ## Checkout the code
+      - name: Checkout the latest code
+        id: git_checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.ref }}
+          sparse-checkout: |
+            .github
+
       ## Setup test environment: try restoring `testenv` for HEAD.
       ## Allows the job to proceed even if the cache restore fails.
       ## The fallback steps will build the archive from source in that case.
