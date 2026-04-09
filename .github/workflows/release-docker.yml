@@ -198,7 +198,7 @@ jobs:
           tags: ${{ steps.docker_metadata.outputs.tags }}
           labels: ${{ steps.docker_metadata.outputs.labels }}
           annotations: ${{ steps.docker_metadata.outputs.annotations }} # Note: annotations are used for multi-architecture ghcr images
-          push: ${{ step.docker_setup.outputs.docker_push }} # defined in .github/actions/docker composite
+          push: ${{ steps.docker_setup.outputs.docker_push }} # defined in .github/actions/docker composite
 
       ## Generate docker image attestation(s)
       - name: Attest Image (${{ github.event.repository.name }})
@@ -209,7 +209,8 @@ jobs:
         with:
           subject-name: ${{ env.DOCKER_REGISTRY }}/${{ github.repository_owner }}/${{ inputs.release_type }}
           subject-digest: ${{ steps.docker_build.outputs.digest }}
-          push-to-registry: ${{ env.DOCKER_PUSH }}
+          # push-to-registry: ${{ env.DOCKER_PUSH }}
+          push-to-registry: ${{ steps.docker_setup.outputs.docker_push }} # defined in .github/actions/docker composite
 
       ## Sign the images with GitHub OIDC Token
       ##   - https://github.blog/security/supply-chain-security/safeguard-container-signing-capability-actions/
