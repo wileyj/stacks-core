@@ -18,6 +18,9 @@ on:
         required: true
         type: string
 
+permissions:
+  contents: read
+
 concurrency:
   group: release-github-${{ github.head_ref || github.ref }}
   ## Always cancel duplicate jobs
@@ -31,10 +34,10 @@ jobs:
   ## Runs when the following is true:
   ##  - either node or signer tag is provided
   andon-cord:
+    name: Andon Cord
     if: |
       inputs.node_tag != '' ||
       inputs.signer_tag != ''
-    name: Andon Cord
     runs-on: ubuntu-latest
     environment: "Build Release"
     steps:
@@ -44,25 +47,25 @@ jobs:
           exit 0
 
   build-binaries:
-    if: |
-      inputs.node_tag != '' ||
-      inputs.signer_tag != ''
     name: Build Binaries
     needs:
       - andon-cord
+    if: |
+      inputs.node_tag != '' ||
+      inputs.signer_tag != ''
     uses: ./.github/workflows/release-build.yml
     with:
       node_tag: ${{ inputs.node_tag }} # used to conditionally run step in release-build.yml
       signer_tag: ${{ inputs.signer_tag }} # used to conditionally run step in release-build.yml
 
   docker-images:
-    if: |
-      inputs.node_tag != '' ||
-      inputs.signer_tag != ''
     name: Build Docker Images
     needs:
       - andon-cord
       - build-binaries
+    if: |
+      inputs.node_tag != '' ||
+      inputs.signer_tag != ''
     strategy:
       fail-fast: false
       ## Build a maximum of 2 images concurrently based on matrix.dist
@@ -84,15 +87,15 @@ jobs:
   ## Runs when the following is true:
   ##  - either node or signer tag is provided
   create-release:
-    if: |
-      inputs.node_tag != '' ||
-      inputs.signer_tag != ''
     name: Create Release
-    runs-on: ubuntu-latest
     needs:
       - andon-cord
       - build-binaries
       - docker-images
+    if: |
+      inputs.node_tag != '' ||
+      inputs.signer_tag != ''
+    runs-on: ubuntu-latest
     permissions:
       contents: write
     steps:

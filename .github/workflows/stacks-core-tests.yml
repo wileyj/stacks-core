@@ -6,6 +6,8 @@ on:
   workflow_dispatch:
   workflow_call:
 
+permissions:
+  contents: read
 ## env vars are transferred to composite action steps
 env:
   BITCOIND_TEST: 1
@@ -29,8 +31,8 @@ jobs:
   # Unit tests with code coverage
   unit-tests:
     name: Unit Tests
-    runs-on: ubuntu-latest
     needs: create-cache
+    runs-on: ubuntu-latest
     ## Continue the workflow in case a step fails (ex a single test fails)
     # continue-on-error: true
     strategy:
@@ -113,10 +115,10 @@ jobs:
   # Core contract tests
   core-contracts-clarinet-test:
     name: Core Contracts Test
+    runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: "./contrib/core-contract-tests/"
-    runs-on: ubuntu-latest
     steps:
       ## Checkout the code
       - name: Checkout the latest code
@@ -137,13 +139,13 @@ jobs:
 
   check-tests:
     name: Check Tests
-    runs-on: ubuntu-latest
-    if: always()
     needs:
       - unit-tests
       - open-api-validation
       - node-config-docsgen
       - core-contracts-clarinet-test
+    if: always()
+    runs-on: ubuntu-latest
     steps:
       ## Checkout the code
       - name: Checkout the latest code

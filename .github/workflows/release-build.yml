@@ -14,6 +14,13 @@ on:
         required: true
         type: string
 
+permissions:
+  contents: read
+
+defaults:
+  run:
+    shell: bash
+
 concurrency:
   group: release-build-${{ github.head_ref || github.ref }}
   ## Always cancel duplicate jobs
@@ -29,11 +36,6 @@ jobs:
   build-binaries:
     name: Build Binaries
     runs-on: ${{ matrix.os }}
-    outputs:
-      branch: ${{ steps.set_vars.outputs.branch }}
-    permissions:
-      id-token: write
-      attestations: write
     strategy:
       ## Run a maximum of 10 builds concurrently
       max-parallel: 10
@@ -68,6 +70,11 @@ jobs:
           ## excludes macos-x64
           - arch: macos
             cpu: x86-64
+    permissions:
+      id-token: write
+      attestations: write
+    outputs:
+      branch: ${{ steps.set_vars.outputs.branch }}
     steps:
       ## Checkout the code
       - name: Checkout the latest code
@@ -79,7 +86,6 @@ jobs:
       ## Configure target platform, install Rust toolchain, and build binaries
       - name: Build Release
         id: build_release
-        shell: bash
         env:
           MATRIX_CPU: ${{ matrix.cpu }}
           MATRIX_ARCH: ${{ matrix.arch }}
@@ -108,7 +114,6 @@ jobs:
         if: |
           inputs.node_tag != ''
         id: compress_artifacts_stacks_node
-        shell: bash
         run: |
           # compress all binaries in the target directory for any architecture
           file -0 ./target/${{ env.TARGET }}/release/* | sed -nE 's/\x0:\s*(ELF|PE32+|Mach).*//p' | zip --junk-paths ${{ env.ZIPFILE_NAME }}.zip -@
@@ -141,7 +146,6 @@ jobs:
         if: |
           inputs.signer_tag != ''
         id: compress_artifacts_stacks_signer
-        shell: bash
         run: |
           # since the archives are named generically and identically for both stacks-core and stacks-signer:
           #   - remove the stacks-core zipfile and recreate for the signer

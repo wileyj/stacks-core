@@ -5,13 +5,17 @@ name: Constants Check
 on:
   workflow_call:
 
+permissions:
+  contents: read
+
+defaults:
+  run:
+    shell: bash
+
 jobs:
   check-consts:
     name: Check the constants from stacks-inspect
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        shell: bash
 
     steps:
       - name: Checkout the latest code

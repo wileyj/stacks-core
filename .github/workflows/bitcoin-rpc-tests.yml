@@ -6,6 +6,9 @@ on:
   workflow_dispatch:
   workflow_call:
 
+permissions:
+  contents: read
+
 env:
   RUST_BACKTRACE: full
   SEGMENT_DOWNLOAD_TIMEOUT_MINS: 5
@@ -21,7 +24,9 @@ jobs:
     name: Create Test Cache
     uses: ./.github/workflows/create-cache.yml
 
+  # this job may run while the cache is verifying/building
   discover-bitcoin-majors:
+    name: Discover Bitcoin Majors
     runs-on: ubuntu-latest
     outputs:
       versions: ${{ steps.discover.outputs.versions }}
@@ -36,7 +41,7 @@ jobs:
           sparse-checkout: |
             .github
 
-      - name: Discover available major tags on Docker Hub
+      - name: Discover available Bitcoin major tags on dockerhub
         id: discover
         timeout-minutes: ${{ fromJSON(env.DISCOVER_TIMEOUT_MINS) }}
         run: |
@@ -55,10 +60,10 @@ jobs:
           echo "versions=$versions_json" >> "$GITHUB_OUTPUT"
 
   test-rpc:
+    name: test-rpc-bitcoin:${{ matrix.bitcoin_version }}
     needs:
       - discover-bitcoin-majors
       - create-cache
-    name: test-rpc-bitcoin:${{ matrix.bitcoin_version }}
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -97,10 +102,10 @@ jobs:
 
   check-tests:
     name: Check Tests
-    runs-on: ubuntu-latest
-    if: always()
     needs:
       - test-rpc
+    if: always()
+    runs-on: ubuntu-latest
     steps:
       ## Checkout the code
       - name: Checkout the latest code

@@ -9,6 +9,13 @@ on:
   schedule:
     - cron: "00 05 * * *" # 0500 UTC
 
+permissions:
+  contents: read
+
+defaults:
+  run:
+    shell: bash
+
 env:
   # build for both x64 and arm64 arch
   DOCKER_PLATFORMS: "linux/amd64,linux/arm64"
@@ -31,11 +38,6 @@ jobs:
   build-binaries:
     name: Build Binaries
     runs-on: ubuntu-latest
-    outputs:
-      branch: ${{ steps.set_vars.outputs.branch }}
-    permissions:
-      id-token: write
-      attestations: write
     strategy:
       max-parallel: 2
       matrix:
@@ -44,12 +46,16 @@ jobs:
         cpu:
           - x86-64
           - arm64
+    permissions:
+      id-token: write
+      attestations: write
+    outputs:
+      branch: ${{ steps.set_vars.outputs.branch }}
     steps:
       ## set local env vars.
       #   if the event is a schedule, use develop branch; otherwise use ref_name
       - name: Set Local Vars
         id: set_vars
-        shell: bash
         run: |
           var_branch="${{ github.ref_name }}"
           if [ "${{ github.event_name }}" == "schedule" ]; then
@@ -75,7 +81,6 @@ jobs:
 
       # echo
       - name: echo
-        shell: bash
         run: |
             echo
             echo "-----------------------------------"
@@ -86,7 +91,6 @@ jobs:
       ## Configure target platform, install Rust toolchain, and build binaries
       - name: Build Binaries
         id: build_binaries
-        shell: bash
         env:
           MATRIX_CPU: ${{ matrix.cpu }}
           MATRIX_ARCH: ${{ env.ARCH }}
@@ -98,7 +102,6 @@ jobs:
       # ZIPFILE_NAME is defined in the .github/scripts/build-binaries.sh script
       - name: Compress binaries
         id: compress_artifacts
-        shell: bash
         run: |
           # compress all binaries in the target directory for any architecture
           file -0 ./target/${{ env.TARGET }}/release/* | sed -nE 's/\x0:\s*(ELF|PE32+|Mach).*//p' | zip --junk-paths ${{ env.ZIPFILE_NAME }}.zip -@
@@ -119,9 +122,9 @@ jobs:
 
   image:
     name: Build Image
-    runs-on: ubuntu-latest
     needs:
       - build-binaries
+    runs-on: ubuntu-latest
     permissions:
       id-token: write
       attestations: write
@@ -139,7 +142,6 @@ jobs:
       ## set local env vars
       - name: Set Local Vars
         id: set_vars
-        shell: bash
         run: |
           # var_branch="${{ github.ref_name }}"
           var_annotation_pattern="${{ needs.build-binaries.outputs.branch }}" # default to use the branch name
@@ -237,7 +239,6 @@ jobs:
 
       - name: Sign the images OIDC Token
         id: cosign_image
-        shell: bash
         env:
           DIGEST: ${{ steps.docker_build.outputs.digest }}
           TAGS: ${{ steps.docker_metadata.outputs.tags }}

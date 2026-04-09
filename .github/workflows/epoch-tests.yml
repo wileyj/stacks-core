@@ -6,6 +6,13 @@ on:
   workflow_dispatch:
   workflow_call:
 
+permissions:
+  contents: read
+
+# defaults:
+#   run:
+#     shell: bash
+
 ## env vars are transferred to composite action steps
 env:
   BITCOIND_TEST: 1
@@ -89,10 +96,10 @@ jobs:
 
   check-tests:
     name: Check Tests
-    runs-on: ubuntu-latest
-    if: always()
     needs:
       - epoch-tests
+    if: always()
+    runs-on: ubuntu-latest
     steps:
       ## Checkout the code
       - name: Checkout the latest code

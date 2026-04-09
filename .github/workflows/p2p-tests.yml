@@ -6,6 +6,9 @@ on:
   workflow_dispatch:
   workflow_call:
 
+permissions:
+  contents: read
+
 ## env vars are transferred to composite action steps
 env:
   BITCOIND_TEST: 0
@@ -21,8 +24,8 @@ concurrency:
 jobs:
   # if triggered manually, create the cache
   create-cache:
-    if: always() && github.event_name == 'workflow_dispatch'
     name: Create Test Cache
+    if: always() && github.event_name == 'workflow_dispatch'
     uses: ./.github/workflows/create-cache.yml
 
   # p2p integration tests with code coverage
@@ -93,8 +96,8 @@ jobs:
 
   check-tests:
     name: Check Tests
-    runs-on: ubuntu-latest
     if: always()
+    runs-on: ubuntu-latest
     needs:
       - integration-tests
     steps:

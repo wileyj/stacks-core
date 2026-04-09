@@ -19,6 +19,13 @@ on:
         required: true
         type: string
 
+permissions:
+  contents: read
+
+defaults:
+  run:
+    shell: bash
+
 concurrency:
   group: ${{ inputs.release_type }}-${{ github.head_ref || github.ref }}
   ## Always cancel duplicate jobs
@@ -36,15 +43,11 @@ env:
 
 jobs:
   release-images:
+    name: Docker Image (${{ inputs.release_type }}, ${{ matrix.dist }})
     if: |
       ( inputs.release_type == 'stacks-core' || inputs.release_type == 'stacks-signer') &&
       ( inputs.signer_tag != '' || inputs.node_tag != '' )
-    name: Docker Image (${{ inputs.release_type }}, ${{ matrix.dist }})
     runs-on: ubuntu-latest
-    permissions:
-      id-token: write
-      attestations: write
-      packages: write
     strategy:
       fail-fast: false
       ## Build a maximum of 2 images concurrently based on matrix.dist
@@ -53,6 +56,10 @@ jobs:
         dist:
           - alpine
           - debian
+    permissions:
+      id-token: write
+      attestations: write
+      packages: write
     steps:
       ## Retrieve repository description for image annotation
       - name: Get repository description
@@ -66,7 +73,6 @@ jobs:
       ## set local env vars
       - name: Set Local Vars
         id: set_vars
-        shell: bash
         run: |
           var_dockerfile_name="Dockerfile.release"
           var_build_arch=glibc # default build architecture to glibc
@@ -100,7 +106,6 @@ jobs:
       ## Set docker rc tag if branch is named `..-rc[0-9]`
       - name: Set Docker Tag RC Flag
         id: docker_tag_rc_flag
-        shell: bash
         run: |
           var_docker_tag_rc=false
           if [[ "${{ steps.set_vars.outputs.docker_tag }}" =~ -rc[0-9]*$ ]]; then
@@ -130,7 +135,6 @@ jobs:
 
       # echo
       - name: echo
-        shell: bash
         run: |
             echo
             echo "-----------------------------------"
@@ -216,7 +220,6 @@ jobs:
 
       - name: Sign the images with OIDC Token
         id: cosign_artifact
-        shell: bash
         env:
           DIGEST: ${{ steps.docker_build.outputs.digest }}
           TAGS: ${{ steps.docker_metadata.outputs.tags }}

@@ -6,6 +6,9 @@ on:
   workflow_dispatch:
   workflow_call:
 
+permissions:
+  contents: read
+
 ## env vars are transferred to composite action steps
 env:
   BITCOIND_TEST: 1
@@ -29,6 +32,7 @@ jobs:
 
   generate-tests:
     name: Generate balanced test matrix
+    needs: create-cache
     runs-on: ubuntu-latest
     outputs:
       matrix1: ${{ steps.set-matrix.outputs.matrix1 }}
@@ -171,6 +175,7 @@ jobs:
           echo "matrix2=$matrix2" >> "$GITHUB_OUTPUT"
 
   integration-tests-1:
+    name: Integration Tests 1
     needs:
       - generate-tests
       - create-cache
@@ -217,6 +222,7 @@ jobs:
           test-name: ${{ matrix.test-name }}
 
   integration-tests-2:
+    name: Integration Tests 2
     needs:
       - generate-tests
       - create-cache
@@ -260,12 +266,12 @@ jobs:
 
   check-tests:
     name: Check Tests
-    runs-on: ubuntu-latest
-    if: always()
     needs:
       - generate-tests
       - integration-tests-1
       - integration-tests-2
+    if: always()
+    runs-on: ubuntu-latest
     steps:
       ## Checkout the code
       - name: Checkout the latest code

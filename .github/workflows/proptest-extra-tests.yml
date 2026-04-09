@@ -39,9 +39,8 @@ on:
         required: true
         type: string
 
-defaults:
-  run:
-    shell: bash
+permissions:
+  contents: read
 
 ## Cancel any in-progress run for the same PR when a new trigger arrives
 concurrency:

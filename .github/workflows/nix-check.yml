@@ -19,6 +19,13 @@ on:
       - reopened
       - synchronize
 
+permissions:
+  contents: read
+
+# defaults:
+#   run:
+#     shell: bash
+
 concurrency:
   group: nix-${{ github.head_ref || github.ref || github.run_id }}
   ## Always cancel duplicate jobs
