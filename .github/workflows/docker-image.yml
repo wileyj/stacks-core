@@ -59,7 +59,8 @@ jobs:
         run: |
           var_branch="${{ github.ref_name }}"
           if [ "${{ github.event_name }}" == "schedule" ]; then
-            var_branch="develop"
+            var_branch="test_composites" ## REMOVE FOR PR. LEAVE FOR TESTING IN DEFAULT
+            # var_branch="develop"
           fi
           echo "branch=${var_branch}" >> "$GITHUB_OUTPUT"
 
