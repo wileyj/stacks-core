@@ -12,9 +12,8 @@ set -euo pipefail
 ## Optional env vars:
 ##   SIGNER_ONLY  - "true" to build only stacks-signer; defaults to "false" (build all)
 ##
-## Outputs written to $GITHUB_ENV for subsequent steps:
+## Outputs written to $GITHUB_OUTPUT for subsequent steps:
 ##   TARGET       - Rust target triple (e.g. x86_64-unknown-linux-gnu)
-##   TARGET_CPU   - Rust/LLVM CPU name (e.g. x86-64-v3, native)
 ##   ZIPFILE_NAME - Base archive filename without extension (e.g. linux-glibc-x64)
 ##
 
@@ -128,9 +127,9 @@ ZIPFILE_NAME="${MATRIX_ARCH}-${ARCHIVE_NAME}"
 
 ## ── Export env vars for subsequent workflow steps ────────────────────────────
 # shellcheck disable=SC2129
-echo "TARGET=${TARGET}" >> "${GITHUB_ENV}"
-echo "TARGET_CPU=${TARGET_CPU}" >> "${GITHUB_ENV}"
-echo "ZIPFILE_NAME=${ZIPFILE_NAME}" >> "${GITHUB_ENV}"
+echo "target=${TARGET}" >> "${GITHUB_OUTPUT}"
+# echo "target_cpu=${TARGET_CPU}" >> "${GITHUB_OUTPUT}"
+echo "zipfile_name=${ZIPFILE_NAME}" >> "${GITHUB_OUTPUT}"
 
 ## ── Install Rust toolchain and add the cross-compilation target ──────────────
 RUST_TOOLCHAIN="$(cat ./rust-toolchain)"

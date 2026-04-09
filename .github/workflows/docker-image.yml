@@ -79,15 +79,6 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      # echo
-      - name: echo
-        run: |
-            echo
-            echo "-----------------------------------"
-            echo "steps.docker_setup.docker_push: ${{ steps.docker_setup.outputs.docker_push }}"
-            echo "-----------------------------------"
-            echo
-
       ## Configure target platform, install Rust toolchain, and build binaries
       - name: Build Binaries
         id: build_binaries
@@ -98,27 +89,42 @@ jobs:
           SIGNER_ONLY: "false"
         run: bash ./.github/scripts/build-binaries.sh
 
+      # echo
+      - name: echo
+        run: |
+            echo
+            echo "-----------------------------------"
+            echo "steps.docker_setup.docker_push: ${{ steps.docker_setup.outputs.docker_push }}"
+            echo "steps.build_binaries.target: ${{ steps.build_binaries.outputs.target }}"
+            echo "steps.build_binaries.target_cpu: ${{ steps.build_binaries.outputs.target_cpu }}"
+            echo "steps.build_binaries.zipfile_name: ${{ steps.build_binaries.outputs.zipfile_name }}"
+            echo "-----------------------------------"
+            echo
+
       ## Compress the binary artifacts
       # ZIPFILE_NAME is defined in the .github/scripts/build-binaries.sh script
       - name: Compress binaries
         id: compress_artifacts
         run: |
           # compress all binaries in the target directory for any architecture
-          file -0 ./target/${{ env.TARGET }}/release/* | sed -nE 's/\x0:\s*(ELF|PE32+|Mach).*//p' | zip --junk-paths ${{ env.ZIPFILE_NAME }}.zip -@
+          # file -0 ./target/${{ env.TARGET }}/release/* | sed -nE 's/\x0:\s*(ELF|PE32+|Mach).*//p' | zip --junk-paths ${{ env.ZIPFILE_NAME }}.zip -@
+          file -0 ./target/${{ steps.build_binaries.outputs.target }}/release/* | sed -nE 's/\x0:\s*(ELF|PE32+|Mach).*//p' | zip --junk-paths ${{ steps.build_binaries.outputs.zipfile_name }}.zip -@
 
       ## Upload the binary archive using the commit sha as the key
       - name: Upload Artifact
         id: upload_artifact
         uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
         with:
-          name: ${{ github.sha }}-${{ env.ZIPFILE_NAME }}
-          path: ${{ env.ZIPFILE_NAME }}.zip
+          # name: ${{ github.sha }}-${{ env.ZIPFILE_NAME }}
+          # path: ${{ env.ZIPFILE_NAME }}.zip
+          name: ${{ github.sha }}-${{ steps.build_binaries.outputs.zipfile_name }}
+          path: ${{ steps.build_binaries.outputs.zipfile_name }}.zip
 
       ## Attest the binary archive
       - name: Attest Artifact
         uses: actions/attest-build-provenance@a2bbfa25375fe432b6a289bc6b6cd05ecd0c4c32 # v4.1.0
         with:
-          subject-path: ${{ env.ZIPFILE_NAME }}.zip
+          subject-path: ${{ steps.build_binaries.outputs.zipfile_name }}.zip
 
   image:
     name: Build Image
@@ -216,7 +222,8 @@ jobs:
           tags: ${{ steps.docker_metadata.outputs.tags }}
           labels: ${{ steps.docker_metadata.outputs.labels }}
           annotations: ${{ steps.docker_metadata.outputs.annotations }} # Note: annotations are used for multi-architecture ghcr images
-          push: ${{ env.DOCKER_PUSH }}
+          # push: ${{ env.DOCKER_PUSH }}
+          push: ${{ step.docker_setup.outputs.docker_push }} # defined in .github/actions/docker composite
 
       ## Generate docker image attestation(s)
       - name: Attest Image
@@ -228,7 +235,8 @@ jobs:
           subject-name: |
             ${{ steps.set_vars.outputs.docker_images }}
           subject-digest: ${{ steps.docker_build.outputs.digest }}
-          push-to-registry: ${{ env.DOCKER_PUSH }}
+          # push-to-registry: ${{ env.DOCKER_PUSH }}
+          push-to-registry: ${{ step.docker_setup.outputs.docker_push }} # defined in .github/actions/docker composite
 
       ## Sign the images with GitHub OIDC Token
       ##   - https://github.blog/security/supply-chain-security/safeguard-container-signing-capability-actions/
