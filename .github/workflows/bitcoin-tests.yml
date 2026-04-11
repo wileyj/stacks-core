@@ -19,7 +19,7 @@ env:
   TEST_TIMEOUT: 30
   FD: 4096 # Increase file descriptor limit
   PARALLELISM: 32
-  FAIL_FAST: false
+  # FAIL_FAST: false
 
 concurrency:
   group: bitcoin-tests-${{ github.head_ref || github.ref || github.run_id }}
@@ -181,7 +181,7 @@ jobs:
     runs-on: ubuntu-latest
     if: ${{ needs.generate-tests.outputs.matrix1 != '[]' }}
     strategy:
-      fail-fast: ${{ env.FAIL_FAST }}
+      fail-fast: false
       max-parallel: ${{ env.PARALLELISM }}
       matrix:
         test-name: ${{ fromJSON(needs.generate-tests.outputs.matrix1) }}
@@ -224,7 +224,7 @@ jobs:
     runs-on: ubuntu-latest
     if: ${{ needs.generate-tests.outputs.matrix2 != '[]' }}
     strategy:
-      fail-fast: ${{ env.FAIL_FAST }}
+      fail-fast: false
       max-parallel: ${{ env.PARALLELISM }}
       matrix:
         test-name: ${{ fromJSON(needs.generate-tests.outputs.matrix2) }}
