@@ -147,10 +147,10 @@ jobs:
       packages: write      # required for image push inside release-docker.yml
     secrets: inherit
     uses: ./.github/workflows/release-github.yml
-    # with:
-    #   node_tag: ${{ needs.check-release.outputs.node_docker_tag }} # 5 place version format like x.x.x.x.x
-    #   signer_tag: ${{ needs.check-release.outputs.signer_docker_tag }} # 6 place version format like x.x.x.x.x.x
-    #   is_node_release: ${{ needs.check-release.outputs.is_node_release }} # used in matrix conitional in release-github.yml
+    with:
+      node_tag: ${{ needs.check-release.outputs.node_docker_tag }} # 5 place version format like x.x.x.x.x
+      signer_tag: ${{ needs.check-release.outputs.signer_docker_tag }} # 6 place version format like x.x.x.x.x.x
+      is_node_release: ${{ needs.check-release.outputs.is_node_release }} # used in matrix conitional in release-github.yml
 
   ## Create a reusable cache for tests
   ##
