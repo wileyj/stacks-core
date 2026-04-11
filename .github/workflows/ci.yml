@@ -170,7 +170,7 @@ jobs:
     needs:
       - rustfmt
       - changelog-check
-      - check-release
+      # - check-release
     if: |
       needs.check-release.outputs.is_node_release == 'true' ||
       github.event_name == 'workflow_dispatch' ||
