@@ -19,7 +19,7 @@ jobs:
     name: Setup
     runs-on: ubuntu-latest
     outputs:
-      rust-toolchain: ${{ steps.define_rust_toolchain.outputs.rust-toolchain }}
+      rust-toolchain: ${{ steps.define-rust-toolchain.outputs.rust-toolchain }}
     steps:
       - name: Checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -27,7 +27,7 @@ jobs:
           persist-credentials: false
 
       - name: Define Rust toolchain
-        id: define_rust_toolchain
+        id: define-rust-toolchain
         run: echo "rust-toolchain=$(cat ./rust-toolchain)" >> "$GITHUB_OUTPUT"
 
   # Native targets (Windows/Linux)
@@ -41,7 +41,7 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Setup Rust
+      - name: Setup Rust Toolchain
         uses: actions-rust-lang/setup-rust-toolchain@11df97af8e8102fd60b60a77dfbf58d40cd843b8 # v1.10.1
         with:
           toolchain: ${{ needs.setup.outputs.rust-toolchain }}
@@ -79,7 +79,7 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Setup Rust
+      - name: Setup Rust Toolchain
         uses: actions-rust-lang/setup-rust-toolchain@11df97af8e8102fd60b60a77dfbf58d40cd843b8 # v1.10.1
         with:
           toolchain: ${{ needs.setup.outputs.rust-toolchain }}

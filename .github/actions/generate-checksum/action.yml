@@ -16,7 +16,6 @@ runs:
   steps:
     ## Downloads the artifacts built in `create-source-binary.yml`
     - name: Download Artifacts
-      id: download_artifacts
       uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v4.1.8
       with:
         pattern: ${{ inputs.artifact_download_pattern }}
@@ -25,7 +24,6 @@ runs:
 
     ## Generate a checksums file to be added to the release page
     - name: Generate Checksums
-      id: generate_checksum
       shell: bash
       run: |
         # If sha512sum command doesn't exist on the host, exit

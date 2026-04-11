@@ -44,7 +44,6 @@ runs:
     - name: Restore Cache
       if: |
         inputs.action == 'restore'
-      id: restore_cache
       uses: actions/cache/restore@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5.0.4
       with:
         fail-on-cache-miss: ${{ inputs.fail-on-cache-miss }}
@@ -56,7 +55,6 @@ runs:
     - name: Save Cache
       if: |
         inputs.action == 'save'
-      id: save_cache
       uses: actions/cache/save@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5.0.4
       with:
         path: ./target

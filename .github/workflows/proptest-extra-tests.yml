@@ -182,7 +182,6 @@ jobs:
     steps:
       ## Checkout the code
       - name: Checkout the latest code
-        id: git_checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           ref: ${{ github.event.pull_request.head.sha || github.ref }}
@@ -193,14 +192,13 @@ jobs:
       ## Allows the job to proceed even if the cache restore fails.
       ## The fallback steps will build the archive from source in that case.
       - name: Setup Test Environment
-        id: setup_tests
         continue-on-error: true
         uses: ./.github/actions/testenv
 
       ## If testenv failed (e.g. cache miss), cargo-nextest will not be installed.
       ## Install it explicitly as a fallback using a pre-built binary.
       - name: Install cargo-nextest (testenv fallback)
-        if: steps.setup_tests.outcome == 'failure'
+        if: steps.setup-tests.outcome == 'failure'
         uses: taiki-e/install-action@d12e869b89167df346dd0ff65da342d1fb1202fb # v2.53.2
         with:
           tool: nextest
@@ -208,7 +206,7 @@ jobs:
       ## If the nextest archive was not in cache,
       ## build it from the HEAD source.
       - name: Build HEAD nextest archive (testenv fallback)
-        if: steps.setup_tests.outcome == 'failure'
+        if: steps.setup-tests.outcome == 'failure'
         run: |
           cargo nextest archive \
             --archive-file ~/test_archive.tar.zst \
@@ -331,7 +329,6 @@ jobs:
       ## parsed by xmllint to extract failed test names for the PR comment step.
       ## The step fails if any test fails (--fail-fast matches the old loop behaviour).
       - name: Run new tests (PROPTEST_CASES=${{ env.PROPTEST_CASES }})
-        id: run_tests
         if: steps.discover.outputs.count != '0'
         timeout-minutes: ${{ fromJSON(env.TEST_TIMEOUT) }}
         run: |
@@ -367,7 +364,7 @@ jobs:
       ## Persist proptest regression files (if any) for a potential next run.
       ## file format: <package>/proptest-regressions/<test-path>/<test-module>.txt
       - name: Save proptest regression (if any)
-        if: failure() && steps.run_tests.outcome == 'failure'
+        if: failure() && steps.run-tests.outcome == 'failure'
         env:
           ARTIFACT_NAME: proptest-extra-pr-${{ github.event.pull_request.number || inputs.pr_number }}
         uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
@@ -381,7 +378,7 @@ jobs:
       ## linking to the run and the artifact that holds the regression seeds.
       ## Skipped if the failure originated from a step other than test execution.
       - name: Report proptest failure on PR
-        if: failure() && steps.run_tests.outcome == 'failure'
+        if: failure() && steps.run-tests.outcome == 'failure'
         env:
           GH_TOKEN: ${{ github.token }}
           PR_NUMBER: ${{ github.event.pull_request.number || inputs.pr_number }}

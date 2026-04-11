@@ -45,7 +45,6 @@ runs:
 
     ## Generate configuration documentation
     - name: Generate Configuration Documentation
-      id: generate_docs
       shell: bash
       env:
         OUTPUT_FILE: ${{ inputs.output }}
@@ -67,7 +66,6 @@ runs:
 
     ## Validate generated documentation quality
     - name: Validate Generated Documentation
-      id: validate_docs
       shell: bash
       run: |
         echo "Validating generated documentation..."
@@ -103,7 +101,6 @@ runs:
 
     ## Upload documentation as artifact
     - name: Upload Documentation Artifact
-      id: upload_artifact
       uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
       with:
         name: ${{ inputs.artifact-name }}
@@ -113,7 +110,6 @@ runs:
 
     ## Generate job summary
     - name: Generate Job Summary
-      id: summary
       shell: bash
       run: |
         OUTPUT_FILE="${{ inputs.output }}"

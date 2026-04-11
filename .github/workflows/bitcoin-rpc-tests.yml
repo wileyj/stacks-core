@@ -34,7 +34,6 @@ jobs:
     steps:
       ## Checkout the code
       - name: Checkout the latest code
-        id: git_checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           ref: ${{ github.event.pull_request.head.sha || github.ref }}
@@ -47,7 +46,7 @@ jobs:
         run: |
           set -euo pipefail
 
-          result_json="$(bash ./.github/scripts/docker-bitcoin-majors.sh "$START_MAJOR")"
+          result_json="$(bash ./.github/scripts/docker_bitcoin_majors.sh "$START_MAJOR")"
           echo "$result_json" | jq .
 
           versions_json="$(jq -c '.versions' <<< "$result_json")"
@@ -60,7 +59,7 @@ jobs:
           echo "versions=$versions_json" >> "$GITHUB_OUTPUT"
 
   test-rpc:
-    name: test-rpc-bitcoin:${{ matrix.bitcoin_version }}
+    name: Test Bitcoin (${{ matrix.bitcoin_version }})
     needs:
       - discover-bitcoin-majors
       - create-cache
@@ -73,7 +72,6 @@ jobs:
     steps:
       ## Checkout the code
       - name: Checkout the latest code
-        id: git_checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           ref: ${{ github.event.pull_request.head.sha || github.ref }}
@@ -81,10 +79,9 @@ jobs:
             .github
 
       - name: Setup Test Environment
-        id: setup_tests
         uses: ./.github/actions/testenv
 
-      - name: Pull bitcoind image ${{ matrix.bitcoin_version }}
+      - name: Pull bitcoind image (${{ matrix.bitcoin_version }})
         run: docker pull bitcoin/bitcoin:${{ matrix.bitcoin_version }}
 
       - name: Run tests on bitcoind ${{ matrix.bitcoin_version }}
@@ -109,7 +106,6 @@ jobs:
     steps:
       ## Checkout the code
       - name: Checkout the latest code
-        id: git_checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           ref: ${{ github.event.pull_request.head.sha || github.ref }}
@@ -118,7 +114,6 @@ jobs:
 
       ## Check if all jobs succeeded
       - name: Check Tests Status
-        id: check_tests_status
         uses: ./.github/actions/check-jobs-status
         with:
           jobs: ${{ toJson(needs) }}

@@ -23,32 +23,28 @@ permissions:
   contents: read
 
 jobs:
-  clippy_check:
+  clippy-checks:
     name: Clippy Check
     runs-on: ubuntu-latest
     steps:
       - name: Checkout the latest code
-        id: git_checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           ref: ${{ github.event.pull_request.head.sha || github.ref }}
 
       - name: Define Rust Toolchain
-        id: define_rust_toolchain
+        id: define-rust-toolchain
         run: echo "rust-toolchain=$(cat ./rust-toolchain)" >> "$GITHUB_OUTPUT"
 
       - name: Setup Rust Toolchain
-        id: setup_rust_toolchain
         uses: actions-rust-lang/setup-rust-toolchain@11df97af8e8102fd60b60a77dfbf58d40cd843b8 # v1.10.1
         with:
-          toolchain: ${{ steps.define_rust_toolchain.outputs.rust-toolchain }}
+          toolchain: ${{ steps.define-rust-toolchain.outputs.rust-toolchain }}
           components: clippy
           cache: false
 
       - name: Clippy
-        id: clippy
         run: cargo clippy-stacks
 
       - name: Clippy Stackslib
-        id: clippy-stackslib
         run: cargo clippy-stackslib

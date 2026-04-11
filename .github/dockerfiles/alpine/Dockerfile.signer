@@ -1,3 +1,4 @@
+# Dockerfile used to build an image or the stacks-signer binary only
 FROM alpine AS builder
 
 LABEL org.opencontainers.image.description="Stacks Signer CLI"

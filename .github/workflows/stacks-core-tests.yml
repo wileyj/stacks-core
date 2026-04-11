@@ -45,7 +45,6 @@ jobs:
     steps:
       ## Checkout the code
       - name: Checkout the latest code
-        id: git_checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           ref: ${{ github.event.pull_request.head.sha || github.ref }}
@@ -54,13 +53,11 @@ jobs:
 
       ## Setup test environment
       - name: Setup Test Environment
-        id: setup_tests
         uses: ./.github/actions/testenv
 
       ## Run test matrix using restored cache of archive file
       ##   - Test will timeout after env.TEST_TIMEOUT minutes
       - name: Run Tests
-        id: run_tests
         timeout-minutes: ${{ fromJSON(env.TEST_TIMEOUT) }}
         uses: ./.github/actions/run-tests/partition
         with:
@@ -69,7 +66,6 @@ jobs:
 
       ## Create and upload code coverage file
       - name: Code Coverage
-        id: codecov
         uses: ./.github/actions/codecov
         with:
           test-name: ${{ github.job }}-${{ matrix.partition }}
@@ -81,13 +77,12 @@ jobs:
     steps:
     ## Checkout the code
       - name: Checkout the latest code
-        id: git_checkout
+
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           ref: ${{ github.event.pull_request.head.sha || github.ref }}
 
       - name: Generate OpenAPI documentation
-        id: openapi
         uses: ./.github/actions/openapi
         with:
           input: "./docs/rpc/openapi.yaml"
@@ -103,13 +98,12 @@ jobs:
     steps:
       ## Checkout the code
       - name: Checkout the latest code
-        id: git_checkout
+
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           ref: ${{ github.event.pull_request.head.sha || github.ref }}
 
       - name: Generate Node Configuration Documentation
-        id: node_config_docsgen
         uses: ./.github/actions/config-docsgen
 
   # Core contract tests
@@ -122,13 +116,12 @@ jobs:
     steps:
       ## Checkout the code
       - name: Checkout the latest code
-        id: git_checkout
+
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           ref: ${{ github.event.pull_request.head.sha || github.ref }}
 
       - name: Execute core contract unit tests with clarinet-sdk
-        id: clarinet_unit_test
         uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238 # v6.2.0
         with:
           node-version: 25.x
@@ -149,7 +142,6 @@ jobs:
     steps:
       ## Checkout the code
       - name: Checkout the latest code
-        id: git_checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           ref: ${{ github.event.pull_request.head.sha || github.ref }}
@@ -158,7 +150,6 @@ jobs:
 
       ## Check if all jobs succeeded
       - name: Check Tests Status
-        id: check_tests_status
         uses: ./.github/actions/check-jobs-status
         with:
           jobs: ${{ toJson(needs) }}

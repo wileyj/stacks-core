@@ -25,7 +25,6 @@ runs:
     ## Generate code coverage using grcov
     ## Resulting coverage filenames must be unique, so use test-name input to name the file
     - name: Run grcov
-      id: run_grcov
       shell: bash
       run: |
         grcov . \
@@ -58,7 +57,6 @@ runs:
 
     ## Store coverage file in GitHub CI artifacts (with SHA prefix)
     - name: Store Code Coverage as Artifact
-      id: store_coverage
       uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # 7.0.0
       with:
         name: ${{ github.sha }}-${{ steps.generate_test_file_name.outputs.result }}

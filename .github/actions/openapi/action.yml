@@ -44,14 +44,12 @@ runs:
         node-version: "${{ inputs.node-version }}"
 
     - name: Install Redocly CLI
-      id: install_redocly
       shell: bash
       run: |
         npm install -g @redocly/cli@${{ inputs.redocly-version }}
         echo "✅ Redocly CLI version: $(redocly --version)"
 
     - name: Validate OpenAPI spec
-      id: validate_spec
       if: inputs.validate == 'true'
       shell: bash
       run: |
@@ -64,7 +62,6 @@ runs:
         echo "✅ OpenAPI specification is valid"
 
     - name: Generate OpenAPI docs
-      id: generate_docs
       shell: bash
       run: |
         echo "Generating OpenAPI documentation..."
@@ -76,7 +73,6 @@ runs:
         echo "✅ Documentation generated successfully"
 
     - name: Check result
-      id: check_result
       shell: bash
       run: |
         echo "Checking if documentation file exists..."
@@ -89,7 +85,6 @@ runs:
 
     ## Upload the html file artifact
     - name: Upload bundled html
-      id: upload_html_artifact
       uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
       with:
         name: open-api-bundle

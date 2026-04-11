@@ -42,7 +42,6 @@ jobs:
     environment: "Build Release"
     steps:
       - name: Check Approval
-        id: check
         run: |
           exit 0
 
@@ -101,7 +100,6 @@ jobs:
     steps:
       ## Creates releases
       - name: Create Release
-        id: check
         uses: ./.github/actions/release/create-releases
         with:
           node_tag: ${{ inputs.node_tag }} # name used for release (use the version by itself

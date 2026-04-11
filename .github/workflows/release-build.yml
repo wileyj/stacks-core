@@ -70,28 +70,43 @@ jobs:
           ## excludes macos-x64
           - arch: macos
             cpu: x86-64
+          ## testing exclude
+          - arch: macos
+            cpu: arm64
+          - arch: windows
+            cpu: x86-64
+          - arch: windows
+            cpu: arm64
     permissions:
       id-token: write
       attestations: write
-    outputs:
-      branch: ${{ steps.set_vars.outputs.branch }}
     steps:
       ## Checkout the code
       - name: Checkout the latest code
-        id: git_checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           ref: ${{ github.ref }}
 
       ## Configure target platform, install Rust toolchain, and build binaries
-      - name: Build Release
-        id: build_release
+      - name: Build Binaries
+        id: build-binaries
         env:
           MATRIX_CPU: ${{ matrix.cpu }}
           MATRIX_ARCH: ${{ matrix.arch }}
           CMD: ${{ env.CMD }}
           SIGNER_ONLY: ${{ inputs.node_tag == '' }}
-        run: bash ./.github/scripts/build-binaries.sh
+        run: bash ./.github/scripts/build_binaries.sh
+
+      # echo
+      - name: echo
+        run: |
+            echo
+            echo "-----------------------------------"
+            echo "steps.build_binaries.target: ${{ steps.build_binaries.outputs.target }}"
+            echo "steps.build_binaries.target_cpu: ${{ steps.build_binaries.outputs.target_cpu }}"
+            echo "steps.build_binaries.zipfile_name: ${{ steps.build_binaries.outputs.zipfile_name }}"
+            echo "-----------------------------------"
+            echo
 
       ## For macOS,install the GNU version of sed used in compress_artifacts_stacks_node
       ##  - Included BSD version of sed returns an error: `sed: first RE may not be empty`
@@ -113,29 +128,26 @@ jobs:
       - name: Compress binaries (stacks-core)
         if: |
           inputs.node_tag != ''
-        id: compress_artifacts_stacks_node
         run: |
           # compress all binaries in the target directory for any architecture
-          file -0 ./target/${{ env.TARGET }}/release/* | sed -nE 's/\x0:\s*(ELF|PE32+|Mach).*//p' | zip --junk-paths ${{ env.ZIPFILE_NAME }}.zip -@
+          file -0 ./target/${{ steps.build-binaries.outputs.target }}/release/* | sed -nE 's/\x0:\s*(ELF|PE32+|Mach).*//p' | zip --junk-paths  ${{ steps.build-binaries.outputs.zipfile_name }}.zip -@
 
       ## Upload the binary archive using the commit sha as the key
       - name: Upload Artifact (stacks-core)
         if: |
           inputs.node_tag != ''
-        id: upload_artifact_stacks_node
         uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
         with:
-          name: ${{ github.sha }}-stacks-core-${{ env.ZIPFILE_NAME }}
-          path: ${{ env.ZIPFILE_NAME }}.zip
+          name: ${{ github.sha }}-stacks-core-${{ steps.build-binaries.outputs.zipfile_name }}
+          path: ${{ steps.build-binaries.outputs.zipfile_name }}.zip
 
       ## Attest the binary archive
       - name: Attest Artifact (stacks-core)
         if: |
           inputs.node_tag != ''
-        id: attest_artifact_stacks_node
         uses: actions/attest-build-provenance@977bb373ede98d70efdf65b84cb5f73e068dcc2a # v3.0.0
         with:
-          subject-path: ${{ env.ZIPFILE_NAME }}.zip
+          subject-path: ${{ steps.build-binaries.outputs.zipfile_name }}.zip
 
       ##############################################################################
       ## Stacks signer release artifact steps
@@ -145,29 +157,26 @@ jobs:
       - name: Compress binaries (stacks-signer)
         if: |
           inputs.signer_tag != ''
-        id: compress_artifacts_stacks_signer
         run: |
           # since the archives are named generically and identically for both stacks-core and stacks-signer:
           #   - remove the stacks-core zipfile and recreate for the signer
-          [ -e "${{ env.ZIPFILE_NAME }}.zip" ] && rm -f "${{ env.ZIPFILE_NAME }}.zip"
+          [ -e "${{ steps.build-binaries.outputs.zipfile_name }}.zip" ] && rm -f "${{ steps.build-binaries.outputs.zipfile_name }}.zip"
           # compress all binaries in the target directory for any architecture
-          file -0 ./target/${{ env.TARGET }}/release/stacks-signer* | sed -nE 's/\x0:\s*(ELF|PE32+|Mach).*//p' | zip --junk-paths ${{ env.ZIPFILE_NAME }}.zip -@
+          file -0 ./target/${{ steps.build-binaries.outputs.target }}/release/stacks-signer* | sed -nE 's/\x0:\s*(ELF|PE32+|Mach).*//p' | zip --junk-paths ${{ steps.build-binaries.outputs.zipfile_name }}.zip -@
 
       ## Upload the binary archive using the commit sha as the key
       - name: Upload Artifact (stacks-signer)
         if: |
           inputs.signer_tag != ''
-        id: upload_artifact_stacks_signer
         uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
         with:
-          name: ${{ github.sha }}-stacks-signer-${{ env.ZIPFILE_NAME }}
-          path: ${{ env.ZIPFILE_NAME }}.zip
+          name: ${{ github.sha }}-stacks-signer-${{ steps.build-binaries.outputs.zipfile_name }}
+          path: ${{ steps.build-binaries.outputs.zipfile_name }}.zip
 
       ## Attest the binary archive
       - name: Attest Artifact (stacks-signer)
         if: |
           inputs.signer_tag != ''
-        id: attest_artifact_stacks_signer
         uses: actions/attest-build-provenance@977bb373ede98d70efdf65b84cb5f73e068dcc2a # v3.0.0
         with:
-          subject-path: ${{ env.ZIPFILE_NAME }}.zip
+          subject-path: ${{ steps.build-binaries.outputs.zipfile_name }}.zip

@@ -27,7 +27,6 @@ jobs:
     steps:
       - name: Lock Threads
         uses: dessant/lock-threads@7266a7ce5c1df01b1c6db85bf8cd86c737dadbe7 # v6.0.0
-        id: lock_threads
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           issue-inactive-days: 7

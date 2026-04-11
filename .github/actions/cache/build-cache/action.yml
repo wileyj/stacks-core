@@ -20,13 +20,17 @@ runs:
           echo "target cache: ${{ steps.check_target_cache.outputs.cache-hit }}"
           echo "test archive cache: ${{ steps.check_test_archive_cache.outputs.cache-hit }}"
 
+    - name: Define Rust toolchain
+      id: define-rust-toolchain
+      run: echo "rust-toolchain=$(cat ./rust-toolchain)" >> "$GITHUB_OUTPUT"
+
     - name: Setup Rust Toolchain
       if: |
         steps.check_target_cache.outputs.cache-hit != 'true' ||
         steps.check_test_archive_cache.outputs.cache-hit != 'true'
-      id: setup_rust_toolchain
       uses: actions-rust-lang/setup-rust-toolchain@11df97af8e8102fd60b60a77dfbf58d40cd843b8 # v1.10.1
       with:
+        toolchain: ${{ needs.setup.outputs.rust-toolchain }}
         components: llvm-tools-preview
         cache: false
 
@@ -36,7 +40,6 @@ runs:
       if: |
         steps.check_target_cache.outputs.cache-hit != 'true' ||
         steps.check_test_archive_cache.outputs.cache-hit != 'true'
-      id: restore_cargo_cache
       uses: ./.github/actions/cache/cargo
       with:
         action: restore
@@ -46,16 +49,15 @@ runs:
       if: |
         steps.check_target_cache.outputs.cache-hit != 'true' ||
         steps.check_test_archive_cache.outputs.cache-hit != 'true'
-      id: install_dependencies
       uses: taiki-e/install-action@d12e869b89167df346dd0ff65da342d1fb1202fb # v2.53.2
       with:
-        tool: nextest, grcov # can be versioned, ex: tool@1.1.1.1
+        tool: nextest # can be versioned, ex: tool@1.1.1.1
+        # tool: nextest, grcov # can be versioned, ex: tool@1.1.1.1
 
     - name: Build and Archive Tests
       if: |
         steps.check_target_cache.outputs.cache-hit != 'true' ||
         steps.check_test_archive_cache.outputs.cache-hit != 'true'
-      id: archive_tests
       shell: bash
       run: |
         export RUSTFLAGS="-C instrument-coverage" && \
@@ -70,7 +72,6 @@ runs:
       if: |
         steps.check_target_cache.outputs.cache-hit != 'true' ||
         steps.check_test_archive_cache.outputs.cache-hit != 'true'
-      id: save_nextest_cache
       uses: ./.github/actions/cache/test-archive
       with:
         action: save
@@ -79,7 +80,6 @@ runs:
       if: |
         steps.check_target_cache.outputs.cache-hit != 'true' ||
         steps.check_test_archive_cache.outputs.cache-hit != 'true'
-      id: save_target_cache
       uses: ./.github/actions/cache/cargo-target
       with:
         action: save

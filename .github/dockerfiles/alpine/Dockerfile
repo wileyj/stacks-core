@@ -1,3 +1,4 @@
+# Dockerfile used to build an image including all binaries
 FROM alpine AS builder
 
 ARG TARGETPLATFORM

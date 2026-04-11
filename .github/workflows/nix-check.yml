@@ -33,8 +33,6 @@ concurrency:
 
 run-name: ${{ github.ref_name }}
 
-permissions: {}
-
 jobs:
   build-pkg:
     name: Check Nix package

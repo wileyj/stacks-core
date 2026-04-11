@@ -16,7 +16,6 @@ runs:
   using: "composite"
   steps:
     - name: Check Jobs
-      id: check_jobs
       shell: bash
       env:
         JOBS: ${{ inputs.jobs }}  # this is passing json to the script, which is why it is failing, but still passing

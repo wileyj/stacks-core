@@ -66,8 +66,8 @@ main() {
 
   mapfile -t sorted_majors < <(printf '%s\n' "${!resolved_tags[@]}" | sort -n)
 
-  # Validation: 
-  # - start_major exists in discovered majors, and 
+  # Validation:
+  # - start_major exists in discovered majors, and
   if [[ "${sorted_majors[0]}" != "$start_major" ]]; then
     echo "Expected start_major=$start_major to be present, but first discovered major is ${sorted_majors[0]}." >&2
     exit 1

@@ -46,7 +46,6 @@ jobs:
       test-archive-cache-hit: ${{ steps.test-archive.outputs.cache-hit }}
     steps:
       - name: Checkout the latest code
-        id: git_checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           ref: ${{ github.head_ref || github.ref }}
@@ -77,7 +76,6 @@ jobs:
     if: needs.check-caches.outputs.cargo-cache-hit != 'true'
     steps:
       - name: Checkout the latest code
-        id: git_checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           ref: ${{ github.head_ref || github.ref }}
@@ -85,7 +83,6 @@ jobs:
             .github
 
       - name: Cargo Cache
-        id: cargo-cache
         uses: ./.github/actions/cache/cargo
         with:
           action: save
@@ -98,7 +95,6 @@ jobs:
     if: needs.check-caches.outputs.bitcoin-cache-hit != 'true'
     steps:
       - name: Checkout the latest code
-        id: git_checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           ref: ${{ github.head_ref || github.ref }}
@@ -106,7 +102,6 @@ jobs:
             .github
 
       - name: Bitcoin Cache
-        id: bitcoin-cache
         uses: ./.github/actions/cache/bitcoin
         with:
           action: save
@@ -148,11 +143,9 @@ jobs:
     steps:
       # Checkout the latest code, full source is required for this job
       - name: Checkout the latest code
-        id: git_checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           ref: ${{ github.event.pull_request.head.sha || github.ref }}
 
       - name: Build Nextest Cache
-        id: nextest-cache
         uses: ./.github/actions/cache/build-cache

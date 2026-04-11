@@ -19,29 +19,25 @@ jobs:
 
     steps:
       - name: Checkout the latest code
-        id: git_checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           ref: ${{ github.event.pull_request.head.sha || github.ref }}
 
       - name: Define Rust Toolchain
-        id: define_rust_toolchain
+        id: define-rust-toolchain
         run: echo "rust-toolchain=$(cat ./rust-toolchain)" >> "$GITHUB_OUTPUT"
 
       - name: Setup Rust Toolchain
-        id: setup_rust_toolchain
         uses: actions-rust-lang/setup-rust-toolchain@11df97af8e8102fd60b60a77dfbf58d40cd843b8 # v1.10.1
         with:
-          toolchain: ${{ steps.define_rust_toolchain.outputs.rust-toolchain }}
+          toolchain: ${{ steps.define-rust-toolchain.outputs.rust-toolchain }}
           cache: false
 
       - name: Dump constants JSON
-        id: consts-dump
         run: |
           cargo run --bin stacks-inspect -- dump-consts | tee out.json
 
       ## output any diff to the github job summary
       - name: Compare expected constants JSON
-        id: expects-json
         run: |
           diff out.json ./sample/expected_consts.json >> $GITHUB_STEP_SUMMARY
