@@ -64,8 +64,6 @@ jobs:
     if: |
       needs.check-release.outputs.is_node_release == 'true' ||
       needs.check-release.outputs.is_signer_release == 'true'
-      # inputs.node_tag != '' ||
-      # inputs.signer_tag != ''
     runs-on: ubuntu-latest
     environment: "Build Release"
     steps:
@@ -101,8 +99,6 @@ jobs:
     if: |
       needs.check-release.outputs.is_node_release == 'true' ||
       needs.check-release.outputs.is_signer_release == 'true'
-      # inputs.node_tag != '' ||
-      # inputs.signer_tag != ''
     permissions:
       contents: read       # required for checkout inside release-docker.yml
       id-token: write      # required for attestation inside release-docker.yml
@@ -137,8 +133,6 @@ jobs:
     if: |
       needs.check-release.outputs.is_node_release == 'true' ||
       needs.check-release.outputs.is_signer_release == 'true'
-      # inputs.node_tag != '' ||
-      # inputs.signer_tag != ''
     runs-on: ubuntu-latest
     permissions:
       contents: write
