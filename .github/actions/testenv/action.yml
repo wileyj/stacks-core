@@ -66,7 +66,7 @@ runs:
         action: restore
 
     # Install dependencies
-    #   grcov is used in the code coverage workflow, so it's installed here
+    #   grcov is used in the code coverage workflow in tests, so it's installed here
     - name: Install Dependencies
       id: install_dependencies
       uses: taiki-e/install-action@d12e869b89167df346dd0ff65da342d1fb1202fb # v2.53.2
