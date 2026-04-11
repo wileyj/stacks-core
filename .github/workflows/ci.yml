@@ -70,9 +70,7 @@ jobs:
 
       ## Check if this is a release
       - name: Rustfmt
-        env:
-          ALIAS: "fmt-stacks"
-        run: bash ./.github/scripts/check_release.sh
+        run: bash ./.github/scripts/rustfmt.sh
 
       # - name: Rustfmt
       #   uses: ./.github/actions/rustfmt
