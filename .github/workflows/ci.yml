@@ -145,7 +145,7 @@ jobs:
       - changelog-check
       - check-release
     permissions:
-      contents: read       # required for checkout inside release-build.yml
+      contents: write      # required for release in github-release.yml
       id-token: write      # required for attestation inside release-build.yml / release-docker.yml
       attestations: write  # required for attestation inside release-build.yml / release-docker.yml
       packages: write      # required for image push inside release-docker.yml
