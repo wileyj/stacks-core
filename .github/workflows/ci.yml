@@ -19,6 +19,9 @@ on:
       - reopened
       - synchronize
 
+permissions:
+  contents: read  # default for all jobs
+
 defaults:
   run:
     shell: bash
@@ -141,6 +144,11 @@ jobs:
       - rustfmt
       - changelog-check
       - check-release
+    permissions:
+      contents: read       # required for checkout inside release-build.yml
+      id-token: write      # required for attestation inside release-build.yml / release-docker.yml
+      attestations: write  # required for attestation inside release-build.yml / release-docker.yml
+      packages: write      # required for image push inside release-docker.yml
     secrets: inherit
     uses: ./.github/workflows/release-github.yml
     with:

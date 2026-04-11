@@ -52,6 +52,10 @@ jobs:
     if: |
       inputs.node_tag != '' ||
       inputs.signer_tag != ''
+    permissions:
+      contents: read       # required for checkout inside release-build.yml
+      id-token: write      # required for attestation inside release-build.yml
+      attestations: write  # required for attestation inside release-build.yml
     uses: ./.github/workflows/release-build.yml
     with:
       node_tag: ${{ inputs.node_tag }} # used to conditionally run step in release-build.yml
@@ -65,6 +69,11 @@ jobs:
     if: |
       inputs.node_tag != '' ||
       inputs.signer_tag != ''
+    permissions:
+      contents: read       # required for checkout inside release-docker.yml
+      id-token: write      # required for attestation inside release-docker.yml
+      attestations: write  # required for attestation inside release-docker.yml
+      packages: write      # required for image push inside release-docker.yml
     strategy:
       fail-fast: false
       ## Build a maximum of 2 images concurrently based on matrix.dist

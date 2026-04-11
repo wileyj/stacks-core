@@ -57,9 +57,10 @@ jobs:
           - alpine
           - debian
     permissions:
-      id-token: write
-      attestations: write
-      packages: write
+      contents: read       # required for checkout
+      id-token: write      # required for attestation
+      attestations: write  # required for attestation
+      packages: write      # required for image push
     steps:
       ## Retrieve repository description for image annotation
       - name: Get repository description
