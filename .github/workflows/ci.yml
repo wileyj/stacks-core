@@ -135,7 +135,7 @@ jobs:
     if: |
       needs.check-release.outputs.is_node_release == 'true' ||
       needs.check-release.outputs.is_signer_release == 'true'
-    name: Check Release
+    name: Create Release
     needs:
       - rustfmt
       - changelog-check
