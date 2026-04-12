@@ -4,7 +4,17 @@ name: Tests::P2P
 
 on:
   workflow_dispatch:
+    inputs:
+      build-cache:
+        type: boolean
+        default: true
+        description: Build the test cache before running tests
   workflow_call:
+    inputs:
+      build-cache:
+        type: boolean
+        default: false
+        description: Build the test cache (set false when called from ci.yml which builds its own cache)
 
 permissions:
   contents: read
@@ -17,14 +27,14 @@ env:
   TEST_TIMEOUT: 30
 
 concurrency:
-  group: stackslib-tests-${{ github.event_name == 'workflow_dispatch' && github.run_id || github.head_ref || github.ref }}
+  group: stackslib-tests-${{ inputs.build-cache && github.run_id || github.head_ref || github.ref }}
   cancel-in-progress: ${{ github.head_ref != '' }}
 
 jobs:
   ## Always run create-cache regardless of trigger — downstream jobs depend on it.
   create-cache:
     name: Create Test Cache
-    if: github.event_name == 'workflow_dispatch'
+    if: ${{ inputs.build-cache }}
     uses: ./.github/workflows/create-cache.yml
 
   # p2p integration tests with code coverage

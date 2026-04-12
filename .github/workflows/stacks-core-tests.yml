@@ -4,7 +4,17 @@ name: Tests::Stacks Core
 
 on:
   workflow_dispatch:
+    inputs:
+      build-cache:
+        type: boolean
+        default: true
+        description: Build the test cache before running tests
   workflow_call:
+    inputs:
+      build-cache:
+        type: boolean
+        default: false
+        description: Build the test cache (set false when called from ci.yml which builds its own cache)
 
 permissions:
   contents: read
@@ -17,20 +27,17 @@ env:
   CI: true  # Required by insta snapshot tests to run in CI
 
 concurrency:
-  ## workflow_dispatch gets a unique slot per run so manual triggers never queue behind ci.yml runs.
-  ## workflow_call on a PR branch uses head_ref so duplicate runs on the same branch cancel each other.
-  ## workflow_call on a non-PR ref uses github.ref.
-  group: stacks-core-tests-${{ github.event_name == 'workflow_dispatch' && github.run_id || github.head_ref || github.ref }}
-  ## Cancel in-progress runs when a new commit is pushed to the same PR branch.
-  ## github.head_ref is only set for pull_request events regardless of call depth,
-  ## so this is reliable even when invoked via workflow_call from ci.yml.
+  ## Direct dispatch (build-cache=true) gets a unique slot per run; ci.yml calls (build-cache=false)
+  ## use head_ref (PR) or ref (push/dispatch) so duplicate runs on the same branch cancel each other.
+  group: stacks-core-tests-${{ inputs.build-cache && github.run_id || github.head_ref || github.ref }}
+  ## github.head_ref is only set in PR context regardless of call depth.
   cancel-in-progress: ${{ github.head_ref != '' }}
 
 jobs:
   ## Always run create-cache regardless of trigger — downstream jobs depend on it.
   create-cache:
     name: Create Test Cache
-    if: github.event_name == 'workflow_dispatch'
+    if: ${{ inputs.build-cache }}
     uses: ./.github/workflows/create-cache.yml
 
   # Unit tests with code coverage
