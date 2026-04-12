@@ -17,6 +17,11 @@ env:
   # Minimum Bitcoin Core major version to start discovering Docker tags from.
   START_MAJOR: "25"
 
+concurrency:
+  group: bitcoin-rpc-tests-${{ github.head_ref || github.ref || github.run_id }}
+  ## Only cancel in progress if this is for a PR
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
   # if triggered manually, create the cache
   create-cache:

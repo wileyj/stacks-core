@@ -27,7 +27,7 @@ defaults:
     shell: bash
 
 concurrency:
-  group: ${{ inputs.release_type }}-${{ github.head_ref || github.ref }}
+  group: release-docker-${{ inputs.release_type }}-${{ github.head_ref || github.ref }}
   ## Always cancel duplicate jobs
   cancel-in-progress: true
 

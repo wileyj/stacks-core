@@ -12,6 +12,11 @@ defaults:
   run:
     shell: bash
 
+concurrency:
+  group: constants-check-${{ github.head_ref || github.ref || github.run_id }}
+  ## Only cancel in progress if this is for a PR
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
   check-consts:
     name: Check the constants from stacks-inspect
