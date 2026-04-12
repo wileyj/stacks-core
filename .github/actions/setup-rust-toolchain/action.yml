@@ -1,29 +1,54 @@
-name: Generate and Upload codecov artifact
+name: Setup Rust Toolchain
 description: |
-    Generates code coverage data and uploads it to GitHub CI artifact storage
+  Resolves the Rust toolchain version and installs it via actions-rust-lang/setup-rust-toolchain.
+  If `toolchain` is not provided, the version is read from `./rust-toolchain`
 
 inputs:
-  test-name:
-    description: "Test name for codecov"
-    required: true
-  binary-path:
-    description: "Binary path"
+  toolchain:
+    description: Explicit toolchain version (i.e. "nightly").
     required: false
-    default: "./target/debug/"
+    default: ""
+  components:
+    description: Comma-separated list of components to install alongside the toolchain
+    required: false
+    default: ""
+  target:
+    description: Comma-separated list of additional compilation targets to install
+    required: false
+    default: ""
+  cache:
+    description: "Enable the built-in Rust caching provided by the action."
+    required: false
+    default: "false"
+
+outputs:
+  rust-toolchain:
+    description: "The resolved Rust toolchain version that was installed."
+    value: ${{ steps.resolve-toolchain.outputs.rust-toolchain }}
 
 runs:
   using: "composite"
   steps:
-    - name: Define Rust toolchain
-      id: define-rust-toolchain
-      run: echo "rust-toolchain=$(cat ./rust-toolchain)" >> "$GITHUB_OUTPUT"
+    ## Resolve the toolchain: use the explicit input if given, otherwise read ./rust-toolchain.
+    - name: Resolve Rust toolchain
+      id: resolve-toolchain
+      shell: bash
+      run: |
+        toolchain="${{ inputs.toolchain }}"
+        if [[ -z "${toolchain}" ]]; then
+          if [[ ! -f ./rust-toolchain ]]; then
+            echo "Error: No toolchain input provided and ./rust-toolchain file not found"
+            exit 1
+          fi
+          toolchain="$(cat ./rust-toolchain)"
+        fi
+        echo "rust-toolchain=${toolchain}" >> "$GITHUB_OUTPUT"
 
-    - name: Setup Rust Toolchain
-      if: |
-        steps.check_target_cache.outputs.cache-hit != 'true' ||
-        steps.check_test_archive_cache.outputs.cache-hit != 'true'
-      uses: actions-rust-lang/setup-rust-toolchain@11df97af8e8102fd60b60a77dfbf58d40cd843b8 # v1.10.1
+    ## Install the resolved toolchain with any requested components and targets.
+    - name: Install Rust toolchain
+      uses: actions-rust-lang/setup-rust-toolchain@150fca883cd4034361b621bd4e6a9d34e5143606 # v1.15.4
       with:
-        toolchain: ${{ needs.setup.outputs.rust-toolchain }}
-        components: llvm-tools-preview
-        cache: false
+        toolchain: ${{ steps.resolve-toolchain.outputs.rust-toolchain }}
+        components: ${{ inputs.components }}
+        target: ${{ inputs.target }}
+        cache: ${{ inputs.cache }}

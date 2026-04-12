@@ -35,69 +35,24 @@ runs:
     #     ref: ${{ github.event.pull_request.head.sha || github.ref }}
 
     ## Install Rust nightly toolchain (required for rustdoc JSON output)
-    - name: Install Rust nightly toolchain
-      id: install_rust
-      uses: actions-rust-lang/setup-rust-toolchain@150fca883cd4034361b621bd4e6a9d34e5143606 # v1.15.4
+    - name: Setup Rust Toolchain
+      uses: ./.github/actions/setup-rust-toolchain
       with:
         toolchain: ${{ inputs.rust-nightly-version }}
         components: rust-docs-json
-        cache: true
+        cache: "true"
 
-    ## Generate configuration documentation
+    ## Generate, validate, and summarise configuration documentation
     - name: Generate Configuration Documentation
       shell: bash
       env:
         OUTPUT_FILE: ${{ inputs.output }}
+        MIN_DOC_SIZE: ${{ inputs.min-doc-size }}
         PROJECT_ROOT: ${{ github.workspace }}
-      run: |
-        echo "Generating configuration documentation..."
-
-        # Navigate to the script directory and run
-        bash contrib/tools/config-docs-generator/generate-config-docs.sh
-
-        # Verify output was generated
-        if [[ ! -f "$OUTPUT_FILE" ]]; then
-          echo "Error: Configuration documentation was not generated"
-          echo "Expected file: $OUTPUT_FILE"
-          exit 1
-        fi
-
-        echo "Documentation generated successfully at $OUTPUT_FILE"
-
-    ## Validate generated documentation quality
-    - name: Validate Generated Documentation
-      shell: bash
-      run: |
-        echo "Validating generated documentation..."
-
-        OUTPUT_FILE="${{ inputs.output }}"
-
-        # Check if file exists and has content
-        if [[ ! -f "$OUTPUT_FILE" ]]; then
-          echo "Error: Markdown file not found at $OUTPUT_FILE"
-          exit 1
-        fi
-
-        # Check file size (should be ~100kb as of 2025-07-25)
-        FILE_SIZE=$(wc -c < "$OUTPUT_FILE")
-        MIN_SIZE=${{ inputs.min-doc-size }}
-
-        if [[ $FILE_SIZE -lt $MIN_SIZE ]]; then
-          echo "Error: Generated documentation is too small ($FILE_SIZE bytes, minimum $MIN_SIZE)"
-          echo "This likely indicates a generation failure"
-          exit 1
-        fi
-
-        # Check word count and basic structure
-        WORD_COUNT=$(wc -w < "$OUTPUT_FILE")
-        LINE_COUNT=$(wc -l < "$OUTPUT_FILE")
-
-        echo "Documentation validation results:"
-        echo "  - File size: $FILE_SIZE bytes"
-        echo "  - Word count: $WORD_COUNT words"
-        echo "  - Line count: $LINE_COUNT lines"
-
-        echo "Documentation validation completed successfully ✅"
+        RUST_NIGHTLY_VERSION: ${{ inputs.rust-nightly-version }}
+        ARTIFACT_NAME: ${{ inputs.artifact-name }}
+        RETENTION_DAYS: ${{ inputs.retention-days }}
+      run: bash ./.github/scripts/config_docsgen.sh
 
     ## Upload documentation as artifact
     - name: Upload Documentation Artifact
@@ -107,26 +62,3 @@ runs:
         path: ${{ inputs.output }}
         retention-days: ${{ inputs.retention-days }}
         if-no-files-found: error
-
-    ## Generate job summary
-    - name: Generate Job Summary
-      shell: bash
-      run: |
-        OUTPUT_FILE="${{ inputs.output }}"
-
-        echo "## Configuration Documentation Generated ✅" >> $GITHUB_STEP_SUMMARY
-        echo "" >> $GITHUB_STEP_SUMMARY
-        echo "Stacks Core configuration documentation has been generated and uploaded as artifact." >> $GITHUB_STEP_SUMMARY
-        echo "" >> $GITHUB_STEP_SUMMARY
-
-        # Add basic file statistics
-        if [[ -f "$OUTPUT_FILE" ]]; then
-          FILE_SIZE=$(wc -c < "$OUTPUT_FILE")
-          WORD_COUNT=$(wc -w < "$OUTPUT_FILE")
-          FORMATTED_SIZE=$(numfmt --to=iec-i --suffix=B "$FILE_SIZE")
-
-          echo "**File Size**: $FORMATTED_SIZE | **Words**: $(printf "%'d" $WORD_COUNT) | **Toolchain**: \`${{ inputs.rust-nightly-version }}\`" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-        fi
-
-        echo "**Artifact**: \`${{ inputs.artifact-name }}\` (retained for ${{ inputs.retention-days }} days)" >> $GITHUB_STEP_SUMMARY

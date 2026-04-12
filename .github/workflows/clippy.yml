@@ -32,16 +32,10 @@ jobs:
         with:
           ref: ${{ github.event.pull_request.head.sha || github.ref }}
 
-      - name: Define Rust Toolchain
-        id: define-rust-toolchain
-        run: echo "rust-toolchain=$(cat ./rust-toolchain)" >> "$GITHUB_OUTPUT"
-
       - name: Setup Rust Toolchain
-        uses: actions-rust-lang/setup-rust-toolchain@11df97af8e8102fd60b60a77dfbf58d40cd843b8 # v1.10.1
+        uses: ./.github/actions/setup-rust-toolchain
         with:
-          toolchain: ${{ steps.define-rust-toolchain.outputs.rust-toolchain }}
           components: clippy
-          cache: false
 
       - name: Clippy
         run: cargo clippy-stacks

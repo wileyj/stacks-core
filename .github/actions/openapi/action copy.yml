@@ -43,15 +43,45 @@ runs:
       with:
         node-version: "${{ inputs.node-version }}"
 
-    - name: Validate and Generate OpenAPI docs
+    - name: Install Redocly CLI
       shell: bash
-      env:
-        INPUT_FILE: ${{ inputs.input }}
-        OUTPUT_FILE: ${{ inputs.output }}
-        REDOCLY_VERSION: ${{ inputs.redocly-version }}
-        VALIDATE: ${{ inputs.validate }}
-        CONFIG_FILE: ${{ inputs.config }}
-      run: bash ./.github/scripts/openapi_validation.sh
+      run: |
+        npm install -g @redocly/cli@${{ inputs.redocly-version }}
+        echo "✅ Redocly CLI version: $(redocly --version)"
+
+    - name: Validate OpenAPI spec
+      if: inputs.validate == 'true'
+      shell: bash
+      run: |
+        echo "Validating OpenAPI specification..."
+        CONFIG_ARG=""
+        if [ -n "${{ inputs.config }}" ]; then
+          CONFIG_ARG="--config ${{ inputs.config }}"
+        fi
+        redocly lint ${{ inputs.input }} $CONFIG_ARG
+        echo "✅ OpenAPI specification is valid"
+
+    - name: Generate OpenAPI docs
+      shell: bash
+      run: |
+        echo "Generating OpenAPI documentation..."
+        CONFIG_ARG=""
+        if [ -n "${{ inputs.config }}" ]; then
+          CONFIG_ARG="--config ${{ inputs.config }}"
+        fi
+        redocly build-docs ${{ inputs.input }} --output ${{ inputs.output }} $CONFIG_ARG
+        echo "✅ Documentation generated successfully"
+
+    - name: Check result
+      shell: bash
+      run: |
+        echo "Checking if documentation file exists..."
+        if [ ! -f ${{ inputs.output }} ]; then
+          echo "❌ Missing ${{ inputs.output }} from previous step."
+          exit 1
+        fi
+        echo "✅ Generated documentation file is valid"
+        echo "📄 File size: $(du -h ${{ inputs.output }} | cut -f1)"
 
     ## Upload the html file artifact
     - name: Upload bundled html

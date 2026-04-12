@@ -14,26 +14,9 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
-  # Setup job to prepare common dependencies
-  setup:
-    name: Setup
-    runs-on: ubuntu-latest
-    outputs:
-      rust-toolchain: ${{ steps.define-rust-toolchain.outputs.rust-toolchain }}
-    steps:
-      - name: Checkout
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-        with:
-          persist-credentials: false
-
-      - name: Define Rust toolchain
-        id: define-rust-toolchain
-        run: echo "rust-toolchain=$(cat ./rust-toolchain)" >> "$GITHUB_OUTPUT"
-
   # Native targets (Windows/Linux)
   native-targets:
     name: All Crates (Windows/Linux)
-    needs: setup
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -42,16 +25,17 @@ jobs:
           persist-credentials: false
 
       - name: Setup Rust Toolchain
-        uses: actions-rust-lang/setup-rust-toolchain@11df97af8e8102fd60b60a77dfbf58d40cd843b8 # v1.10.1
+        uses: ./.github/actions/setup-rust-toolchain
         with:
-          toolchain: ${{ needs.setup.outputs.rust-toolchain }}
           target: x86_64-pc-windows-gnu,x86_64-unknown-linux-gnu
-          cache: false
 
       - name: Install cargo-hack
-        uses: taiki-e/install-action@2383334cf567d78771fc7d89b6b3802ef1412cf6  # v2.56.8
+        uses: ./.github/actions/install-tool
         with:
           tool: cargo-hack
+        # uses: taiki-e/install-action@2383334cf567d78771fc7d89b6b3802ef1412cf6  # v2.56.8
+        # with:
+        #   tool: cargo-hack
 
       - name: Install Windows cross-compilation tools
         run: |
@@ -71,7 +55,6 @@ jobs:
   # WASM targets - No caching needed as it runs in parallel with longer jobs
   wasm-targets:
     name: WASM targets
-    needs: setup
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -80,16 +63,17 @@ jobs:
           persist-credentials: false
 
       - name: Setup Rust Toolchain
-        uses: actions-rust-lang/setup-rust-toolchain@11df97af8e8102fd60b60a77dfbf58d40cd843b8 # v1.10.1
+        uses: ./.github/actions/setup-rust-toolchain
         with:
-          toolchain: ${{ needs.setup.outputs.rust-toolchain }}
           target: wasm32-unknown-unknown
-          cache: false
 
       - name: Install cargo-hack
-        uses: taiki-e/install-action@2383334cf567d78771fc7d89b6b3802ef1412cf6 # v2.56.8
+        uses: ./.github/actions/install-tool
         with:
           tool: cargo-hack
+        # uses: taiki-e/install-action@2383334cf567d78771fc7d89b6b3802ef1412cf6 # v2.56.8
+        # with:
+        #   tool: cargo-hack
 
       - name: Run cargo hack check (WASM Web)
         run: |
@@ -121,11 +105,10 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Install Rust nightly toolchain
-        uses: actions-rust-lang/setup-rust-toolchain@fb51252c7ba57d633bc668f941da052e410add48 # v1.13.0
+      - name: Setup Rust Toolchain
+        uses: ./.github/actions/setup-rust-toolchain
         with:
           toolchain: nightly
-          cache: false
 
       - name: Check fuzz targets (clarity)
         run: |

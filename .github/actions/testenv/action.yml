@@ -19,18 +19,11 @@ runs:
       with:
         ref: ${{ github.event.pull_request.head.sha || github.ref }}
 
-    - name: Define Rust Toolchain
-      id: define_rust_toolchain
-      shell: bash
-      run: echo "rust-toolchain=$(cat ./rust-toolchain)" >> "$GITHUB_OUTPUT"
-
     ## Install rust toolchain (llvm-tools-preview)
     - name: Setup Rust Toolchain
-      uses: actions-rust-lang/setup-rust-toolchain@150fca883cd4034361b621bd4e6a9d34e5143606 # v1.15.4
+      uses: ./.github/actions/setup-rust-toolchain
       with:
-        toolchain: ${{ steps.define_rust_toolchain.outputs.rust-toolchain }}
         components: llvm-tools-preview
-        cache: false
 
     ## Restore cargo cache data
     - name: Restore Cargo Cache
@@ -69,6 +62,9 @@ runs:
     #   grcov is used in the code coverage workflow in tests, so it's installed here
     - name: Install Dependencies
       id: install_dependencies
-      uses: taiki-e/install-action@d12e869b89167df346dd0ff65da342d1fb1202fb # v2.53.2
+      uses: ./.github/actions/install-tool
       with:
-        tool: nextest, grcov # can be versioned, ex: tool@1.1.1.1
+        tool: nextest, grcov
+      # uses: taiki-e/install-action@d12e869b89167df346dd0ff65da342d1fb1202fb # v2.53.2
+      # with:
+      #   tool: nextest, grcov # can be versioned, ex: tool@1.1.1.1

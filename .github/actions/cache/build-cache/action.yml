@@ -20,19 +20,13 @@ runs:
           echo "target cache: ${{ steps.check_target_cache.outputs.cache-hit }}"
           echo "test archive cache: ${{ steps.check_test_archive_cache.outputs.cache-hit }}"
 
-    - name: Define Rust toolchain
-      id: define-rust-toolchain
-      run: echo "rust-toolchain=$(cat ./rust-toolchain)" >> "$GITHUB_OUTPUT"
-
     - name: Setup Rust Toolchain
       if: |
         steps.check_target_cache.outputs.cache-hit != 'true' ||
         steps.check_test_archive_cache.outputs.cache-hit != 'true'
-      uses: actions-rust-lang/setup-rust-toolchain@11df97af8e8102fd60b60a77dfbf58d40cd843b8 # v1.10.1
+      uses: ./.github/actions/setup-rust-toolchain
       with:
-        toolchain: ${{ needs.setup.outputs.rust-toolchain }}
         components: llvm-tools-preview
-        cache: false
 
     ## Save cache data
     # restore cargo cache
@@ -49,10 +43,13 @@ runs:
       if: |
         steps.check_target_cache.outputs.cache-hit != 'true' ||
         steps.check_test_archive_cache.outputs.cache-hit != 'true'
-      uses: taiki-e/install-action@d12e869b89167df346dd0ff65da342d1fb1202fb # v2.53.2
+      uses: ./.github/actions/install-tool
       with:
-        tool: nextest # can be versioned, ex: tool@1.1.1.1
-        # tool: nextest, grcov # can be versioned, ex: tool@1.1.1.1
+        tool: nextest
+      # uses: taiki-e/install-action@d12e869b89167df346dd0ff65da342d1fb1202fb # v2.53.2
+      # with:
+      #   tool: nextest # can be versioned, ex: tool@1.1.1.1
+      #   # tool: nextest, grcov # can be versioned, ex: tool@1.1.1.1
 
     - name: Build and Archive Tests
       if: |

@@ -199,9 +199,12 @@ jobs:
       ## Install it explicitly as a fallback using a pre-built binary.
       - name: Install cargo-nextest (testenv fallback)
         if: steps.setup-tests.outcome == 'failure'
-        uses: taiki-e/install-action@d12e869b89167df346dd0ff65da342d1fb1202fb # v2.53.2
+        uses: ./.github/actions/install-tool
         with:
           tool: nextest
+        # uses: taiki-e/install-action@d12e869b89167df346dd0ff65da342d1fb1202fb # v2.53.2
+        # with:
+        #   tool: nextest
 
       ## If the nextest archive was not in cache,
       ## build it from the HEAD source.
