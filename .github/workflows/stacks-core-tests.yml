@@ -36,6 +36,9 @@ jobs:
   unit-tests:
     name: Unit Tests
     needs: create-cache
+    ## Run if create-cache succeeded OR was skipped (caches already existed from a prior run).
+    ## Do not run if create-cache genuinely failed.
+    if: always() && needs.create-cache.result != 'failure'
     runs-on: ubuntu-latest
     ## Continue the workflow in case a step fails (ex a single test fails)
     # continue-on-error: true

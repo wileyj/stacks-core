@@ -30,6 +30,7 @@ jobs:
   integration-tests:
     name: Integration Tests
     needs: create-cache
+    if: always() && needs.create-cache.result != 'failure'
     runs-on: ubuntu-latest
     strategy:
       ## Continue with the test matrix even if we've had a failure

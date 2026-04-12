@@ -33,7 +33,6 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       versions: ${{ steps.discover.outputs.versions }}
-
     steps:
       ## Checkout the code
       - name: Checkout the latest code
@@ -66,6 +65,7 @@ jobs:
     needs:
       - discover-bitcoin-majors
       - create-cache
+    if: always() && needs.create-cache.result != 'failure' && needs.discover-bitcoin-majors.result != 'failure'
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false

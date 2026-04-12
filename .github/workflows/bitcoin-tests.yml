@@ -34,6 +34,7 @@ jobs:
   generate-tests:
     name: Generate balanced test matrix
     needs: create-cache
+    if: always() && needs.create-cache.result != 'failure'
     runs-on: ubuntu-latest
     outputs:
       matrix1: ${{ steps.set-matrix.outputs.matrix1 }}
@@ -177,7 +178,11 @@ jobs:
       - generate-tests
       - create-cache
     runs-on: ubuntu-latest
-    if: ${{ needs.generate-tests.outputs.matrix1 != '[]' }}
+    if: |
+      always() &&
+      needs.create-cache.result != 'failure' &&
+      needs.generate-tests.result != 'failure' &&
+      needs.generate-tests.outputs.matrix1 != '[]'
     strategy:
       fail-fast: false
       max-parallel: 32
@@ -220,7 +225,11 @@ jobs:
       - generate-tests
       - create-cache
     runs-on: ubuntu-latest
-    if: ${{ needs.generate-tests.outputs.matrix2 != '[]' }}
+    if: |
+      always() &&
+      needs.create-cache.result != 'failure' &&
+      needs.generate-tests.result != 'failure' &&
+      needs.generate-tests.outputs.matrix2 != '[]'
     strategy:
       fail-fast: false
       max-parallel: 32
