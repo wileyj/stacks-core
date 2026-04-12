@@ -28,6 +28,7 @@ jobs:
   ## Always run create-cache regardless of trigger — downstream jobs depend on it.
   create-cache:
     name: Create Test Cache
+    if: github.event_name == 'workflow_dispatch'
     uses: ./.github/workflows/create-cache.yml
 
   # Epoch integration tests with code coverage
