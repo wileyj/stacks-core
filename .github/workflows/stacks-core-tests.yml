@@ -17,14 +17,18 @@ env:
   CI: true  # Required by insta snapshot tests to run in CI
 
 concurrency:
-  group: stacks-core-tests-${{ github.head_ref || github.ref || github.run_id }}
-  ## Only cancel in progress if this is for a PR
-  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+  ## workflow_dispatch gets a unique slot per run so manual triggers never queue behind ci.yml runs.
+  ## workflow_call on a PR branch uses head_ref so duplicate runs on the same branch cancel each other.
+  ## workflow_call on a non-PR ref uses github.ref.
+  group: stacks-core-tests-${{ github.event_name == 'workflow_dispatch' && github.run_id || github.head_ref || github.ref }}
+  ## Cancel in-progress runs when a new commit is pushed to the same PR branch.
+  ## github.head_ref is only set for pull_request events regardless of call depth,
+  ## so this is reliable even when invoked via workflow_call from ci.yml.
+  cancel-in-progress: ${{ github.head_ref != '' }}
 
 jobs:
-  # if triggered manually, create the cache
+  ## Always run create-cache regardless of trigger — downstream jobs depend on it.
   create-cache:
-    if: always() && github.event_name == 'workflow_dispatch'
     name: Create Test Cache
     uses: ./.github/workflows/create-cache.yml
 

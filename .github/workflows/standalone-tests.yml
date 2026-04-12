@@ -27,6 +27,10 @@ on:
 ## Set the display name to the test being run
 run-name: ${{ inputs.workflow }}
 
+concurrency:
+  group: standalone-tests-${{ github.event_name == 'workflow_dispatch' && github.run_id || github.head_ref || github.ref }}
+  cancel-in-progress: ${{ github.head_ref != '' }}
+
 jobs:
   ## Runs every time to either create the required caches or confirm they already exist
   create-cache:

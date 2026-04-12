@@ -18,14 +18,12 @@ env:
   START_MAJOR: "25"
 
 concurrency:
-  group: bitcoin-rpc-tests-${{ github.head_ref || github.ref || github.run_id }}
-  ## Only cancel in progress if this is for a PR
-  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+  group: bitcoin-rpc-tests-${{ github.event_name == 'workflow_dispatch' && github.run_id || github.head_ref || github.ref }}
+  cancel-in-progress: ${{ github.head_ref != '' }}
 
 jobs:
-  # if triggered manually, create the cache
+  ## Always run create-cache regardless of trigger — downstream jobs depend on it.
   create-cache:
-    if: always() && github.event_name == 'workflow_dispatch'
     name: Create Test Cache
     uses: ./.github/workflows/create-cache.yml
 

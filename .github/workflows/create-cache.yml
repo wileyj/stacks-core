@@ -29,10 +29,13 @@ env:
 ##
 ## Cache will exist longer than workflow execution so other runners have access
 ##   however, this is only relevant if the commit sha does not change between runs
+## Multiple test workflows may call create-cache simultaneously for the same ref.
+## They share a concurrency slot so only one actively builds; others wait and then
+## find the caches already populated. Runs on PR branches cancel old builds when a
+## new commit arrives (github.head_ref is only set in a PR context).
 concurrency:
-  group: create-cache-${{ github.head_ref || github.ref || github.run_id}}
-  ## Only cancel in progress if this is for a PR
-  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+  group: create-cache-${{ github.head_ref || github.ref }}
+  cancel-in-progress: ${{ github.head_ref != '' }}
 
 jobs:
   ## Check which caches already exist before spinning up creation jobs
