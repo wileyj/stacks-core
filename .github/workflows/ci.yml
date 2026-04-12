@@ -173,72 +173,72 @@ jobs:
       github.event_name == 'merge_group'
     uses: ./.github/workflows/create-cache.yml
 
-  # ## Tests to run regularly
-  # ##
-  # ## Runs when:
-  # ##   - it is a node or signer-only release run
-  # ##   or any of:
-  # ##     - this workflow is called manually
-  # ##     - PR is opened
-  # ##     - PR added to merge queue
-  # stacks-core-tests:
-  #   name: Stacks Core Tests
-  #   needs:
-  #     - rustfmt
-  #     - changelog-check
-  #     - create-cache
-  ##     - check-release
-  #   if: |
-  #     needs.check-release.outputs.is_node_release == 'true' ||
-  #     needs.check-release.outputs.is_signer_release == 'true' ||
-  #     github.event_name == 'workflow_dispatch' ||
-  #     github.event_name == 'pull_request' ||
-  #     github.event_name == 'merge_group'
-  #   uses: ./.github/workflows/stacks-core-tests.yml
+  ## Tests to run regularly
+  ##
+  ## Runs when:
+  ##   - it is a node or signer-only release run
+  ##   or any of:
+  ##     - this workflow is called manually
+  ##     - PR is opened
+  ##     - PR added to merge queue
+  stacks-core-tests:
+    name: Stacks Core Tests
+    needs:
+      - rustfmt
+      - changelog-check
+      - create-cache
+  #     - check-release
+    if: |
+      needs.check-release.outputs.is_node_release == 'true' ||
+      needs.check-release.outputs.is_signer_release == 'true' ||
+      github.event_name == 'workflow_dispatch' ||
+      github.event_name == 'pull_request' ||
+      github.event_name == 'merge_group'
+    uses: ./.github/workflows/stacks-core-tests.yml
 
-  # ## Validate constants dumped by stacks-inspect
-  # ##
-  # ## Runs when:
-  # ##   - it is a node or signer-only release run
-  # ##   or any of:
-  # ##     - this workflow is called manually
-  # ##     - PR is opened
-  # ##     - PR added to merge queue
-  # constants-check:
-  #   name: Constants Check
-  #   needs:
-  #     - rustfmt
-  #     - changelog-check
-  ##     - check-release
-  #   if: |
-  #     needs.check-release.outputs.is_node_release == 'true' ||
-  #     needs.check-release.outputs.is_signer_release == 'true' ||
-  #     github.event_name == 'workflow_dispatch' ||
-  #     github.event_name == 'pull_request' ||
-  #     github.event_name == 'merge_group'
-  #   uses: ./.github/workflows/constants-check.yml
+  ## Validate constants dumped by stacks-inspect
+  ##
+  ## Runs when:
+  ##   - it is a node or signer-only release run
+  ##   or any of:
+  ##     - this workflow is called manually
+  ##     - PR is opened
+  ##     - PR added to merge queue
+  constants-check:
+    name: Constants Check
+    needs:
+      - rustfmt
+      - changelog-check
+  #     - check-release
+    if: |
+      needs.check-release.outputs.is_node_release == 'true' ||
+      needs.check-release.outputs.is_signer_release == 'true' ||
+      github.event_name == 'workflow_dispatch' ||
+      github.event_name == 'pull_request' ||
+      github.event_name == 'merge_group'
+    uses: ./.github/workflows/constants-check.yml
 
-  # ## Checks to run on built binaries
-  # ##
-  # ## Runs when:
-  # ##   - it is a node or signer-only release run
-  # ##   or any of:
-  # ##     - this workflow is called manually
-  # ##     - PR is opened
-  # ##     - PR added to merge queue
-  # cargo-hack-check:
-  #   name: Cargo Hack Check
-  #   needs:
-  #     - rustfmt
-  #     - changelog-check
-  ##     - check-release
-  #   if: |
-  #     needs.check-release.outputs.is_node_release == 'true' ||
-  #     needs.check-release.outputs.is_signer_release == 'true' ||
-  #     github.event_name == 'workflow_dispatch' ||
-  #     github.event_name == 'pull_request' ||
-  #     github.event_name == 'merge_group'
-  #   uses: ./.github/workflows/cargo-hack-check.yml
+  ## Checks to run on built binaries
+  ##
+  ## Runs when:
+  ##   - it is a node or signer-only release run
+  ##   or any of:
+  ##     - this workflow is called manually
+  ##     - PR is opened
+  ##     - PR added to merge queue
+  cargo-hack-check:
+    name: Cargo Hack Check
+    needs:
+      - rustfmt
+      - changelog-check
+  #     - check-release
+    if: |
+      needs.check-release.outputs.is_node_release == 'true' ||
+      needs.check-release.outputs.is_signer_release == 'true' ||
+      github.event_name == 'workflow_dispatch' ||
+      github.event_name == 'pull_request' ||
+      github.event_name == 'merge_group'
+    uses: ./.github/workflows/cargo-hack-check.yml
 
   # ## Checks to run on built binaries
   # ##
