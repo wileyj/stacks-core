@@ -110,7 +110,7 @@ jobs:
     steps:
       ## Creates releases
       - name: Create Release
-        uses: ./.github/actions/release/create-releases
+        uses: ./.github/actions/release
         with:
           node_tag: ${{ inputs.node_tag }} # name used for release (use the version by itself
           signer_tag: signer-${{ inputs.signer_tag }} # name used for release (prefix with 'signer-')

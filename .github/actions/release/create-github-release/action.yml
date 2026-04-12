@@ -1,9 +1,7 @@
 ## Github workflow to create and upload a github release
 name: Create Release
-description: "Create GitHub Release"
-branding:
-    icon: "archive"
-    color: "gray-dark"
+description: |
+    Create GitHub Release
 
 inputs:
     tag:
@@ -29,7 +27,7 @@ runs:
 
         ## Generate a checksums file to be added to the release page
         - name: Generate Checksums
-          uses: stacks-network/actions/generate-checksum@main
+          uses: ./.github/actions/release/generate-checksum
           with:
               artifact_download_pattern: "${{github.sha}}-${{ inputs.release_type }}*" # matches artifact names like 727043a37fbc90f1c7eb391b590bde460ca0e36a-linux-glibc-arm64
 

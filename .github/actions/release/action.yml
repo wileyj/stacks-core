@@ -1,9 +1,7 @@
 ## Github workflow to create and upload github releases
 name: Create Releases
-description: "Create GitHub Releases"
-branding:
-    icon: "archive"
-    color: "gray-dark"
+description: |
+    Create GitHub Releases
 
 inputs:
     node_tag:
