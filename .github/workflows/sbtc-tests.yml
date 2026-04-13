@@ -41,7 +41,7 @@ jobs:
   sbtc-tests:
     name: SBTC Tests
     needs: create-cache
-    if: needs.create-cache.result == 'success' || needs.create-cache.result == 'skipped'
+    if: always() && !cancelled() && needs.create-cache.result != 'failure'
     runs-on: ubuntu-latest
     strategy:
       ## Continue with the test matrix even if we've had a failure
