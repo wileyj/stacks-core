@@ -27,11 +27,8 @@ env:
   CI: true  # Required by insta snapshot tests to run in CI
 
 concurrency:
-  ## Direct dispatch (build-cache=true) gets a unique slot per run; ci.yml calls (build-cache=false)
-  ## use head_ref (PR) or ref (push/dispatch) so duplicate runs on the same branch cancel each other.
-  group: stacks-core-tests-${{ inputs.build-cache && github.run_id || github.head_ref || github.ref }}
-  ## github.head_ref is only set in PR context regardless of call depth.
-  cancel-in-progress: ${{ github.head_ref != '' }}
+  group: stacks-core-tests-${{ github.head_ref || github.ref || github.run_id }}
+  cancel-in-progress: true
 
 jobs:
   ## Always run create-cache regardless of trigger — downstream jobs depend on it.
