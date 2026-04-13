@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+set -euo pipefail
+
 ##
 ## Checks whether the current branch name matches a release pattern and, if so,
 ## derives the release tags and validates them against versions.toml.
@@ -8,9 +10,7 @@
 ##
 ## Outputs written to $GITHUB_OUTPUT for subsequent steps/jobs:
 ##   node_tag          - node release tag       (e.g. 1.0.0.0.0)         empty for signer-only releases
-##   node_docker_tag   - node docker tag        (e.g. 1.0.0.0.0)         empty for signer-only releases
 ##   signer_tag        - signer release tag     (e.g. signer-1.0.0.0.0.0)
-##   signer_docker_tag - signer docker tag      (e.g. 1.0.0.0.0.0)
 ##   is_node_release   - "true" if this is a node release branch
 ##   is_signer_release - "true" if this is a signer release branch
 ##
@@ -20,7 +20,6 @@
 ##                                         jobs guard themselves with is_node/signer_release checks)
 ##   - Validation error                  → writes error to $GITHUB_STEP_SUMMARY, exits 1
 ##
-set -euo pipefail
 
 ## ── ANSI color codes and logging helpers ─────────────────────────────────────
 ## Convention: ALL_CAPS for env var inputs and GitHub runner values;
@@ -59,9 +58,7 @@ signer_release_regex="^${signer_prefix}${signer_version_regex}$"
 
 ## ── Initialise output variables ───────────────────────────────────────────────
 node_tag=""
-node_docker_tag=""
 signer_tag=""
-signer_docker_tag=""
 is_node_release=false
 is_signer_release=false
 
@@ -69,15 +66,12 @@ is_signer_release=false
 ## Signer must be tested first — its prefix (release/signer-) is a superset of
 ## the node prefix (release/), so a signer branch would also match the node regex.
 if [[ "${BRANCH}" =~ ${signer_release_regex} ]]; then
-    signer_tag=$(echo "${BRANCH}"        | sed "s|^${release_prefix}||")
-    signer_docker_tag=$(echo "${BRANCH}" | sed "s|^${signer_prefix}||")
+    signer_tag=$(echo "${BRANCH}" | sed "s|^${signer_prefix}||")
     is_signer_release=true
 elif [[ "${BRANCH}" =~ ${node_release_regex} ]]; then
     node_tag=$(echo "${BRANCH}"          | sed "s|^${release_prefix}||")
-    node_docker_tag="${node_tag}"
     ## Derive the signer tag by appending an extra .0 version component
-    signer_tag="signer-$(echo "${node_tag}" | sed 's/\(-[^-]*\)*$/.0\1/')"
-    signer_docker_tag=$(echo "${node_tag}"  | sed 's/\(-[^-]*\)*$/.0\1/')
+    signer_tag=$(echo "${node_tag}"  | sed 's/\(-[^-]*\)*$/.0\1/')
     is_node_release=true
     is_signer_release=true
 else
@@ -86,9 +80,7 @@ else
     warn "Branch $(hl "${BRANCH}") does not match a release pattern. Skipping."
     {
         echo "node_tag="
-        echo "node_docker_tag="
         echo "signer_tag="
-        echo "signer_docker_tag="
         echo "is_node_release=false"
         echo "is_signer_release=false"
     } >> "${GITHUB_OUTPUT}"
@@ -114,13 +106,13 @@ if [[ -z "${signer_version}" ]]; then
     exit 1
 fi
 
-if [[ "${is_node_release}" == "true" && "${node_version}" != "${node_docker_tag}" ]]; then
-    error "node version in $(hl "${versions_file}") ($(hl "${node_version}")) does not match branch tag ($(hl "${node_docker_tag}"))"
+if [[ "${is_node_release}" == "true" && "${node_version}" != "${node_tag}" ]]; then
+    error "node version in $(hl "${versions_file}") ($(hl "${node_version}")) does not match branch tag ($(hl "${node_tag}"))"
     exit 1
 fi
 
-if [[ "${signer_version}" != "${signer_docker_tag}" ]]; then
-    error "signer version in $(hl "${versions_file}") ($(hl "${signer_version}")) does not match branch tag ($(hl "${signer_docker_tag}"))"
+if [[ "${signer_version}" != "${signer_tag}" ]]; then
+    error "signer version in $(hl "${versions_file}") ($(hl "${signer_version}")) does not match branch tag ($(hl "${signer_tag}"))"
     exit 1
 fi
 
@@ -130,9 +122,7 @@ info "Signer version: $(hl "${signer_version}")"
 ## ── Write outputs ─────────────────────────────────────────────────────────────
 {
     echo "node_tag=${node_tag}"
-    echo "node_docker_tag=${node_docker_tag}"
     echo "signer_tag=${signer_tag}"
-    echo "signer_docker_tag=${signer_docker_tag}"
     echo "is_node_release=${is_node_release}"
     echo "is_signer_release=${is_signer_release}"
 } >> "${GITHUB_OUTPUT}"
