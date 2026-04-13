@@ -45,9 +45,9 @@ jobs:
     outputs:
       versions: ${{ steps.discover.outputs.versions }}
     steps:
-      - uses: step-security/harden-runner@f808768d1510423e83855289c910610ca9b43176 # v2.17.0
-        with:
-          egress-policy: audit # TODO: change to 'egress-policy: block' after couple of runs
+      # - uses: step-security/harden-runner@f808768d1510423e83855289c910610ca9b43176 # v2.17.0
+      #   with:
+      #     egress-policy: audit # TODO: change to 'egress-policy: block' after couple of runs
 
       ## Checkout the code
       - name: Checkout the latest code
@@ -88,9 +88,9 @@ jobs:
         bitcoin_version: ${{ fromJSON(needs.discover-bitcoin-majors.outputs.versions) }}
 
     steps:
-      - uses: step-security/harden-runner@f808768d1510423e83855289c910610ca9b43176 # v2.17.0
-        with:
-          egress-policy: audit # TODO: change to 'egress-policy: block' after couple of runs
+      # - uses: step-security/harden-runner@f808768d1510423e83855289c910610ca9b43176 # v2.17.0
+      #   with:
+      #     egress-policy: audit # TODO: change to 'egress-policy: block' after couple of runs
 
       ## Checkout the code
       - name: Checkout the latest code
@@ -126,9 +126,9 @@ jobs:
     if: always() && !cancelled()
     runs-on: ubuntu-latest
     steps:
-      - uses: step-security/harden-runner@f808768d1510423e83855289c910610ca9b43176 # v2.17.0
-        with:
-          egress-policy: audit # TODO: change to 'egress-policy: block' after couple of runs
+      # - uses: step-security/harden-runner@f808768d1510423e83855289c910610ca9b43176 # v2.17.0
+      #   with:
+      #     egress-policy: audit # TODO: change to 'egress-policy: block' after couple of runs
 
       ## Checkout the code
       - name: Checkout the latest code

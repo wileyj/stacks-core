@@ -38,9 +38,9 @@ jobs:
     name: Changelog Check
     runs-on: ubuntu-latest
     steps:
-      - uses: step-security/harden-runner@f808768d1510423e83855289c910610ca9b43176 # v2.17.0
-        with:
-          egress-policy: audit # TODO: change to 'egress-policy: block' after couple of runs
+      # - uses: step-security/harden-runner@f808768d1510423e83855289c910610ca9b43176 # v2.17.0
+      #   with:
+      #     egress-policy: audit # TODO: change to 'egress-policy: block' after couple of runs
 
       - name: Checkout the latest code
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -61,9 +61,9 @@ jobs:
     needs: changelog-check
     runs-on: ubuntu-latest
     steps:
-      - uses: step-security/harden-runner@f808768d1510423e83855289c910610ca9b43176 # v2.17.0
-        with:
-          egress-policy: audit # TODO: change to 'egress-policy: block' after couple of runs
+      # - uses: step-security/harden-runner@f808768d1510423e83855289c910610ca9b43176 # v2.17.0
+      #   with:
+      #     egress-policy: audit # TODO: change to 'egress-policy: block' after couple of runs
 
       - name: Checkout the latest code
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -106,16 +106,16 @@ jobs:
       - changelog-check
     runs-on: ubuntu-latest
     outputs:
-      node_tag: ${{ steps.check-release.outputs.node_tag }}
-      node_docker_tag: ${{ steps.check-release.outputs.node_docker_tag }}
-      signer_tag: ${{ steps.check-release.outputs.signer_tag }}
-      signer_docker_tag: ${{ steps.check-release.outputs.signer_docker_tag }}
-      is_node_release: ${{ steps.check-release.outputs.is_node_release }}
-      is_signer_release: ${{ steps.check-release.outputs.is_signer_release }}
+      node_tag: ${{ steps.check-release.outputs.node_tag }} # not used
+      # node_docker_tag: ${{ steps.check-release.outputs.node_docker_tag }} # used by create-release as node-tag
+      signer_tag: ${{ steps.check-release.outputs.signer_tag }} # not used
+      # signer_docker_tag: ${{ steps.check-release.outputs.signer_docker_tag }} # used by create-release as signer-tag
+      is_node_release: ${{ steps.check-release.outputs.is_node_release }} # used by create-release and in conditionals to trigger jobs
+      is_signer_release: ${{ steps.check-release.outputs.is_signer_release }} # used in conditionals to trigger jobs
     steps:
-      - uses: step-security/harden-runner@f808768d1510423e83855289c910610ca9b43176 # v2.17.0
-        with:
-          egress-policy: audit # TODO: change to 'egress-policy: block' after couple of runs
+      # - uses: step-security/harden-runner@f808768d1510423e83855289c910610ca9b43176 # v2.17.0
+      #   with:
+      #     egress-policy: audit # TODO: change to 'egress-policy: block' after couple of runs
 
       - name: Checkout the latest code
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -161,7 +161,7 @@ jobs:
     with:
       node_tag: ${{ needs.check-release.outputs.node_docker_tag }} # 5 place version format like x.x.x.x.x
       signer_tag: ${{ needs.check-release.outputs.signer_docker_tag }} # 6 place version format like x.x.x.x.x.x
-      is_node_release: ${{ needs.check-release.outputs.is_node_release }} # used in matrix conitional in release-github.yml
+      is_node_release: ${{ needs.check-release.outputs.is_node_release }} # used in matrix conditional in release-github.yml
 
   ## Create a reusable cache for tests
   ##

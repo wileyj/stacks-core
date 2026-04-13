@@ -19,9 +19,9 @@ jobs:
     name: All Crates (Windows/Linux)
     runs-on: ubuntu-latest
     steps:
-      - uses: step-security/harden-runner@f808768d1510423e83855289c910610ca9b43176 # v2.17.0
-        with:
-          egress-policy: audit # TODO: change to 'egress-policy: block' after couple of runs
+      # - uses: step-security/harden-runner@f808768d1510423e83855289c910610ca9b43176 # v2.17.0
+      #   with:
+      #     egress-policy: audit # TODO: change to 'egress-policy: block' after couple of runs
 
       - name: Checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -61,9 +61,9 @@ jobs:
     name: WASM targets
     runs-on: ubuntu-latest
     steps:
-      - uses: step-security/harden-runner@f808768d1510423e83855289c910610ca9b43176 # v2.17.0
-        with:
-          egress-policy: audit # TODO: change to 'egress-policy: block' after couple of runs
+      # - uses: step-security/harden-runner@f808768d1510423e83855289c910610ca9b43176 # v2.17.0
+      #   with:
+      #     egress-policy: audit # TODO: change to 'egress-policy: block' after couple of runs
 
       - name: Checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -108,9 +108,9 @@ jobs:
     name: Fuzz targets (nightly)
     runs-on: ubuntu-latest
     steps:
-      - uses: step-security/harden-runner@f808768d1510423e83855289c910610ca9b43176 # v2.17.0
-        with:
-          egress-policy: audit # TODO: change to 'egress-policy: block' after couple of runs
+      # - uses: step-security/harden-runner@f808768d1510423e83855289c910610ca9b43176 # v2.17.0
+      #   with:
+      #     egress-policy: audit # TODO: change to 'egress-policy: block' after couple of runs
 
       - name: Checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
