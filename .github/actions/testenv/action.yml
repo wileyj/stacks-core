@@ -46,6 +46,7 @@ runs:
 
     ## Increase open file descriptors limit
     - name: Increase Open File Descriptors
+      shell: bash
       run: |
         sudo prlimit --nofile=4096:4096
 
