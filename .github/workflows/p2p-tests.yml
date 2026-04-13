@@ -104,7 +104,7 @@ jobs:
     name: Check Tests
     needs:
       - integration-tests
-    if: always()
+    if: always() && !cancelled()
     runs-on: ubuntu-latest
     steps:
       ## Checkout the code

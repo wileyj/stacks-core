@@ -149,7 +149,7 @@ jobs:
       - open-api-validation
       - node-config-docsgen
       - core-contracts-clarinet-test
-    if: always()
+    if: always() && !cancelled()
     runs-on: ubuntu-latest
     steps:
       ## Checkout the code

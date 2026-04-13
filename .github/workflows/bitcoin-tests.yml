@@ -190,7 +190,7 @@ jobs:
       - create-cache
     runs-on: ubuntu-latest
     if: |
-      always() &&
+      always() && !cancelled() &&
       needs.create-cache.result != 'failure' &&
       needs.generate-tests.result != 'failure' &&
       needs.generate-tests.outputs.matrix1 != '[]'
@@ -237,7 +237,7 @@ jobs:
       - create-cache
     runs-on: ubuntu-latest
     if: |
-      always() &&
+      always() && !cancelled() &&
       needs.create-cache.result != 'failure' &&
       needs.generate-tests.result != 'failure' &&
       needs.generate-tests.outputs.matrix2 != '[]'
@@ -280,7 +280,7 @@ jobs:
       - generate-tests
       - integration-tests-1
       - integration-tests-2
-    if: always()
+    if: always() && !cancelled()
     runs-on: ubuntu-latest
     steps:
       ## Checkout the code
