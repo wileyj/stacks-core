@@ -108,6 +108,10 @@ jobs:
     permissions:
       contents: write
     steps:
+      - uses: step-security/harden-runner@f808768d1510423e83855289c910610ca9b43176 # v2.17.0
+        with:
+          egress-policy: audit # TODO: change to 'egress-policy: block' after couple of runs
+
       ## Creates releases
       - name: Create Release
         uses: ./.github/actions/release

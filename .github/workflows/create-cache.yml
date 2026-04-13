@@ -78,6 +78,10 @@ jobs:
     runs-on: ubuntu-latest
     if: needs.check-caches.outputs.cargo-cache-hit != 'true'
     steps:
+      - uses: step-security/harden-runner@f808768d1510423e83855289c910610ca9b43176 # v2.17.0
+        with:
+          egress-policy: audit # TODO: change to 'egress-policy: block' after couple of runs
+
       - name: Checkout the latest code
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
@@ -97,6 +101,10 @@ jobs:
     runs-on: ubuntu-latest
     if: needs.check-caches.outputs.bitcoin-cache-hit != 'true'
     steps:
+      - uses: step-security/harden-runner@f808768d1510423e83855289c910610ca9b43176 # v2.17.0
+        with:
+          egress-policy: audit # TODO: change to 'egress-policy: block' after couple of runs
+
       - name: Checkout the latest code
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
@@ -144,6 +152,10 @@ jobs:
         needs.check-caches.outputs.test-archive-cache-hit != 'true'
       )
     steps:
+      - uses: step-security/harden-runner@f808768d1510423e83855289c910610ca9b43176 # v2.17.0
+        with:
+          egress-policy: audit # TODO: change to 'egress-policy: block' after couple of runs
+
       # Checkout the latest code, full source is required for this job
       - name: Checkout the latest code
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2

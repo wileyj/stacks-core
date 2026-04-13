@@ -55,6 +55,10 @@ jobs:
         ##   - This is used in a later step when running `cargo nextest run ... --partition count:num/8`
         partition: [1, 2, 3, 4, 5, 6, 7, 8]
     steps:
+      - uses: step-security/harden-runner@f808768d1510423e83855289c910610ca9b43176 # v2.17.0
+        with:
+          egress-policy: audit # TODO: change to 'egress-policy: block' after couple of runs
+
       ## Checkout the code
       - name: Checkout the latest code
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -152,6 +156,10 @@ jobs:
     if: always() && !cancelled()
     runs-on: ubuntu-latest
     steps:
+      - uses: step-security/harden-runner@f808768d1510423e83855289c910610ca9b43176 # v2.17.0
+        with:
+          egress-policy: audit # TODO: change to 'egress-policy: block' after couple of runs
+
       ## Checkout the code
       - name: Checkout the latest code
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
