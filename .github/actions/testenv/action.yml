@@ -44,6 +44,11 @@ runs:
       run: |
         sudo ln -s ~/bitcoin/bin/bitcoind /bin/
 
+    ## Increase open file descriptors limit
+    - name: Increase Open File Descriptors
+      run: |
+        sudo prlimit --nofile=4096:4096
+
     ## Restore nextest test archive cache data
     - name: Restore Test Archive Cache
       id: restore_test_cache
