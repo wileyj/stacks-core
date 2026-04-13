@@ -76,7 +76,7 @@ jobs:
     needs:
       - discover-bitcoin-majors
       - create-cache
-    if: always() && needs.create-cache.result != 'failure' && needs.discover-bitcoin-majors.result != 'failure'
+    if: (needs.create-cache.result == 'success' || needs.create-cache.result == 'skipped') && needs.discover-bitcoin-majors.result == 'success'
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false

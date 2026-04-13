@@ -45,7 +45,7 @@ jobs:
   generate-tests:
     name: Generate balanced test matrix
     needs: create-cache
-    if: always() && needs.create-cache.result != 'failure'
+    if: needs.create-cache.result == 'success' || needs.create-cache.result == 'skipped'
     runs-on: ubuntu-latest
     outputs:
       matrix1: ${{ steps.set-matrix.outputs.matrix1 }}
