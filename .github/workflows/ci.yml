@@ -162,6 +162,18 @@ jobs:
       signer_tag: ${{ needs.check-release.outputs.signer_docker_tag }} # 6 place version format like x.x.x.x.x.x
       is_node_release: ${{ needs.check-release.outputs.is_node_release }} # used in matrix conditional in release-github.yml
 
+  echo:
+    name: Echo
+    needs:
+      - rustfmt
+      - changelog-check
+      - check-release
+    runs-on: ubuntu-latest
+    steps:
+      - name: echo
+        run: |
+          echo "is_node_release:   ${{ needs.check-release.outputs.is_node_release }}"
+          echo "is_signer_release: ${{ needs.check-release.outputs.is_signer_release }}"
   # ## Create a reusable cache for tests
   # ##
   # ## Runs when:
