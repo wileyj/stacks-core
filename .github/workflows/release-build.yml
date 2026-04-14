@@ -70,13 +70,6 @@ jobs:
           ## excludes macos-x64
           - arch: macos
             cpu: x86-64
-          ## testing exclude
-          - arch: macos
-            cpu: arm64
-          - arch: windows
-            cpu: x86-64
-          - arch: windows
-            cpu: arm64
     permissions:
       contents: read
       id-token: write
