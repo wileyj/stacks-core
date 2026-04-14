@@ -142,7 +142,7 @@ jobs:
   #   - create the release docker images
   #   - create the github release.
   create-release:
-    if: |
+    if: >-
       needs.check-release.outputs.is_node_release == 'true' ||
       needs.check-release.outputs.is_signer_release == 'true'
     name: Create Release
@@ -155,11 +155,11 @@ jobs:
       id-token: write      # required for attestation inside release-build.yml / release-docker.yml
       attestations: write  # required for attestation inside release-build.yml / release-docker.yml
       packages: write      # required for image push inside release-docker.yml
-    secrets: inherit
+    # secrets: inherit
     uses: ./.github/workflows/release-github.yml
     with:
-      node_tag: ${{ needs.check-release.outputs.node_docker_tag }} # 5 place version format like x.x.x.x.x
-      signer_tag: ${{ needs.check-release.outputs.signer_docker_tag }} # 6 place version format like x.x.x.x.x.x
+      node_tag: ${{ needs.check-release.outputs.node_tag }} # 5 place version format like x.x.x.x.x
+      signer_tag: ${{ needs.check-release.outputs.signer_tag }} # 6 place version format like x.x.x.x.x.x
       is_node_release: ${{ needs.check-release.outputs.is_node_release }} # used in matrix conditional in release-github.yml
 
   echo:
