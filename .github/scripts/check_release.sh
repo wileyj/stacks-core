@@ -118,6 +118,8 @@ fi
 
 info "Node version:   $(hl "${node_version}")"
 info "Signer version: $(hl "${signer_version}")"
+info "Signer Release: $(hl "${is_signer_release}")"
+info "Node version: $(hl "${is_node_release}")"
 
 ## ── Write outputs ─────────────────────────────────────────────────────────────
 {
