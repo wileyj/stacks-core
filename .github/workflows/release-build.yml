@@ -70,6 +70,7 @@ jobs:
           ## excludes macos-x64
           - arch: macos
             cpu: x86-64
+
     permissions:
       contents: read
       id-token: write
