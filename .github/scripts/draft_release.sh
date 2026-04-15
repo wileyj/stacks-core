@@ -99,7 +99,9 @@ info "node_tag:          $(hl "${node_tag}")"
 info "signer_tag:        $(hl "${signer_tag}")"
 info "node_epoch:        $(hl "${node_epoch}")"
 info "changelog_link:    $(hl "${changelog_link}")"
-info "changelog_content: $(hl "${CHANGELOG}") ($(echo "${changelog_content}" | wc -l | tr -d ' ') lines)"
+changelog_lines=0
+[[ -n "${changelog_content}" ]] && changelog_lines=$(printf '%s\n' "${changelog_content}" | wc -l | tr -d '[:space:]')
+info "changelog_content: $(hl "${CHANGELOG}") (${changelog_lines} lines)"
 
 ## ── Expand template ──────────────────────────────────────────────────────────
 export node_tag signer_tag node_epoch companion_line changelog_section
@@ -109,7 +111,7 @@ body=$(envsubst '${node_tag}${signer_tag}${node_epoch}${companion_line}${changel
 ## ── Output ───────────────────────────────────────────────────────────────────
 if [[ -n "${GITHUB_OUTPUT:-}" ]]; then
     ## Use a randomised delimiter to avoid collision with body content
-    delimiter="RELEASE_BODY_$(LC_ALL=C tr -dc 'A-F0-9' < /dev/urandom | head -c 16)"
+    delimiter="RELEASE_BODY_$(set +o pipefail; LC_ALL=C tr -dc 'A-F0-9' < /dev/urandom 2>/dev/null | head -c 16)"
     {
         printf 'release_body<<%s\n' "${delimiter}"
         printf '%s\n' "${body}"
