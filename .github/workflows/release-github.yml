@@ -9,6 +9,10 @@ on:
         description: "Node Docker Release Tag"
         required: true
         type: string
+      # node_epoch:
+      #   description: "Node Epoch"
+      #   required: true
+      #   type: string
       signer_tag:
         description: "Signer Docker Release Tag"
         required: true
@@ -124,5 +128,6 @@ jobs:
         uses: ./.github/actions/release
         with:
           node_tag: ${{ inputs.node_tag }} # name used for release (use the version by itself
+          # node_epoch: ${{ inputs.node_epoch }}
           signer_tag: signer-${{ inputs.signer_tag }} # name used for release (prefix with 'signer-')
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

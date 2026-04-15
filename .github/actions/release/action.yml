@@ -10,9 +10,6 @@ inputs:
     signer_tag:
         description: "Signer Release Tag"
         required: true
-    GH_TOKEN:
-        description: "GitHub Token"
-        required: true
 
 runs:
     using: "composite"
@@ -24,23 +21,22 @@ runs:
             ref: ${{ github.event.pull_request.head.sha || github.ref }}
             sparse-checkout: |
               .github
+              CHANGELOG.md
+              stacks-signer/CHANGELOG.md
+
 
         ## Creates the node release
         - name: Create Node Release
-          if: |
-              inputs.node_tag != ''
+          if: inputs.node_tag != ''
           uses: ./.github/actions/release/create-github-release
           with:
               tag: ${{ inputs.node_tag }}
-              # GH_TOKEN: ${{ inputs.GH_TOKEN }}
               release_type: stacks-core
 
         ## Creates the signer release
         - name: Create Signer Release
-          if: |
-              inputs.signer_tag != ''
+          if: inputs.signer_tag != ''
           uses: ./.github/actions/release/create-github-release
           with:
               tag: ${{ inputs.signer_tag }}
-              # GH_TOKEN: ${{ inputs.GH_TOKEN }}
               release_type: stacks-signer

@@ -106,10 +106,9 @@ jobs:
       - changelog-check
     runs-on: ubuntu-latest
     outputs:
-      node_tag: ${{ steps.check-release.outputs.node_tag }} # not used
-      # node_docker_tag: ${{ steps.check-release.outputs.node_docker_tag }} # used by create-release as node-tag
-      signer_tag: ${{ steps.check-release.outputs.signer_tag }} # not used
-      # signer_docker_tag: ${{ steps.check-release.outputs.signer_docker_tag }} # used by create-release as signer-tag
+      node_tag: ${{ steps.check-release.outputs.node_tag }} # used by create-release for node version
+      # node_epoch: ${{ steps.check-release.outputs.node_epoch }} # used for release desc for epoch compatibility
+      signer_tag: ${{ steps.check-release.outputs.signer_tag }} # used by create-releas for signer version
       is_node_release: ${{ steps.check-release.outputs.is_node_release }} # used by create-release and in conditionals to trigger jobs
       is_signer_release: ${{ steps.check-release.outputs.is_signer_release }} # used in conditionals to trigger jobs
     steps:
@@ -160,6 +159,7 @@ jobs:
     uses: ./.github/workflows/release-github.yml
     with:
       node_tag: ${{ needs.check-release.outputs.node_tag }} # 5 place version format like x.x.x.x.x
+      # node_epoch: ${{ needs.check-release.outputs.node_epoch }} # 5 place epoch version format like 1.0.x.x.x
       signer_tag: ${{ needs.check-release.outputs.signer_tag }} # 6 place version format like x.x.x.x.x.x
       is_node_release: ${{ needs.check-release.outputs.is_node_release }} # used in matrix conditional in release-github.yml
 
