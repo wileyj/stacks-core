@@ -16,17 +16,22 @@ set -euo pipefail
 ##   - JOBS is invalid JSON → writes error to $GITHUB_STEP_SUMMARY, exits 1
 ##
 
-## ── ANSI color codes and logging helpers ─────────────────────────────────────
-COLRED=$'\033[31m'    ## Red
-COLGREEN=$'\033[32m'  ## Green
-COLYELLOW=$'\033[33m' ## Yellow
-COLRESET=$'\033[0m'   ## Reset color/formatting
+## Load logging functions
+# shellcheck disable=SC1091
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/logging.sh"
 
-strip_ansi() { printf '%s' "$*" | sed $'s/\033\\[[0-9;]*m//g'; }
-info()  { echo "${COLGREEN}INFO:${COLRESET}    $*"; }
-warn()  { echo "${COLYELLOW}WARN:${COLRESET}    $*"; }
-error() { echo "${COLRED}ERROR:${COLRESET}   $*" >&2; echo "**ERROR:** $(strip_ansi "$*")" >> "${GITHUB_STEP_SUMMARY}"; }
-hl()    { printf '%s' "${COLYELLOW}$*${COLRESET}"; }  ## highlight an inline value
+# ## ── ANSI color codes and logging helpers ─────────────────────────────────────
+# COLRED=$'\033[31m'    ## Red
+# COLGREEN=$'\033[32m'  ## Green
+# COLYELLOW=$'\033[33m' ## Yellow
+# COLRESET=$'\033[0m'   ## Reset color/formatting
+
+# ## logging functions
+# strip_ansi() { printf '%s' "$*" | sed $'s/\033\\[[0-9;]*m//g'; }
+# info()  { echo "${COLGREEN}INFO:${COLRESET}    $*"; }
+# warn()  { echo "${COLYELLOW}WARN:${COLRESET}    $*"; }
+# error() { echo "${COLRED}ERROR:${COLRESET}   $*" >&2; echo "**ERROR:** $(strip_ansi "$*")" >> "${GITHUB_STEP_SUMMARY}"; }
+# hl()    { printf '%s' "${COLYELLOW}$*${COLRESET}"; }  ## highlight an inline value
 
 ## ── Validate required inputs ──────────────────────────────────────────────────
 : "${JOBS:?JOBS env var is required}"

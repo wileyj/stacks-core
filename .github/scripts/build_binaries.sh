@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+set -euo pipefail
+
 ##
 ## Build release binaries for a given target platform.
 ##
@@ -9,26 +11,33 @@
 ##
 ## Optional env vars:
 ##   SIGNER_ONLY  - "true" to build only stacks-signer; defaults to "false" (build all)
+##   GITHUB_OUTPUT  - Path to the GitHub Actions output file (set by runner); prints to stdout if unset
 ##
 ## Outputs written to $GITHUB_OUTPUT for subsequent steps:
 ##   target       - Rust target triple (e.g. x86_64-unknown-linux-gnu)
 ##   zipfile_name - Base archive filename without extension (e.g. linux-glibc-x64)
 ##
-set -euo pipefail
 
-## ── ANSI color codes and logging helpers ─────────────────────────────────────
-## Convention: ALL_CAPS for env var inputs and exported/GitHub values;
-##             lowercase for all script-local variables.
-COLRED=$'\033[31m'    ## Red
-COLGREEN=$'\033[32m'  ## Green
-COLYELLOW=$'\033[33m' ## Yellow
-COLRESET=$'\033[0m'   ## Reset color/formatting
+## Load logging functions
+# shellcheck disable=SC1091
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/logging.sh"
 
-strip_ansi() { printf '%s' "$*" | sed $'s/\033\\[[0-9;]*m//g'; }
-info()  { echo "${COLGREEN}INFO:${COLRESET}    $*"; }
-warn()  { echo "${COLYELLOW}WARN:${COLRESET}    $*"; }
-error() { echo "${COLRED}ERROR:${COLRESET}   $*" >&2; echo "**ERROR:** $(strip_ansi "$*")" >> "${GITHUB_STEP_SUMMARY}"; }
-hl()    { printf '%s' "${COLYELLOW}$*${COLRESET}"; }  ## highlight an inline value
+# ## ── ANSI color codes and logging helpers ─────────────────────────────────────
+# ## Convention: ALL_CAPS for env var inputs and exported/GitHub values;
+# ##             lowercase for all script-local variables.
+# COLRED=$'\033[31m'    ## Red
+# COLGREEN=$'\033[32m'  ## Green
+# COLYELLOW=$'\033[33m' ## Yellow
+# COLRESET=$'\033[0m'   ## Reset color/formatting
+
+
+# ## logging functions
+# strip_ansi() { printf '%s' "$*" | sed $'s/\033\\[[0-9;]*m//g'; }
+# info()  { echo "${COLGREEN}INFO:${COLRESET}    $*"; }
+# warn()  { echo "${COLYELLOW}WARN:${COLRESET}    $*"; }
+# # error() { echo "${COLRED}ERROR:${COLRESET}   $*" >&2; echo "**ERROR:** $(strip_ansi "$*")" >> "${GITHUB_STEP_SUMMARY}"; }
+# error() { echo "${COLRED}ERROR:${COLRESET}   $*" >&2; [[ -n "${GITHUB_STEP_SUMMARY:-}" ]] && echo "**ERROR:** $(strip_ansi "$*")" >> "${GITHUB_STEP_SUMMARY}"; }
+# hl()    { printf '%s' "${COLYELLOW}$*${COLRESET}"; }  ## highlight an inline value
 
 ## ── Validate required inputs ──────────────────────────────────────────────────
 ## Uppercase: env var inputs supplied by the calling workflow step.
@@ -135,10 +144,15 @@ fi
 zipfile_name="${MATRIX_ARCH}-${archive_name}"
 
 ## ── Write outputs for subsequent workflow steps ───────────────────────────────
-{
+if [[ -n "${GITHUB_OUTPUT:-}" ]]; then
+    {
+        echo "target=${target}"
+        echo "zipfile_name=${zipfile_name}"
+    } >> "${GITHUB_OUTPUT}"
+else
     echo "target=${target}"
     echo "zipfile_name=${zipfile_name}"
-} >> "${GITHUB_OUTPUT}"
+fi
 
 ## ── Install Rust toolchain and add the cross-compilation target ──────────────
 rust_toolchain="$(cat ./rust-toolchain)"

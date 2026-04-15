@@ -14,19 +14,24 @@ set -euo pipefail
 ##   CONFIG_FILE - Path to a Redocly config file for linting; omit to use no config
 ##
 
-## ── ANSI color codes and logging helpers ─────────────────────────────────────
-## Convention: ALL_CAPS for env var inputs and exported/GitHub values;
-##             lowercase for all script-local variables.
-COLRED=$'\033[31m'    ## Red
-COLGREEN=$'\033[32m'  ## Green
-COLYELLOW=$'\033[33m' ## Yellow
-COLRESET=$'\033[0m'   ## Reset color/formatting
+## Load logging functions
+# shellcheck disable=SC1091
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/logging.sh"
 
-strip_ansi() { printf '%s' "$*" | sed $'s/\033\\[[0-9;]*m//g'; }
-info()  { echo "${COLGREEN}INFO:${COLRESET}    $*"; }
-warn()  { echo "${COLYELLOW}WARN:${COLRESET}    $*"; }
-error() { echo "${COLRED}ERROR:${COLRESET}   $*" >&2; echo "**ERROR:** $(strip_ansi "$*")" >> "${GITHUB_STEP_SUMMARY}"; }
-hl()    { printf '%s' "${COLYELLOW}$*${COLRESET}"; }
+# ## ── ANSI color codes and logging helpers ─────────────────────────────────────
+# ## Convention: ALL_CAPS for env var inputs and exported/GitHub values;
+# ##             lowercase for all script-local variables.
+# COLRED=$'\033[31m'    ## Red
+# COLGREEN=$'\033[32m'  ## Green
+# COLYELLOW=$'\033[33m' ## Yellow
+# COLRESET=$'\033[0m'   ## Reset color/formatting
+
+# ## logging functions
+# strip_ansi() { printf '%s' "$*" | sed $'s/\033\\[[0-9;]*m//g'; }
+# info()  { echo "${COLGREEN}INFO:${COLRESET}    $*"; }
+# warn()  { echo "${COLYELLOW}WARN:${COLRESET}    $*"; }
+# error() { echo "${COLRED}ERROR:${COLRESET}   $*" >&2; echo "**ERROR:** $(strip_ansi "$*")" >> "${GITHUB_STEP_SUMMARY}"; }
+# hl()    { printf '%s' "${COLYELLOW}$*${COLRESET}"; }
 
 ## ── Validate required inputs ──────────────────────────────────────────────────
 : "${INPUT_FILE:?INPUT_FILE is required}"

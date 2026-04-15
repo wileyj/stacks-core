@@ -8,27 +8,30 @@ set -euo pipefail
 ## removes a hardcoded exclude list, then splits the remaining tests into
 ## MATRIX balanced partitions and writes each one to $GITHUB_OUTPUT.
 ##
-## Required env vars:
-##   GITHUB_OUTPUT  - Path to the GitHub Actions output file (set by runner)
-##
 ## Optional env vars:
+##   GITHUB_OUTPUT  - Path to the GitHub Actions output file (set by runner); prints to stdout if unset
 ##   MATRIX         - Number of partitions to split tests into (default: 2)
 ##   MAX_PER_MATRIX - Maximum tests allowed per partition (default: 256)
 ##
 
-## ── ANSI color codes and logging helpers ─────────────────────────────────────
-## Convention: ALL_CAPS for env var inputs and exported/GitHub values;
-##             lowercase for all script-local variables.
-COLRED=$'\033[31m'    ## Red
-COLGREEN=$'\033[32m'  ## Green
-COLYELLOW=$'\033[33m' ## Yellow
-COLRESET=$'\033[0m'   ## Reset color/formatting
+## Load logging functions
+# shellcheck disable=SC1091
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/logging.sh"
 
-strip_ansi() { printf '%s' "$*" | sed $'s/\033\\[[0-9;]*m//g'; }
-info()  { echo "${COLGREEN}INFO:${COLRESET}    $*"; }
-warn()  { echo "${COLYELLOW}WARN:${COLRESET}    $*"; }
-error() { echo "${COLRED}ERROR:${COLRESET}   $*" >&2; echo "**ERROR:** $(strip_ansi "$*")" >> "${GITHUB_STEP_SUMMARY}"; }
-hl()    { printf '%s' "${COLYELLOW}$*${COLRESET}"; }
+# ## ── ANSI color codes and logging helpers ─────────────────────────────────────
+# ## Convention: ALL_CAPS for env var inputs and exported/GitHub values;
+# ##             lowercase for all script-local variables.
+# COLRED=$'\033[31m'    ## Red
+# COLGREEN=$'\033[32m'  ## Green
+# COLYELLOW=$'\033[33m' ## Yellow
+# COLRESET=$'\033[0m'   ## Reset color/formatting
+
+# ## logging functions
+# strip_ansi() { printf '%s' "$*" | sed $'s/\033\\[[0-9;]*m//g'; }
+# info()  { echo "${COLGREEN}INFO:${COLRESET}    $*"; }
+# warn()  { echo "${COLYELLOW}WARN:${COLRESET}    $*"; }
+# error() { echo "${COLRED}ERROR:${COLRESET}   $*" >&2; [[ -n "${GITHUB_STEP_SUMMARY:-}" ]] && echo "**ERROR:** $(strip_ansi "$*")" >> "${GITHUB_STEP_SUMMARY}"; }
+# hl()    { printf '%s' "${COLYELLOW}$*${COLRESET}"; }
 
 ## ── Configuration ────────────────────────────────────────────────────────────
 matrix="${MATRIX:-2}"
@@ -148,6 +151,10 @@ for (( i = 1; i <= matrix; i++ )); do
     size=$(( base + ( i <= remainder ? 1 : 0 ) ))
     partition=$(printf '%s\n' "${tests[@]:$offset:$size}" | jq -R . | jq -s -c .)
     info "matrix${i}: $(hl ${size}) tests"
-    echo "matrix${i}=${partition}" >> "${GITHUB_OUTPUT}"
+    if [[ -n "${GITHUB_OUTPUT:-}" ]]; then
+        echo "matrix${i}=${partition}" >> "${GITHUB_OUTPUT}"
+    else
+        echo "matrix${i}=${partition}"
+    fi
     offset=$(( offset + size ))
 done

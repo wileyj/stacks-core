@@ -1,12 +1,18 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+## Load logging functions
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/logging.sh"
+
 ##
 ## Checks whether the current branch name matches a release pattern and, if so,
 ## derives the release tags and validates them against versions.toml.
 ##
 ## Required env vars (set by the calling workflow step):
 ##   BRANCH  - branch name from github.ref_name (e.g. release/1.0.0.0.0)
+##
+## Optional env vars:
+##   GITHUB_OUTPUT  - Path to the GitHub Actions output file (set by runner); prints to stdout if unset
 ##
 ## Outputs written to $GITHUB_OUTPUT for subsequent steps/jobs:
 ##   node_tag          - node release tag       (e.g. 1.0.0.0.0)         empty for signer-only releases
@@ -21,19 +27,24 @@ set -euo pipefail
 ##   - Validation error                  → writes error to $GITHUB_STEP_SUMMARY, exits 1
 ##
 
-## ── ANSI color codes and logging helpers ─────────────────────────────────────
-## Convention: ALL_CAPS for env var inputs and GitHub runner values;
-##             lowercase for all script-local variables.
-COLRED=$'\033[31m'    ## Red
-COLGREEN=$'\033[32m'  ## Green
-COLYELLOW=$'\033[33m' ## Yellow
-COLRESET=$'\033[0m'   ## Reset color/formatting
+## Load logging functions
+# shellcheck disable=SC1091
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/logging.sh"
 
-strip_ansi() { printf '%s' "$*" | sed $'s/\033\\[[0-9;]*m//g'; }
-info()  { echo "${COLGREEN}INFO:${COLRESET}    $*"; }
-warn()  { echo "${COLYELLOW}WARN:${COLRESET}    $*"; }
-error() { echo "${COLRED}ERROR:${COLRESET}   $*" >&2; echo "**ERROR:** $(strip_ansi "$*")" >> "${GITHUB_STEP_SUMMARY}"; }
-hl()    { printf '%s' "${COLYELLOW}$*${COLRESET}"; }  ## highlight an inline value
+# ## ── ANSI color codes and logging helpers ─────────────────────────────────────
+# ## Convention: ALL_CAPS for env var inputs and GitHub runner values;
+# ##             lowercase for all script-local variables.
+# COLRED=$'\033[31m'    ## Red
+# COLGREEN=$'\033[32m'  ## Green
+# COLYELLOW=$'\033[33m' ## Yellow
+# COLRESET=$'\033[0m'   ## Reset color/formatting
+
+# ## logging functions
+# strip_ansi() { printf '%s' "$*" | sed $'s/\033\\[[0-9;]*m//g'; }
+# info()  { echo "${COLGREEN}INFO:${COLRESET}    $*"; }
+# warn()  { echo "${COLYELLOW}WARN:${COLRESET}    $*"; }
+# error() { echo "${COLRED}ERROR:${COLRESET}   $*" >&2; [[ -n "${GITHUB_STEP_SUMMARY:-}" ]] && echo "**ERROR:** $(strip_ansi "$*")" >> "${GITHUB_STEP_SUMMARY}"; }
+# hl()    { printf '%s' "${COLYELLOW}$*${COLRESET}"; }  ## highlight an inline value
 
 ## ── Validate required inputs ──────────────────────────────────────────────────
 ## Uppercase: env var input supplied by the calling workflow step.
@@ -78,12 +89,19 @@ else
     ## Not a release branch — write empty/false outputs and exit cleanly so that
     ## downstream jobs can evaluate their own is_node/signer_release conditions.
     warn "Branch $(hl "${BRANCH}") does not match a release pattern. Skipping."
-    {
+    if [[ -n "${GITHUB_OUTPUT:-}" ]]; then
+        {
+            echo "node_tag="
+            echo "signer_tag="
+            echo "is_node_release=false"
+            echo "is_signer_release=false"
+        } >> "${GITHUB_OUTPUT}"
+    else
         echo "node_tag="
         echo "signer_tag="
         echo "is_node_release=false"
         echo "is_signer_release=false"
-    } >> "${GITHUB_OUTPUT}"
+    fi
     exit 0
 fi
 
@@ -93,8 +111,8 @@ if [[ ! -f "${versions_file}" ]]; then
     exit 1
 fi
 
-node_version=$(grep   "^${node_key}"   "${versions_file}" | sed -E 's/.*=\s*"([^"]+)"/\1/')
-signer_version=$(grep "^${signer_key}" "${versions_file}" | sed -E 's/.*=\s*"([^"]+)"/\1/')
+node_version=$(grep   "^${node_key}"   "${versions_file}" | sed -E 's/.*=[[:space:]]*"([^"]+)"/\1/')
+signer_version=$(grep "^${signer_key}" "${versions_file}" | sed -E 's/.*=[[:space:]]*"([^"]+)"/\1/')
 
 if [[ -z "${node_version}" ]]; then
     error "$(hl "${node_key}") not found in $(hl "${versions_file}")"
@@ -116,15 +134,22 @@ if [[ "${signer_version}" != "${signer_tag}" ]]; then
     exit 1
 fi
 
-info "Node version:   $(hl "${node_version}")"
-info "Signer version: $(hl "${signer_version}")"
-info "Signer Release: $(hl "${is_signer_release}")"
-info "Node version: $(hl "${is_node_release}")"
+info "Node version:     $(hl "${node_version}")"
+info "Signer version:   $(hl "${signer_version}")"
+info "Is node release:  $(hl "${is_node_release}")"
+info "Is signer release:$(hl "${is_signer_release}")"
 
 ## ── Write outputs ─────────────────────────────────────────────────────────────
-{
+if [[ -n "${GITHUB_OUTPUT:-}" ]]; then
+    {
+        echo "node_tag=${node_tag}"
+        echo "signer_tag=${signer_tag}"
+        echo "is_node_release=${is_node_release}"
+        echo "is_signer_release=${is_signer_release}"
+    } >> "${GITHUB_OUTPUT}"
+else
     echo "node_tag=${node_tag}"
     echo "signer_tag=${signer_tag}"
     echo "is_node_release=${is_node_release}"
     echo "is_signer_release=${is_signer_release}"
-} >> "${GITHUB_OUTPUT}"
+fi
