@@ -104,6 +104,9 @@ jobs:
     needs:
       - rustfmt
       - changelog-check
+    if: >-
+      !cancelled() &&
+      needs.rustfmt.result == 'success'
     runs-on: ubuntu-latest
     outputs:
       node_tag: ${{ steps.check-release.outputs.node_tag }}
@@ -136,6 +139,7 @@ jobs:
       - check-release
     if: >-
       !cancelled() &&
+      needs.rustfmt.result == 'success' &&
       (needs.check-release.outputs.is_node_release == 'true' ||
       needs.check-release.outputs.is_signer_release == 'true' ||
       github.event_name == 'workflow_dispatch' ||
@@ -170,6 +174,7 @@ jobs:
       - check-release
     if: >-
       !cancelled() &&
+      needs.rustfmt.result == 'success' &&
       (needs.check-release.outputs.is_node_release == 'true' ||
       needs.check-release.outputs.is_signer_release == 'true' ||
       github.event_name == 'workflow_dispatch' ||
@@ -186,6 +191,7 @@ jobs:
       - check-release
     if: >-
       !cancelled() &&
+      needs.rustfmt.result == 'success' &&
       (needs.check-release.outputs.is_node_release == 'true' ||
       needs.check-release.outputs.is_signer_release == 'true' ||
       github.event_name == 'workflow_dispatch' ||
@@ -203,6 +209,7 @@ jobs:
       - check-release
     if: >-
       !cancelled() &&
+      needs.rustfmt.result == 'success' &&
       (needs.check-release.outputs.is_node_release == 'true' ||
       needs.check-release.outputs.is_signer_release == 'true' ||
       github.event_name == 'workflow_dispatch' ||
@@ -225,6 +232,7 @@ jobs:
       - check-release
     if: >-
       !cancelled() &&
+      needs.rustfmt.result == 'success' &&
       (github.event_name == 'workflow_dispatch' ||
       github.event_name == 'pull_request' ||
       github.event_name == 'merge_group')
@@ -239,6 +247,7 @@ jobs:
       - check-release
     if: >-
       !cancelled() &&
+      needs.rustfmt.result == 'success' &&
       (github.event_name == 'workflow_dispatch' ||
       github.event_name == 'pull_request' ||
       github.event_name == 'merge_group')
@@ -256,6 +265,8 @@ jobs:
   create-release:
     if: >-
       !cancelled() &&
+      needs.rustfmt.result == 'success' &&
+      needs.changelog-check.result == 'success' &&
       (needs.check-release.outputs.is_node_release == 'true' ||
       needs.check-release.outputs.is_signer_release == 'true')
     name: Create Release
@@ -284,6 +295,7 @@ jobs:
       - check-release
     if: >-
       !cancelled() &&
+      needs.rustfmt.result == 'success' &&
       (needs.check-release.outputs.is_node_release == 'true' ||
       needs.check-release.outputs.is_signer_release == 'true')
     uses: ./.github/workflows/epoch-tests.yml
