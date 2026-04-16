@@ -1,0 +1,55 @@
+# Generate a sha512 checksum for the build archive
+name: Generate Checksum
+
+inputs:
+  hashfile_name:
+    description: "The name of the generated checksum file"
+    required: false
+    default: "CHECKSUMS.txt"
+  artifact_download_pattern:
+    description: "The pattern of artifacts to download. Defaults to '*' (all artifacts)"
+    required: false
+    default: "*"
+
+runs:
+  using: "composite"
+  steps:
+    # Downloads the artifacts built in `create-source-binary.yml`
+    - name: Download Artifacts
+      uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v4.1.8
+      with:
+        pattern: ${{ inputs.artifact_download_pattern }}
+        path: release
+        merge-multiple: true
+
+    # Generate a checksums file to be added to the release page
+    - name: Generate Checksums
+      shell: bash
+      run: |
+        ## ── ANSI color codes for logging ────────────────────────────────────
+        COLRED=$'\033[31m'    ## Red
+        COLGREEN=$'\033[32m'  ## Green
+        COLYELLOW=$'\033[33m' ## Yellow
+        COLRESET=$'\033[0m'   ## Reset color/formatting
+
+        # If sha512sum command doesn't exist on the host, exit
+        if ! command -v sha512sum > /dev/null 2>&1; then
+          echo "${COLRED}Error:${COLRESET} ${COLYELLOW}sha512sum${COLRESET} command doesn't exist!";
+          exit 1;
+        fi
+
+        # Generate the hashes and exit if the variable is empty
+        cd release || {
+          echo "${COLRED}Error:${COLRESET} Artifact directory (${COLYELLOW}release${COLRESET}) does not exist!"
+          exit 1;
+        }
+
+        shasum="$(sha512sum *)" || {
+          echo "${COLRED}Error:${COLRESET} Checksum could not be generated!";
+          exit 1;
+        }
+
+        echo "${COLGREEN}Generated checksums:${COLRESET}"
+        echo "$shasum"
+        echo "$shasum" > "../${{ inputs.hashfile_name }}";
+        exit 0;
