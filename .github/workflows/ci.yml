@@ -157,6 +157,7 @@ jobs:
       - check-release
     if: >-
       !cancelled() &&
+      needs.rustfmt.result == 'success' &&
       (needs.check-release.outputs.is_node_release == 'true' ||
       needs.check-release.outputs.is_signer_release == 'true' ||
       github.event_name == 'workflow_dispatch' ||
