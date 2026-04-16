@@ -75,22 +75,34 @@ jobs:
     needs: changelog-check
     runs-on: ubuntu-latest
     steps:
-      # Checkout the code
       - name: Checkout the latest code
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           ref: ${{ github.event.pull_request.head.sha || github.ref }}
-
-       # Setup the default rust toolchain with rustfmt
 
       - name: Setup Rust Toolchain
         uses: ./.github/actions/setup-rust-toolchain
         with:
           components: rustfmt
 
-      # Run script to check rust formatting
+      ## Check if this is a release
       - name: Rustfmt
         run: bash ./.github/scripts/rustfmt.sh
+      # # Checkout the code
+      # - name: Checkout the latest code
+      #   uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      #   with:
+      #     ref: ${{ github.event.pull_request.head.sha || github.ref }}
+
+      #  # Setup the default rust toolchain with rustfmt
+      # - name: Setup Rust Toolchain
+      #   uses: ./.github/actions/setup-rust-toolchain
+      #   with:
+      #     components: rustfmt
+
+      # # Run script to check rust formatting
+      # - name: Rustfmt
+      #   run: bash ./.github/scripts/rustfmt.sh
 
   ## --- Check if this is a release build -------------------------------------
   # Outputs:
