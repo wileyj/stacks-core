@@ -1,3 +1,5 @@
+# Run individual tests
+
 name: Run Tests
 description: |
     Run tests with cargo nextest
@@ -30,6 +32,7 @@ inputs:
 runs:
   using: "composite"
   steps:
+    # Run a provided test
     - name: Run Tests
       shell: bash
       run: |

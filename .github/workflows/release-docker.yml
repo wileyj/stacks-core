@@ -1,5 +1,5 @@
-## Github workflow to create release docker images
-##   - uses binary archives produced by the ./release-build.yml workflow
+# Github workflow to create release docker images
+#   - uses binary archives produced by the ./release-build.yml workflow
 
 name: Docker Release Images
 
@@ -19,16 +19,19 @@ on:
         required: true
         type: string
 
+# set default permissions
 permissions:
   contents: read
 
+# set default shell
 defaults:
   run:
     shell: bash
 
+# configure concurrency
 concurrency:
   group: release-docker-${{ inputs.release_type }}-${{ github.head_ref || github.ref }}
-  ## Always cancel duplicate jobs
+  # Always cancel duplicate jobs
   cancel-in-progress: true
 
 run-name: ${{ inputs.node_tag || inputs.signer_tag }}
@@ -50,7 +53,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
-      ## Build a maximum of 2 images concurrently based on matrix.dist
+      # Build a maximum of 2 images concurrently based on matrix.dist
       max-parallel: 2
       matrix:
         dist:
@@ -62,11 +65,7 @@ jobs:
       attestations: write  # required for attestation
       packages: write      # required for image push
     steps:
-      # - uses: step-security/harden-runner@f808768d1510423e83855289c910610ca9b43176 # v2.17.0
-      #   with:
-      #     egress-policy: audit # TODO: change to 'egress-policy: block' after couple of runs
-
-      ## Retrieve repository description for image annotation
+      # Retrieve repository description for image annotation
       - name: Get repository description
         id: repo-desc
         run: |
@@ -75,7 +74,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
 
-      ## set local env vars
+      # Set local env vars
       - name: Set Local Vars
         id: set-vars
         run: |
@@ -85,7 +84,6 @@ jobs:
           if [ "${{ matrix.dist }}" == "alpine" ]; then
             var_build_arch=musl
           fi
-
           # set a default docker image: registry/repo/release_type
           var_default_image="${{ env.DOCKER_REGISTRY }}/${{ github.repository_owner }}/${{ inputs.release_type }}"
           var_artifact_pattern="${{ github.sha }}-${{ inputs.release_type }}-linux-${var_build_arch}*"
@@ -101,19 +99,12 @@ jobs:
             var_docker_tag=${{ inputs.node_tag }} # use the input node_tag if this is the stacks-node build
             var_annotation_pattern="Stacks Core"
           fi
-
-          ## Set docker rc tag if branch is named `..-rc[0-9]`
+          # Set docker rc tag if branch is named `..-rc[0-9]`
           if [[ "${docker_tag}" =~ -rc[0-9]*$ ]]; then
             # is a release candidate
             var_docker_tag_rc=true
           fi
-          # Add vars to github env for later steps
-          # echo "docker_images=${var_images}" >> "$GITHUB_OUTPUT"
-          # echo "docker_tag=${var_docker_tag}" >> "$GITHUB_OUTPUT"
-          # echo "artifact_pattern=${var_artifact_pattern}" >> "$GITHUB_OUTPUT"
-          # echo "annotation_pattern=${var_annotation_pattern}" >> "$GITHUB_OUTPUT"
-          # echo "dockerfile_name=${var_dockerfile_name}" >> "$GITHUB_OUTPUT"
-          # echo "docker_tag_rc=${var_docker_tag_rc}" >> "$GITHUB_OUTPUT"
+          # Add vars to github output for later steps
           {
             echo "docker_images=${var_images}"
             echo "docker_tag=${var_docker_tag}"
@@ -123,25 +114,16 @@ jobs:
             echo "docker_tag_rc=${var_docker_tag_rc}"
           } >> "${GITHUB_OUTPUT}"
 
-      # ## Set docker rc tag if branch is named `..-rc[0-9]`
-      # - name: Set Docker Tag RC Flag
-      #   run: |
-      #     var_docker_tag_rc=false
-      #     if [[ "${{ steps.set-vars.outputs.docker_tag }}" =~ -rc[0-9]*$ ]]; then
-      #       # is a release candidate
-      #       var_docker_tag_rc=true
-      #     fi
-      #     echo "docker_tag_rc=${var_docker_tag_rc}" >> "$GITHUB_OUTPUT"
-
-      ## Checkout the code
+      # Checkout the code
+      #   - only .github is required for this job
       - name: Checkout the latest code
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
-          ref: ${{ github.ref }}
+          ref: ${{ github.event.pull_request.head.sha || github.ref }}
           sparse-checkout: |
             .github
 
-      ## Download binary artifacts
+      # Download binary artifacts
       - name: Download Artifacts
         uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
         with:
@@ -149,7 +131,7 @@ jobs:
           path: /tmp/release
           merge-multiple: true
 
-      ## Setup Docker for the builds
+      # Setup Docker for the builds
       - name: Docker setup
         id: docker-setup
         uses: ./.github/actions/docker
@@ -158,16 +140,7 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      # echo
-      - name: echo
-        run: |
-            echo
-            echo "-----------------------------------"
-            echo "steps.docker-setup.docker_push: ${{ steps.docker-setup.outputs.docker_push }}"
-            echo "-----------------------------------"
-            echo
-
-      ## Set docker metatdata
+      # Set docker metatdata
       - name: Docker Metadata ( ${{ matrix.dist }} )
         id: docker-metadata
         uses: docker/metadata-action@318604b99e75e41977312d83839a89be02ca4893 #v5.9.0
@@ -201,7 +174,7 @@ jobs:
             #  version-dist tag
             type=raw,value=${{ steps.set-vars.outputs.docker_tag }},suffix=-${{ matrix.dist }},enable=${{ steps.set-vars.outputs.docker_tag != '' && matrix.dist == 'alpine' }}
 
-      ## Build docker image for release
+      # Build docker image for release
       - name: Build and Push ( ${{matrix.dist}} )
         id: docker-build
         uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83 # v6.18.0
@@ -216,7 +189,7 @@ jobs:
           annotations: ${{ steps.docker-metadata.outputs.annotations }} # Note: annotations are used for multi-architecture ghcr images
           push: ${{ steps.docker-setup.outputs.docker_push }} # defined in .github/actions/docker composite
 
-      ## Generate docker image attestation(s)
+      # Generate docker image attestation(s)
       - name: Attest Image (${{ github.event.repository.name }})
         if: |
           env.PROVENANCE != true
@@ -226,12 +199,13 @@ jobs:
           subject-digest: ${{ steps.docker-build.outputs.digest }}
           push-to-registry: ${{ steps.docker-setup.outputs.docker_push }} # defined in .github/actions/docker composite
 
-      ## Sign the images with GitHub OIDC Token
-      ##   - https://github.blog/security/supply-chain-security/safeguard-container-signing-capability-actions/
-      ##   - annotations show as null per https://github.com/sigstore/cosign/pull/4508 until a future release (or tagging this specific commit)
+      # Sign the images with GitHub OIDC Token
+      #   - https://github.blog/security/supply-chain-security/safeguard-container-signing-capability-actions/
+      #   - annotations show as null per https://github.com/sigstore/cosign/pull/4508 until a future release (or tagging this specific commit)
       - name: Install Cosign
         uses: sigstore/cosign-installer@faadad0cce49287aee09b3a48701e75088a2c6ad # v4.0.0
 
+      # Sign the images with Github OIDC token
       - name: Sign the images with OIDC Token
         env:
           DIGEST: ${{ steps.docker-build.outputs.digest }}

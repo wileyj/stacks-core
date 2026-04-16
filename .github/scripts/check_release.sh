@@ -1,59 +1,31 @@
 #!/usr/bin/env bash
+
+# Checks whether the current branch name matches a release pattern and, if so,
+# derives the release tags and validates them against versions.toml.
+#
+# Required env vars:
+#   BRANCH  - branch name from github.ref_name (e.g. release/1.0.0.0.0)
+#
+# Exit behaviour:
+#   - Branch matches a release pattern  → validates versions.toml, writes outputs, exits 0
+#   - Branch does not match             → exits 0 (all outputs empty/false; downstream
+#                                         jobs guard themselves with is_node/signer_release checks)
+#   - Validation error                  → writes error to $GITHUB_STEP_SUMMARY, exits 1
+# Outputs:
+#   GITHUB_OUTPUT  - Path to the GitHub Actions output file (set by runner); prints to stdout if unset
+#   node_tag          - node release tag       (e.g. 1.0.0.0.0)         empty for signer-only releases
+#   signer_tag        - signer release tag     (e.g. signer-1.0.0.0.0.0)
+#   is_node_release   - "true" if this is a node release branch
+#   is_signer_release - "true" if this is a signer release branch
 set -euo pipefail
 
-## Load logging functions
-source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/logging.sh"
 
-##
-## Checks whether the current branch name matches a release pattern and, if so,
-## derives the release tags and validates them against versions.toml.
-##
-## Required env vars (set by the calling workflow step):
-##   BRANCH  - branch name from github.ref_name (e.g. release/1.0.0.0.0)
-##
-## Optional env vars:
-##   GITHUB_OUTPUT  - Path to the GitHub Actions output file (set by runner); prints to stdout if unset
-##
-## Outputs written to $GITHUB_OUTPUT for subsequent steps/jobs:
-##   node_tag          - node release tag       (e.g. 1.0.0.0.0)         empty for signer-only releases
-##   signer_tag        - signer release tag     (e.g. signer-1.0.0.0.0.0)
-##   is_node_release   - "true" if this is a node release branch
-##   is_signer_release - "true" if this is a signer release branch
-##
-## Exit behaviour:
-##   - Branch matches a release pattern  → validates versions.toml, writes outputs, exits 0
-##   - Branch does not match             → exits 0 (all outputs empty/false; downstream
-##                                         jobs guard themselves with is_node/signer_release checks)
-##   - Validation error                  → writes error to $GITHUB_STEP_SUMMARY, exits 1
-##
-
-## Load logging functions
-# shellcheck disable=SC1091
-source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/logging.sh"
-
-# ## ── ANSI color codes and logging helpers ─────────────────────────────────────
-# ## Convention: ALL_CAPS for env var inputs and GitHub runner values;
-# ##             lowercase for all script-local variables.
-# COLRED=$'\033[31m'    ## Red
-# COLGREEN=$'\033[32m'  ## Green
-# COLYELLOW=$'\033[33m' ## Yellow
-# COLRESET=$'\033[0m'   ## Reset color/formatting
-
-# ## logging functions
-# strip_ansi() { printf '%s' "$*" | sed $'s/\033\\[[0-9;]*m//g'; }
-# info()  { echo "${COLGREEN}INFO:${COLRESET}    $*"; }
-# warn()  { echo "${COLYELLOW}WARN:${COLRESET}    $*"; }
-# error() { echo "${COLRED}ERROR:${COLRESET}   $*" >&2; [[ -n "${GITHUB_STEP_SUMMARY:-}" ]] && echo "**ERROR:** $(strip_ansi "$*")" >> "${GITHUB_STEP_SUMMARY}"; }
-# hl()    { printf '%s' "${COLYELLOW}$*${COLRESET}"; }  ## highlight an inline value
-
-## ── Validate required inputs ──────────────────────────────────────────────────
-## Uppercase: env var input supplied by the calling workflow step.
+## ── Validate required inputs ────────────────────────────────────────────────
 : "${BRANCH:?BRANCH is required}"
 
-## ── Release branch patterns ───────────────────────────────────────────────────
-## Lowercase: script-local constants derived and used only within this script.
-## Node release:   release/[0-9].[0-9].[0-9].[0-9].[0-9]   (5-part version, optional -rcN suffix)
-## Signer release: release/signer-[0-9].[0-9].[0-9].[0-9].[0-9].[0-9]  (6-part version, optional -rcN suffix)
+## ── Release branch patterns ─────────────────────────────────────────────────
+# Node release:   release/x.x.x.x.x   (5-part version, optional -rcN suffix)
+# Signer release: release/signer-x.x.x.x.x.x  (6-part version, optional -rcN suffix)
 versions_file="versions.toml"
 node_key="stacks_node_version"
 signer_key="stacks_signer_version"
@@ -67,15 +39,15 @@ signer_prefix="release/signer-"
 node_release_regex="^${release_prefix}${node_version_regex}$"
 signer_release_regex="^${signer_prefix}${signer_version_regex}$"
 
-## ── Initialise output variables ───────────────────────────────────────────────
+## ── Initialise output variables ─────────────────────────────────────────────
 node_tag=""
 signer_tag=""
 is_node_release=false
 is_signer_release=false
 
-## ── Match branch against release patterns ────────────────────────────────────
-## Signer must be tested first — its prefix (release/signer-) is a superset of
-## the node prefix (release/), so a signer branch would also match the node regex.
+## ── Match branch against release patterns -----------------------------------
+# Signer must be tested first — its prefix (release/signer-) is a superset of
+# the node prefix (release/), so a signer branch would also match the node regex.
 if [[ "${BRANCH}" =~ ${signer_release_regex} ]]; then
     signer_tag=$(echo "${BRANCH}" | sed "s|^${signer_prefix}||")
     is_signer_release=true
@@ -86,8 +58,8 @@ elif [[ "${BRANCH}" =~ ${node_release_regex} ]]; then
     is_node_release=true
     is_signer_release=true
 else
-    ## Not a release branch — write empty/false outputs and exit cleanly so that
-    ## downstream jobs can evaluate their own is_node/signer_release conditions.
+    # Not a release branch — write empty/false outputs and exit cleanly so that
+    # downstream jobs can evaluate their own is_node/signer_release conditions.
     warn "Branch $(hl "${BRANCH}") does not match a release pattern. Skipping."
     if [[ -n "${GITHUB_OUTPUT:-}" ]]; then
         {
@@ -105,13 +77,13 @@ else
     exit 0
 fi
 
-## ── Validate versions.toml ────────────────────────────────────────────────────
+## ── Validate versions.toml ──────────────────────────────────────────────────
 if [[ ! -f "${versions_file}" ]]; then
     error "$(hl "${versions_file}") not found"
     exit 1
 fi
 
-node_version=$(grep   "^${node_key}"   "${versions_file}" | sed -E 's/.*=[[:space:]]*"([^"]+)"/\1/')
+node_version=$(grep "^${node_key}" "${versions_file}" | sed -E 's/.*=[[:space:]]*"([^"]+)"/\1/')
 signer_version=$(grep "^${signer_key}" "${versions_file}" | sed -E 's/.*=[[:space:]]*"([^"]+)"/\1/')
 
 if [[ -z "${node_version}" ]]; then
@@ -139,7 +111,7 @@ info "Signer version:   $(hl "${signer_version}")"
 info "Is node release:  $(hl "${is_node_release}")"
 info "Is signer release:$(hl "${is_signer_release}")"
 
-## ── Write outputs ─────────────────────────────────────────────────────────────
+## ── Write outputs ───────────────────────────────────────────────────────────
 if [[ -n "${GITHUB_OUTPUT:-}" ]]; then
     {
         echo "node_tag=${node_tag}"

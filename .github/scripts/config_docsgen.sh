@@ -1,49 +1,42 @@
 #!/usr/bin/env bash
+# Generate, validate, and summarise Stacks Core configuration documentation.
+#
+# Required env vars (set by the calling workflow step):
+#   OUTPUT_FILE   - Path for the generated markdown file (e.g. ./node-parameters.md)
+#   MIN_DOC_SIZE  - Minimum acceptable file size in bytes; generation is considered
+#                   failed if the output is smaller than this value
+#
+# Optional env vars:
+#   PROJECT_ROOT          - Workspace root; defaults to $GITHUB_WORKSPACE
+#   RUST_NIGHTLY_VERSION  - Nightly toolchain used (informational — written to job summary)
+#   ARTIFACT_NAME         - Artifact name (informational — written to job summary)
+#   RETENTION_DAYS        - Retention period in days (informational — written to job summary)
 set -euo pipefail
 
-##
-## Generate, validate, and summarise Stacks Core configuration documentation.
-##
-## Required env vars (set by the calling workflow step):
-##   OUTPUT_FILE   - Path for the generated markdown file (e.g. ./node-parameters.md)
-##   MIN_DOC_SIZE  - Minimum acceptable file size in bytes; generation is considered
-##                   failed if the output is smaller than this value
-##
-## Optional env vars:
-##   PROJECT_ROOT          - Workspace root; defaults to $GITHUB_WORKSPACE
-##   RUST_NIGHTLY_VERSION  - Nightly toolchain used (informational — written to job summary)
-##   ARTIFACT_NAME         - Artifact name (informational — written to job summary)
-##   RETENTION_DAYS        - Retention period in days (informational — written to job summary)
-##
-
-## Load logging functions
+# Load logging functions
 # shellcheck disable=SC1091
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/logging.sh"
 
-# ## ── ANSI color codes and logging helpers ─────────────────────────────────────
-# ## Convention: ALL_CAPS for env var inputs and exported/GitHub values;
-# ##             lowercase for all script-local variables.
-# COLRED=$'\033[31m'    ## Red
-# COLGREEN=$'\033[32m'  ## Green
-# COLYELLOW=$'\033[33m' ## Yellow
-# COLRESET=$'\033[0m'   ## Reset color/formatting
-
-# ## logging functions
-# strip_ansi() { printf '%s' "$*" | sed $'s/\033\\[[0-9;]*m//g'; }
-# info()  { echo "${COLGREEN}INFO:${COLRESET}    $*"; }
-# warn()  { echo "${COLYELLOW}WARN:${COLRESET}    $*"; }
-# error() { echo "${COLRED}ERROR:${COLRESET}   $*" >&2; echo "**ERROR:** $(strip_ansi "$*")" >> "${GITHUB_STEP_SUMMARY}"; }
-# hl()    { printf '%s' "${COLYELLOW}$*${COLRESET}"; }
-
-## ── Validate required inputs ──────────────────────────────────────────────────
+# --- Configuration -----------------------------------------------------------
 : "${OUTPUT_FILE:?OUTPUT_FILE is required}"
 : "${MIN_DOC_SIZE:?MIN_DOC_SIZE is required}"
 PROJECT_ROOT="${PROJECT_ROOT:-${GITHUB_WORKSPACE}}"
-RUST_NIGHTLY_VERSION="${RUST_NIGHTLY_VERSION:-}"
-ARTIFACT_NAME="${ARTIFACT_NAME:-}"
-RETENTION_DAYS="${RETENTION_DAYS:-}"
+rust_nightly_version="${RUST_NIGHTLY_VERSION:-}"
+artifact_name="${ARTIFACT_NAME:-}"
+retention_days="${RETENTION_DAYS:-}"
 
-## ── Generate configuration documentation ─────────────────────────────────────
+# ── Check for required binaries ----------------------------------------------
+missing=0
+for cmd in numfmt wc; do
+    if ! command -v "${cmd}" > /dev/null 2>&1; then
+        error "Missing required command: $(hl "${cmd}")"
+        missing=1
+    fi
+done
+[[ "${missing}" -eq 1 ]] && exit 1
+
+
+# ── Generate configuration documentation -------------------------------------
 info "Generating configuration documentation → $(hl "${OUTPUT_FILE}")..."
 bash contrib/tools/config-docs-generator/generate-config-docs.sh || {
     error "config-docs-generator script failed"
@@ -56,7 +49,7 @@ if [[ ! -f "${OUTPUT_FILE}" ]]; then
 fi
 info "Documentation generated at $(hl "${OUTPUT_FILE}")"
 
-## ── Validate generated documentation ─────────────────────────────────────────
+# ── Validate generated documentation -----------------------------------------
 info "Validating $(hl "${OUTPUT_FILE}")..."
 
 file_size="$(wc -c < "${OUTPUT_FILE}")"
@@ -74,7 +67,7 @@ info "  Word count: $(hl "${word_count} words")"
 info "  Line count: $(hl "${line_count} lines")"
 info "Documentation passed validation"
 
-## ── Write job summary ─────────────────────────────────────────────────────────
+# ── Write job summary --------------------------------------------------------
 formatted_size="$(numfmt --to=iec-i --suffix=B "${file_size}")"
 formatted_words="$(printf "%'d" "${word_count}")"
 
@@ -85,9 +78,9 @@ formatted_words="$(printf "%'d" "${word_count}")"
     echo ""
     echo -n "**File Size**: ${formatted_size}"
     echo -n " | **Words**: ${formatted_words}"
-    [[ -n "${RUST_NIGHTLY_VERSION}" ]] && echo -n " | **Toolchain**: \`${RUST_NIGHTLY_VERSION}\`"
+    [[ -n "${rust_nightly_version}" ]] && echo -n " | **Toolchain**: \`${rust_nightly_version}\`"
     echo ""
     echo ""
-    [[ -n "${ARTIFACT_NAME}" && -n "${RETENTION_DAYS}" ]] && \
-        echo "**Artifact**: \`${ARTIFACT_NAME}\` (retained for ${RETENTION_DAYS} days)"
+    [[ -n "${artifact_name}" && -n "${RETENTION_DAYS}" ]] && \
+        echo "**Artifact**: \`${artifact_name}\` (retained for ${retention_days} days)"
 } >> "${GITHUB_STEP_SUMMARY}"

@@ -1,4 +1,4 @@
-## Github workflow to create and upload github releases
+# Create Github release and upload files
 name: Create Releases
 description: |
     Create GitHub Releases
@@ -14,18 +14,13 @@ inputs:
 runs:
     using: "composite"
     steps:
-        ## Checkout the code
+        # Checkout the code
         - name: Checkout the latest code
           uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
           with:
             ref: ${{ github.event.pull_request.head.sha || github.ref }}
-            # sparse-checkout: |
-            #   .github
-            #   CHANGELOG.md
-            #   stacks-signer/CHANGELOG.md
 
-
-        ## Creates the node release
+        # Creates the node release
         - name: Create Node Release
           if: inputs.node_tag != ''
           uses: ./.github/actions/release/create-github-release
@@ -33,7 +28,7 @@ runs:
               tag: ${{ inputs.node_tag }}
               release_type: stacks-core
 
-        ## Creates the signer release
+        # Creates the signer release
         - name: Create Signer Release
           if: inputs.signer_tag != ''
           uses: ./.github/actions/release/create-github-release

@@ -1,68 +1,58 @@
 #!/usr/bin/env bash
+# Build release binaries for a given target platform.
+#
+# Required env vars (set by the calling workflow step):
+#   MATRIX_CPU   - CPU target from the build matrix  (e.g. x86-64, arm64)
+#   MATRIX_ARCH  - OS/ABI target from the build matrix (e.g. linux-glibc, inux-musl, macos, windows)
+#   CMD          - Full cargo build command string
+#
+# Optional env vars:
+#   SIGNER_ONLY  - "true" to build only stacks-signer; defaults to "false" (build all)
+#
+# Outputs:
+#   GITHUB_OUTPUT  - Path to the GitHub Actions output file (set by runner); prints to stdout if unset
+#   target       - Rust target triple (e.g. x86_64-unknown-linux-gnu)
+#   zipfile_name - Base archive filename without extension (e.g. linux-glibc-x64)
 set -euo pipefail
 
-##
-## Build release binaries for a given target platform.
-##
-## Required env vars (set by the calling workflow step):
-##   MATRIX_CPU   - CPU target from the build matrix  (e.g. x86-64, arm64)
-##   MATRIX_ARCH  - OS/ABI target from the build matrix (e.g. linux-glibc, linux-musl, macos, windows)
-##   CMD          - Full cargo build command string
-##
-## Optional env vars:
-##   SIGNER_ONLY  - "true" to build only stacks-signer; defaults to "false" (build all)
-##   GITHUB_OUTPUT  - Path to the GitHub Actions output file (set by runner); prints to stdout if unset
-##
-## Outputs written to $GITHUB_OUTPUT for subsequent steps:
-##   target       - Rust target triple (e.g. x86_64-unknown-linux-gnu)
-##   zipfile_name - Base archive filename without extension (e.g. linux-glibc-x64)
-##
-
-## Load logging functions
+# Load logging functions
 # shellcheck disable=SC1091
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/logging.sh"
 
-# ## ── ANSI color codes and logging helpers ─────────────────────────────────────
-# ## Convention: ALL_CAPS for env var inputs and exported/GitHub values;
-# ##             lowercase for all script-local variables.
-# COLRED=$'\033[31m'    ## Red
-# COLGREEN=$'\033[32m'  ## Green
-# COLYELLOW=$'\033[33m' ## Yellow
-# COLRESET=$'\033[0m'   ## Reset color/formatting
-
-
-# ## logging functions
-# strip_ansi() { printf '%s' "$*" | sed $'s/\033\\[[0-9;]*m//g'; }
-# info()  { echo "${COLGREEN}INFO:${COLRESET}    $*"; }
-# warn()  { echo "${COLYELLOW}WARN:${COLRESET}    $*"; }
-# # error() { echo "${COLRED}ERROR:${COLRESET}   $*" >&2; echo "**ERROR:** $(strip_ansi "$*")" >> "${GITHUB_STEP_SUMMARY}"; }
-# error() { echo "${COLRED}ERROR:${COLRESET}   $*" >&2; [[ -n "${GITHUB_STEP_SUMMARY:-}" ]] && echo "**ERROR:** $(strip_ansi "$*")" >> "${GITHUB_STEP_SUMMARY}"; }
-# hl()    { printf '%s' "${COLYELLOW}$*${COLRESET}"; }  ## highlight an inline value
-
-## ── Validate required inputs ──────────────────────────────────────────────────
-## Uppercase: env var inputs supplied by the calling workflow step.
+## --- Configuration ----------------------------------------------------------
 : "${MATRIX_CPU:?MATRIX_CPU is required}"
 : "${MATRIX_ARCH:?MATRIX_ARCH is required}"
 : "${CMD:?CMD is required}"
-SIGNER_ONLY="${SIGNER_ONLY:-false}"
+signer_only="${SIGNER_ONLY:-false}"
+# musl.cc has aggressive rate limits from Azure IPs; use the GitHub mirror instead
+musl_linker_archive="https://github.com/musl-cc/musl.cc/releases/download/v0.0.1/aarch64-linux-musl-cross.tgz"
 
 ## ── Preserve cargo color output in CI (cargo disables color when stdout is not a TTY)
 export CARGO_TERM_COLOR=always
 
-## ── Determine which binaries to build ────────────────────────────────────────
-## Lowercase: script-local variables derived within this script.
+## ── Check for required binaries ─────────────────────────────────────────────
+missing=0
+for cmd in apt-get rustup cargo; do
+    if ! command -v "${cmd}" > /dev/null 2>&1; then
+        error "Missing required command: $(hl "${cmd}")"
+        missing=1
+    fi
+done
+[[ "${missing}" -eq 1 ]] && exit 1
+
+## ── Determine which binaries to build ───────────────────────────────────────
 bins=""
-if [[ "${SIGNER_ONLY}" == "true" ]]; then
+if [[ "${signer_only}" == "true" ]]; then
     bins="--bin stacks-signer"
 fi
 
-## ── Initialise per-target variables ──────────────────────────────────────────
+## ── Initialise per-target variables ─────────────────────────────────────────
 target=""
 target_cpu=""
 linker=""
 archive_name=""
 
-## ── Configure target platform ────────────────────────────────────────────────
+## ── Configure target platform ───────────────────────────────────────────────
 case "${MATRIX_CPU}" in
     x86-64*)
         # Derive archive suffix: x86-64 → x64, x86-64-v3 → x64-v3, etc.
@@ -72,7 +62,6 @@ case "${MATRIX_CPU}" in
             x86-64) target_cpu="${MATRIX_CPU}-v3" ;;
             *)       target_cpu="${MATRIX_CPU}"    ;;
         esac
-
         case "${MATRIX_ARCH}" in
             linux-glibc)
                 info "Installing dependencies for $(hl "linux-glibc x86_64") build"
@@ -99,7 +88,6 @@ case "${MATRIX_CPU}" in
 
     arm64)
         archive_name="${MATRIX_CPU}"
-
         case "${MATRIX_ARCH}" in
             linux-glibc)
                 info "Installing dependencies for $(hl "linux-glibc arm64") build"
@@ -110,9 +98,8 @@ case "${MATRIX_CPU}" in
             linux-musl)
                 info "Installing dependencies for $(hl "linux-musl arm64") build"
                 sudo apt-get update && sudo apt-get install -y gcc-aarch64-linux-gnu musl-dev
-                # musl.cc has aggressive rate limits from Azure IPs; use the GitHub mirror instead
                 curl -LSf -# \
-                    https://github.com/musl-cc/musl.cc/releases/download/v0.0.1/aarch64-linux-musl-cross.tgz \
+                    ${musl_linker_archive} \
                     | tar zxf - -C /tmp
                 target="aarch64-unknown-linux-musl"
                 linker="/tmp/aarch64-linux-musl-cross/bin/aarch64-linux-musl-gcc"
@@ -143,7 +130,7 @@ fi
 
 zipfile_name="${MATRIX_ARCH}-${archive_name}"
 
-## ── Write outputs for subsequent workflow steps ───────────────────────────────
+## ── Write outputs for subsequent workflow steps ─────────────────────────────
 if [[ -n "${GITHUB_OUTPUT:-}" ]]; then
     {
         echo "target=${target}"
@@ -154,7 +141,7 @@ else
     echo "zipfile_name=${zipfile_name}"
 fi
 
-## ── Install Rust toolchain and add the cross-compilation target ──────────────
+## ── Install Rust toolchain and add the cross-compilation target ─────────────
 rust_toolchain="$(cat ./rust-toolchain)"
 rustup toolchain install "${rust_toolchain}" --no-self-update || {
     error "Failed to install Rust toolchain $(hl "${rust_toolchain}")"
@@ -165,7 +152,7 @@ rustup target add "${target}" --toolchain "${rust_toolchain}" || {
     exit 1
 }
 
-## ── Build ────────────────────────────────────────────────────────────────────
+## ── Build ───────────────────────────────────────────────────────────────────
 # CMD and bins are intentionally unquoted so the shell performs word-splitting
 # on the multi-word command/flag strings.
 # shellcheck disable=SC2086

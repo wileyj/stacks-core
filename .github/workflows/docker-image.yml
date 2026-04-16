@@ -1,6 +1,4 @@
-## Github workflow to build a docker image from source
-#  - first builds the binaries from source for x86_64 and arm64
-#  - then builds the docker image from the binary artifacts
+# Github workflow to build a docker image from a branch
 
 name: Docker Image
 
@@ -9,9 +7,11 @@ on:
   schedule:
     - cron: "00 05 * * *" # 0500 UTC
 
+# set default permissions
 permissions:
   contents: read
 
+# set default shell
 defaults:
   run:
     shell: bash
@@ -27,14 +27,14 @@ env:
   PROVENANCE: false
   # set the build target statically, since we only need to build for linux-glibc
   ARCH: linux-glibc
-
+# configure concurrency
 concurrency:
   group: docker-image-${{ github.head_ref || github.ref || github.run_id }}
-  ## Always cancel duplicate jobs
+  # Always cancel duplicate jobs
   cancel-in-progress: true
 
 jobs:
-  ## Build arch dependent binaries from source
+  # Build arch dependent binaries from source
   build-binaries:
     name: Build Binaries
     runs-on: ubuntu-latest
@@ -53,29 +53,26 @@ jobs:
     outputs:
       branch: ${{ steps.set-vars.outputs.branch }}
     steps:
-      # - uses: step-security/harden-runner@f808768d1510423e83855289c910610ca9b43176 # v2.17.0
-      #   with:
-      #     egress-policy: audit # TODO: change to 'egress-policy: block' after couple of runs
-
-      ## set local env vars.
-      #   if the event is a schedule, use develop branch; otherwise use ref_name
+      # Set local env vars.
+      #     - if the event is a schedule, use develop branch; otherwise use ref_name
       - name: Set Local Vars
         id: set-vars
         run: |
           var_branch="${{ github.ref_name }}"
           if [ "${{ github.event_name }}" == "schedule" ]; then
-            var_branch="test_composites" ## REMOVE FOR PR. LEAVE FOR TESTING IN DEFAULT
+            var_branch="test_composite2" ## REMOVE FOR PR. LEAVE FOR TESTING IN DEFAULT
             # var_branch="develop"
           fi
           echo "branch=${var_branch}" >> "$GITHUB_OUTPUT"
 
-      ## Checkout the code
+      # Checkout the code
+      #   - checkout a specified branch or develop for scheduled jobs
       - name: Checkout the latest code
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           ref: ${{ steps.set-vars.outputs.branch }}
 
-      ## Setup Docker for the builds
+      # Setup Docker for the builds
       - name: Docker setup
         id: docker-setup
         uses: ./.github/actions/docker
@@ -84,7 +81,7 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      ## Configure target platform, install Rust toolchain, and build binaries
+      # Configure target platform, install Rust toolchain, and build binaries
       - name: Build Binaries
         id: build-binaries
         env:
@@ -94,38 +91,26 @@ jobs:
           SIGNER_ONLY: "false"
         run: bash ./.github/scripts/build_binaries.sh
 
-      # echo
-      - name: echo
-        run: |
-            echo
-            echo "-----------------------------------"
-            echo "steps.docker-setup.docker_push: ${{ steps.docker-setup.outputs.docker_push }}"
-            echo "steps.build-binaries.target: ${{ steps.build-binaries.outputs.target }}"
-            echo "steps.build-binaries.target_cpu: ${{ steps.build-binaries.outputs.target_cpu }}"
-            echo "steps.build-binaries.zipfile_name: ${{ steps.build-binaries.outputs.zipfile_name }}"
-            echo "-----------------------------------"
-            echo
-
-      ## Compress the binary artifacts
-      # ZIPFILE_NAME is defined in the .github/scripts/build_binaries.sh script
+      # Compress the binary artifacts
       - name: Compress binaries
         run: |
           # compress all binaries in the target directory for any architecture
           file -0 ./target/${{ steps.build-binaries.outputs.target }}/release/* | sed -nE 's/\x0:\s*(ELF|PE32+|Mach).*//p' | zip --junk-paths ${{ steps.build-binaries.outputs.zipfile_name }}.zip -@
 
-      ## Upload the binary archive using the commit sha as the key
+      # Upload the binary archive using the commit sha as the key
       - name: Upload Artifact
         uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
         with:
           name: ${{ github.sha }}-${{ steps.build-binaries.outputs.zipfile_name }}
           path: ${{ steps.build-binaries.outputs.zipfile_name }}.zip
 
-      ## Attest the binary archive
+      # Attest the binary archive
       - name: Attest Artifact
         uses: actions/attest-build-provenance@a2bbfa25375fe432b6a289bc6b6cd05ecd0c4c32 # v4.1.0
         with:
           subject-path: ${{ steps.build-binaries.outputs.zipfile_name }}.zip
 
+  # Build and publish the docker images using the binary archives
   image:
     name: Build Image
     needs:
@@ -137,11 +122,7 @@ jobs:
       attestations: write  # required for attestation
       packages: write      # required for image push
     steps:
-      # - uses: step-security/harden-runner@f808768d1510423e83855289c910610ca9b43176 # v2.17.0
-      #   with:
-      #     egress-policy: audit # TODO: change to 'egress-policy: block' after couple of runs
-
-      ## Retrieve repository description for image annotation
+      # Retrieve repository description for image annotation
       - name: Get repository description
         id: repo-desc
         run: |
@@ -150,11 +131,10 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
 
-      ## set local env vars
+      # Set local env vars
       - name: Set Local Vars
         id: set-vars
         run: |
-          # var_branch="${{ github.ref_name }}"
           var_annotation_pattern="${{ needs.build-binaries.outputs.branch }}" # default to use the branch name
           var_default_image="${{ env.DOCKER_REGISTRY }}/${{ github.repository }}"
           if [ "${{ github.event_name }}" == "schedule" ]; then
@@ -162,15 +142,13 @@ jobs:
             # var_branch="develop"
             var_annotation_pattern="Nightly" # for scheduled (nightly) builds, use 'Nightly'
           fi
-          # echo "docker_images=${var_default_image}" >> "$GITHUB_OUTPUT"
-          # echo "annotation_pattern=${var_annotation_pattern}" >> "$GITHUB_OUTPUT"
           {
             echo "docker_images=${var_default_image}"
             echo "annotation_pattern=${var_annotation_pattern}"
           } >> "${GITHUB_OUTPUT}"
 
-
-      ## Checkout the code
+      # Checkout the code
+      #   - only .github is required for this job
       - name: Checkout the latest code
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
@@ -178,7 +156,7 @@ jobs:
           sparse-checkout: |
             .github
 
-      ## Download binary artifacts
+      # Download binary artifacts
       - name: Download Artifacts
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
@@ -187,7 +165,7 @@ jobs:
           path: /tmp/release
           merge-multiple: true
 
-      ## Setup Docker for the builds
+      # Setup Docker for the builds
       - name: Docker setup
         id: docker-setup
         uses: ./.github/actions/docker
@@ -196,7 +174,7 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      ## Set docker metadata
+      # Set docker metadata
       - name: Docker Metadata
         id: docker-metadata
         uses: docker/metadata-action@030e881283bb7a6894de51c315a6bfe6a94e05cf #v6.0.0
@@ -216,7 +194,7 @@ jobs:
             # if trigger is schedule, use a timestamp
             type=schedule,pattern={{date 'YYYYMMDD'}}
 
-      ## Build and push the docker image(s)
+      # Build and push the docker image(s)
       - name: Build and Push
         id: docker-build
         uses: docker/build-push-action@d08e5c354a6adb9ed34480a06d141179aa583294 # v7.0.0
@@ -231,7 +209,7 @@ jobs:
           annotations: ${{ steps.docker-metadata.outputs.annotations }} # Note: annotations are used for multi-architecture ghcr images
           push: ${{ steps.docker-setup.outputs.docker_push }} # defined in .github/actions/docker composite
 
-      ## Generate docker image attestation(s)
+      # Generate docker image attestation(s)
       - name: Attest Image
         if: |
           env.PROVENANCE != true
@@ -242,12 +220,13 @@ jobs:
           subject-digest: ${{ steps.docker-build.outputs.digest }}
           push-to-registry: ${{ steps.docker-setup.outputs.docker_push }} # defined in .github/actions/docker composite
 
-      ## Sign the images with GitHub OIDC Token
-      ##   - https://github.blog/security/supply-chain-security/safeguard-container-signing-capability-actions/
-      ##   - annotations show as null per https://github.com/sigstore/cosign/pull/4508 until a future release (or tagging this specific commit)
+      # Sign the images with GitHub OIDC Token
+      #   - https://github.blog/security/supply-chain-security/safeguard-container-signing-capability-actions/
+      #   - annotations show as null per https://github.com/sigstore/cosign/pull/4508 until a future release (or tagging this specific commit)
       - name: Install Cosign
         uses: sigstore/cosign-installer@cad07c2e89fa2edd6e2d7bab4c1aa38e53f76003 # v4.1.0
 
+      # Sign the images with Github OIDC token
       - name: Sign the images OIDC Token
         env:
           DIGEST: ${{ steps.docker-build.outputs.digest }}

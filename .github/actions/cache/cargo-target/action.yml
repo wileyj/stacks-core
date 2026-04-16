@@ -25,7 +25,7 @@ outputs:
 runs:
   using: "composite"
   steps:
-    ## Check if cache data exists
+    # Check if cache data exists
     - name: Check Cache
       uses: actions/cache@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5.0.4
       id: check_cache
@@ -34,13 +34,7 @@ runs:
         path: ./target
         key: ${{ inputs.cache-key }}
 
-    - name: echo cache hit
-      shell: bash
-      run: |
-        echo "inputs.cache-key: ${{ inputs.cache-key }}"
-        echo "cache-hit=${{ steps.check_cache.outputs.cache-hit }}"
-
-    ## Restore cache data
+    # Restore cache data
     - name: Restore Cache
       if: |
         inputs.action == 'restore'
@@ -50,8 +44,7 @@ runs:
         path: ./target
         key: ${{ inputs.cache-key }}
 
-    # ## Save cache data
-    #  Only save if cache miss (i.e. no existing data)
+    # Save cache data
     - name: Save Cache
       if: |
         inputs.action == 'save'

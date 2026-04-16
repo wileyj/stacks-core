@@ -1,4 +1,4 @@
-## Github workflow to create a github release and upload binary artifacts
+# Github workflow to create a github release and upload binary artifacts
 
 name: Github Release
 
@@ -22,22 +22,24 @@ on:
         required: true
         type: string
 
+# set default permissions
 permissions:
   contents: read
 
+# configure concurrency
 concurrency:
   group: release-github-${{ github.head_ref || github.ref }}
-  ## Always cancel duplicate jobs
+  # Always cancel duplicate jobs
   cancel-in-progress: true
 
 run-name: ${{ inputs.node_tag || inputs.signer_tag }}
 
 jobs:
 
-  ## Build arch dependent binaries from source
-  ##
-  ## Runs when the following is true:
-  ##  - either node or signer tag is provided
+  # Build arch dependent binaries from source
+  #
+  # Runs when the following is true:
+  #  - either node or signer tag is provided
   andon-cord:
     name: Andon Cord
     if: |
@@ -81,7 +83,7 @@ jobs:
       packages: write      # required for image push inside release-docker.yml
     strategy:
       fail-fast: false
-      ## Build a maximum of 2 images concurrently based on matrix.dist
+      # Build a maximum of 2 images concurrently based on matrix.dist
       max-parallel: 2
       matrix:
         type:
@@ -89,16 +91,16 @@ jobs:
           - stacks-signer
         exclude:
           - type: ${{ inputs.is_node_release == 'false' && 'stacks-core' }} # exclude stacks-core if node release is false
-    ## Creates the node docker image
+    # Creates the node docker image
     uses: ./.github/workflows/release-docker.yml
     with:
       node_tag: ${{ inputs.node_tag }} # node_tag will contains the 5 char node version, i.e. 3.3.0.0.0
       signer_tag: ${{ inputs.signer_tag }} # signer_tag contains 6 char signer version, i.e. 3.3.0.0.0.1
       release_type: ${{ matrix.type }} # one of stacks-signer or stacks-core
 
-  ##
-  ## Runs when the following is true:
-  ##  - either node or signer tag is provided
+  #
+  # Runs when the following is true:
+  #  - either node or signer tag is provided
   create-release:
     name: Create Release
     needs:
@@ -112,10 +114,8 @@ jobs:
     permissions:
       contents: write
     steps:
-      # - uses: step-security/harden-runner@f808768d1510423e83855289c910610ca9b43176 # v2.17.0
-      #   with:
-      #     egress-policy: audit # TODO: change to 'egress-policy: block' after couple of runs
-
+      # Checkout the code
+      #   - only .github is required for this job
       - name: Checkout the latest code
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
@@ -123,7 +123,7 @@ jobs:
           sparse-checkout: |
             .github
 
-      ## Creates releases
+      # Creates releases
       - name: Create Release
         uses: ./.github/actions/release
         with:

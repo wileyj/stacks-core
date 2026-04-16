@@ -1,17 +1,11 @@
-## The main Github Actions workflow
+# The main Github Actions workflow
+
 name: CI
 
 on:
   merge_group:
     types:
       - checks_requested
-  push:
-    branches:
-      - master
-      - develop
-    paths-ignore:
-      - "**.md"
-      - "**.yml"
   workflow_dispatch:
   pull_request:
     types:
@@ -19,29 +13,45 @@ on:
       - reopened
       - synchronize
 
+# set default permissions
+
 permissions:
   contents: read  # default for all jobs
 
+# set default shell
 defaults:
   run:
     shell: bash
 
+# configure concurrency
 concurrency:
   group: ci-${{ github.head_ref || github.ref || github.run_id }}
-  ## Always cancel duplicate jobs
+  # Always cancel duplicate jobs
   cancel-in-progress: true
+
+  # maybe this? and then remove concurrency from all other workflows that aren't triggered manually.
+  # group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  # cancel-in-progress: true
 
 run-name: ${{ github.ref_name }}
 
 jobs:
+  ## --- Jobs to run on every workflow trigger --------------------------------
+  # Runs when:
+  #    - this workflow is called manually
+  #    - PR is opened or new commits pushed
+  #    - PR added to merge queue
+  #    - release workflow is triggered
+  #
+  ## --- Changelog check ------------------------------------------------------
+  #   - Checks for changelog updates (or the 'No Changelog' label on a PR
+  #   - Required by all subsequent jobs
   changelog-check:
     name: Changelog Check
     runs-on: ubuntu-latest
     steps:
-      # - uses: step-security/harden-runner@f808768d1510423e83855289c910610ca9b43176 # v2.17.0
-      #   with:
-      #     egress-policy: audit # TODO: change to 'egress-policy: block' after couple of runs
-
+      # Checkout the code
+      #   - only .github is required for this job
       - name: Checkout the latest code
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
@@ -49,6 +59,7 @@ jobs:
           sparse-checkout: |
             .github
 
+      # run script to detect changelog entries
       - name: Check for changelog fragments
         uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8.0.0
         with:
@@ -56,66 +67,52 @@ jobs:
             const changelog = require('./.github/scripts/changelog.js');
             await changelog({ github, context, core });
 
+  ## --- Check Rust Formatting ------------------------------------------------
+  #   - Check for correct formatting
+  #   - Required to pass for all subsequent jobs
   rustfmt:
     name: Rust Format
     needs: changelog-check
     runs-on: ubuntu-latest
     steps:
-      # - uses: step-security/harden-runner@f808768d1510423e83855289c910610ca9b43176 # v2.17.0
-      #   with:
-      #     egress-policy: audit # TODO: change to 'egress-policy: block' after couple of runs
-
+      # Checkout the code
       - name: Checkout the latest code
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           ref: ${{ github.event.pull_request.head.sha || github.ref }}
+
+       # Setup the default rust toolchain with rustfmt
 
       - name: Setup Rust Toolchain
         uses: ./.github/actions/setup-rust-toolchain
         with:
           components: rustfmt
 
-      ## Check if this is a release
+      # Run script to check rust formatting
       - name: Rustfmt
         run: bash ./.github/scripts/rustfmt.sh
 
-      # - name: Rustfmt
-      #   uses: ./.github/actions/rustfmt
-      #   with:
-      #     alias: "fmt-stacks"
-
-  ######################################################################################
-  ## Check if the branch that this workflow is being run against is a release branch
-  ##
-  ## Outputs:
-  ##  - node_tag: Tag of the stacks-node if the branch is a release one (example: release/3.4.0.0.1), null otherwise
-  ##  - node_docker_tag: Version of the stacks-node if the branch is a release one (example: 3.4.0.0.1), null otherwise
-  ##  - signer_tag: Tag of the stacks-signer if the branch is a release one (example: release/3.4.0.0.1.0), null otherwise
-  ##  - signer_docker_tag: Version of the stacks-signer if the branch is a release one (example: 3.4.0.0.1.0), null otherwise
-  ##  - is_node_release: True if the branch represents a 'stacks-node' release, false otherwise.
-  ##                     If this is true, 'is_signer_release' will also be true, since a 'stacks-signer' binary
-  ##                     is always released alongside 'stacks-node'.
-  ##  - is_signer_release: True if the branch represents a 'stacks-signer' release, false otherwise.
+  ## --- Check if this is a release build -------------------------------------
+  # Outputs:
+  #  - node_tag: Tag of the stacks-node if the branch is a release one (example: release/3.4.0.0.1), null otherwise
+  #  - signer_tag: Tag of the stacks-signer if the branch is a release one (example: release/3.4.0.0.1.0), null otherwise
+  #  - is_node_release: True if the branch represents a 'stacks-node' release, false otherwise.
+  #    - If this is true, 'is_signer_release' will also be true, since a 'stacks-signer' binary is always released alongside 'stacks-node'.
+  #  - is_signer_release: True if the branch represents a 'stacks-signer' release, false otherwise.
   check-release:
-    ##
-    ## this can be moved to github-release.yml
-    ##
     name: Check Release
     needs:
       - rustfmt
       - changelog-check
     runs-on: ubuntu-latest
     outputs:
-      node_tag: ${{ steps.check-release.outputs.node_tag }} # used by create-release for node version
-      # node_epoch: ${{ steps.check-release.outputs.node_epoch }} # used for release desc for epoch compatibility
-      signer_tag: ${{ steps.check-release.outputs.signer_tag }} # used by create-releas for signer version
-      is_node_release: ${{ steps.check-release.outputs.is_node_release }} # used by create-release and in conditionals to trigger jobs
-      is_signer_release: ${{ steps.check-release.outputs.is_signer_release }} # used in conditionals to trigger jobs
+      node_tag: ${{ steps.check-release.outputs.node_tag }}
+      signer_tag: ${{ steps.check-release.outputs.signer_tag }}
+      is_node_release: ${{ steps.check-release.outputs.is_node_release }}
+      is_signer_release: ${{ steps.check-release.outputs.is_signer_release }}
     steps:
-      # - uses: step-security/harden-runner@f808768d1510423e83855289c910610ca9b43176 # v2.17.0
-      #   with:
-      #     egress-policy: audit # TODO: change to 'egress-policy: block' after couple of runs
-
+      # Checkout the code
+      #   - only .github is required for this job
       - name: Checkout the latest code
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
@@ -123,23 +120,139 @@ jobs:
           sparse-checkout: |
             .github
 
-      ## Check if this is a release
+      # Run script to check if this is a release and set outputs
       - name: Check Release
         id: check-release
         env:
           BRANCH: ${{ github.ref_name }}
         run: bash ./.github/scripts/check_release.sh
 
-  ######################################################################################
-  ## Create a tagged github release
-  ##
-  ## Runs when:
-  ##  - it is either a node release or a signer release
+  ## --- Create a reusable cache for tests ------------------------------------
+  create-cache:
+    name: Create Test Cache
+    needs:
+      - rustfmt
+      - changelog-check
+      - check-release
+    if: >-
+      !cancelled() &&
+      (needs.check-release.outputs.is_node_release == 'true' ||
+      needs.check-release.outputs.is_signer_release == 'true' ||
+      github.event_name == 'workflow_dispatch' ||
+      github.event_name == 'pull_request' ||
+      github.event_name == 'merge_group')
+    uses: ./.github/workflows/create-cache.yml
 
-  ## create-release will call the reusable workflows to:
-  #   - build the binary artifacts
-  #   - create the release docker images
-  #   - create the github release.
+  ## --- Run stacks core tests ------------------------------------------------
+  stacks-core-tests:
+    name: Stacks Core Tests
+    needs:
+      - rustfmt
+      - changelog-check
+      - create-cache
+      - check-release
+    if: >-
+      !cancelled() &&
+      (needs.check-release.outputs.is_node_release == 'true' ||
+      needs.check-release.outputs.is_signer_release == 'true' ||
+      github.event_name == 'workflow_dispatch' ||
+      github.event_name == 'pull_request' ||
+      github.event_name == 'merge_group')
+    uses: ./.github/workflows/stacks-core-tests.yml
+
+  ## --- Run bitcoin Tests ----------------------------------------------------
+  bitcoin-tests:
+    name: Bitcoin Tests
+    needs:
+      - rustfmt
+      - changelog-check
+      - create-cache
+      - check-release
+    if: >-
+      !cancelled() &&
+      (needs.check-release.outputs.is_node_release == 'true' ||
+      needs.check-release.outputs.is_signer_release == 'true' ||
+      github.event_name == 'workflow_dispatch' ||
+      github.event_name == 'pull_request' ||
+      github.event_name == 'merge_group')
+    uses: ./.github/workflows/bitcoin-tests.yml
+
+  ## --- Run bitcoin RPC Tests ------------------------------------------------
+  bitcoin-rpc-tests:
+    name: Bitcoin RPC Tests
+    needs:
+      - rustfmt
+      - create-cache
+      - check-release
+    if: >-
+      !cancelled() &&
+      (needs.check-release.outputs.is_node_release == 'true' ||
+      needs.check-release.outputs.is_signer_release == 'true' ||
+      github.event_name == 'workflow_dispatch' ||
+      github.event_name == 'pull_request' ||
+      github.event_name == 'merge_group')
+    uses: ./.github/workflows/bitcoin-rpc-tests.yml
+
+  ## --- Run P2P Tests --------------------------------------------------------
+  p2p-tests:
+    name: P2P Tests
+    needs:
+      - rustfmt
+      - changelog-check
+      - create-cache
+      - check-release
+    if: >-
+      !cancelled() &&
+      (needs.check-release.outputs.is_node_release == 'true' ||
+      needs.check-release.outputs.is_signer_release == 'true' ||
+      github.event_name == 'workflow_dispatch' ||
+      github.event_name == 'pull_request' ||
+      github.event_name == 'merge_group')
+    uses: ./.github/workflows/p2p-tests.yml
+
+  ## --- Jobs to run on PR trigger --------------------------------------------
+  # Runs when:
+  #     - this workflow is called manually
+  #     - PR is opened or new commits pushed
+  #     - PR added to merge queue
+  #
+  ## --- Cargo Hack check------------------------------------------------------
+  cargo-hack-check:
+    name: Cargo Hack Check
+    needs:
+      - rustfmt
+      - changelog-check
+      - check-release
+    if: >-
+      !cancelled() &&
+      (github.event_name == 'workflow_dispatch' ||
+      github.event_name == 'pull_request' ||
+      github.event_name == 'merge_group')
+    uses: ./.github/workflows/cargo-hack-check.yml
+
+  ## --- Validate constants dumped by stacks-inspect --------------------------
+  constants-check:
+    name: Constants Check
+    needs:
+      - rustfmt
+      - changelog-check
+      - check-release
+    if: >-
+      !cancelled() &&
+      (github.event_name == 'workflow_dispatch' ||
+      github.event_name == 'pull_request' ||
+      github.event_name == 'merge_group')
+    uses: ./.github/workflows/constants-check.yml
+
+
+  ## --- Jobs to run on release trigger ---------------------------------------
+  # Runs when:
+  #   - it is a node release run
+  #
+  # --- Create a release ---------------------------------------
+  #   - Creates binary archives for several architectures
+  #   - Creates Docker images and pushes to ghcr registry
+  #   - Creates a draft github release
   create-release:
     if: >-
       !cancelled() &&
@@ -151,235 +264,93 @@ jobs:
       - changelog-check
       - check-release
     permissions:
-      contents: write      # required for release in github-release.yml
-      id-token: write      # required for attestation inside release-build.yml / release-docker.yml
-      attestations: write  # required for attestation inside release-build.yml / release-docker.yml
-      packages: write      # required for image push inside release-docker.yml
-    # secrets: inherit
+      contents: write      # required for github release
+      id-token: write      # required for attestation
+      attestations: write  # required for attestation
+      packages: write      # required for image push to ghcr
     uses: ./.github/workflows/release-github.yml
     with:
       node_tag: ${{ needs.check-release.outputs.node_tag }} # 5 place version format like x.x.x.x.x
-      # node_epoch: ${{ needs.check-release.outputs.node_epoch }} # 5 place epoch version format like 1.0.x.x.x
       signer_tag: ${{ needs.check-release.outputs.signer_tag }} # 6 place version format like x.x.x.x.x.x
       is_node_release: ${{ needs.check-release.outputs.is_node_release }} # used in matrix conditional in release-github.yml
 
+  ## --- Epoch Tests ----------------------------------------------------------
+  epoch-tests:
+    name: Epoch Tests
+    needs:
+      - rustfmt
+      - changelog-check
+      - create-cache
+      - check-release
+    if: >-
+      !cancelled() &&
+      (needs.check-release.outputs.is_node_release == 'true' ||
+      needs.check-release.outputs.is_signer_release == 'true')
+    uses: ./.github/workflows/epoch-tests.yml
 
-  # ## Create a reusable cache for tests
-  # ##
-  # ## Runs when:
-  # ##   - it is a node release run
-  # ##   or any of:
-  # ##     - this workflow is called manually
-  # ##     - PR is opened
-  # ##     - PR added to merge queue
-  # create-cache:
-  #   name: Create Test Cache
-  #   needs:
-  #     - rustfmt
-  #     - changelog-check
-  #     - check-release
-  #   if: >-
-  #     !cancelled() &&
-  #     (needs.check-release.outputs.is_node_release == 'true' ||
-  #     needs.check-release.outputs.is_signer_release == 'true' ||
-  #     github.event_name == 'workflow_dispatch' ||
-  #     github.event_name == 'pull_request' ||
-  #     github.event_name == 'merge_group')
-  #   uses: ./.github/workflows/create-cache.yml
 
-  # ## Tests to run regularly
-  # ##
-  # ## Runs when:
-  # ##   - it is a node or signer-only release run
-  # ##   or any of:
-  # ##     - this workflow is called manually
-  # ##     - PR is opened
-  # ##     - PR added to merge queue
-  # stacks-core-tests:
-  #   name: Stacks Core Tests
-  #   needs:
-  #     - rustfmt
-  #     - changelog-check
-  #     - create-cache
-  #     - check-release
-  #   if: >-
-  #     !cancelled() &&
-  #     (github.event_name == 'workflow_dispatch' ||
-  #     github.event_name == 'pull_request' ||
-  #     github.event_name == 'merge_group')
-  #   uses: ./.github/workflows/stacks-core-tests.yml
+  ## --- Code Coverage --------------------------------------------------------
+  # Merge and upload code coverage report files once all tests are done
+  #
+  # Runs when:
+  #   - always (unless workflow is cancelled OR any of bitcoin or stacks-core or p2p tests are skipped)
+  trigger-code-coverage-report:
+    if: always() && !cancelled() && !contains(needs.stacks-core-tests.result, 'skipped') && !contains(needs.bitcoin-tests.result, 'skipped') && !contains(needs.p2p-tests.result, 'skipped')
+    name: Merge & Upload Code Coverage Report
+    runs-on: ubuntu-latest
+    needs:
+      - stacks-core-tests
+      - bitcoin-tests
+      - p2p-tests
+    env:
+      REPORT_FILES_DIR: "code_coverage_files"
+      REPORT_FILES_EXT: "info"
+    steps:
+      # Checkout the code (Coveralls requires source code to be available when action is called)
+      - name: Checkout the latest code
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.ref }}
 
-  # ## Validate constants dumped by stacks-inspect
-  # ##
-  # ## Runs when:
-  # ##   - it is a node or signer-only release run
-  # ##   or any of:
-  # ##     - this workflow is called manually
-  # ##     - PR is opened
-  # ##     - PR added to merge queue
-  # constants-check:
-  #   name: Constants Check
-  #   needs:
-  #     - rustfmt
-  #     - changelog-check
-  #     - check-release
-  #   if: >-
-  #     !cancelled() &&
-  #     (github.event_name == 'workflow_dispatch' ||
-  #     github.event_name == 'pull_request' ||
-  #     github.event_name == 'merge_group')
-  #   uses: ./.github/workflows/constants-check.yml
+      # Download the code coverage .info files generated by tests from artifacts (prefixed by commit SHA)
+      - name: Download code coverage artifacts
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # 8.0.1
+        with:
+          pattern: ${{ github.sha }}-*.${{ env.REPORT_FILES_EXT }}
+          path: ${{ env.REPORT_FILES_DIR }}
+          merge-multiple: true
 
-  # ## Checks to run on built binaries
-  # ##
-  # ## Runs when:
-  # ##   - it is a node or signer-only release run
-  # ##   or any of:
-  # ##     - this workflow is called manually
-  # ##     - PR is opened
-  # ##     - PR added to merge queue
-  # cargo-hack-check:
-  #   name: Cargo Hack Check
-  #   needs:
-  #     - rustfmt
-  #     - changelog-check
-  #     - check-release
-  #   if: >-
-  #     !cancelled() &&
-  #     (github.event_name == 'workflow_dispatch' ||
-  #     github.event_name == 'pull_request' ||
-  #     github.event_name == 'merge_group')
-  #   uses: ./.github/workflows/cargo-hack-check.yml
+      # Check for at least 1 code coverage files
+      - name: Check for at least 1 code coverage file
+        run: |
+          file_count=$(find -type f -wholename "./${{ env.REPORT_FILES_DIR }}/*.${{ env.REPORT_FILES_EXT }}" | wc -l)
+          if [ "$file_count" -eq 0 ]; then
+            echo "ERROR: no code coverage files found to merge. Verify that they were correctly generated and uploaded in prior CI steps"
+            exit 1
+          fi
 
-  # ## Checks to run on built binaries
-  # ##
-  # ## Runs when:
-  # ##   - it is a node release run
-  # ##   or any of:
-  # ##     - this workflow is called manually
-  # ##     - PR is opened
-  # ##     - PR added to merge queue
-  # bitcoin-tests:
-  #   name: Bitcoin Tests
-  #   needs:
-  #     - rustfmt
-  #     - changelog-check
-  #     - create-cache
-  #     - check-release
-  #   if: >-
-  #     !cancelled() &&
-  #     (github.event_name == 'workflow_dispatch' ||
-  #     github.event_name == 'pull_request' ||
-  #     github.event_name == 'merge_group')
-  #   uses: ./.github/workflows/bitcoin-tests.yml
+      # Install lcov for merging the reports
+      - name: Install lcov
+        run: |
+          sudo apt-get install -y --no-install-recommends lcov
 
-  # ## Checks to run on built binaries
-  # ##
-  # ## Runs when:
-  # ##   - it is a node release run
-  # ##   or any of:
-  # ##     - this workflow is called manually
-  # ##     - PR is opened
-  # ##     - PR added to merge queue
-  # bitcoin-rpc-tests:
-  #   name: Bitcoin RPC Tests
-  #   needs:
-  #     - rustfmt
-  #     - create-cache
-  #     - check-release
-  #   if: >-
-  #     !cancelled() &&
-  #     (github.event_name == 'workflow_dispatch' ||
-  #     github.event_name == 'pull_request' ||
-  #     github.event_name == 'merge_group')
-  #   uses: ./.github/workflows/bitcoin-rpc-tests.yml
+      # Merge n coverage report files into 1 file using lcov
+      - name: Merge code coverage files
+        run: |
+          cd "${{ env.REPORT_FILES_DIR }}" || exit 1
+          args=()
+          # Build the full -a <file> argument list in a single shell invocation, using NUL delimiters
+          # The use of xargs can batch operations when len of arguments exceeds ARG_MAX, which could overwrite the report file
+          while IFS= read -r -d '' file; do
+            args+=(-a "$file")
+          done < <(find . -type f -name "*.${{ env.REPORT_FILES_EXT }}" -print0)
+          lcov "${args[@]}" -o "code-coverage-report.${{ env.REPORT_FILES_EXT }}"
+          cd ..
 
-  # p2p-tests:
-  #   name: P2P Tests
-  #   needs:
-  #     - rustfmt
-  #     - changelog-check
-  #     - create-cache
-  #     - check-release
-  #   if: >-
-  #     !cancelled() &&
-  #     (github.event_name == 'workflow_dispatch' ||
-  #     github.event_name == 'pull_request' ||
-  #     github.event_name == 'merge_group')
-  #   uses: ./.github/workflows/p2p-tests.yml
-
-  # ## Test to run on a tagged release
-  # ##
-  # ## Runs when:
-  # ##   - it is a node release run
-  # epoch-tests:
-  #   name: Epoch Tests
-  #   needs:
-  #     - rustfmt
-  #     - changelog-check
-  #     - create-cache
-  #     - check-release
-  #   if: >-
-  #     !cancelled() &&
-  #     (needs.check-release.outputs.is_node_release == 'true' ||
-  #     needs.check-release.outputs.is_signer_release == 'true')
-  #   uses: ./.github/workflows/epoch-tests.yml
-
-  # # ## Merge and upload code coverage report files once all tests are done
-  # # ##
-  # # ## Runs when:
-  # # ##   - always (unless workflow is cancelled OR either bitcoin or stacks-core tests are skipped)
-  # # trigger-code-coverage-report:
-  # #   if: always() && !cancelled() && !contains(needs.stacks-core-tests.result, 'skipped') && !contains(needs.bitcoin-tests.result, 'skipped')
-  # #   name: Merge & Upload Code Coverage Report
-  # #   runs-on: ubuntu-latest
-  # #   needs:
-  # #     - stacks-core-tests
-  # #     - bitcoin-tests
-  # #     - p2p-tests
-  # #     - epoch-tests
-  # #   env:
-  # #     REPORT_FILES_DIR: "code_coverage_files"
-  # #     REPORT_FILES_EXT: "info"
-  # #   steps:
-  # #     # Checkout the code (Coveralls requires source code to be available when action is called)
-  # #     - name: Checkout the latest code
-  # #       uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-  # #     # Download the code coverage .info files generated by tests from artifacts (prefixed by commit SHA)
-  # #     - name: Download code coverage artifacts
-  # #       uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # 8.0.1
-  # #       with:
-  # #         pattern: ${{ github.sha }}-*.${{ env.REPORT_FILES_EXT }}
-  # #         path: ${{ env.REPORT_FILES_DIR }}
-  # #         merge-multiple: true
-  # #     # Check for at least 1 code coverage files
-  # #     - name: Check for at least 1 code coverage file
-  # #       run: |
-  # #         file_count=$(find -type f -wholename "./${{ env.REPORT_FILES_DIR }}/*.${{ env.REPORT_FILES_EXT }}" | wc -l)
-  # #         if [ "$file_count" -eq 0 ]; then
-  # #           echo "ERROR: no code coverage files found to merge. Verify that they were correctly generated and uploaded in prior CI steps"
-  # #           exit 1
-  # #         fi
-  # #     # Install lcov for merging the reports
-  # #     - name: Install lcov
-  # #       run: |
-  # #         sudo apt-get install -y --no-install-recommends lcov
-  # #     # Merge n coverage report files into 1 file using lcov
-  # #     - name: Merge code coverage files
-  # #       run: |
-  # #         cd "${{ env.REPORT_FILES_DIR }}" || exit 1
-  # #         args=()
-  # #         # Build the full -a <file> argument list in a single shell invocation, using NUL delimiters
-  # #         # The use of xargs can batch operations when len of arguments exceeds ARG_MAX, which could overwrite the report file
-  # #         while IFS= read -r -d '' file; do
-  # #           args+=(-a "$file")
-  # #         done < <(find . -type f -name "*.${{ env.REPORT_FILES_EXT }}" -print0)
-  # #         lcov "${args[@]}" -o "code-coverage-report.${{ env.REPORT_FILES_EXT }}"
-  # #         cd ..
-  # #     # Upload the merged code coverage file to Coveralls
-  # #     - name: Upload code coverage to Coveralls
-  # #       uses: coverallsapp/github-action@648a8eb78e6d50909eff900e4ec85cab4524a45b # v2.3.6
-  # #       with:
-  # #         file: ${{ env.REPORT_FILES_DIR }}/code-coverage-report.${{ env.REPORT_FILES_EXT }}
-  # #         compare-ref: ${{ github.base_ref }} # defaults to master if this isn't supplied
-  # #         fail-on-error: true
+      # Upload the merged code coverage file to Coveralls
+      - name: Upload code coverage to Coveralls
+        uses: coverallsapp/github-action@648a8eb78e6d50909eff900e4ec85cab4524a45b # v2.3.6
+        with:
+          file: ${{ env.REPORT_FILES_DIR }}/code-coverage-report.${{ env.REPORT_FILES_EXT }}
+          compare-ref: ${{ github.base_ref }} # defaults to master if this isn't supplied
+          fail-on-error: true

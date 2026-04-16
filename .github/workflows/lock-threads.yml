@@ -1,8 +1,8 @@
-## Workflow to lock closed PRs/issues/discussions
-## timeframe to lock defaults to:
-##    issues: 30 days
-##    prs: 30 days
-##    discussions: 365 days
+# Workflow to lock closed PRs/issues/discussions
+# timeframe to lock defaults to:
+#    issues: 30 days
+#    prs: 30 days
+#    discussions: 365 days
 
 name: "Lock Threads"
 
@@ -11,24 +11,22 @@ on:
     - cron: "0 0 * * *"
   workflow_dispatch:
 
+# set default permissions
 permissions:
   issues: write
   pull-requests: write
   discussions: write
 
+# configure concurrency
 concurrency:
   group: lock-threads
 
 jobs:
-  ## Lock closed issues/prs/discussions
+  # Lock closed issues/prs/discussions
   lock:
     name: Lock Threads
     runs-on: ubuntu-latest
     steps:
-      # - uses: step-security/harden-runner@f808768d1510423e83855289c910610ca9b43176 # v2.17.0
-      #   with:
-      #     egress-policy: audit # TODO: change to 'egress-policy: block' after couple of runs
-
       - name: Lock Threads
         uses: dessant/lock-threads@7266a7ce5c1df01b1c6db85bf8cd86c737dadbe7 # v6.0.0
         with:

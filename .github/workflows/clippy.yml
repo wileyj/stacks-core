@@ -1,11 +1,13 @@
-## Perform Clippy checks - currently set to defaults
-##   https://github.com/rust-lang/rust-clippy#usage
-##   https://rust-lang.github.io/rust-clippy/master/index.html
-##
+# Perform Clippy checks - currently set to defaults
+#   https://github.com/rust-lang/rust-clippy#usage
+#   https://rust-lang.github.io/rust-clippy/master/index.html
+#
 name: Clippy Checks
 
 # Only run when:
 #   - PRs are (re)opened against develop branch
+#   - commit is pushed to PR
+#   - PR is added to merge queue
 on:
   workflow_dispatch:
   merge_group:
@@ -19,12 +21,14 @@ on:
       - reopened
       - synchronize
 
+# set default permissions
 permissions:
   contents: read
 
+# configure concurrency
 concurrency:
   group: clippy-${{ github.head_ref || github.ref || github.run_id }}
-  ## Only cancel in progress if this is for a PR
+  # Only cancel in progress if this is for a PR
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
@@ -32,22 +36,22 @@ jobs:
     name: Clippy Check
     runs-on: ubuntu-latest
     steps:
-      # - uses: step-security/harden-runner@f808768d1510423e83855289c910610ca9b43176 # v2.17.0
-      #   with:
-      #     egress-policy: audit # TODO: change to 'egress-policy: block' after couple of runs
-
+      # Checkout the code
       - name: Checkout the latest code
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           ref: ${{ github.event.pull_request.head.sha || github.ref }}
 
+      # Setup the default rust toolchain with clippy
       - name: Setup Rust Toolchain
         uses: ./.github/actions/setup-rust-toolchain
         with:
           components: clippy
 
+      # Run clippy with clippy-stacks alias in .cargo/config.toml
       - name: Clippy
         run: cargo clippy-stacks
 
+      # Run clippy with clippy-stackslib alias in .cargo/config.toml
       - name: Clippy Stackslib
         run: cargo clippy-stackslib

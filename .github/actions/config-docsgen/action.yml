@@ -1,3 +1,5 @@
+# Save docs as a build artifact
+
 name: Generate Configuration Documentation
 description: |
     Generate and upload Stacks Core configuration documentation
@@ -27,14 +29,14 @@ inputs:
 runs:
   using: "composite"
   steps:
-    # ## Checkout the code
+    # # Checkout the code
     # - name: Checkout the latest code
     #   id: git_checkout
     #   uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
     #   with:
     #     ref: ${{ github.event.pull_request.head.sha || github.ref }}
 
-    ## Install Rust nightly toolchain (required for rustdoc JSON output)
+    # Install Rust nightly toolchain with rust-docs-json
     - name: Setup Rust Toolchain
       uses: ./.github/actions/setup-rust-toolchain
       with:
@@ -42,7 +44,7 @@ runs:
         components: rust-docs-json
         cache: "true"
 
-    ## Generate, validate, and summarise configuration documentation
+    # Generate, validate, and summarise configuration documentation
     - name: Generate Configuration Documentation
       shell: bash
       env:
@@ -54,7 +56,7 @@ runs:
         RETENTION_DAYS: ${{ inputs.retention-days }}
       run: bash ./.github/scripts/config_docsgen.sh
 
-    ## Upload documentation as artifact
+    # Upload documentation as artifact
     - name: Upload Documentation Artifact
       uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
       with:

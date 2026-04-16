@@ -1,25 +1,21 @@
 name: Build Test Archive Caches
 description: |
-    Builds nextest test archive caches
+    Builds nextest test archive cache
 
 runs:
   using: "composite"
   steps:
-    ## Check if the test archive cache already exists
+    # Check if the target  cache exists
     - name: Check Cargo Target Cache
       uses: ./.github/actions/cache/cargo-target
       id: check_target_cache
 
+    # Check if the nextest archive cache exists
     - name: Check Test Archive Cache
       uses: ./.github/actions/cache/test-archive
       id: check_test_archive_cache
 
-    - name: echo
-      shell: bash
-      run: |
-          echo "target cache: ${{ steps.check_target_cache.outputs.cache-hit }}"
-          echo "test archive cache: ${{ steps.check_test_archive_cache.outputs.cache-hit }}"
-
+    # Setup rust with the specified toolchain with llvm-tools-preview
     - name: Setup Rust Toolchain
       if: |
         steps.check_target_cache.outputs.cache-hit != 'true' ||
@@ -28,8 +24,7 @@ runs:
       with:
         components: llvm-tools-preview
 
-    ## Save cache data
-    # restore cargo cache
+    # Restore cargo cache
     - name: Restore Cargo Cache
       if: |
         steps.check_target_cache.outputs.cache-hit != 'true' ||
@@ -46,11 +41,8 @@ runs:
       uses: ./.github/actions/install-tool
       with:
         tool: nextest
-      # uses: taiki-e/install-action@d12e869b89167df346dd0ff65da342d1fb1202fb # v2.53.2
-      # with:
-      #   tool: nextest # can be versioned, ex: tool@1.1.1.1
-      #   # tool: nextest, grcov # can be versioned, ex: tool@1.1.1.1
 
+    # Build the nextest archive
     - name: Build and Archive Tests
       if: |
         steps.check_target_cache.outputs.cache-hit != 'true' ||
@@ -65,6 +57,7 @@ runs:
           --features monitoring_prom \
           --archive-file ~/test_archive.tar.zst
 
+    # Save the nextest archive to cache
     - name: Cache Nextest Archive
       if: |
         steps.check_target_cache.outputs.cache-hit != 'true' ||
@@ -73,6 +66,7 @@ runs:
       with:
         action: save
 
+    # Save the target cache
     - name: Cache Cargo Target
       if: |
         steps.check_target_cache.outputs.cache-hit != 'true' ||

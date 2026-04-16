@@ -1,4 +1,4 @@
-## Github workflow to run bitcoin tests in multiple github matrices
+# Github workflow to run bitcoin tests in multiple github matrices
 
 name: Tests::Bitcoin
 
@@ -16,10 +16,11 @@ on:
         default: false
         description: Build the test cache (set false when called from ci.yml which builds its own cache)
 
+# set default permissions
 permissions:
   contents: read
 
-## env vars are transferred to composite action steps
+# env vars are transferred to composite action steps
 env:
   BITCOIND_TEST: 1
   # Docker tag for the Bitcoin Core image used when spinning up container with `testcontainers` crate.
@@ -27,15 +28,16 @@ env:
   RUST_BACKTRACE: full
   SEGMENT_DOWNLOAD_TIMEOUT_MINS: 15
   TEST_TIMEOUT: 30
-  ## Number of active test partitions. Must not exceed the number of integration-tests-N jobs below.
+  # Number of active test partitions. Must not exceed the number of integration-tests-N jobs below.
   MATRIX: 2
 
+# configure concurrency
 concurrency:
   group: bitcoin-tests-${{ github.head_ref || github.ref || github.run_id }}
   cancel-in-progress: true
 
 jobs:
-  ## Always run create-cache regardless of trigger — downstream jobs depend on it.
+  # Always run create-cache regardless of trigger — downstream jobs depend on it.
   create-cache:
     name: Create Test Cache
     if: ${{ inputs.build-cache }}
@@ -50,11 +52,8 @@ jobs:
       matrix1: ${{ steps.set-matrix.outputs.matrix1 }}
       matrix2: ${{ steps.set-matrix.outputs.matrix2 }}
     steps:
-      # - uses: step-security/harden-runner@f808768d1510423e83855289c910610ca9b43176 # v2.17.0
-      #   with:
-      #     egress-policy: audit # TODO: change to 'egress-policy: block' after couple of runs
-
-      ## Checkout the code
+      # Checkout the code
+      #   - only .github is required for this job
       - name: Checkout the latest code
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
@@ -62,10 +61,11 @@ jobs:
           sparse-checkout: |
             .github
 
-      ## Setup test environment
+      # Download cache(s) and configure the runner to run test(s)
       - name: Setup Test Environment
         uses: ./.github/actions/testenv
 
+      # Generate the bitcoin test matrices json used for running tests
       - name: Generate test matrices
         id: set-matrix
         run: bash ./.github/scripts/bitcoin_tests.sh
@@ -87,11 +87,8 @@ jobs:
       matrix:
         test-name: ${{ fromJSON(needs.generate-tests.outputs.matrix1) }}
     steps:
-      # - uses: step-security/harden-runner@f808768d1510423e83855289c910610ca9b43176 # v2.17.0
-      #   with:
-      #     egress-policy: audit # TODO: change to 'egress-policy: block' after couple of runs
-
-      ## Checkout the code
+      # Checkout the code
+      #   - only .github is required for this job
       - name: Checkout the latest code
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
@@ -99,23 +96,19 @@ jobs:
           sparse-checkout: |
             .github
 
-      ## Setup test environment
+      # Download cache(s) and configure the runner to run test(s)
       - name: Setup Test Environment
         uses: ./.github/actions/testenv
 
-      # ## Increase open file descriptors limit
-      # - name: Increase Open File Descriptors
-      #   run: |
-      #     sudo prlimit --nofile=4096:4096
-
-      ## Run test matrix using restored cache of archive file
-      ##   - Test will timeout after env.TEST_TIMEOUT minutes
+      # Run test matrix using restored cache of archive file
+      #   - Test will timeout after env.TEST_TIMEOUT minutes
       - name: Run Tests
         timeout-minutes: ${{ fromJSON(env.TEST_TIMEOUT) }}
         uses: ./.github/actions/run-tests
         with:
           test-name: ${{ matrix.test-name }}
 
+      # Generate code coverage
       - name: Code Coverage
         uses: ./.github/actions/codecov
         with:
@@ -138,11 +131,8 @@ jobs:
       matrix:
         test-name: ${{ fromJSON(needs.generate-tests.outputs.matrix2) }}
     steps:
-      # - uses: step-security/harden-runner@f808768d1510423e83855289c910610ca9b43176 # v2.17.0
-      #   with:
-      #     egress-policy: audit # TODO: change to 'egress-policy: block' after couple of runs
-
-      ## Checkout the code
+      # Checkout the code
+      #   - only .github is required for this job
       - name: Checkout the latest code
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
@@ -150,25 +140,25 @@ jobs:
           sparse-checkout: |
             .github
 
+      # Download cache(s) and configure the runner to run test(s)
       - name: Setup Test Environment
         uses: ./.github/actions/testenv
 
-      # ## Increase open file descriptors limit
-      # - name: Increase Open File Descriptors
-      #   run: |
-      #     sudo prlimit --nofile=4096:4096
-
+      # Run tests from the composite action
       - name: Run Tests
         timeout-minutes: ${{ fromJSON(env.TEST_TIMEOUT) }}
         uses: ./.github/actions/run-tests
         with:
           test-name: ${{ matrix.test-name }}
 
+      # Generate code coverage
       - name: Code Coverage
         uses: ./.github/actions/codecov
         with:
           test-name: ${{ matrix.test-name }}
 
+  # Check that all jobs in this workflow have succeeded.
+  #   - will not run if the job is cancelled
   check-tests:
     name: Check Tests
     needs:
@@ -178,11 +168,8 @@ jobs:
     if: always() && !cancelled()
     runs-on: ubuntu-latest
     steps:
-      # - uses: step-security/harden-runner@f808768d1510423e83855289c910610ca9b43176 # v2.17.0
-      #   with:
-      #     egress-policy: audit # TODO: change to 'egress-policy: block' after couple of runs
-
-      ## Checkout the code
+      # Checkout the code
+      #   - only .github is required for this job
       - name: Checkout the latest code
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
@@ -190,9 +177,15 @@ jobs:
           sparse-checkout: |
             .github
 
-      ## Check if all jobs succeeded
-      - name: Check Tests Status
-        uses: ./.github/actions/check-jobs-status
-        with:
-          jobs: ${{ toJson(needs) }}
-          summary_print: "true"
+      # Check if all jobs succeeded
+      - name: Check Jobs Status
+        shell: bash
+        env:
+          JOBS: ${{ toJson(needs) }}
+          SUMMARY_PRINT: "true"
+        run: bash ./.github/scripts/check_jobs_status.sh
+      # - name: Check Tests Status
+      #   uses: ./.github/actions/check-jobs-status
+      #   with:
+      #     jobs: ${{ toJson(needs) }}
+      #     summary_print: "true"

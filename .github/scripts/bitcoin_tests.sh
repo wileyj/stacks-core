@@ -1,51 +1,57 @@
 #!/usr/bin/env bash
+# Generate a balanced test matrix for the Bitcoin integration test workflow.
+#
+# Discovers all ignored tests in the stacks-node binary via cargo nextest,
+# removes a hardcoded exclude list, then splits the remaining tests into
+# MATRIX balanced partitions.
+#
+# Optional env vars:
+#   MATRIX          - Number of partitions to split tests into (default: 2)
+#   MAX_PER_MATRIX  - Maximum tests allowed per partition (default: 256)
+#   NEXTEST_ARCHIVE - Nextest archive to use (default: ~/test_archive.tar.zst)
+#
+# Outputs:
+#   GITHUB_OUTPUT  - Path to the GitHub Actions output file (set by runner); prints to stdout if unset
 set -euo pipefail
 
-##
-## Generate a balanced test matrix for the Bitcoin integration test workflow.
-##
-## Discovers all ignored tests in the stacks-node binary via cargo nextest,
-## removes a hardcoded exclude list, then splits the remaining tests into
-## MATRIX balanced partitions and writes each one to $GITHUB_OUTPUT.
-##
-## Optional env vars:
-##   GITHUB_OUTPUT  - Path to the GitHub Actions output file (set by runner); prints to stdout if unset
-##   MATRIX         - Number of partitions to split tests into (default: 2)
-##   MAX_PER_MATRIX - Maximum tests allowed per partition (default: 256)
-##
 
-## Load logging functions
+# Load logging functions from loggin.sh for color and standardized output
 # shellcheck disable=SC1091
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/logging.sh"
 
-# ## ── ANSI color codes and logging helpers ─────────────────────────────────────
-# ## Convention: ALL_CAPS for env var inputs and exported/GitHub values;
-# ##             lowercase for all script-local variables.
-# COLRED=$'\033[31m'    ## Red
-# COLGREEN=$'\033[32m'  ## Green
-# COLYELLOW=$'\033[33m' ## Yellow
-# COLRESET=$'\033[0m'   ## Reset color/formatting
-
-# ## logging functions
-# strip_ansi() { printf '%s' "$*" | sed $'s/\033\\[[0-9;]*m//g'; }
-# info()  { echo "${COLGREEN}INFO:${COLRESET}    $*"; }
-# warn()  { echo "${COLYELLOW}WARN:${COLRESET}    $*"; }
-# error() { echo "${COLRED}ERROR:${COLRESET}   $*" >&2; [[ -n "${GITHUB_STEP_SUMMARY:-}" ]] && echo "**ERROR:** $(strip_ansi "$*")" >> "${GITHUB_STEP_SUMMARY}"; }
-# hl()    { printf '%s' "${COLYELLOW}$*${COLRESET}"; }
-
-## ── Configuration ────────────────────────────────────────────────────────────
+## --- Configuration ----------------------------------------------------------
+# set number of matrices to use for tests. default is 2
 matrix="${MATRIX:-2}"
+# set number of tests per matrix. default is 256
 max_per_matrix="${MAX_PER_MATRIX:-256}"
+# set the nextest archive to use
+nextest_archive="${NEXTEST_ARCHIVE:-~/test_archive.tar.zst}"
 
 if ! [[ "$matrix" =~ ^[1-9][0-9]*$ ]]; then
     error "MATRIX must be a positive integer, got: ${matrix}"
     exit 1
 fi
 
-## ── Step 1: List all ignored tests via nextest ───────────────────────────────
+## ── Require bash 5+ (mapfile with -t flag behaviour) ────────────────────────
+if [[ "${BASH_VERSINFO[0]}" -lt 5 ]]; then
+    error "Bash version 5 or higher is required (found ${BASH_VERSION})"
+    exit 1
+fi
+
+## ── Check for required binaries ─────────────────────────────────────────────
+missing=0
+for cmd in cargo comm grep jq sort wc; do
+    if ! command -v "${cmd}" > /dev/null 2>&1; then
+        error "Missing required command: $(hl "${cmd}")"
+        missing=1
+    fi
+done
+[[ "${missing}" -eq 1 ]] && exit 1
+
+## --- List all ignored tests via nextest -------------------------------------
 info "Listing ignored tests from nextest archive..."
-cargo nextest list --archive-file ~/test_archive.tar.zst -Tjson > nextest_output.json || {
-    error "Error listing tests in $(hl ~/test_archive.tar.zst)"
+cargo nextest list --archive-file ${nextest_archive} -Tjson > nextest_output.json || {
+    error "Error listing tests in $(hl ${nextest_archive})"
     exit 1
 }
 
@@ -56,9 +62,7 @@ jq -c '
 
 info "Ignored tests count: $(hl $(jq 'length' ignored_tests.json))"
 
-## ── Step 2: Build exclude list ───────────────────────────────────────────────
-## Tests listed here are excluded from CI runs. Some of these may be
-## worth investigating adding back into CI in the future.
+## ── Build list of excluded tests --------------------------------------------
 info "Building exclude list..."
 cat << 'EOF' > raw_exclude.txt
 # The following tests are excluded from CI runs. Some of these may be worth investigating adding back into the CI
@@ -112,12 +116,12 @@ tests::nakamoto_integrations::check_block_info_rewards
 tests::signer::v0::larger_mempool
 EOF
 
-## Strip blank lines and comments, then convert to JSON array
+# Strip blank lines and comments, then convert to JSON array
 grep -v '^\s*$' raw_exclude.txt | grep -v '^\s*#' > clean_exclude.txt
 jq -R . clean_exclude.txt | jq -s . > exclude.json
 info "Excluded tests count: $(hl $(jq length exclude.json))"
 
-## ── Step 3: Filter out excluded tests ────────────────────────────────────────
+## ── Filter out excluded tests -----------------------------------------------
 info "Filtering excluded tests..."
 jq -e 'type == "array"' ignored_tests.json > /dev/null
 jq -e 'type == "array"' exclude.json > /dev/null
@@ -130,7 +134,7 @@ comm -23 ignored_sorted.txt exclude_sorted.txt > filtered.txt
 total=$(wc -l < filtered.txt)
 info "Final test count: $(hl ${total})"
 
-## ── Step 4: Validate capacity ────────────────────────────────────────────────
+## --- Validate capacity ------------------------------------------------------
 max_total=$(( matrix * max_per_matrix ))
 if (( total > max_total )); then
     error "${total} tests exceed the limit of ${max_total} (${matrix} partitions × ${max_per_matrix} tests each)"
@@ -138,7 +142,7 @@ if (( total > max_total )); then
     exit 1
 fi
 
-## ── Step 5: Split into N balanced partitions ─────────────────────────────────
+## ── Split into $matrix balanced partitions ----------------------------------
 info "Splitting $(hl ${total}) tests into $(hl ${matrix}) active partitions..."
 mapfile -t tests < filtered.txt
 
@@ -147,7 +151,7 @@ remainder=$(( total % matrix ))
 offset=0
 
 for (( i = 1; i <= matrix; i++ )); do
-    ## Distribute remainder one test at a time across the first partitions
+    # Distribute remainder one test at a time across the first partitions
     size=$(( base + ( i <= remainder ? 1 : 0 ) ))
     partition=$(printf '%s\n' "${tests[@]:$offset:$size}" | jq -R . | jq -s -c .)
     info "matrix${i}: $(hl ${size}) tests"

@@ -1,4 +1,4 @@
-## Github workflow to run bitcoin RPC tests over multiple versions of Bitcoin Core
+# Github workflow to run bitcoin RPC tests over multiple versions of Bitcoin Core
 
 name: Tests::Bitcoin RPC
 
@@ -16,9 +16,11 @@ on:
         default: false
         description: Build the test cache (set false when called from ci.yml which builds its own cache)
 
+# Set default permissions
 permissions:
   contents: read
 
+# Set default env vars
 env:
   RUST_BACKTRACE: full
   SEGMENT_DOWNLOAD_TIMEOUT_MINS: 5
@@ -27,29 +29,26 @@ env:
   # Minimum Bitcoin Core major version to start discovering Docker tags from.
   START_MAJOR: "25"
 
+# configure concurrency
 concurrency:
   group: bitcoin-rpc-tests-${{ github.head_ref || github.ref || github.run_id }}
   cancel-in-progress: true
 
 jobs:
-  ## Always run create-cache regardless of trigger — downstream jobs depend on it.
+  # Always run create-cache regardless of trigger — downstream jobs depend on it.
   create-cache:
     name: Create Test Cache
     if: ${{ inputs.build-cache }}
     uses: ./.github/workflows/create-cache.yml
 
-  # this job may run while the cache is verifying/building
+  # This job may run while the cache is verifying/building
   discover-bitcoin-majors:
     name: Discover Bitcoin Majors
     runs-on: ubuntu-latest
     outputs:
       versions: ${{ steps.discover.outputs.versions }}
     steps:
-      # - uses: step-security/harden-runner@f808768d1510423e83855289c910610ca9b43176 # v2.17.0
-      #   with:
-      #     egress-policy: audit # TODO: change to 'egress-policy: block' after couple of runs
-
-      ## Checkout the code
+      # Checkout the code
       - name: Checkout the latest code
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
@@ -57,24 +56,13 @@ jobs:
           sparse-checkout: |
             .github
 
+      # Run script to get a list of docker bitcoin versions
       - name: Discover available Bitcoin major tags on dockerhub
         id: discover
         timeout-minutes: ${{ fromJSON(env.DISCOVER_TIMEOUT_MINS) }}
-        run: |
-          set -euo pipefail
+        run: bash ./.github/scripts/docker_bitcoin_majors.sh "${START_MAJOR}"
 
-          result_json="$(bash ./.github/scripts/docker_bitcoin_majors.sh "$START_MAJOR")"
-          echo "$result_json" | jq .
-
-          versions_json="$(jq -c '.versions' <<< "$result_json")"
-
-          if [[ -z "$versions_json" ]]; then
-            echo "Unable to parse versions JSON from script output."
-            exit 1
-          fi
-
-          echo "versions=$versions_json" >> "$GITHUB_OUTPUT"
-
+  # run tests against a matrix of bitcoin versions
   test-rpc:
     name: Test Bitcoin (${{ matrix.bitcoin_version }})
     needs:
@@ -86,13 +74,9 @@ jobs:
       fail-fast: false
       matrix:
         bitcoin_version: ${{ fromJSON(needs.discover-bitcoin-majors.outputs.versions) }}
-
     steps:
-      # - uses: step-security/harden-runner@f808768d1510423e83855289c910610ca9b43176 # v2.17.0
-      #   with:
-      #     egress-policy: audit # TODO: change to 'egress-policy: block' after couple of runs
-
-      ## Checkout the code
+      # Checkout the code
+      #   - only .github is required for this job
       - name: Checkout the latest code
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
@@ -100,12 +84,15 @@ jobs:
           sparse-checkout: |
             .github
 
+      # Download cache(s) and configure the runner to run test(s)
       - name: Setup Test Environment
         uses: ./.github/actions/testenv
 
+      # Pull bitcoin docker image
       - name: Pull bitcoind image (${{ matrix.bitcoin_version }})
         run: docker pull bitcoin/bitcoin:${{ matrix.bitcoin_version }}
 
+      # Run tests on the pulled bitcoin docker image
       - name: Run tests on bitcoind ${{ matrix.bitcoin_version }}
         timeout-minutes: ${{ fromJSON(env.TEST_TIMEOUT_MINS) }}
         env:
@@ -119,6 +106,8 @@ jobs:
             --no-tests fail \
             -E 'package(stacks-node) & binary(stacks-node) & test(/^tests::bitcoin::rpc_integrations::/)'
 
+  # Check that all jobs in this workflow have succeeded.
+  #   - will not run if the job is cancelled
   check-tests:
     name: Check Tests
     needs:
@@ -126,11 +115,8 @@ jobs:
     if: always() && !cancelled()
     runs-on: ubuntu-latest
     steps:
-      # - uses: step-security/harden-runner@f808768d1510423e83855289c910610ca9b43176 # v2.17.0
-      #   with:
-      #     egress-policy: audit # TODO: change to 'egress-policy: block' after couple of runs
-
-      ## Checkout the code
+      # Checkout the code
+      #   - only .github is required for this job
       - name: Checkout the latest code
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
@@ -138,9 +124,15 @@ jobs:
           sparse-checkout: |
             .github
 
-      ## Check if all jobs succeeded
-      - name: Check Tests Status
-        uses: ./.github/actions/check-jobs-status
-        with:
-          jobs: ${{ toJson(needs) }}
-          summary_print: "true"
+      # Check if all jobs succeeded
+      - name: Check Jobs Status
+        shell: bash
+        env:
+          JOBS: ${{ toJson(needs) }}
+          SUMMARY_PRINT: "true"
+        run: bash ./.github/scripts/check_jobs_status.sh
+      # - name: Check Tests Status
+      #   uses: ./.github/actions/check-jobs-status
+      #   with:
+      #     jobs: ${{ toJson(needs) }}
+      #     summary_print: "true"
