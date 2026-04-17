@@ -267,36 +267,36 @@ jobs:
   #   uses: ./.github/workflows/constants-check.yml
 
 
-  # ## --- Jobs to run on release trigger ---------------------------------------
-  # # Runs when:
-  # #   - it is a node release run
-  # #
-  # # --- Create a release ---------------------------------------
-  # #   - Creates binary archives for several architectures
-  # #   - Creates Docker images and pushes to ghcr registry
-  # #   - Creates a draft github release
-  # create-release:
-  #   if: >-
-  #     !cancelled() &&
-  #     needs.rustfmt.result == 'success' &&
-  #     needs.changelog-check.result == 'success' &&
-  #     (needs.check-release.outputs.is_node_release == 'true' ||
-  #     needs.check-release.outputs.is_signer_release == 'true')
-  #   name: Create Release
-  #   needs:
-  #     - rustfmt
-  #     - changelog-check
-  #     - check-release
-  #   permissions:
-  #     contents: write      # required for github release
-  #     id-token: write      # required for attestation
-  #     attestations: write  # required for attestation
-  #     packages: write      # required for image push to ghcr
-  #   uses: ./.github/workflows/release-github.yml
-  #   with:
-  #     node_tag: ${{ needs.check-release.outputs.node_tag }} # 5 place version format like x.x.x.x.x
-  #     signer_tag: ${{ needs.check-release.outputs.signer_tag }} # 6 place version format like x.x.x.x.x.x
-  #     is_node_release: ${{ needs.check-release.outputs.is_node_release }} # used in matrix conditional in release-github.yml
+  ## --- Jobs to run on release trigger ---------------------------------------
+  # Runs when:
+  #   - it is a node release run
+  #
+  # --- Create a release ---------------------------------------
+  #   - Creates binary archives for several architectures
+  #   - Creates Docker images and pushes to ghcr registry
+  #   - Creates a draft github release
+  create-release:
+    if: >-
+      !cancelled() &&
+      needs.rustfmt.result == 'success' &&
+      needs.changelog-check.result == 'success' &&
+      (needs.check-release.outputs.is_node_release == 'true' ||
+      needs.check-release.outputs.is_signer_release == 'true')
+    name: Create Release
+    needs:
+      - rustfmt
+      - changelog-check
+      - check-release
+    permissions:
+      contents: write      # required for github release
+      id-token: write      # required for attestation
+      attestations: write  # required for attestation
+      packages: write      # required for image push to ghcr
+    uses: ./.github/workflows/release-github.yml
+    with:
+      node_tag: ${{ needs.check-release.outputs.node_tag }} # 5 place version format like x.x.x.x.x
+      signer_tag: ${{ needs.check-release.outputs.signer_tag }} # 6 place version format like x.x.x.x.x.x
+      is_node_release: ${{ needs.check-release.outputs.is_node_release }} # used in matrix conditional in release-github.yml
 
   # ## --- Epoch Tests ----------------------------------------------------------
   # epoch-tests:
