@@ -14,7 +14,6 @@
 #   GITHUB_OUTPUT  - Path to the GitHub Actions output file (set by runner); prints to stdout if unset
 set -euo pipefail
 
-
 # Load logging functions from loggin.sh for color and standardized output
 # shellcheck disable=SC1091
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/logging.sh"

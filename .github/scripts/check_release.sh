@@ -19,6 +19,9 @@
 #   is_signer_release - "true" if this is a signer release branch
 set -euo pipefail
 
+# Load logging functions from loggin.sh for color and standardized output
+# shellcheck disable=SC1091
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/logging.sh"
 
 ## ── Validate required inputs ────────────────────────────────────────────────
 : "${BRANCH:?BRANCH is required}"
