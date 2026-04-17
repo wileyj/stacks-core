@@ -45,7 +45,7 @@ jobs:
   #
   ## --- Changelog check ------------------------------------------------------
   #   - Checks for changelog updates (or the 'No Changelog' label on a PR
-  #   - Required by all subsequent jobs
+  #   - Required to pass for all subsequent jobs
   changelog-check:
     name: Changelog Check
     runs-on: ubuntu-latest
