@@ -7,7 +7,7 @@ inputs:
   toolchain:
     description: Toolchain version (i.e. "nightly". default to stable).
     required: false
-    default: "stable"
+    default: ""
   components:
     description: Comma-separated list of components to install alongside the toolchain
     required: false
