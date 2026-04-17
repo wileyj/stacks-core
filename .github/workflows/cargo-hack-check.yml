@@ -4,7 +4,7 @@ name: Cargo Hack Check
 
 on:
   workflow_call:
-
+  workflow_dispatch:  # TESTING
 # set default permissions
 permissions:
   contents: read
@@ -31,15 +31,15 @@ jobs:
           persist-credentials: false
 
       # Setup the rust toolchain with specified toolchain
-      - name: Setup Rust
-        uses: actions-rust-lang/setup-rust-toolchain@11df97af8e8102fd60b60a77dfbf58d40cd843b8 # v1.10.1
-        with:
-          target: x86_64-pc-windows-gnu,x86_64-unknown-linux-gnu
-          cache: false
-      # - name: Setup Rust Toolchain
-      #   uses: ./.github/actions/setup-rust-toolchain
+      # - name: Setup Rust
+      #   uses: actions-rust-lang/setup-rust-toolchain@11df97af8e8102fd60b60a77dfbf58d40cd843b8 # v1.10.1
       #   with:
       #     target: x86_64-pc-windows-gnu,x86_64-unknown-linux-gnu
+      #     cache: false
+      - name: Setup Rust Toolchain
+        uses: ./.github/actions/setup-rust-toolchain
+        with:
+          target: x86_64-pc-windows-gnu,x86_64-unknown-linux-gnu
 
       # Install cargo-hack tool
       - name: Install cargo-hack
@@ -77,15 +77,15 @@ jobs:
           persist-credentials: false
 
       # Setup the rust toolchain with specified toolchain
-      - name: Setup Rust
-        uses: actions-rust-lang/setup-rust-toolchain@11df97af8e8102fd60b60a77dfbf58d40cd843b8 # v1.10.1
-        with:
-          target: wasm32-unknown-unknown
-          cache: false
-      # - name: Setup Rust Toolchain
-      #   uses: ./.github/actions/setup-rust-toolchain
+      # - name: Setup Rust
+      #   uses: actions-rust-lang/setup-rust-toolchain@11df97af8e8102fd60b60a77dfbf58d40cd843b8 # v1.10.1
       #   with:
       #     target: wasm32-unknown-unknown
+      #     cache: false
+      - name: Setup Rust Toolchain
+        uses: ./.github/actions/setup-rust-toolchain
+        with:
+          target: wasm32-unknown-unknown
 
       # Install cargo-hack tool
       - name: Install cargo-hack
@@ -129,15 +129,15 @@ jobs:
           persist-credentials: false
 
       # Setup the rust toolchain with specified toolchain
-      - name: Install Rust nightly toolchain
-        uses: actions-rust-lang/setup-rust-toolchain@fb51252c7ba57d633bc668f941da052e410add48 # v1.13.0
-        with:
-          toolchain: nightly
-          cache: false
-      # - name: Setup Rust Toolchain
-      #   uses: ./.github/actions/setup-rust-toolchain
+      # - name: Install Rust nightly toolchain
+      #   uses: actions-rust-lang/setup-rust-toolchain@fb51252c7ba57d633bc668f941da052e410add48 # v1.13.0
       #   with:
       #     toolchain: nightly
+      #     cache: false
+      - name: Setup Rust Toolchain
+        uses: ./.github/actions/setup-rust-toolchain
+        with:
+          toolchain: nightly
 
       # Fuzz check clarity targets
       - name: Check fuzz targets (clarity)

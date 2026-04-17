@@ -16,21 +16,21 @@ runs:
       id: check_test_archive_cache
 
     # Setup rust with the specified toolchain with llvm-tools-preview
-    - name: Setup Rust Toolchain
-      if: |
-        steps.check_target_cache.outputs.cache-hit != 'true' ||
-        steps.check_test_archive_cache.outputs.cache-hit != 'true'
-      uses: actions-rust-lang/setup-rust-toolchain@150fca883cd4034361b621bd4e6a9d34e5143606 # v1.15.4
-      with:
-        components: llvm-tools-preview
-        cache: false
     # - name: Setup Rust Toolchain
     #   if: |
     #     steps.check_target_cache.outputs.cache-hit != 'true' ||
     #     steps.check_test_archive_cache.outputs.cache-hit != 'true'
-    #   uses: ./.github/actions/setup-rust-toolchain
+    #   uses: actions-rust-lang/setup-rust-toolchain@150fca883cd4034361b621bd4e6a9d34e5143606 # v1.15.4
     #   with:
     #     components: llvm-tools-preview
+    #     cache: false
+    - name: Setup Rust Toolchain
+      if: |
+        steps.check_target_cache.outputs.cache-hit != 'true' ||
+        steps.check_test_archive_cache.outputs.cache-hit != 'true'
+      uses: ./.github/actions/setup-rust-toolchain
+      with:
+        components: llvm-tools-preview
 
     # Restore cargo cache
     - name: Restore Cargo Cache
