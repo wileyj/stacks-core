@@ -149,40 +149,40 @@ jobs:
           BRANCH: ${{ github.ref_name }}
         run: bash ./.github/scripts/check_release.sh
 
-  # ## --- Create a reusable cache for tests ------------------------------------
-  # create-cache:
-  #   name: Create Test Cache
-  #   needs:
-  #     - rustfmt
-  #     - changelog-check
-  #     - check-release
-  #   if: >-
-  #     !cancelled() &&
-  #     needs.rustfmt.result == 'success' &&
-  #     (needs.check-release.outputs.is_node_release == 'true' ||
-  #     needs.check-release.outputs.is_signer_release == 'true' ||
-  #     github.event_name == 'workflow_dispatch' ||
-  #     github.event_name == 'pull_request' ||
-  #     github.event_name == 'merge_group')
-  #   uses: ./.github/workflows/create-cache.yml
+  ## --- Create a reusable cache for tests ------------------------------------
+  create-cache:
+    name: Create Test Cache
+    needs:
+      - rustfmt
+      - changelog-check
+      - check-release
+    if: >-
+      !cancelled() &&
+      needs.rustfmt.result == 'success' &&
+      (needs.check-release.outputs.is_node_release == 'true' ||
+      needs.check-release.outputs.is_signer_release == 'true' ||
+      github.event_name == 'workflow_dispatch' ||
+      github.event_name == 'pull_request' ||
+      github.event_name == 'merge_group')
+    uses: ./.github/workflows/create-cache.yml
 
-  # ## --- Run stacks core tests ------------------------------------------------
-  # stacks-core-tests:
-  #   name: Stacks Core Tests
-  #   needs:
-  #     - rustfmt
-  #     - changelog-check
-  #     - create-cache
-  #     - check-release
-  #   if: >-
-  #     !cancelled() &&
-  #     needs.rustfmt.result == 'success' &&
-  #     (needs.check-release.outputs.is_node_release == 'true' ||
-  #     needs.check-release.outputs.is_signer_release == 'true' ||
-  #     github.event_name == 'workflow_dispatch' ||
-  #     github.event_name == 'pull_request' ||
-  #     github.event_name == 'merge_group')
-  #   uses: ./.github/workflows/stacks-core-tests.yml
+  ## --- Run stacks core tests ------------------------------------------------
+  stacks-core-tests:
+    name: Stacks Core Tests
+    needs:
+      - rustfmt
+      - changelog-check
+      - create-cache
+      - check-release
+    if: >-
+      !cancelled() &&
+      needs.rustfmt.result == 'success' &&
+      (needs.check-release.outputs.is_node_release == 'true' ||
+      needs.check-release.outputs.is_signer_release == 'true' ||
+      github.event_name == 'workflow_dispatch' ||
+      github.event_name == 'pull_request' ||
+      github.event_name == 'merge_group')
+    uses: ./.github/workflows/stacks-core-tests.yml
 
   # ## --- Run bitcoin Tests ----------------------------------------------------
   # bitcoin-tests:
