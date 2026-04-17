@@ -142,13 +142,12 @@ else
 fi
 
 ## ── Install Rust toolchain and add the cross-compilation target ─────────────
-rust_toolchain="$(cat ./rust-toolchain)"
-rustup toolchain install "${rust_toolchain}" --no-self-update || {
-    error "Failed to install Rust toolchain $(hl "${rust_toolchain}")"
+rustup show || {
+    error "Failed to install Rust toolchain from $(hl "rust-toolchain.toml")"
     exit 1
 }
-rustup target add "${target}" --toolchain "${rust_toolchain}" || {
-    error "Failed to add target $(hl "${target}") to toolchain $(hl "${rust_toolchain}")"
+rustup target add "${target}" || {
+    error "Failed to add target $(hl "${target}")"
     exit 1
 }
 
