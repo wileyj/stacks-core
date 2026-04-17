@@ -44,9 +44,14 @@ jobs:
 
       # Setup the default rust toolchain with clippy
       - name: Setup Rust Toolchain
-        uses: ./.github/actions/setup-rust-toolchain
+        id: setup_rust_toolchain
+        uses: actions-rust-lang/setup-rust-toolchain@11df97af8e8102fd60b60a77dfbf58d40cd843b8 # v1.10.1
         with:
-          components: clippy
+          cache: false
+      # - name: Setup Rust Toolchain
+      #   uses: ./.github/actions/setup-rust-toolchain
+      #   with:
+      #     components: clippy
 
       # Run clippy with clippy-stacks alias in .cargo/config.toml
       - name: Clippy

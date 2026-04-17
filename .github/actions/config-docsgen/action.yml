@@ -37,12 +37,19 @@ runs:
     #     ref: ${{ github.event.pull_request.head.sha || github.ref }}
 
     # Install Rust nightly toolchain with rust-docs-json
-    - name: Setup Rust Toolchain
-      uses: ./.github/actions/setup-rust-toolchain
+    - name: Install Rust nightly toolchain
+      id: install_rust
+      uses: actions-rust-lang/setup-rust-toolchain@150fca883cd4034361b621bd4e6a9d34e5143606 # v1.15.4
       with:
         toolchain: ${{ inputs.rust-nightly-version }}
         components: rust-docs-json
-        cache: "true"
+        cache: false
+    # - name: Setup Rust Toolchain
+    #   uses: ./.github/actions/setup-rust-toolchain
+    #   with:
+    #     toolchain: ${{ inputs.rust-nightly-version }}
+    #     components: rust-docs-json
+    #     cache: "true"
 
     # Generate, validate, and summarise configuration documentation
     - name: Generate Configuration Documentation
