@@ -32,7 +32,7 @@ jobs:
         with:
           ref: ${{ github.event.pull_request.head.sha || github.ref }}
 
-      Setup the rust toolchain with specified rustfmt
+      # Setup the rust toolchain with specified rustfmt
       - name: Setup Rust Toolchain
         uses: ./.github/actions/setup-rust-toolchain
         with:
