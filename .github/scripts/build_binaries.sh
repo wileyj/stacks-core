@@ -142,6 +142,9 @@ else
 fi
 
 ## ── Install Rust toolchain and add the cross-compilation target ─────────────
+# This is a break from how other workflows install the toolchain, since it would require:
+#   - Breaking up this script so we know what target we're building for, then rerunning a script/function to build for that target triple
+#   - Only running this script via workflow, when a secondary use-case is running it on a local system
 rustup show || {
     error "Failed to install Rust toolchain from $(hl "rust-toolchain.toml")"
     exit 1

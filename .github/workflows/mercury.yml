@@ -1,0 +1,38 @@
+# Github workflow to run full genesis and unit tests
+
+name: Mercury
+
+on:
+  workflow_dispatch:
+
+# set default permissions
+permissions:
+  contents: read
+# env vars are transferred to composite action steps
+env:
+  BITCOIND_TEST: 1
+  RUST_BACKTRACE: full
+  SEGMENT_DOWNLOAD_TIMEOUT_MINS: 3
+  TEST_TIMEOUT: 30
+  CI: true  # Required by insta snapshot tests to run in CI
+
+# configure concurrency
+concurrency:
+  group: stacks-core-tests-${{ github.head_ref || github.ref || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+
+  # Generate and upload node configuration documentation
+  node-config-docsgen:
+    name: Node Configuration Documentation
+    runs-on: ubuntu-latest
+    steps:
+      # Checkout the code
+      - name: Checkout the latest code
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.ref }}
+
+      - name: Generate Node Configuration Documentation
+        uses: ./.github/actions/config-docsgen
