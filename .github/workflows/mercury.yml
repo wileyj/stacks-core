@@ -24,7 +24,7 @@ concurrency:
 jobs:
   rustfmt:
     name: Rust Format
-    needs: changelog-check
+    # needs: changelog-check
     runs-on: ubuntu-latest
     steps:
       - name: Checkout the latest code
