@@ -111,43 +111,43 @@ jobs:
       # - name: Rustfmt
       #   run: bash ./.github/scripts/rustfmt.sh
 
-  # ## --- Check if this is a release build -------------------------------------
-  # # Outputs:
-  # #  - node_tag: Tag of the stacks-node if the branch is a release one (example: release/3.4.0.0.1), null otherwise
-  # #  - signer_tag: Tag of the stacks-signer if the branch is a release one (example: release/3.4.0.0.1.0), null otherwise
-  # #  - is_node_release: True if the branch represents a 'stacks-node' release, false otherwise.
-  # #    - If this is true, 'is_signer_release' will also be true, since a 'stacks-signer' binary is always released alongside 'stacks-node'.
-  # #  - is_signer_release: True if the branch represents a 'stacks-signer' release, false otherwise.
-  # check-release:
-  #   name: Check Release
-  #   needs:
-  #     - rustfmt
-  #     - changelog-check
-  #   if: >-
-  #     !cancelled() &&
-  #     needs.rustfmt.result == 'success'
-  #   runs-on: ubuntu-latest
-  #   outputs:
-  #     node_tag: ${{ steps.check-release.outputs.node_tag }}
-  #     signer_tag: ${{ steps.check-release.outputs.signer_tag }}
-  #     is_node_release: ${{ steps.check-release.outputs.is_node_release }}
-  #     is_signer_release: ${{ steps.check-release.outputs.is_signer_release }}
-  #   steps:
-  #     # Checkout the code
-  #     #   - only .github is required for this job
-  #     - name: Checkout the latest code
-  #       uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-  #       with:
-  #         ref: ${{ github.event.pull_request.head.sha || github.ref }}
-  #         sparse-checkout: |
-  #           .github
+  ## --- Check if this is a release build -------------------------------------
+  # Outputs:
+  #  - node_tag: Tag of the stacks-node if the branch is a release one (example: release/3.4.0.0.1), null otherwise
+  #  - signer_tag: Tag of the stacks-signer if the branch is a release one (example: release/3.4.0.0.1.0), null otherwise
+  #  - is_node_release: True if the branch represents a 'stacks-node' release, false otherwise.
+  #    - If this is true, 'is_signer_release' will also be true, since a 'stacks-signer' binary is always released alongside 'stacks-node'.
+  #  - is_signer_release: True if the branch represents a 'stacks-signer' release, false otherwise.
+  check-release:
+    name: Check Release
+    needs:
+      - rustfmt
+      - changelog-check
+    if: >-
+      !cancelled() &&
+      needs.rustfmt.result == 'success'
+    runs-on: ubuntu-latest
+    outputs:
+      node_tag: ${{ steps.check-release.outputs.node_tag }}
+      signer_tag: ${{ steps.check-release.outputs.signer_tag }}
+      is_node_release: ${{ steps.check-release.outputs.is_node_release }}
+      is_signer_release: ${{ steps.check-release.outputs.is_signer_release }}
+    steps:
+      # Checkout the code
+      #   - only .github is required for this job
+      - name: Checkout the latest code
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.ref }}
+          sparse-checkout: |
+            .github
 
-  #     # Run script to check if this is a release and set outputs
-  #     - name: Check Release
-  #       id: check-release
-  #       env:
-  #         BRANCH: ${{ github.ref_name }}
-  #       run: bash ./.github/scripts/check_release.sh
+      # Run script to check if this is a release and set outputs
+      - name: Check Release
+        id: check-release
+        env:
+          BRANCH: ${{ github.ref_name }}
+        run: bash ./.github/scripts/check_release.sh
 
   # ## --- Create a reusable cache for tests ------------------------------------
   # create-cache:

@@ -22,17 +22,42 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-
-  # Generate and upload node configuration documentation
-  node-config-docsgen:
-    name: Node Configuration Documentation
+  rustfmt:
+    name: Rust Format
+    needs: changelog-check
     runs-on: ubuntu-latest
     steps:
-      # Checkout the code
       - name: Checkout the latest code
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           ref: ${{ github.event.pull_request.head.sha || github.ref }}
 
-      - name: Generate Node Configuration Documentation
-        uses: ./.github/actions/config-docsgen
+      # Setup the rust toolchain with specified rustfmt
+      # - name: Setup Rust Toolchain
+      #   uses: ./.github/actions/setup-rust-toolchain
+      #   with:
+      #     components: rustfmt
+      - name: Setup Rust Toolchain
+        id: setup_rust_toolchain
+        uses: actions-rust-lang/setup-rust-toolchain@150fca883cd4034361b621bd4e6a9d34e5143606 # v1.15.4
+        with:
+          components: rustfmt
+          cache: false
+
+      ## Check if this is a release
+      - name: Rustfmt
+        run: bash ./.github/scripts/rustfmt.sh
+
+  # Generate and upload node configuration documentation
+  # node-config-docsgen:
+  #   name: Node Configuration Documentation
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     # Checkout the code
+  #     - name: Checkout the latest code
+  #       uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+  #       with:
+  #         ref: ${{ github.event.pull_request.head.sha || github.ref }}
+
+  #     - name: Generate Node Configuration Documentation
+  #       uses: ./.github/actions/config-docsgen
