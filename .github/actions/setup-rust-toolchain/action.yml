@@ -48,7 +48,8 @@ runs:
     - name: Install Rust toolchain
       uses: actions-rust-lang/setup-rust-toolchain@150fca883cd4034361b621bd4e6a9d34e5143606 # v1.15.4
       with:
-        toolchain: ${{ steps.resolve-toolchain.outputs.rust-toolchain }}
+        toolchain: ${{ inputs.toolchain }}
+        # toolchain: ${{ steps.resolve-toolchain.outputs.rust-toolchain }}
         components: ${{ inputs.components }}
         target: ${{ inputs.target }}
         cache: ${{ inputs.cache }}
