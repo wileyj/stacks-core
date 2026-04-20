@@ -24,7 +24,7 @@ matrix="${MATRIX:-2}"
 # set number of tests per matrix. default is 256
 max_per_matrix="${MAX_PER_MATRIX:-256}"
 # set the nextest archive to use
-nextest_archive="${NEXTEST_ARCHIVE:-~/test_archive.tar.zst}"
+nextest_archive="${NEXTEST_ARCHIVE:-${HOME}/test_archive.tar.zst}"
 
 if ! [[ "$matrix" =~ ^[1-9][0-9]*$ ]]; then
     error "MATRIX must be a positive integer, got: ${matrix}"
