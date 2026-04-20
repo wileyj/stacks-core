@@ -10,11 +10,11 @@ on:
         default: true
         description: Build the test cache before running tests
   workflow_call:
-    inputs:
-      build-cache:
-        type: boolean
-        default: false
-        description: Build the test cache (set false when called from ci.yml which builds its own cache)
+    # inputs:
+    #   build-cache:
+    #     type: boolean
+    #     default: false
+    #     description: Build the test cache (set false when called from ci.yml which builds its own cache)
 
 # set default permissions
 permissions:
