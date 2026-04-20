@@ -49,7 +49,7 @@ done
 
 ## --- List all ignored tests via nextest -------------------------------------
 info "checking fs for archive ${nextest_archive}"
-ls -al ${nextest_archive}
+ls -al ~/
 
 
 info "Listing ignored tests from nextest archive..."

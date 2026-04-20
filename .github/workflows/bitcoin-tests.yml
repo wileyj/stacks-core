@@ -65,6 +65,13 @@ jobs:
       - name: Setup Test Environment
         uses: ./.github/actions/testenv
 
+      - name: echo
+        run: |
+            ls -al ~/test_archive.tar.zst
+            echo
+            echo
+            ls -al ~/
+
       # Generate the bitcoin test matrices json used for running tests
       - name: Generate test matrices
         id: set-matrix
