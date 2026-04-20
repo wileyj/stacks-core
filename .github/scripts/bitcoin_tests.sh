@@ -48,6 +48,10 @@ done
 [[ "${missing}" -eq 1 ]] && exit 1
 
 ## --- List all ignored tests via nextest -------------------------------------
+info "checking fs for archive ${nextest_archive}"
+ls -al ${nextest_archive}
+
+
 info "Listing ignored tests from nextest archive..."
 cargo nextest list --archive-file ${nextest_archive} -Tjson > nextest_output.json || {
     error "Error listing tests in $(hl ${nextest_archive})"
