@@ -4,17 +4,17 @@ name: Tests::Bitcoin RPC
 
 on:
   workflow_dispatch:
-    # inputs:
-    #   build-cache:
-    #     type: boolean
-    #     default: true
-    #     description: Build the test cache before running tests
+    inputs:
+      build-cache:
+        type: boolean
+        default: true
+        description: Build the test cache before running tests
   workflow_call:
-    # inputs:
-    #   build-cache:
-    #     type: boolean
-    #     default: false
-    #     description: Build the test cache (set false when called from ci.yml which builds its own cache)
+    inputs:
+      build-cache:
+        type: boolean
+        default: false
+        description: Build the test cache (set false when called from ci.yml which builds its own cache)
 
 # Set default permissions
 permissions:
@@ -38,7 +38,7 @@ jobs:
   # Always run create-cache regardless of trigger — downstream jobs depend on it.
   create-cache:
     name: Create Test Cache
-    # if: ${{ inputs.build-cache }}
+    if: ${{ inputs.build-cache }}
     uses: ./.github/workflows/create-cache.yml
 
   # This job may run while the cache is verifying/building
