@@ -75,8 +75,6 @@ jobs:
       # Generate the bitcoin test matrices json used for running tests
       - name: Generate test matrices
         id: set-matrix
-        env:
-          NEXTEST_ARCHIVE: ~/test_archive.tar.zst
         run: bash ./.github/scripts/bitcoin_tests.sh
 
   integration-tests-1:
