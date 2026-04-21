@@ -6,9 +6,10 @@
 # MATRIX balanced partitions.
 #
 # Optional env vars:
-#   MATRIX          - Number of partitions to split tests into (default: 2)
-#   MAX_PER_MATRIX  - Maximum tests allowed per partition (default: 256)
-#   NEXTEST_ARCHIVE - Nextest archive to use (default: ~/test_archive.tar.zst)
+#   MATRIX           - Number of partitions to split tests into (default: 2)
+#   MAX_PER_MATRIX   - Maximum tests allowed per partition (default: 256)
+#   NEXTEST_ARCHIVE  - Nextest archive to use (default: ~/test_archive.tar.zst)
+#   TEST_TAG_CI_SKIP - Tag name used to exclude tests from CI (default: ci_skip)
 #
 # Outputs:
 #   GITHUB_OUTPUT  - Path to the GitHub Actions output file (set by runner); prints to stdout if unset
@@ -19,12 +20,14 @@ set -euo pipefail
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/logging.sh"
 
 ## --- Configuration ----------------------------------------------------------
-# set number of matrices to use for tests. default is 2
+# Set number of matrices to use for tests. default is 2
 matrix="${MATRIX:-2}"
-# set number of tests per matrix. default is 256
+# Set number of tests per matrix. default is 256
 max_per_matrix="${MAX_PER_MATRIX:-256}"
-# set the nextest archive to use
+# Set the nextest archive to use
 nextest_archive="${NEXTEST_ARCHIVE:-${HOME}/test_archive.tar.zst}"
+# Exclude tests tagged with a skip tag
+ci_skip_tag="${TEST_TAG_CI_SKIP:-ci_skip}"
 
 if ! [[ "$matrix" =~ ^[1-9][0-9]*$ ]]; then
     error "MATRIX must be a positive integer, got: ${matrix}"
@@ -115,7 +118,12 @@ tests::nakamoto_integrations::check_block_info_rewards
 tests::signer::v0::larger_mempool
 EOF
 
-# Strip blank lines and comments, then convert to JSON array
+## ── Append tests tagged with ci_skip to the exclude list ────────────────────
+ci_skip_regex=":t::(?:.*::)?${ci_skip_tag}::"
+info "Excluding tests matching tag: $(hl "${ci_skip_tag}") (regex: $(hl "${ci_skip_regex}"))"
+jq -r '.[]' ignored_tests.json | grep -P "${ci_skip_regex}" >> raw_exclude.txt || true
+
+## ── Strip blank lines and comments, then convert to JSON array ──────────────
 grep -v '^\s*$' raw_exclude.txt | grep -v '^\s*#' > clean_exclude.txt
 jq -R . clean_exclude.txt | jq -s . > exclude.json
 info "Excluded tests count: $(hl $(jq length exclude.json))"
