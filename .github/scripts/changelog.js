@@ -43,13 +43,34 @@ module.exports = async ({ github, context, core }) => {
   }
 
   const validExtensions = ["added", "changed", "fixed", "removed"];
-  const fragments = files.filter(
-    (f) =>
-      (f.filename.startsWith("changelog.d/") ||
-        f.filename.startsWith("stacks-signer/changelog.d/")) &&
-      f.status === "added" &&
-      validExtensions.some((ext) => f.filename.endsWith(`.${ext}`))
-  );
+  const filenamePattern = /^\d+-[a-z0-9-]+$/;
+
+  function isValidFragmentName(filename) {
+    const baseName = filename.split("/").pop();
+    const nameWithoutExt = baseName.slice(0, baseName.lastIndexOf("."));
+    return filenamePattern.test(nameWithoutExt);
+  }
+
+  const fragments = files.filter((f) => {
+    const isInValidDir =
+      f.filename.startsWith("changelog.d/") ||
+      f.filename.startsWith("stacks-signer/changelog.d/");
+    const hasValidExt = validExtensions.some((ext) =>
+      f.filename.endsWith(`.${ext}`)
+    );
+    const isAdded = f.status === "added";
+    const isValidName = isValidFragmentName(f.filename);
+
+    if (isInValidDir && hasValidExt && isAdded && !isValidName) {
+      core.setFailed(
+        `Invalid changelog filename '${f.filename}': ` +
+          `must match pattern '<PR#>-<short-description>.<category>' ` +
+          `(example: '6811-marf-compress.added')`
+      );
+    }
+
+    return isInValidDir && hasValidExt && isAdded && isValidName;
+  });
 
   if (fragments.length === 0) {
     core.setFailed(
