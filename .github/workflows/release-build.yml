@@ -72,7 +72,11 @@ jobs:
           # excludes macos-x64
           - arch: macos
             cpu: x86-64
-
+          # rc testing
+          - arch: macos
+            cpu: arm64
+          - arch: windows
+            cpu: x86-64
     permissions:
       contents: read
       id-token: write
