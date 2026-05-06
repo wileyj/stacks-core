@@ -126,6 +126,19 @@ jobs:
           name: digest-manifest
           path: /tmp
 
+      # Debug: Display downloaded manifest
+      - name: Debug - Inspect Digest Manifest
+        run: |
+          echo "Files downloaded to /tmp:"
+          ls -lah /tmp/
+          if [[ -f /tmp/digest-manifest.json ]]; then
+            echo "Digest manifest contents:"
+            jq . /tmp/digest-manifest.json 2>/dev/null || cat /tmp/digest-manifest.json
+          else
+            echo "ERROR: /tmp/digest-manifest.json not found!"
+            find /tmp -name "*digest*" -o -name "*.json"
+          fi
+
       # Creates github release(s)
       - name: Create Release
         uses: ./.github/actions/release

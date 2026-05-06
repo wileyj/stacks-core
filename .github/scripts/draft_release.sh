@@ -106,17 +106,19 @@ format_docker_pulls() {
     }
 
     # Validate JSON manifest
-    if ! jq empty "${manifest_file}"; then
-        error "invalid JSON in digest manifest: ${manifest_file}"
+    if ! jq empty "${manifest_file}" 2>/dev/null; then
+        warn "invalid JSON in digest manifest: $(hl "${manifest_file}"), falling back to simple docker pulls"
+        info "manifest file contents:"
         cat "${manifest_file}" >&2
         return 1
     fi
 
     # Read digests from JSON manifest
-    local core_glibc=$(jq -r '.["stacks-core"].glibc // empty' "${manifest_file}")
-    local core_musl=$(jq -r '.["stacks-core"].musl // empty' "${manifest_file}")
-    local signer_glibc=$(jq -r '.["stacks-signer"].glibc // empty' "${manifest_file}")
-    local signer_musl=$(jq -r '.["stacks-signer"].musl // empty' "${manifest_file}")
+    local core_glibc core_musl signer_glibc signer_musl
+    core_glibc=$(jq -r '.["stacks-core"].glibc // empty' "${manifest_file}" 2>/dev/null) || return 1
+    core_musl=$(jq -r '.["stacks-core"].musl // empty' "${manifest_file}" 2>/dev/null) || return 1
+    signer_glibc=$(jq -r '.["stacks-signer"].glibc // empty' "${manifest_file}" 2>/dev/null) || return 1
+    signer_musl=$(jq -r '.["stacks-signer"].musl // empty' "${manifest_file}" 2>/dev/null) || return 1
 
     printf "Docker images have been published to GitHub Container Registry:\n\n"
     printf "* **stacks-core**: https://github.com/%s/stacks-core/pkgs/container/stacks-core\n" "${repo_owner}"
@@ -131,7 +133,23 @@ format_docker_pulls() {
 ## ── Generate docker pull section with or without digests ───────────────────
 if [[ -n "${DIGEST_MANIFEST:-}" ]] && [[ -f "${DIGEST_MANIFEST}" ]]; then
     info "docker_pulls: using digest manifest from ${DIGEST_MANIFEST}"
-    docker_pulls_with_digests=$(format_docker_pulls "${DIGEST_MANIFEST}" "${node_tag}" "${signer_tag}" "${repo_owner}")
+    if ! docker_pulls_with_digests=$(format_docker_pulls "${DIGEST_MANIFEST}" "${node_tag}" "${signer_tag}" "${repo_owner}"); then
+        # Fallback if manifest processing fails
+        info "docker_pulls: manifest processing failed, using fallback"
+        docker_pulls_with_digests=$(cat <<-EOF
+		Docker images have been published to GitHub Container Registry:
+
+		* **stacks-core**: https://github.com/${REPO}/pkgs/container/stacks-core
+		  \`\`\`sh
+		  docker pull ghcr.io/${repo_owner}/stacks-core:${node_tag}
+		  \`\`\`
+		* **stacks-signer**: https://github.com/${REPO}/pkgs/container/stacks-signer
+		  \`\`\`sh
+		  docker pull ghcr.io/${repo_owner}/stacks-signer:${signer_tag}
+		  \`\`\`
+		EOF
+        )
+    fi
 else
     # Fallback to simple docker pull commands without digests
     info "docker_pulls: digest manifest not found, using fallback"
@@ -185,21 +203,37 @@ changelog_lines=0
 [[ -n "${changelog_content}" ]] && changelog_lines=$(printf '%s\n' "${changelog_content}" | wc -l | tr -d '[:space:]')
 info "changelog_content: $(hl "${CHANGELOG}") (${changelog_lines} lines)"
 
+## ── Debug: Log manifest file if present ──────────────────────────────────────
+if [[ -n "${DIGEST_MANIFEST:-}" ]] && [[ -f "${DIGEST_MANIFEST}" ]]; then
+    info "DEBUG: digest manifest file contents:"
+    jq . "${DIGEST_MANIFEST}" 2>/dev/null || cat "${DIGEST_MANIFEST}"
+fi
+
 ## ── Expand template ─────────────────────────────────────────────────────────
 export node_tag signer_tag node_epoch companion_line changelog_section repo_owner docker_pulls_with_digests
+
+# Debug: Show exported variables size
+info "DEBUG: exported variables: node_tag(${#node_tag}), signer_tag(${#signer_tag}), changelog_section(${#changelog_section}), docker_pulls_with_digests(${#docker_pulls_with_digests})"
+
 # shellcheck disable=SC2016
-body=$(envsubst '${node_tag}${signer_tag}${node_epoch}${companion_line}${changelog_section}${repo_owner}${docker_pulls_with_digests}' < "${TEMPLATE}")
+if ! body=$(envsubst '${node_tag}${signer_tag}${node_epoch}${companion_line}${changelog_section}${repo_owner}${docker_pulls_with_digests}' < "${TEMPLATE}" 2>/dev/null); then
+    error "failed to expand template with envsubst"
+    exit 1
+fi
 
 ## ── Output ──────────────────────────────────────────────────────────────────
 if [[ -n "${GITHUB_OUTPUT:-}" ]]; then
     # Use a randomised delimiter to avoid collision with body content
     delimiter="RELEASE_BODY_$(LC_ALL=C tr -dc 'A-F0-9' < /dev/urandom 2>/dev/null | head -c 16)"
-    {
+    if ! {
         printf 'release_body<<%s\n' "${delimiter}"
         printf '%s\n' "${body}"
         printf '%s\n' "${delimiter}"
-    } >> "${GITHUB_OUTPUT}"
-    info "release_body written to GITHUB_OUTPUT"
+    } >> "${GITHUB_OUTPUT}" 2>/dev/null; then
+        error "failed to write release_body to GITHUB_OUTPUT (${GITHUB_OUTPUT})"
+        exit 1
+    fi
+    info "release_body written to GITHUB_OUTPUT (${#body} bytes)"
 else
     printf '%s\n' "${body}"
 fi
