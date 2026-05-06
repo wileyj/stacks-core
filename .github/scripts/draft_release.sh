@@ -95,11 +95,12 @@ format_docker_pulls() {
         esac
 
         if [[ -n "${digest}" ]]; then
-            # md codeblock for the image variant with a version and a sha256 if available in the provided manifest json
-            printf "  - %s: \`\`\`sh\n    docker pull ghcr.io/%s/%s:%s%s@%s\n    \`\`\`\n" \
-                "${os_name}" "${repo_owner}" "${image_name}" "${tag}" "${dist}" "${digest}"
+            printf "  - %s:\n" "${os_name}"
+            printf '```sh\n'
+            printf "docker pull ghcr.io/%s/%s:%s%s \\\\\n" "${repo_owner}" "${image_name}" "${tag}" "${dist}"
+            printf "  @%s\n" "${digest}"
+            printf '```\n'
         else
-            # md codeblock for the image variant with version only (no digest, manifest JSON not available)
             printf "  - %s: \`docker pull ghcr.io/%s/%s:%s%s\`\n" \
                 "${os_name}" "${repo_owner}" "${image_name}" "${tag}" "${dist}"
         fi
@@ -120,14 +121,16 @@ format_docker_pulls() {
     signer_glibc=$(jq -r '.["stacks-signer"].glibc // empty' "${manifest_file}" 2>/dev/null) || return 1
     signer_musl=$(jq -r '.["stacks-signer"].musl // empty' "${manifest_file}" 2>/dev/null) || return 1
 
-    printf "Docker images have been published to GitHub Container Registry:\n\n"
-    printf "* **stacks-core**: https://github.com/%s/stacks-core/pkgs/container/stacks-core\n" "${repo_owner}"
-    print_image "stacks-core" "glibc" "${node_tag}" "${core_glibc}"
-    print_image "stacks-core" "musl" "${node_tag}" "${core_musl}"
+    {
+        printf "Docker images have been published to GitHub Container Registry:\n\n"
+        printf "* **stacks-core**: https://github.com/%s/stacks-core/pkgs/container/stacks-core\n" "${repo_owner}"
+        print_image "stacks-core" "glibc" "${node_tag}" "${core_glibc}"
+        print_image "stacks-core" "musl" "${node_tag}" "${core_musl}"
 
-    printf "\n* **stacks-signer**: https://github.com/%s/stacks-signer/pkgs/container/stacks-signer\n" "${repo_owner}"
-    print_image "stacks-signer" "glibc" "${signer_tag}" "${signer_glibc}"
-    print_image "stacks-signer" "musl" "${signer_tag}" "${signer_musl}"
+        printf "\n* **stacks-signer**: https://github.com/%s/stacks-signer/pkgs/container/stacks-signer\n" "${repo_owner}"
+        print_image "stacks-signer" "glibc" "${signer_tag}" "${signer_glibc}"
+        print_image "stacks-signer" "musl" "${signer_tag}" "${signer_musl}"
+    }
 }
 
 ## ── Generate docker pull section with or without digests ───────────────────
@@ -140,13 +143,13 @@ if [[ -n "${DIGEST_MANIFEST:-}" ]] && [[ -f "${DIGEST_MANIFEST}" ]]; then
 		Docker images have been published to GitHub Container Registry:
 
 		* **stacks-core**: https://github.com/${REPO}/pkgs/container/stacks-core
-		  \`\`\`sh
-		  docker pull ghcr.io/${repo_owner}/stacks-core:${node_tag}
-		  \`\`\`
+		\`\`\`sh
+		docker pull ghcr.io/${repo_owner}/stacks-core:${node_tag}
+		\`\`\`
 		* **stacks-signer**: https://github.com/${REPO}/pkgs/container/stacks-signer
-		  \`\`\`sh
-		  docker pull ghcr.io/${repo_owner}/stacks-signer:${signer_tag}
-		  \`\`\`
+		\`\`\`sh
+		docker pull ghcr.io/${repo_owner}/stacks-signer:${signer_tag}
+		\`\`\`
 		EOF
         )
     fi
@@ -157,13 +160,13 @@ else
 	Docker images have been published to GitHub Container Registry:
 
 	* **stacks-core**: https://github.com/${REPO}/pkgs/container/stacks-core
-	  \`\`\`sh
-	  docker pull ghcr.io/${repo_owner}/stacks-core:${node_tag}
-	  \`\`\`
+	\`\`\`sh
+	docker pull ghcr.io/${repo_owner}/stacks-core:${node_tag}
+	\`\`\`
 	* **stacks-signer**: https://github.com/${REPO}/pkgs/container/stacks-signer
-	  \`\`\`sh
-	  docker pull ghcr.io/${repo_owner}/stacks-signer:${signer_tag}
-	  \`\`\`
+	\`\`\`sh
+	docker pull ghcr.io/${repo_owner}/stacks-signer:${signer_tag}
+	\`\`\`
 	EOF
     )
 fi
