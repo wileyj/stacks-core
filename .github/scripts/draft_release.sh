@@ -223,16 +223,14 @@ fi
 
 ## ── Output ──────────────────────────────────────────────────────────────────
 if [[ -n "${GITHUB_OUTPUT:-}" ]]; then
-    # Use a randomised delimiter to avoid collision with body content
-    delimiter="RELEASE_BODY_$(LC_ALL=C tr -dc 'A-F0-9' < /dev/urandom 2>/dev/null | head -c 16)"
-    if ! {
+    # Use a delimiter to avoid collision with body content
+    # GitHub Actions requires multiline variable delimiter format
+    delimiter="RELEASE_BODY_END_$$_$(date +%s%N)"
+    {
         printf 'release_body<<%s\n' "${delimiter}"
         printf '%s\n' "${body}"
         printf '%s\n' "${delimiter}"
-    } >> "${GITHUB_OUTPUT}" 2>/dev/null; then
-        error "failed to write release_body to GITHUB_OUTPUT (${GITHUB_OUTPUT})"
-        exit 1
-    fi
+    } >> "${GITHUB_OUTPUT}"
     info "release_body written to GITHUB_OUTPUT (${#body} bytes)"
 else
     printf '%s\n' "${body}"
