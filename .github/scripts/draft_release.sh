@@ -95,13 +95,13 @@ format_docker_pulls() {
         esac
 
         if [[ -n "${digest}" ]]; then
-            printf "  - %s:\n" "${os_name}"
+            printf "* %s:\n" "${os_name}"
             printf '```sh\n'
-            printf "docker pull ghcr.io/%s/%s:%s%s \\\\\n" "${repo_owner}" "${image_name}" "${tag}" "${dist}"
-            printf "  @%s\n" "${digest}"
+            printf "docker pull ghcr.io/%s/%s:%s%s@%s\n" "${repo_owner}" "${image_name}" "${tag}" "${dist}" "${digest}"
             printf '```\n'
+            printf "\n"
         else
-            printf "  - %s: \`docker pull ghcr.io/%s/%s:%s%s\`\n" \
+            printf "* %s: \`docker pull ghcr.io/%s/%s:%s%s\`\n" \
                 "${os_name}" "${repo_owner}" "${image_name}" "${tag}" "${dist}"
         fi
     }
@@ -122,12 +122,12 @@ format_docker_pulls() {
     signer_musl=$(jq -r '.["stacks-signer"].musl // empty' "${manifest_file}" 2>/dev/null) || return 1
 
     {
-        printf "Docker images have been published to GitHub Container Registry:\n\n"
-        printf "* **stacks-core**: https://github.com/%s/stacks-core/pkgs/container/stacks-core\n" "${repo_owner}"
+        printf "### Docker images have been published to GitHub Container Registry:\n\n"
+        printf "#### **stacks-core**: https://github.com/%s/stacks-core/pkgs/container/stacks-core\n" "${repo_owner}"
         print_image "stacks-core" "glibc" "${node_tag}" "${core_glibc}"
         print_image "stacks-core" "musl" "${node_tag}" "${core_musl}"
 
-        printf "\n* **stacks-signer**: https://github.com/%s/stacks-signer/pkgs/container/stacks-signer\n" "${repo_owner}"
+        printf "#### **stacks-signer**: https://github.com/%s/stacks-signer/pkgs/container/stacks-signer\n" "${repo_owner}"
         print_image "stacks-signer" "glibc" "${signer_tag}" "${signer_glibc}"
         print_image "stacks-signer" "musl" "${signer_tag}" "${signer_musl}"
     }
@@ -140,13 +140,16 @@ if [[ -n "${DIGEST_MANIFEST:-}" ]] && [[ -f "${DIGEST_MANIFEST}" ]]; then
         # Fallback if manifest processing fails
         info "docker_pulls: manifest processing failed, using fallback"
         docker_pulls_with_digests=$(cat <<-EOF
-		Docker images have been published to GitHub Container Registry:
+		### Docker images have been published to GitHub Container Registry:
 
-		* **stacks-core**: https://github.com/${REPO}/pkgs/container/stacks-core
+		#### **stacks-core**: https://github.com/${REPO}/pkgs/container/stacks-core
+		* Debian (glibc):
 		\`\`\`sh
 		docker pull ghcr.io/${repo_owner}/stacks-core:${node_tag}
 		\`\`\`
-		* **stacks-signer**: https://github.com/${REPO}/pkgs/container/stacks-signer
+
+		#### **stacks-signer**: https://github.com/${REPO}/pkgs/container/stacks-signer
+		* Debian (glibc):
 		\`\`\`sh
 		docker pull ghcr.io/${repo_owner}/stacks-signer:${signer_tag}
 		\`\`\`
@@ -157,13 +160,16 @@ else
     # Fallback to simple docker pull commands without digests
     info "docker_pulls: digest manifest not found, using fallback"
     docker_pulls_with_digests=$(cat <<-EOF
-	Docker images have been published to GitHub Container Registry:
+	### Docker images have been published to GitHub Container Registry:
 
-	* **stacks-core**: https://github.com/${REPO}/pkgs/container/stacks-core
+	#### **stacks-core**: https://github.com/${REPO}/pkgs/container/stacks-core
+	* Debian (glibc):
 	\`\`\`sh
 	docker pull ghcr.io/${repo_owner}/stacks-core:${node_tag}
 	\`\`\`
-	* **stacks-signer**: https://github.com/${REPO}/pkgs/container/stacks-signer
+
+	#### **stacks-signer**: https://github.com/${REPO}/pkgs/container/stacks-signer
+	* Debian (glibc):
 	\`\`\`sh
 	docker pull ghcr.io/${repo_owner}/stacks-signer:${signer_tag}
 	\`\`\`
