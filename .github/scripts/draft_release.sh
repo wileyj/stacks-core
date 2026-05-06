@@ -3,17 +3,31 @@
 #
 # Required env vars:
 #   VERSION      - Bare release version (no 'signer-' prefix)
-#                  e.g. 3.4.0.0.0 for stacks-node, 3.4.0.0.0.1 for stacks-signer
 #   CHANGELOG    - Path to the CHANGELOG.md file
 #   TEMPLATE     - Path to the release body template
 #   RELEASE_TYPE - one of: stacks-core, stacks-signer
+#   REPO         - repository to create release for
+#
+# Optional env var:
+#   DIGEST_MANIFEST - json file containing sha256 for image variants
+#       Example manifest:
+#        {
+#            "stacks-core": {
+#                "glibc": "sha256:1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef",
+#                "musl": "sha256:fedcba0987654321fedcba0987654321fedcba0987654321fedcba0987654321"
+#           },
+#           "stacks-signer": {
+#               "glibc": "sha256:abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890",
+#               "musl": "sha256:7654321fedcba0987654321fedcba0987654321fedcba0987654321fedcba098"
+#           }
+#        }
 #
 # Template variables substituted:
-#   ${node_tag}         - 5-part node version  (e.g. 3.4.0.0.0)
-#   ${signer_tag}       - 6-part signer version (e.g. 3.4.0.0.0.0)
-#   ${node_epoch}       - epoch compatibility tag (e.g. 3.4.x.x.x)
-#   ${companion_line}   - cross-release compatibility line (differs by RELEASE_TYPE)
-#   ${changelog_content}- extracted changelog block (may be empty for signer releases)
+#   ${node_tag}          - 5-part node version  (e.g. 3.4.0.0.0)
+#   ${signer_tag}        - 6-part signer version (e.g. 3.4.0.0.0.0)
+#   ${node_epoch}        - epoch compatibility tag (e.g. 3.4.x.x.x)
+#   ${companion_line}    - line to reference companion release (differs by RELEASE_TYPE, stacks-core mentions stacks-signer and vice-versa)
+#   ${changelog_content} - extracted changelog block (may be empty for signer releases)
 #
 # Outputs:
 #   GITHUB_OUTPUT  - Path to the GitHub Actions output file (set by runner); prints to stderr if unset (via logging.sh)
@@ -47,15 +61,97 @@ if [[ "${RELEASE_TYPE}" == "stacks-signer" ]]; then
     companion_line="The version of stacks-node compatible with this release is ${node_tag}, available here: https://github.com/${REPO}/releases/tag/${node_tag}."
 else
     node_tag="${VERSION}"
-    signer_tag="${node_tag}.0"
+    signer_tag=$(sed 's/\(-[^-]*\)*$/.0\1/' <<<"${node_tag}")
     companion_line="The version of stacks-signer compatible with this release is ${signer_tag}, available at: https://github.com/${REPO}/releases/tag/signer-${signer_tag}."
 fi
 
 node_epoch="$(echo "${node_tag}" | cut -d. -f1-2).x.x.x"
-repo="${REPO}"
 repo_owner="${REPO%%/*}"
 
+## ── Format docker pull commands with digests (if manifest provided) ─────────
+format_docker_pulls() {
+    local manifest_file="$1"
+    local node_tag="$2"
+    local signer_tag="$3"
+    local repo_owner="$4"
+
+    # Print a single image variant with or without digest
+    print_image() {
+        local image_name="$1"
+        local variant="$2"
+        local tag="$3"
+        local digest="$4"
+        local dist os_name
+
+        case "${variant}" in
+            glibc)
+                dist="";
+                os_name="Debian (glibc)"
+                ;;
+            musl)
+                dist="-alpine";
+                os_name="Alpine (musl)"
+                ;;
+        esac
+
+        if [[ -n "${digest}" ]]; then
+            # md codeblock for the image variant with a version and a sha256 if available in the provided manifest json
+            printf "  - %s: \`\`\`sh\n    docker pull ghcr.io/%s/%s:%s%s@%s\n    \`\`\`\n" \
+                "${os_name}" "${repo_owner}" "${image_name}" "${tag}" "${dist}" "${digest}"
+        else
+            # md codeblock for the image variant with version only (no digest, manifest JSON not available)
+            printf "  - %s: \`docker pull ghcr.io/%s/%s:%s%s\`\n" \
+                "${os_name}" "${repo_owner}" "${image_name}" "${tag}" "${dist}"
+        fi
+    }
+
+    # Validate JSON manifest
+    if ! jq empty "${manifest_file}"; then
+        error "invalid JSON in digest manifest: ${manifest_file}"
+        cat "${manifest_file}" >&2
+        return 1
+    fi
+
+    # Read digests from JSON manifest
+    local core_glibc=$(jq -r '.["stacks-core"].glibc // empty' "${manifest_file}")
+    local core_musl=$(jq -r '.["stacks-core"].musl // empty' "${manifest_file}")
+    local signer_glibc=$(jq -r '.["stacks-signer"].glibc // empty' "${manifest_file}")
+    local signer_musl=$(jq -r '.["stacks-signer"].musl // empty' "${manifest_file}")
+
+    printf "Docker images have been published to GitHub Container Registry:\n\n"
+    printf "* **stacks-core**: https://github.com/%s/stacks-core/pkgs/container/stacks-core\n" "${repo_owner}"
+    print_image "stacks-core" "glibc" "${node_tag}" "${core_glibc}"
+    print_image "stacks-core" "musl" "${node_tag}" "${core_musl}"
+
+    printf "\n* **stacks-signer**: https://github.com/%s/stacks-signer/pkgs/container/stacks-signer\n" "${repo_owner}"
+    print_image "stacks-signer" "glibc" "${signer_tag}" "${signer_glibc}"
+    print_image "stacks-signer" "musl" "${signer_tag}" "${signer_musl}"
+}
+
+## ── Generate docker pull section with or without digests ───────────────────
+if [[ -n "${DIGEST_MANIFEST:-}" ]] && [[ -f "${DIGEST_MANIFEST}" ]]; then
+    info "docker_pulls: using digest manifest from ${DIGEST_MANIFEST}"
+    docker_pulls_with_digests=$(format_docker_pulls "${DIGEST_MANIFEST}" "${node_tag}" "${signer_tag}" "${repo_owner}")
+else
+    # Fallback to simple docker pull commands without digests
+    info "docker_pulls: digest manifest not found, using fallback"
+    docker_pulls_with_digests=$(cat <<-EOF
+	Docker images have been published to GitHub Container Registry:
+
+	* **stacks-core**: https://github.com/${REPO}/pkgs/container/stacks-core
+	  \`\`\`sh
+	  docker pull ghcr.io/${repo_owner}/stacks-core:${node_tag}
+	  \`\`\`
+	* **stacks-signer**: https://github.com/${REPO}/pkgs/container/stacks-signer
+	  \`\`\`sh
+	  docker pull ghcr.io/${repo_owner}/stacks-signer:${signer_tag}
+	  \`\`\`
+	EOF
+    )
+fi
+
 ## ── Extract changelog content (empty is acceptable) ─────────────────────────
+# Extract the changelog section for this release: from "## [VERSION]" until the next "## " header
 changelog_content=$(awk -v ver="## [${VERSION}]" '
     { sub(/[[:space:]]*$/, "") }
     $0 == ver       { found=1; next }
@@ -90,14 +186,14 @@ changelog_lines=0
 info "changelog_content: $(hl "${CHANGELOG}") (${changelog_lines} lines)"
 
 ## ── Expand template ─────────────────────────────────────────────────────────
-export node_tag signer_tag node_epoch companion_line changelog_section repo repo_owner
+export node_tag signer_tag node_epoch companion_line changelog_section repo_owner docker_pulls_with_digests
 # shellcheck disable=SC2016
-body=$(envsubst '${node_tag}${signer_tag}${node_epoch}${companion_line}${changelog_section}${repo}${repo_owner}' < "${TEMPLATE}")
+body=$(envsubst '${node_tag}${signer_tag}${node_epoch}${companion_line}${changelog_section}${repo_owner}${docker_pulls_with_digests}' < "${TEMPLATE}")
 
 ## ── Output ──────────────────────────────────────────────────────────────────
 if [[ -n "${GITHUB_OUTPUT:-}" ]]; then
     # Use a randomised delimiter to avoid collision with body content
-    delimiter="RELEASE_BODY_$(set +o pipefail; LC_ALL=C tr -dc 'A-F0-9' < /dev/urandom 2>/dev/null | head -c 16)"
+    delimiter="RELEASE_BODY_$(LC_ALL=C tr -dc 'A-F0-9' < /dev/urandom 2>/dev/null | head -c 16)"
     {
         printf 'release_body<<%s\n' "${delimiter}"
         printf '%s\n' "${body}"

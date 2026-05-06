@@ -64,6 +64,8 @@ jobs:
       id-token: write      # required for attestation
       attestations: write  # required for attestation
       packages: write      # required for image push
+    outputs:
+      branch: ${{ steps.docker-build.outputs.digest }}
     steps:
       # Retrieve repository description for image annotation
       - name: Get repository description
@@ -201,7 +203,6 @@ jobs:
 
       # Sign the images with GitHub OIDC Token
       #   - https://github.blog/security/supply-chain-security/safeguard-container-signing-capability-actions/
-      #   - annotations show as null per https://github.com/sigstore/cosign/pull/4508 until a future release (or tagging this specific commit)
       - name: Install Cosign
         uses: sigstore/cosign-installer@cad07c2e89fa2edd6e2d7bab4c1aa38e53f76003 # v4.1.1
 
@@ -221,3 +222,39 @@ jobs:
             -a "dist=${{ matrix.dist }}" \
             --yes \
           ${images}
+
+      # Export digest metadata for release notes
+      - name: Export Image Digest
+        id: digest-export
+        env:
+          DIGEST: ${{ steps.docker-build.outputs.digest }}
+          RELEASE_TYPE: ${{ inputs.release_type }}
+          DIST: ${{ matrix.dist }}
+        run: |
+          # Determine libc variant from distribution
+          libc_variant="glibc"
+          [[ "${{ matrix.dist }}" == "alpine" ]] && libc_variant="musl"
+
+          # Create or update JSON manifest with digest
+          manifest_file="/tmp/digest-manifest.json"
+          if [[ -f "${manifest_file}" ]]; then
+            # File exists, update it with jq
+            jq --arg rt "${RELEASE_TYPE}" --arg lc "${libc_variant}" --arg digest "${DIGEST}" \
+              '.[$rt][$lc] = $digest' "${manifest_file}" > "${manifest_file}.tmp" && \
+              mv "${manifest_file}.tmp" "${manifest_file}"
+          else
+            # Create new file with initial structure
+            echo '{}' | jq --arg rt "${RELEASE_TYPE}" --arg lc "${libc_variant}" --arg digest "${DIGEST}" \
+              '.[$rt][$lc] = $digest' > "${manifest_file}"
+          fi
+
+          echo "Exported digest for ${RELEASE_TYPE} (${DIST}): ${DIGEST}"
+
+      # Upload digest manifest as artifact (final step after matrix)
+      - name: Upload Digest Manifest
+        if: always()
+        uses: actions/upload-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: digest-manifest
+          path: /tmp/digest-manifest.json
+          retention-days: 1
