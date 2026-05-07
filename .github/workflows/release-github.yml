@@ -144,7 +144,7 @@ jobs:
                 --arg lc "${libc_variant}" \
                 --arg d "${digest}" \
                 --arg pid "${package_id}" \
-                '.[$rt] |= . // {} | .[$rt][$lc] = $d | .[$rt].package_id = $pid' 2>/dev/null)
+                '.[$rt] |= . // {} | .[$rt][$lc] = {digest: $d, package_id: $pid}' 2>/dev/null)
             fi
           done
 

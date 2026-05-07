@@ -83,6 +83,7 @@ format_docker_pulls() {
         local variant="$2"
         local tag="$3"
         local digest="$4"
+        local package_id="$5"
         local dist os_name
 
         case "${variant}" in
@@ -96,15 +97,20 @@ format_docker_pulls() {
                 ;;
         esac
 
+        if [[ -n "${package_id}" ]]; then
+            printf "* %s: https://github.com/%s/%s/pkgs/container/%s/%s?tag=%s%s\n" \
+                "${os_name}" "${repo_owner}" "${image_name}" "${image_name}" "${package_id}" "${tag}" "${dist}"
+        fi
+
         if [[ -n "${digest}" ]]; then
-            printf "* %s:\n" "${os_name}"
             printf '```sh\n'
             printf "docker pull ghcr.io/%s/%s:%s%s@%s\n" "${repo_owner}" "${image_name}" "${tag}" "${dist}" "${digest}"
             printf '```\n'
             printf "\n"
         else
-            printf "* %s: \`docker pull ghcr.io/%s/%s:%s%s\`\n" \
-                "${os_name}" "${repo_owner}" "${image_name}" "${tag}" "${dist}"
+            printf "\`docker pull ghcr.io/%s/%s:%s%s\`\n" \
+                "${repo_owner}" "${image_name}" "${tag}" "${dist}"
+            printf "\n"
         fi
     }
 
@@ -117,23 +123,25 @@ format_docker_pulls() {
     fi
 
     # Read digests and package IDs from JSON manifest
-    local core_glibc core_musl signer_glibc signer_musl core_package_id signer_package_id
-    core_glibc=$(jq -r '.["stacks-core"].glibc // empty' "${manifest_file}" 2>/dev/null) || return 1
-    core_musl=$(jq -r '.["stacks-core"].musl // empty' "${manifest_file}" 2>/dev/null) || return 1
-    core_package_id=$(jq -r '.["stacks-core"].package_id // empty' "${manifest_file}" 2>/dev/null) || return 1
-    signer_glibc=$(jq -r '.["stacks-signer"].glibc // empty' "${manifest_file}" 2>/dev/null) || return 1
-    signer_musl=$(jq -r '.["stacks-signer"].musl // empty' "${manifest_file}" 2>/dev/null) || return 1
-    signer_package_id=$(jq -r '.["stacks-signer"].package_id // empty' "${manifest_file}" 2>/dev/null) || return 1
+    local core_glibc core_glibc_id core_musl core_musl_id signer_glibc signer_glibc_id signer_musl signer_musl_id
+    core_glibc=$(jq -r '.["stacks-core"].glibc.digest // empty' "${manifest_file}" 2>/dev/null) || return 1
+    core_glibc_id=$(jq -r '.["stacks-core"].glibc.package_id // empty' "${manifest_file}" 2>/dev/null) || return 1
+    core_musl=$(jq -r '.["stacks-core"].musl.digest // empty' "${manifest_file}" 2>/dev/null) || return 1
+    core_musl_id=$(jq -r '.["stacks-core"].musl.package_id // empty' "${manifest_file}" 2>/dev/null) || return 1
+    signer_glibc=$(jq -r '.["stacks-signer"].glibc.digest // empty' "${manifest_file}" 2>/dev/null) || return 1
+    signer_glibc_id=$(jq -r '.["stacks-signer"].glibc.package_id // empty' "${manifest_file}" 2>/dev/null) || return 1
+    signer_musl=$(jq -r '.["stacks-signer"].musl.digest // empty' "${manifest_file}" 2>/dev/null) || return 1
+    signer_musl_id=$(jq -r '.["stacks-signer"].musl.package_id // empty' "${manifest_file}" 2>/dev/null) || return 1
 
     {
         printf "### Docker images have been published to GitHub Container Registry:\n\n"
-        printf "#### **stacks-core**: https://github.com/%s/stacks-core/pkgs/container/stacks-core/%s?tag=%s\n" "${repo_owner}" "${core_package_id}" "${node_tag}"
-        print_image "stacks-core" "glibc" "${node_tag}" "${core_glibc}"
-        print_image "stacks-core" "musl" "${node_tag}" "${core_musl}"
+        printf "#### **stacks-core**\n"
+        print_image "stacks-core" "glibc" "${node_tag}" "${core_glibc}" "${core_glibc_id}"
+        print_image "stacks-core" "musl" "${node_tag}" "${core_musl}" "${core_musl_id}"
 
-        printf "#### **stacks-signer**: https://github.com/%s/stacks-signer/pkgs/container/stacks-signer/%s?tag=%s\n" "${repo_owner}" "${signer_package_id}" "${signer_tag}"
-        print_image "stacks-signer" "glibc" "${signer_tag}" "${signer_glibc}"
-        print_image "stacks-signer" "musl" "${signer_tag}" "${signer_musl}"
+        printf "#### **stacks-signer**\n"
+        print_image "stacks-signer" "glibc" "${signer_tag}" "${signer_glibc}" "${signer_glibc_id}"
+        print_image "stacks-signer" "musl" "${signer_tag}" "${signer_musl}" "${signer_musl_id}"
     }
 }
 
