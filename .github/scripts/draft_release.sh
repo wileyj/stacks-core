@@ -9,16 +9,18 @@
 #   REPO         - repository to create release for
 #
 # Optional env var:
-#   DIGEST_MANIFEST - json file containing sha256 for image variants
+#   DIGEST_MANIFEST - json file containing sha256 for image variants and package IDs
 #       Example manifest:
 #        {
 #            "stacks-core": {
 #                "glibc": "sha256:1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef",
-#                "musl": "sha256:fedcba0987654321fedcba0987654321fedcba0987654321fedcba0987654321"
+#                "musl": "sha256:fedcba0987654321fedcba0987654321fedcba0987654321fedcba0987654321",
+#                "package_id": "123456789"
 #           },
 #           "stacks-signer": {
 #               "glibc": "sha256:abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890",
-#               "musl": "sha256:7654321fedcba0987654321fedcba0987654321fedcba0987654321fedcba098"
+#               "musl": "sha256:7654321fedcba0987654321fedcba0987654321fedcba0987654321fedcba098",
+#               "package_id": "987654321"
 #           }
 #        }
 #
@@ -114,20 +116,22 @@ format_docker_pulls() {
         return 1
     fi
 
-    # Read digests from JSON manifest
-    local core_glibc core_musl signer_glibc signer_musl
+    # Read digests and package IDs from JSON manifest
+    local core_glibc core_musl signer_glibc signer_musl core_package_id signer_package_id
     core_glibc=$(jq -r '.["stacks-core"].glibc // empty' "${manifest_file}" 2>/dev/null) || return 1
     core_musl=$(jq -r '.["stacks-core"].musl // empty' "${manifest_file}" 2>/dev/null) || return 1
+    core_package_id=$(jq -r '.["stacks-core"].package_id // empty' "${manifest_file}" 2>/dev/null) || return 1
     signer_glibc=$(jq -r '.["stacks-signer"].glibc // empty' "${manifest_file}" 2>/dev/null) || return 1
     signer_musl=$(jq -r '.["stacks-signer"].musl // empty' "${manifest_file}" 2>/dev/null) || return 1
+    signer_package_id=$(jq -r '.["stacks-signer"].package_id // empty' "${manifest_file}" 2>/dev/null) || return 1
 
     {
         printf "### Docker images have been published to GitHub Container Registry:\n\n"
-        printf "#### **stacks-core**: https://github.com/%s/stacks-core/pkgs/container/stacks-core\n" "${repo_owner}"
+        printf "#### **stacks-core**: https://github.com/%s/stacks-core/pkgs/container/stacks-core/%s?tag=%s\n" "${repo_owner}" "${core_package_id}" "${node_tag}"
         print_image "stacks-core" "glibc" "${node_tag}" "${core_glibc}"
         print_image "stacks-core" "musl" "${node_tag}" "${core_musl}"
 
-        printf "#### **stacks-signer**: https://github.com/%s/stacks-signer/pkgs/container/stacks-signer\n" "${repo_owner}"
+        printf "#### **stacks-signer**: https://github.com/%s/stacks-signer/pkgs/container/stacks-signer/%s?tag=%s\n" "${repo_owner}" "${signer_package_id}" "${signer_tag}"
         print_image "stacks-signer" "glibc" "${signer_tag}" "${signer_glibc}"
         print_image "stacks-signer" "musl" "${signer_tag}" "${signer_musl}"
     }
