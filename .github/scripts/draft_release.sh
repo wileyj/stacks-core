@@ -220,21 +220,14 @@ info "node_tag:          $(hl "${node_tag}")"
 info "signer_tag:        $(hl "${signer_tag}")"
 info "node_epoch:        $(hl "${node_epoch}")"
 info "changelog_link:    $(hl "${changelog_link}")"
+info "DIGEST_MANIFEST:   $(hl "${DIGEST_MANIFEST}")"
+
 changelog_lines=0
 [[ -n "${changelog_content}" ]] && changelog_lines=$(printf '%s\n' "${changelog_content}" | wc -l | tr -d '[:space:]')
 info "changelog_content: $(hl "${CHANGELOG}") (${changelog_lines} lines)"
 
-## ── Debug: Log manifest file if present ──────────────────────────────────────
-if [[ -n "${DIGEST_MANIFEST:-}" ]] && [[ -f "${DIGEST_MANIFEST}" ]]; then
-    info "DEBUG: digest manifest file contents:"
-    jq . "${DIGEST_MANIFEST}" 2>/dev/null || cat "${DIGEST_MANIFEST}"
-fi
-
 ## ── Expand template ─────────────────────────────────────────────────────────
 export node_tag signer_tag node_epoch companion_line changelog_section repo_owner docker_pulls_with_digests
-
-# Debug: Show exported variables size
-info "DEBUG: exported variables: node_tag(${#node_tag}), signer_tag(${#signer_tag}), changelog_section(${#changelog_section}), docker_pulls_with_digests(${#docker_pulls_with_digests})"
 
 # shellcheck disable=SC2016
 if ! body=$(envsubst '${node_tag}${signer_tag}${node_epoch}${companion_line}${changelog_section}${repo_owner}${docker_pulls_with_digests}' < "${TEMPLATE}" 2>/dev/null); then

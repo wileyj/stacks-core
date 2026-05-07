@@ -112,7 +112,7 @@ jobs:
       # Consolidate individual digests into single manifest
       - name: Create Consolidated Digest Manifest
         run: |
-          echo "DEBUG: Consolidating digests from all matrix jobs"
+          echo "Consolidating digests from all matrix jobs"
           echo "Files downloaded:"
           find /tmp/digest-artifacts -type f -name "*.json" | sort
 
@@ -193,19 +193,6 @@ jobs:
         with:
           name: digest-manifest
           path: /tmp
-
-      # Debug: Display downloaded manifest
-      - name: Debug - Inspect Digest Manifest
-        run: |
-          echo "Files downloaded to /tmp:"
-          ls -lah /tmp/
-          if [[ -f /tmp/digest-manifest.json ]]; then
-            echo "Digest manifest contents:"
-            jq . /tmp/digest-manifest.json 2>/dev/null || cat /tmp/digest-manifest.json
-          else
-            echo "ERROR: /tmp/digest-manifest.json not found!"
-            find /tmp -name "*digest*"
-          fi
 
       # Creates github release(s)
       - name: Create Release
