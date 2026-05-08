@@ -9,6 +9,17 @@ and this project adheres to the versioning scheme outlined in the [README.md](RE
 
 ### Added
 
+* release 3.4.0.0.4 test
+* line 2
+
+### Fixed
+
+* something fixed
+
+## [3.4.0.0.3]
+
+### Added
+
 * Miners now track `failed_txid` from signer block rejections. When a blocking minority (>30%) of signers report the same transaction as failed, the miner excludes it from the next block proposal. A new `ProblematicTransaction` validation reject code distinguishes genuinely broken transactions (permanently blacklisted from the mempool) from context-dependent failures like deadline exceeded (excluded until a successful block only).
 * Added some diagnostics data to a miner's block proposal StackerDB message. This data contains nothing confidential, only some information about the miner's view of the world. This may help with investigating issues where a miner keeps submitting blocks that are then rejected by signers.
 * Added `error!`-level logging with `UNREACHABLE_ERROR_TRIGGERED` marker and `stacks_unreachable_errors_total` Prometheus counter when unreachable errors are hit during transaction processing ([#7046](https://github.com/stacks-network/stacks-core/pull/7046))
