@@ -9,6 +9,16 @@ and this project adheres to the versioning scheme outlined in the [README.md](RE
 
 ### Added
 
+* adding a fake feature
+
+### Fixed
+
+* Fixing a bug
+
+## [3.4.0.0.5.0]
+
+### Added
+
 * Signers now include a `failed_txid` field in block rejection messages, reporting which transaction caused block validation to fail. This allows miners to skip problematic transactions in subsequent proposals rather than repeatedly proposing blocks that will be rejected.
 
 ### Fixed
