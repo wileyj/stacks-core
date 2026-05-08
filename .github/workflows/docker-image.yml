@@ -62,7 +62,7 @@ jobs:
         run: |
           var_branch="${{ github.ref_name }}"
           if [ "${{ github.event_name }}" == "schedule" ]; then
-            var_branch="develop"
+            var_branch="temp_branch"
           fi
           echo "branch=${var_branch}" >> "$GITHUB_OUTPUT"
 
