@@ -96,23 +96,21 @@ format_docker_pulls() {
                 os_name="Alpine (musl)"
                 ;;
         esac
-
         if [[ -n "${package_id}" ]]; then
             printf "* %s: https://github.com/%s/%s/pkgs/container/%s/%s?tag=%s%s\n" \
                 "${os_name}" "${repo_owner}" "${image_name}" "${image_name}" "${package_id}" "${tag}" "${dist}"
+        else
+            printf "* %s: https://github.com/%s/%s/pkgs/container/%s\n" \
+                "${os_name}" "${repo_owner}" "${image_name}" "${image_name}"
         fi
 
-        if [[ -n "${digest}" ]]; then
-            printf '```sh\n'
-            printf "docker pull ghcr.io/%s/%s:%s%s@%s\n" "${repo_owner}" "${image_name}" "${tag}" "${dist}" "${digest}"
-            printf '```\n'
-            printf "\n"
-        else
-            printf '```sh\n'
-            printf "docker pull ghcr.io/%s/%s:%s%s\n" "${repo_owner}" "${image_name}" "${tag}" "${dist}"
-            printf '```\n'
-            printf "\n"
-        fi
+        local digest_suffix=""
+        [[ -n "${digest}" ]] && digest_suffix="@${digest}"
+
+        printf '```sh\n'
+        printf "docker pull ghcr.io/%s/%s:%s%s%s\n" "${repo_owner}" "${image_name}" "${tag}" "${dist}" "${digest_suffix}"
+        printf '```\n'
+        printf "\n"
     }
 
     # Validate JSON manifest
@@ -136,11 +134,16 @@ format_docker_pulls() {
 
     {
         printf "### Docker images have been published to GitHub Container Registry:\n\n"
-        printf "#### **stacks-core**\n"
-        print_image "stacks-core" "glibc" "${node_tag}" "${core_glibc}" "${core_glibc_id}"
-        print_image "stacks-core" "musl" "${node_tag}" "${core_musl}" "${core_musl_id}"
+        # if RELEASE_TYPE is stacks-core, show all images. if stacks-signer, only show signer images
+        if [[ "${RELEASE_TYPE}" != "stacks-signer" ]]; then
+            printf "#### **stacks-core**\n"
+            print_image "stacks-core" "glibc" "${node_tag}" "${core_glibc}" "${core_glibc_id}"
+            print_image "stacks-core" "musl" "${node_tag}" "${core_musl}" "${core_musl_id}"
 
-        printf "#### **stacks-signer**\n"
+            printf "#### **stacks-signer**\n"
+        else
+            printf "#### **stacks-signer**\n"
+        fi
         print_image "stacks-signer" "glibc" "${signer_tag}" "${signer_glibc}" "${signer_glibc_id}"
         print_image "stacks-signer" "musl" "${signer_tag}" "${signer_musl}" "${signer_musl_id}"
     }

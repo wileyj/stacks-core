@@ -132,11 +132,8 @@ jobs:
             digest=$(jq -r '.digest // empty' "${digest_file}" 2>/dev/null)
             package_id=$(jq -r '.package_id // empty' "${digest_file}" 2>/dev/null)
 
-            # Only process if all fields are non-empty and not literally "null"
-            if [[ -n "${release_type}" && "${release_type}" != "null" && \
-                  -n "${libc_variant}" && "${libc_variant}" != "null" && \
-                  -n "${digest}" && "${digest}" != "null" && \
-                  -n "${package_id}" && "${package_id}" != "null" ]]; then
+            # Only process if all required fields are present
+            if [[ -n "${release_type}" && -n "${libc_variant}" && -n "${digest}" && -n "${package_id}" ]]; then
               echo "  Adding: ${release_type}/${libc_variant} = ${digest:0:20}... (package_id: ${package_id})"
               # Add to manifest using jq with safe variable substitution
               manifest=$(printf '%s' "${manifest}" | jq \

@@ -9,6 +9,12 @@ and this project adheres to the versioning scheme outlined in the [README.md](RE
 
 ### Added
 
+* a second test of a release
+
+## [3.4.0.0.3.1]
+
+### Added
+
 * a test of a signer-only release
 
 ## [3.4.0.0.3.0]
