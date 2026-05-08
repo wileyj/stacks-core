@@ -70,7 +70,8 @@ fi
 ## ── Derive node_tag, signer_tag, node_epoch, companion_line ─────────────────
 if [[ "${RELEASE_TYPE}" == "stacks-signer" ]]; then
     signer_tag="${VERSION}"
-    node_tag="$(echo "${signer_tag}" | cut -d. -f1-5)"
+    # Extract first 5 dot-separated parts and preserve any suffix (like -rc1)
+    node_tag=$(echo "${signer_tag}" | sed 's/^\([^.]*\.[^.]*\.[^.]*\.[^.]*\.[^.]*\)\.[0-9]*\(.*\)$/\1\2/')
     companion_line="The version of stacks-node compatible with this release is ${node_tag}, available here: https://github.com/${REPO}/releases/tag/${node_tag}."
 else
     node_tag="${VERSION}"
