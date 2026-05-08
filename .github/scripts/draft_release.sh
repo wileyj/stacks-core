@@ -108,8 +108,10 @@ format_docker_pulls() {
             printf '```\n'
             printf "\n"
         else
+            printf '```sh\n'
             printf "\`docker pull ghcr.io/%s/%s:%s%s\`\n" \
                 "${repo_owner}" "${image_name}" "${tag}" "${dist}"
+            printf '```\n'
             printf "\n"
         fi
     }
