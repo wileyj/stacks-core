@@ -49,7 +49,7 @@ jobs:
       fail-fast: false
       matrix:
         # Partition unit tests into 8 concurrent jobs
-        partition: [1, 2, 3, 4, 5, 6, 7, 8]
+        partition: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]
     steps:
     # Checkout the code
     #   - only .github is required for this job
@@ -71,7 +71,7 @@ jobs:
         uses: ./.github/actions/run-tests/partition
         with:
           partition: ${{ matrix.partition }}
-          total-partitions: 8
+          total-partitions: 16
 
       # Create and upload code coverage file
       - name: Code Coverage
