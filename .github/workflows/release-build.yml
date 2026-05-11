@@ -54,6 +54,9 @@ jobs:
         os:
           - ubuntu-latest
           - macos-latest-large
+        # Only run for macos-arm64 and windows-x64 if this run from stacks-network
+        is_fork:
+          - ${{ github.repository_owner != 'stacks-network' }}
         exclude:
           # exclude linux-musl on macos
           - arch: linux-musl
@@ -73,15 +76,18 @@ jobs:
           # excludes macos-x64 (always)
           - arch: macos
             cpu: x86-64
+          # excludes macos-arm64 (fork only)
+          - arch: macos
+            cpu: arm64
+            is_fork: true
+          # excludes windows-x64 (fork only)
+          - arch: windows
+            cpu: x86-64
+            is_fork: true
     permissions:
       contents: read
       id-token: write
       attestations: write
-    # Only run for macos-arm64 and windows-x64 if this run from stacks-network
-    if: |
-      !((github.repository_owner != 'stacks-network') &&
-        ((matrix.arch == 'macos' && matrix.cpu == 'arm64') ||
-         (matrix.arch == 'windows' && matrix.cpu == 'x86-64')))
     steps:
       # Checkout the code
       - name: Checkout the latest code
