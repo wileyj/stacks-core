@@ -79,10 +79,10 @@ jobs:
       contents: read
       id-token: write
       attestations: write
-    if: |
-      !((env.IS_FORK == 'true') &&
-        ((matrix.arch == 'macos' && matrix.cpu == 'arm64') ||
-         (matrix.arch == 'windows' && matrix.cpu == 'x86-64')))
+    # if: |
+    #   !((env.IS_FORK == 'true') &&
+    #     ((matrix.arch == 'macos' && matrix.cpu == 'arm64') ||
+    #      (matrix.arch == 'windows' && matrix.cpu == 'x86-64')))
     steps:
       - name: Debug fork status
         run: |
