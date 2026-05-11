@@ -39,8 +39,6 @@ jobs:
   build-binaries:
     name: Build Binaries
     runs-on: ${{ matrix.os }}
-    env:
-      IS_FORK: ${{ github.repository_owner != 'stacks-network' }}
     strategy:
       # Run a maximum of 10 builds concurrently
       max-parallel: 10
@@ -79,8 +77,9 @@ jobs:
       contents: read
       id-token: write
       attestations: write
+    # Only run for macos-arm64 and windows-x64 if this run from stacks-network
     if: |
-      !((env.IS_FORK == 'true') &&
+      !((github.repository_owner != 'stacks-network') &&
         ((matrix.arch == 'macos' && matrix.cpu == 'arm64') ||
          (matrix.arch == 'windows' && matrix.cpu == 'x86-64')))
     steps:
