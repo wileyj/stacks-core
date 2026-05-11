@@ -39,6 +39,8 @@ jobs:
   build-binaries:
     name: Build Binaries
     runs-on: ${{ matrix.os }}
+    env:
+      IS_FORK: ${{ github.event.repository.is_fork }}
     strategy:
       # Run a maximum of 10 builds concurrently
       max-parallel: 10
@@ -70,14 +72,23 @@ jobs:
           # excludes windows-arm64
           - arch: windows
             cpu: arm64
-          # excludes macos-x64
+          # excludes macos-x64 (always)
           - arch: macos
             cpu: x86-64
     permissions:
       contents: read
       id-token: write
       attestations: write
+    if: |
+      !((env.IS_FORK == 'true') &&
+        ((matrix.arch == 'macos' && matrix.cpu == 'arm64') ||
+         (matrix.arch == 'windows' && matrix.cpu == 'x86-64')))
     steps:
+      - name: Debug fork status
+        run: |
+          echo "IS_FORK=${{ env.IS_FORK }}"
+          echo "Repository is_fork: ${{ github.event.repository.is_fork }}"
+
       # Checkout the code
       - name: Checkout the latest code
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
