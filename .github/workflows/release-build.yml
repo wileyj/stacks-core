@@ -102,6 +102,7 @@ jobs:
           MATRIX_CPU: ${{ matrix.cpu }}
           MATRIX_ARCH: ${{ matrix.arch }}
           CMD: ${{ env.CMD }}
+          # SIGNER_ONLY: true when only building signer (no node release)
           SIGNER_ONLY: ${{ inputs.node_tag == '' }}
         run: bash ./.github/scripts/build_binaries.sh
 

@@ -72,8 +72,9 @@ jobs:
       - andon-cord
       - build-binaries
     if: |
-      inputs.node_tag != '' ||
-      inputs.signer_tag != ''
+      (inputs.node_tag != '' ||
+      inputs.signer_tag != '') &&
+      !(matrix.type == 'stacks-core' && inputs.is_node_release == 'false')
     permissions:
       contents: read       # required for checkout inside release-docker.yml
       id-token: write      # required for attestation inside release-docker.yml
@@ -87,8 +88,6 @@ jobs:
         type:
           - stacks-core
           - stacks-signer
-        exclude:
-          - type: ${{ inputs.is_node_release == 'false' && 'stacks-core' }} # exclude stacks-core if node release is false
     # Build the docker images
     uses: ./.github/workflows/release-docker.yml
     with:
