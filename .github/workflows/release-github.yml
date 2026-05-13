@@ -84,9 +84,12 @@ jobs:
       # Build a maximum of 2 images concurrently based on matrix.dist
       max-parallel: 2
       matrix:
-        # When is_node_release is false, only build stacks-signer.
-        # Otherwise, build both stacks-core and stacks-signer.
-        type: ${{ inputs.is_node_release == 'false' && fromJSON('["stacks-signer"]') || fromJSON('["stacks-core", "stacks-signer"]') }}
+        type:
+          - stacks-core
+          - stacks-signer
+        exclude:
+          # When is_node_release is false, only build stacks-signer.
+          - type: ${{ inputs.is_node_release == 'false' && 'stacks-core' }}
     # Build the docker images
     uses: ./.github/workflows/release-docker.yml
     with:
