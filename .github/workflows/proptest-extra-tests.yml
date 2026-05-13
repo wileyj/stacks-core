@@ -38,15 +38,16 @@ on:
         required: true
         type: string
 
-# set default permissions
+# Set default permissions
 permissions:
   contents: read
 
-# configure concurrency
+# Configure concurrency
 concurrency:
   group: proptest-extra-${{ github.event.pull_request.number || inputs.pr_number }}
   cancel-in-progress: true
 
+# Set default env vars
 env:
   RUST_BACKTRACE: full
   SEGMENT_DOWNLOAD_TIMEOUT_MINS: 3
@@ -197,6 +198,7 @@ jobs:
       # Allows the job to proceed even if the cache restore fails.
       # The fallback steps will build the archive from source in that case.
       - name: Setup Test Environment
+        id: setup-tests
         continue-on-error: true
         uses: ./.github/actions/testenv
 

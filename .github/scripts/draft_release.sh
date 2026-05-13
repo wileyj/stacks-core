@@ -1,5 +1,12 @@
 #!/usr/bin/env bash
 # Generates a GitHub release body by expanding a template with release variables.
+# Notes:
+#   - stacks-core releases will output all docker images with a sha256 (if available), including stacks-signer images
+#   - stacks-core releases will link to a companion stacks-signer release (e.g. stacks-core release 1.2.3.4.5 will link to stacks-signer 1.2.3.4.5.0)
+#   - stacks-signer releases will *only* output images for the stacks-signer release (for stacks-core, a release link is provided for those images)
+#   - stacks-signer point releases will link to the stacks-core release for that version (e.g. stacks-signer 1.2.3.4.5.1 will link to stacks-core 1.2.3.4.5)
+#   - rc releases will respect the same above rules
+#     - if there is an rc signer release, e.g. 1.2.3.4.5.1-rc1, it will link to stacks-core 1.2.3.4.5-rc1
 #
 # Required env vars:
 #   VERSION      - Bare release version (no 'signer-' prefix)
@@ -36,9 +43,9 @@
 
 
 # Template variables substituted:
-#   ${node_tag}          - 5-part node version  (e.g. 3.4.0.0.0)
-#   ${signer_tag}        - 6-part signer version (e.g. 3.4.0.0.0.0)
-#   ${node_epoch}        - epoch compatibility tag (e.g. 3.4.x.x.x)
+#   ${node_tag}          - 5-part node version  (e.g. 1.2.3.4.5)
+#   ${signer_tag}        - 6-part signer version (e.g. 1.2.3.4.5.0)
+#   ${node_epoch}        - epoch compatibility tag (e.g. 1.2.x.x.x)
 #   ${companion_line}    - line to reference companion release (differs by RELEASE_TYPE, stacks-core mentions stacks-signer and vice-versa)
 #   ${changelog_content} - extracted changelog block (may be empty for signer releases)
 #
@@ -57,6 +64,8 @@ source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/logging.sh"
 : "${RELEASE_TYPE:?RELEASE_TYPE is required}"
 : "${REPO:?REPO is required}"
 
+DIGEST_MANIFEST="${DIGEST_MANIFEST:-}"
+
 if [[ ! -f "${TEMPLATE}" ]]; then
     error "template not found: $(hl "${TEMPLATE}")"
     exit 1
@@ -70,7 +79,8 @@ fi
 ## ── Derive node_tag, signer_tag, node_epoch, companion_line ─────────────────
 if [[ "${RELEASE_TYPE}" == "stacks-signer" ]]; then
     signer_tag="${VERSION}"
-    node_tag="$(echo "${signer_tag}" | cut -d. -f1-5)"
+    # Extract first 5 dot-separated parts and preserve any suffix (like -rc1)
+    node_tag=$(echo "${signer_tag}" | sed 's/^\([^.]*\.[^.]*\.[^.]*\.[^.]*\.[^.]*\)\.[0-9]*\(.*\)$/\1\2/')
     companion_line="The version of stacks-node compatible with this release is ${node_tag}, available here: https://github.com/${REPO}/releases/tag/${node_tag}."
 else
     node_tag="${VERSION}"
@@ -161,7 +171,7 @@ format_docker_pulls() {
 }
 
 ## ── Generate docker pull section with or without digests ───────────────────
-if [[ -n "${DIGEST_MANIFEST:-}" ]] && [[ -f "${DIGEST_MANIFEST}" ]]; then
+if [[ -n "${DIGEST_MANIFEST}" ]] && [[ -f "${DIGEST_MANIFEST}" ]]; then
     info "docker_pulls: using digest manifest from ${DIGEST_MANIFEST}"
     if ! docker_pulls_with_digests=$(format_docker_pulls "${DIGEST_MANIFEST}" "${node_tag}" "${signer_tag}" "${repo_owner}"); then
         # Fallback if manifest processing fails
