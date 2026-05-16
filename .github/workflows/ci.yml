@@ -253,6 +253,7 @@ jobs:
   epoch-tests:
     name: Epoch Tests
     needs:
+      - create-cache
       - check-release
     if: >-
       !cancelled() &&
